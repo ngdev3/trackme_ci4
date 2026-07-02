@@ -124,3 +124,6 @@ _modules/*
 
 /results/
 /phpunit.xml
+
+# Local deployment artifacts (never push secrets / DB dumps to the repo)
+/deploy/
