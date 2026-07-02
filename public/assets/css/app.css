@@ -1,0 +1,115 @@
+/* ------------------------------------------------------------------
+ * ERP Admin — small custom utilities layered on top of AdminLTE 4.
+ * Keep this lean: AdminLTE + Bootstrap 5.3 own the layout.
+ * ------------------------------------------------------------------ */
+
+.brand-link .brand-image {
+    height: 32px;
+    width: 32px;
+    object-fit: contain;
+}
+
+/* Login / auth screens */
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
+    padding: 1.5rem;
+}
+[data-bs-theme="dark"] .auth-wrapper {
+    background: linear-gradient(135deg, #1f2937 0%, #0b1120 100%);
+}
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+}
+
+/* Utility: fixed-width action column */
+.col-actions { width: 1%; white-space: nowrap; }
+
+/* Small stat-card icon */
+.small-box .icon > i { font-size: 2.6rem; }
+
+/* Permission matrix table */
+.perm-matrix th, .perm-matrix td { text-align: center; vertical-align: middle; }
+.perm-matrix td:first-child, .perm-matrix th:first-child { text-align: left; }
+
+/* Profile thumbnail */
+.avatar-sm { width: 36px; height: 36px; object-fit: cover; border-radius: 50%; }
+.avatar-lg { width: 96px; height: 96px; object-fit: cover; border-radius: 50%; }
+
+/* Subtle card polish */
+.card { border: 0; box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.08); }
+
+/* ==================================================================
+ * Theme override hooks — make the custom primary colour reach the
+ * elements Bootstrap compiles with hard-coded values.
+ * ================================================================== */
+.btn-primary {
+    --bs-btn-bg: var(--bs-primary);
+    --bs-btn-border-color: var(--bs-primary);
+    --bs-btn-hover-bg: var(--erp-primary-dark, #0b5ed7);
+    --bs-btn-hover-border-color: var(--erp-primary-dark, #0a58ca);
+    --bs-btn-active-bg: var(--erp-primary-dark, #0a58ca);
+    --bs-btn-disabled-bg: var(--bs-primary);
+    --bs-btn-disabled-border-color: var(--bs-primary);
+}
+.btn-outline-primary {
+    --bs-btn-color: var(--bs-primary);
+    --bs-btn-border-color: var(--bs-primary);
+    --bs-btn-hover-bg: var(--bs-primary);
+    --bs-btn-hover-border-color: var(--bs-primary);
+    --bs-btn-active-bg: var(--bs-primary);
+}
+.text-bg-primary { background-color: var(--bs-primary) !important; }
+.bg-primary { background-color: var(--bs-primary) !important; }
+.text-primary { color: var(--bs-primary) !important; }
+.small-box.text-bg-primary { background-color: var(--bs-primary) !important; }
+.page-item.active .page-link { background-color: var(--bs-primary); border-color: var(--bs-primary); }
+.sidebar-menu .nav-link.active { background-color: var(--bs-primary) !important; }
+
+/* ==================================================================
+ * Global smooth transitions (subtle, fast — never sluggish)
+ * ================================================================== */
+.card, .btn, .small-box, .nav-link, .dropdown-item, .badge, .page-link, .form-control, .form-select {
+    transition: background-color .18s ease, color .18s ease, border-color .18s ease,
+                box-shadow .18s ease, transform .18s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.card:hover { box-shadow: 0 .35rem 1.1rem rgba(0,0,0,.12); }
+
+/* Bootstrap dropdown open/close animation */
+.dropdown-menu.show { animation: erpFadeInDown .18s ease both; }
+@keyframes erpFadeInDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Sidebar treeview slide (respect AdminLTE, just smooth the colour/opacity) */
+.app-sidebar { transition: margin-left .3s ease, width .3s ease; }
+.nav-treeview { transition: max-height .3s ease; }
+
+/* Offcanvas / theme panel colour swatches */
+.form-control-color { width: 3rem; height: 2.2rem; padding: .15rem; cursor: pointer; }
+
+/* ==================================================================
+ * Top page-loading progress bar
+ * ================================================================== */
+.page-loader {
+    position: fixed; top: 0; left: 0; right: 0; height: 3px;
+    z-index: 3000; opacity: 0; pointer-events: none; transition: opacity .2s ease;
+}
+.page-loader.active { opacity: 1; }
+.page-loader .page-loader-bar {
+    height: 100%; width: 30%;
+    background: linear-gradient(90deg, transparent, var(--bs-primary, #0d6efd), transparent);
+    animation: erpLoaderSlide 1s linear infinite;
+}
+@keyframes erpLoaderSlide {
+    0% { margin-left: -30%; } 100% { margin-left: 100%; }
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}

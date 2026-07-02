@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Models;
+
+use CodeIgniter\Model;
+
+class UserModel extends Model
+{
+    protected $table            = 'users';
+    protected $primaryKey       = 'id';
+    protected $useAutoIncrement = true;
+    protected $returnType       = 'array';
+    protected $useSoftDeletes   = true;
+    protected $useTimestamps    = true;
+
+    protected $allowedFields = [
+        'name', 'email', 'mobile', 'username', 'password', 'user_type_id',
+        'profile_image', 'status', 'remember_token', 'last_login_at',
+    ];
+
+    protected $validationRules = [
+        'name'     => 'required|min_length[2]|max_length[150]',
+        'email'    => 'required|valid_email|max_length[191]|is_unique[users.email,id,{id}]',
+        'username' => 'required|alpha_dash|min_length[3]|max_length[100]|is_unique[users.username,id,{id}]',
+        'mobile'   => 'permit_empty|max_length[20]',
+        'status'   => 'in_list[0,1]',
+    ];
+
+    protected $validationMessages = [
+        'email'    => ['is_unique' => 'This email is already registered.'],
+        'username' => ['is_unique' => 'This username is already taken.'],
+    ];
+
+    /**
+     * Full user record with its type + role names, for listing.
+     */
+    public function withRelations()
+    {
+        return $this->select('users.*, user_types.name AS user_type_name,
+                GROUP_CONCAT(DISTINCT roles.name ORDER BY roles.name SEPARATOR ", ") AS role_names')
+            ->join('user_types', 'user_types.id = users.user_type_id', 'left')
+            ->join('user_roles', 'user_roles.user_id = users.id', 'left')
+            ->join('roles', 'roles.id = user_roles.role_id', 'left')
+            ->groupBy('users.id');
+    }
+
+    public function findByLogin(string $login): ?array
+    {
+        return $this->groupStart()
+            ->where('username', $login)
+            ->orWhere('email', $login)
+            ->groupEnd()
+            ->first();
+    }
+
+    /**
+     * IDs of roles assigned to a user.
+     *
+     * @return list<int>
+     */
+    public function roleIds(int $userId): array
+    {
+        $rows = $this->db->table('user_roles')->select('role_id')->where('user_id', $userId)->get()->getResultArray();
+        return array_map(static fn ($r) => (int) $r['role_id'], $rows);
+    }
+
+    /**
+     * Replace a user's role assignments.
+     *
+     * @param list<int> $roleIds
+     */
+    public function syncRoles(int $userId, array $roleIds): void
+    {
+        $this->db->table('user_roles')->where('user_id', $userId)->delete();
+        $rows = [];
+        foreach (array_unique(array_filter(array_map('intval', $roleIds))) as $rid) {
+            $rows[] = ['user_id' => $userId, 'role_id' => $rid];
+        }
+        if ($rows !== []) {
+            $this->db->table('user_roles')->insertBatch($rows);
+        }
+    }
+
+    public function countActive(): int
+    {
+        return $this->where('status', 1)->countAllResults();
+    }
+}

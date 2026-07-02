@@ -1,0 +1,17 @@
+# ------------------------------------------------------------------
+# Route every request into the CodeIgniter public/ front controller.
+# The Apache document root points at the project root (D:\laragon\www\ERP),
+# so we transparently forward into public/ where index.php + .htaccess live.
+# ------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Don't touch requests already inside public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Fallback: if mod_rewrite is unavailable, use public as the index.
+<IfModule !mod_rewrite.c>
+    DirectoryIndex public/index.php
+</IfModule>
