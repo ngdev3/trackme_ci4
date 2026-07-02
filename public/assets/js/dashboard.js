@@ -45,7 +45,7 @@
 
     /* ---------- KPI count-up animation ---------- */
     function animateCounts() {
-        $('.kpi-value[data-count]').each(function () {
+        $('[data-count]').each(function () {
             var $el = $(this), target = parseInt($el.attr('data-count'), 10) || 0, start = null, dur = 900;
             function step(ts) {
                 if (!start) { start = ts; }
@@ -174,6 +174,14 @@
         // Re-render charts when the theme colour is saved (keeps charts on-brand).
         $(document).on('click', '#themeSave', function () {
             setTimeout(loadAnalytics, 150);
+        });
+
+        // TrackmeNew-style per-widget refresh icons: spin then reload the page
+        // (server-rendered tiles + AJAX charts both refresh).
+        $(document).on('click', '[data-tm-refresh]', function () {
+            $(this).addClass('spinning');
+            if (window.erpNotify) { window.erpNotify('info', 'Refreshing…'); }
+            setTimeout(function () { window.location.reload(); }, 250);
         });
     });
 })(jQuery);
