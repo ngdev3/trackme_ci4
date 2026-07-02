@@ -41,6 +41,11 @@
     <?= $this->include('partials/sidebar') ?>
 
     <main class="app-main">
+        <div class="erp-info-strip">
+            <i class="bi bi-info-circle"></i>
+            <span>Advanced features are inside the profile dropdown.</span>
+        </div>
+
         <!-- Content header / breadcrumb -->
         <div class="app-content-header">
             <div class="container-fluid">

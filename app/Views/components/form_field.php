@@ -31,7 +31,7 @@ foreach ($attrs as $k => $v) {
     $attrStr .= ' ' . $k . '="' . esc($v, 'attr') . '"';
 }
 ?>
-<div class="mb-3">
+<div class="mb-3 erp-field">
     <?php if ($type !== 'checkbox'): ?>
         <label for="f_<?= esc($name) ?>" class="form-label">
             <?= esc($label) ?><?php if ($required): ?> <span class="text-danger">*</span><?php endif; ?>

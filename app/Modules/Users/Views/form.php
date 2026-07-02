@@ -1,10 +1,13 @@
 <?php /** Sliced content — rendered inside app/Views/layout.php via BaseController::render(). */ ?>
-<form action="<?= $mode === 'edit' ? site_url('users/update/' . $row['id']) : site_url('users/store') ?>" method="post" enctype="multipart/form-data">
+<form class="erp-form-page" action="<?= $mode === 'edit' ? site_url('users/update/' . $row['id']) : site_url('users/store') ?>" method="post" enctype="multipart/form-data">
     <?= csrf_field() ?>
-    <div class="row g-3">
+    <div class="row g-4">
         <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header"><h3 class="card-title mb-0"><?= esc($title) ?></h3></div>
+            <div class="card erp-panel">
+                <div class="card-header erp-panel-title">
+                    <span class="panel-icon"><i class="bi bi-person-vcard"></i></span>
+                    <h3 class="card-title mb-0">Registration & Identity</h3>
+                </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6"><?= view('components/form_field', ['name' => 'name', 'label' => 'Full Name', 'value' => old_value('name', $row), 'required' => true, 'errors' => $errors, 'icon' => 'bi bi-person']) ?></div>
@@ -32,8 +35,11 @@
 
         <div class="col-lg-4">
             <!-- Profile image -->
-            <div class="card">
-                <div class="card-header"><h3 class="card-title mb-0">Profile Image</h3></div>
+            <div class="card erp-panel">
+                <div class="card-header erp-panel-title">
+                    <span class="panel-icon"><i class="bi bi-image"></i></span>
+                    <h3 class="card-title mb-0">Profile Image</h3>
+                </div>
                 <div class="card-body text-center">
                     <?php if (! empty($row['profile_image'])): ?>
                         <img src="<?= base_url('uploads/users/' . $row['profile_image']) ?>" class="avatar-lg mb-2" alt="avatar">
@@ -45,8 +51,11 @@
             </div>
 
             <!-- Roles -->
-            <div class="card">
-                <div class="card-header"><h3 class="card-title mb-0">Roles</h3></div>
+            <div class="card erp-panel">
+                <div class="card-header erp-panel-title">
+                    <span class="panel-icon"><i class="bi bi-shield-check"></i></span>
+                    <h3 class="card-title mb-0">Roles</h3>
+                </div>
                 <div class="card-body">
                     <?php if (empty($roles)): ?>
                         <p class="text-secondary mb-0">No roles available.</p>
@@ -62,4 +71,3 @@
         </div>
     </div>
 </form>
-
