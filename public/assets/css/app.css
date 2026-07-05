@@ -62,6 +62,7 @@
     --erp-sidebar-line:  rgba(255, 255, 255, .10);
     --erp-sidebar-text:  rgba(233, 239, 250, .82);
     --erp-sidebar-hover: rgba(255, 255, 255, .09);
+    --erp-topbar-h: 70px;
 }
 
 /* ===================== 2. DARK-MODE TOKENS ======================== */
@@ -98,7 +99,10 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-.app-wrapper { background: transparent; }
+.app-wrapper {
+    padding-top: var(--erp-topbar-h);
+    background: transparent;
+}
 .app-main    { background: transparent; min-height: 100vh; }
 
 .container-fluid { --bs-gutter-x: 1.75rem; }
@@ -151,11 +155,19 @@ a { text-decoration: none; }
 
 /* ======================= 5. SHELL · SIDEBAR ======================= */
 .erp-sidebar {
-    position: relative;
+    position: fixed !important;
+    top: var(--erp-topbar-h) !important;
+    bottom: 0 !important;
+    left: 0;
+    z-index: 1038;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--erp-topbar-h));
+    max-height: calc(100vh - var(--erp-topbar-h));
     background: linear-gradient(168deg, var(--erp-sidebar-1) 0%, var(--erp-sidebar-2) 100%) !important;
     border-right: 1px solid var(--erp-sidebar-line);
     box-shadow: 14px 0 40px rgba(8, 15, 30, .18);
-    overflow: hidden;
+    overflow: hidden !important;
 }
 
 .erp-sidebar::before {
@@ -170,6 +182,7 @@ a { text-decoration: none; }
 .erp-sidebar-brand {
     position: relative;
     z-index: 1;
+    flex: 0 0 88px;
     height: 88px;
     padding: 14px 18px;
     border-bottom: 1px solid var(--erp-sidebar-line);
@@ -219,10 +232,20 @@ a { text-decoration: none; }
     overflow-wrap: anywhere;
 }
 
-.sidebar-wrapper { position: relative; z-index: 1; padding: 16px 12px 22px; }
+.sidebar-wrapper {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--erp-topbar-h) - 88px);
+    min-height: 0;
+    padding: 16px 12px 0;
+    overflow: hidden;
+}
 
 .sidebar-search {
     position: relative;
+    flex: 0 0 44px;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -243,6 +266,35 @@ a { text-decoration: none; }
 
 .sidebar-search input { min-width: 0; width: 100%; color: #fff; border: 0; outline: 0; background: transparent; font-size: .9rem; }
 .sidebar-search input::placeholder { color: rgba(255, 255, 255, .55); }
+
+.erp-sidebar nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 14px !important;
+    padding: 0 2px 18px 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, .28) transparent;
+}
+
+.erp-sidebar nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.erp-sidebar nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.erp-sidebar nav::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .26);
+}
+
+.erp-sidebar nav:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, .4);
+}
 
 .erp-sidebar nav::before {
     content: "Menu";
@@ -407,8 +459,20 @@ a { text-decoration: none; }
 
 .app-sidebar { transition: margin-left var(--erp-t), width var(--erp-t); }
 
+@media (min-width: 992px) {
+    body:not(.sidebar-collapse) .app-main,
+    body:not(.sidebar-collapse) .app-footer {
+        margin-left: var(--lte-sidebar-width, 250px);
+        width: calc(100% - var(--lte-sidebar-width, 250px));
+    }
+}
+
 /* ======================== 6. SHELL · TOP BAR ===================== */
 .erp-topbar {
+    position: fixed !important;
+    top: 0;
+    right: 0;
+    left: 0;
     height: 70px;
     padding: 8px 18px;
     border: 0;
@@ -677,7 +741,8 @@ a { text-decoration: none; }
 }
 
 .session-chip::after {
-    margin-left: 2px;
+    justify-self: end;
+    margin-left: 0;
 }
 
 .session-dropdown {
@@ -804,14 +869,18 @@ a { text-decoration: none; }
 .company-chip strong { color: var(--erp-primary); font-size: .95rem; }
 
 .session-chip {
-    display: flex;
+    display: grid;
+    grid-template-columns: 34px 42px 78px 8px;
     align-items: center;
-    gap: 10px;
+    gap: 7px;
     height: 46px;
-    max-width: 170px;
-    padding: 0 12px;
+    width: 202px;
+    max-width: 202px;
+    padding: 0 10px;
     color: var(--erp-ink);
     line-height: 1.1;
+    white-space: nowrap;
+    text-decoration: none;
 }
 
 .session-icon {
@@ -825,8 +894,22 @@ a { text-decoration: none; }
     background: var(--erp-primary);
     font-size: 1rem;
 }
-.session-label { color: var(--erp-muted); font-size: .68rem; font-weight: 700; }
-.session-chip strong { font-size: .82rem; }
+.session-label {
+    color: var(--erp-muted);
+    font-size: .68rem;
+    font-weight: 800;
+    line-height: 1.05;
+    text-align: left;
+}
+
+.session-chip strong {
+    color: var(--erp-ink);
+    font-size: .92rem;
+    font-weight: 900;
+    line-height: 1.2;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
 
 .user-chip {
     min-height: 46px;
@@ -1204,29 +1287,21 @@ canvas { max-width: 100%; }
 }
 
 @media (max-width: 1399.98px) {
-    .topbar-session .session-chip {
-        width: 46px;
-        max-width: 46px;
-        padding: 0 !important;
-        justify-content: center;
-    }
-    .topbar-session .session-label,
-    .topbar-session .session-chip strong {
-        display: none;
-    }
-    .topbar-session .session-chip::after {
-        display: none;
-    }
     .topbar-left { max-width: min(520px, 48vw); }
 }
 
 @media (max-width: 1199.98px) {
     .topbar-left { max-width: none; }
     .top-search { max-width: 340px; }
+    .topbar-session .session-chip {
+        width: 196px;
+        max-width: 196px;
+    }
     .erp-info-strip { margin-inline: 1rem; }
 }
 
 @media (max-width: 991.98px) {
+    :root { --erp-topbar-h: 62px; }
     .topbar-search-item { display: none !important; }
     .erp-topbar { height: 62px; padding-inline: 12px; }
     .nav-square { width: 44px; height: 44px; }
@@ -1237,11 +1312,25 @@ canvas { max-width: 100%; }
 }
 
 @media (max-width: 767.98px) {
+    :root { --erp-topbar-h: 58px; }
     .erp-topbar { height: 58px; padding: 8px 10px; }
     .erp-topbar .container-fluid { --bs-gutter-x: .5rem; gap: 6px; }
     .erp-topbar .navbar-nav.ms-auto { gap: 6px !important; }
     .nav-square { width: 42px; height: 42px; font-size: 1rem; }
-    .topbar-session .session-chip { width: 42px; max-width: 42px; height: 42px; }
+    .topbar-icon-menu { display: none; }
+    .topbar-session .session-chip {
+        display: flex;
+        justify-content: center;
+        width: 42px;
+        max-width: 42px;
+        height: 42px;
+        padding: 0 !important;
+    }
+    .topbar-session .session-label,
+    .topbar-session .session-chip strong,
+    .topbar-session .session-chip::after {
+        display: none;
+    }
     .user-chip { min-height: 42px; max-width: 54px; padding: 3px 8px !important; }
     .avatar-sm { width: 32px; height: 32px; }
     .erp-info-strip { align-items: flex-start; margin-inline: .75rem; padding: 9px 12px; font-size: .82rem; line-height: 1.35; }
@@ -1257,6 +1346,7 @@ canvas { max-width: 100%; }
 }
 
 @media (max-width: 575.98px) {
+    :root { --erp-topbar-h: 56px; }
     .erp-topbar { height: 56px; }
     .topbar-theme-panel { display: none; }
     .nav-square { width: 40px; height: 40px; }

@@ -57,4 +57,3 @@
                 <div class="login-copyright">&copy; <?= date('Y') ?> ERP Admin. All rights reserved.</div>
 
 <?= view('partials/auth_bottom') ?>
-</content>

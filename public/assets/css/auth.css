@@ -258,22 +258,37 @@ body.auth-body {
 /* ===================== RESPONSIVE ===================== */
 @media (max-width: 940px) {
     .login-shell { grid-template-columns: 1fr; width: min(440px, 100%); min-height: auto; }
-    .login-hero { min-height: 300px; padding: 28px; }
+    .login-hero { min-height: 260px; padding: 24px; }
     .solar { top: 62%; left: 72%; }
     .hero-top { flex-direction: column; }
     .hero-foot { display: none; }
-    .login-hero h1 { font-size: 30px; }
-    .login-panel { padding: 38px 26px; }
+    .login-hero h1 { font-size: 28px; }
+    .login-hero p { font-size: 14px; line-height: 1.55; }
+    .login-panel { padding: 34px 26px; }
     .mobile-logo { display: flex; }
 }
-@media (max-width: 460px) {
-    .login-page { padding: 14px; }
-    .weather-card { min-width: 0; width: 100%; }
-    .login-panel { padding: 30px 20px; }
-    .login-card h2 { font-size: 25px; }
+@media (max-width: 575.98px) {
+    .login-page { align-items: flex-start; padding: 10px; }
+    .login-shell { border-radius: 18px; }
+    .login-hero { min-height: auto; padding: 18px; }
+    .solar,
+    .hero-foot,
+    .weather-card { display: none; }
+    .hero-top { margin-bottom: 18px; }
+    .hero-brand-mark { width: 44px; height: 44px; border-radius: 12px; font-size: 22px; }
+    .hero-badge { margin-bottom: 10px; padding: 5px 10px; font-size: 10px; }
+    .login-hero h1 { max-width: none; margin-bottom: 8px; font-size: 24px; line-height: 1.12; }
+    .login-hero p { max-width: none; font-size: 13px; line-height: 1.45; }
+    .login-panel { padding: 24px 18px; }
+    .mobile-logo { display: none; }
+    .login-card h2 { font-size: 24px; }
+    .login-card .subtitle { margin-bottom: 20px; }
+    .auth-control,
+    .login-button { height: 48px; }
     .form-meta { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .demo-note { margin-top: 16px; }
+    .login-copyright { margin-top: 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
     .orbit, .planet, .earth-moon, .saturn-ring, .sun, .sun:before, .shooting, .space:before, .space:after, .nebula, .galaxy, .dust { animation: none !important; }
 }
-</content>

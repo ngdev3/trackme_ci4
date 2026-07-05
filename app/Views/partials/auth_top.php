@@ -11,10 +11,10 @@
  *   $heroLede   string  hero paragraph
  *   $heroBadge  string  small uppercase pill label
  */
-$pageTitle = $pageTitle ?? 'Sign In';
-$heroBadge = $heroBadge ?? 'Mission Control';
-$heroTitle = $heroTitle ?? 'Your whole business, <em>in one orbit.</em>';
-$heroLede  = $heroLede  ?? 'Users, roles, permissions and daily operations — all revolving around a single secure command center.';
+$pageTitle = isset($pageTitle) ? $pageTitle : 'Sign In';
+$heroBadge = isset($heroBadge) ? $heroBadge : 'Mission Control';
+$heroTitle = isset($heroTitle) ? $heroTitle : 'Your whole business, <em>in one orbit.</em>';
+$heroLede  = isset($heroLede) ? $heroLede : 'Users, roles, permissions and daily operations - all revolving around a single secure command center.';
 
 /* ---------- random colour palette (changes every page load) ---------- */
 $palettes = [
@@ -127,4 +127,3 @@ $pos = $positions[array_rand($positions)];
             <!-- FORM PANEL -->
             <div class="login-panel">
                 <div class="login-card">
-</content>

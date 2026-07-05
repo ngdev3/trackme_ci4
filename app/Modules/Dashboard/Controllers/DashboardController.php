@@ -34,7 +34,7 @@ class DashboardController extends BaseController
 
         // TrackmeNew-style widget data (server-rendered so tiles paint instantly).
         $dash        = new DashboardModel();
-        $loginTrend  = $dash->loginTrend(14);
+        $loginTrend  = $dash->loginTrend(7);
         $loginOk     = array_sum($loginTrend['success']);
         $loginFail   = array_sum($loginTrend['failed']);
 
@@ -84,13 +84,16 @@ class DashboardController extends BaseController
         }
 
         $model = new DashboardModel();
-        $block = (string) ($this->request->getGet('block') ?? 'all');
+        $blockParam = $this->request->getGet('block');
+        $block = (string) ($blockParam !== null ? $blockParam : 'all');
 
         $payload = [];
-        $wants   = static fn (string $b) => $block === 'all' || $block === $b;
+        $wants = static function ($b) use ($block) {
+            return $block === 'all' || $block === $b;
+        };
 
         if ($wants('kpis'))        { $payload['kpis']        = $model->kpis(); }
-        if ($wants('logins'))      { $payload['logins']      = $model->loginTrend(14); }
+        if ($wants('logins'))      { $payload['logins']      = $model->loginTrend(7); }
         if ($wants('usersByType')) { $payload['usersByType'] = $model->usersByType(); }
         if ($wants('usersByRole')) { $payload['usersByRole'] = $model->usersByRole(); }
         if ($wants('activity'))    { $payload['activity']    = $model->activityByAction(30); }
