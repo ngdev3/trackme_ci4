@@ -18,6 +18,12 @@
 
         <hr>
 
+        <!-- Quick primary presets -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Preset colors</label>
+            <div class="erp-preset-grid" id="themePresets"></div>
+        </div>
+
         <div class="mb-3 d-flex justify-content-between align-items-center">
             <label for="themePrimary" class="form-label mb-0 fw-semibold">Primary color</label>
             <input type="color" class="form-control form-control-color" id="themePrimary" value="#0d6efd">

@@ -4,7 +4,10 @@
     <div class="sidebar-brand erp-sidebar-brand">
         <a href="<?= site_url('dashboard') ?>" class="brand-link">
             <span class="brand-mark"><i class="bi bi-boxes"></i></span>
-            <span class="brand-text"><?= esc($u['name'] ?? 'Administrator') ?></span>
+            <span class="brand-copy">
+                <span class="brand-kicker">ERP Workspace</span>
+                <span class="brand-text"><?= esc(! empty($u['name']) ? $u['name'] : 'Administrator') ?></span>
+            </span>
         </a>
     </div>
 

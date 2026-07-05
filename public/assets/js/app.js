@@ -51,6 +51,47 @@
         });
     }
 
+    /* ---------------- Sidebar menu interactions ---------------- */
+    const sidebar = document.querySelector('.erp-sidebar');
+    if (sidebar) {
+        const menu = sidebar.querySelector('.sidebar-menu');
+        const search = sidebar.querySelector('.sidebar-search input');
+
+        sidebar.addEventListener('click', function (e) {
+            const link = e.target.closest('.sidebar-menu .nav-link');
+            if (!link) { return; }
+
+            const pulse = document.createElement('span');
+            const rect = link.getBoundingClientRect();
+            pulse.className = 'menu-pulse';
+            pulse.style.left = (e.clientX - rect.left) + 'px';
+            pulse.style.top = (e.clientY - rect.top) + 'px';
+            link.appendChild(pulse);
+            pulse.addEventListener('animationend', function () { pulse.remove(); }, { once: true });
+        });
+
+        if (menu && search) {
+            search.addEventListener('input', function () {
+                const query = search.value.trim().toLowerCase();
+                menu.querySelectorAll(':scope > .nav-item').forEach(function (item) {
+                    const text = item.textContent.toLowerCase();
+                    const matched = !query || text.indexOf(query) !== -1;
+                    item.classList.toggle('is-hidden', !matched);
+
+                    if (!query && item.hasAttribute('data-search-open')) {
+                        item.classList.remove('menu-open');
+                        item.removeAttribute('data-search-open');
+                    }
+
+                    if (query && matched && item.querySelector('.nav-treeview') && !item.classList.contains('menu-open')) {
+                        item.classList.add('menu-open');
+                        item.setAttribute('data-search-open', 'true');
+                    }
+                });
+            });
+        }
+    }
+
     /* ---------------- Delete confirmation ---------------- */
     // Buttons with .btn-delete + data-url submit a hidden POST form after confirm.
     document.addEventListener('click', function (e) {

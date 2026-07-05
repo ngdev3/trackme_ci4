@@ -31,7 +31,7 @@
         <link rel="stylesheet" href="<?= $href ?>">
     <?php endforeach; ?>
 </head>
-<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+<body class="layout-fixed sidebar-expand-lg">
 <!-- Top page-loading progress bar -->
 <div id="pageLoader" class="page-loader"><div class="page-loader-bar"></div></div>
 

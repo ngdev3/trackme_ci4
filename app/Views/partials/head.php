@@ -19,10 +19,10 @@
             var c = JSON.parse(localStorage.getItem('erp-custom-theme'));
             if (c) {
                 var r = document.documentElement, hx = function (h){var m=h.replace('#','');if(m.length===3)m=m[0]+m[0]+m[1]+m[1]+m[2]+m[2];var n=parseInt(m,16);return (n>>16&255)+', '+(n>>8&255)+', '+(n&255);};
-                if (c.primary){r.style.setProperty('--bs-primary',c.primary);r.style.setProperty('--bs-primary-rgb',hx(c.primary));r.style.setProperty('--bs-link-color',c.primary);r.style.setProperty('--erp-primary',c.primary);}
+                if (c.primary){r.style.setProperty('--bs-primary',c.primary);r.style.setProperty('--bs-primary-rgb',hx(c.primary));r.style.setProperty('--bs-link-color',c.primary);r.style.setProperty('--erp-primary',c.primary);r.style.setProperty('--erp-primary-rgb',hx(c.primary));}
                 if (c.secondary){r.style.setProperty('--bs-secondary',c.secondary);r.style.setProperty('--erp-secondary',c.secondary);}
-                if (c.bg){r.style.setProperty('--bs-body-bg',c.bg);}
-                if (c.font){r.style.setProperty('--bs-body-color',c.font);}
+                if (c.bg){r.style.setProperty('--erp-app-bg',c.bg);r.style.setProperty('--bs-body-bg',c.bg);}
+                if (c.font){r.style.setProperty('--erp-ink',c.font);r.style.setProperty('--bs-body-color',c.font);}
             }
         } catch (e) {}
     })();
