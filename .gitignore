@@ -84,7 +84,10 @@ php_errors.log
 #-------------------------
 # Composer
 #-------------------------
-vendor/
+# vendor/ is intentionally COMMITTED so the Hostinger git auto-deploy
+# ships a runnable app without needing `composer install` on the server.
+# (Re-ignore it if you switch to an SSH/composer-based deploy.)
+# vendor/
 
 #-------------------------
 # IDE / Development Files
