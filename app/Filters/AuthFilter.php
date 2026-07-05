@@ -23,6 +23,8 @@ class AuthFilter implements FilterInterface
             Services::session()->setFlashdata('info', 'Please sign in to continue.');
             return redirect()->to(site_url('login'));
         }
+
+        (new \App\Models\LoginLogModel())->markActivity((int) Services::session()->get('login_log_id'));
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)

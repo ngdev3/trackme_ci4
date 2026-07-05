@@ -31,6 +31,8 @@ class PermissionFilter implements FilterInterface
             return redirect()->to(site_url('login'));
         }
 
+        (new \App\Models\LoginLogModel())->markActivity((int) Services::session()->get('login_log_id'));
+
         $moduleCode = $arguments[0] ?? null;
         $action     = $arguments[1] ?? 'view';
 

@@ -51,6 +51,7 @@ class Autoload extends AutoloadConfig
         'Modules\ModuleMaster' => APPPATH . 'Modules/ModuleMaster',
         'Modules\Permissions'  => APPPATH . 'Modules/Permissions',
         'Modules\Logs'         => APPPATH . 'Modules/Logs',
+        'Modules\Notifications'=> APPPATH . 'Modules/Notifications',
         'Modules\Profile'      => APPPATH . 'Modules/Profile',
     ];
 

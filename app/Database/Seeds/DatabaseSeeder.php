@@ -92,6 +92,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Permissions',   'code' => 'permissions',   'url' => 'permissions',   'icon' => 'bi bi-key',               'parent' => 'access_control',  'sort_order' => 2],
             ['name' => 'Activity Logs', 'code' => 'activity_logs', 'url' => 'activity-logs', 'icon' => 'bi bi-list-check',        'parent' => 'logs',            'sort_order' => 1],
             ['name' => 'Login Logs',    'code' => 'login_logs',    'url' => 'login-logs',    'icon' => 'bi bi-box-arrow-in-right','parent' => 'logs',            'sort_order' => 2],
+            ['name' => 'Notifications', 'code' => 'notifications', 'url' => 'notifications', 'icon' => 'bi bi-bell',              'parent' => 'logs',            'sort_order' => 3],
         ];
         $childRows = [];
         foreach ($children as $c) {
@@ -121,7 +122,7 @@ class DatabaseSeeder extends Seeder
         $all = ['view', 'add', 'edit', 'delete', 'print', 'export', 'approve'];
 
         // Admin — full access to most modules, but NOT the Access Control group.
-        foreach (['dashboard', 'users', 'user_types', 'roles', 'activity_logs', 'login_logs'] as $m) {
+        foreach (['dashboard', 'users', 'user_types', 'roles', 'activity_logs', 'login_logs', 'notifications'] as $m) {
             $grant('admin', $m, $all);
         }
         // Manager — manage users, view supporting masters.

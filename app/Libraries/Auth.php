@@ -58,6 +58,7 @@ class Auth
         $key = strtolower($login);
 
         if ($this->isLocked($key)) {
+            $this->logLogin(null, $login, 'failed', 'Too many failed attempts');
             return [false, 'Too many failed attempts. Please try again in ' . self::LOCK_MINUTES . ' minutes.'];
         }
 
@@ -82,7 +83,18 @@ class Auth
         }
 
         $this->users->update($user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
-        $this->logLogin((int) $user['id'], $login, 'success', 'Login successful');
+        $logId = $this->logLogin((int) $user['id'], $login, 'success', 'Login successful');
+        if ($logId) {
+            $this->session->set('login_log_id', $logId);
+        }
+
+        Services::notifier()->user((int) $user['id'], 'Login successful', 'Your account signed in from ' . service('request')->getIPAddress() . '.', [
+            'type'       => 'user_activity',
+            'module'     => 'login_logs',
+            'priority'   => 'normal',
+            'action_url' => site_url('my-login-history'),
+            'created_by' => null,
+        ]);
 
         return [true, 'Welcome back, ' . $user['name'] . '!'];
     }
@@ -111,12 +123,14 @@ class Auth
     public function logout(): void
     {
         $userId = $this->id();
+        $logId  = $this->session->get('login_log_id');
         if ($userId) {
             $this->users->update($userId, ['remember_token' => null]);
         }
+        $this->loginLogs->closeSession($logId ? (int) $logId : null);
         // Expire remember cookie.
         service('response')->deleteCookie('erp_remember');
-        $this->session->remove(['user_id', 'user_name', 'user_email', 'username', 'role_ids', 'is_superadmin']);
+        $this->session->remove(['user_id', 'user_name', 'user_email', 'username', 'role_ids', 'is_superadmin', 'login_log_id']);
         $this->session->destroy();
     }
 
@@ -189,17 +203,87 @@ class Auth
         }
     }
 
-    protected function logLogin(?int $userId, string $username, string $status, string $message): void
+    protected function logLogin(?int $userId, string $username, string $status, string $message): ?int
     {
         $req = service('request');
-        $this->loginLogs->insert([
-            'user_id'    => $userId,
-            'username'   => $username,
-            'ip_address' => $req->getIPAddress(),
-            'user_agent' => substr((string) $req->getUserAgent(), 0, 255),
-            'status'     => $status,
-            'message'    => $message,
-            'created_at' => date('Y-m-d H:i:s'),
+        $agent = $req->getUserAgent();
+        $ip = $req->getIPAddress();
+        $browser = trim($agent->getBrowser() . ' ' . $agent->getVersion());
+        $platform = $agent->getPlatform() ?: 'Unknown';
+        $device = $agent->isMobile() ? 'Mobile' : ($agent->isRobot() ? 'Robot' : 'Desktop');
+        $now = date('Y-m-d H:i:s');
+        [$suspicious, $reason] = $this->detectSuspicious($userId, $username, $ip, $browser, $status);
+
+        $id = $this->loginLogs->insert([
+            'user_id'           => $userId,
+            'username'          => $username,
+            'ip_address'        => $ip,
+            'user_agent'        => substr((string) $agent, 0, 255),
+            'browser'           => substr($browser !== '' ? $browser : 'Unknown', 0, 120),
+            'operating_system'  => substr($platform, 0, 120),
+            'device_type'       => $device,
+            'status'            => $status,
+            'failure_reason'    => $status === 'failed' ? $message : null,
+            'is_suspicious'     => $suspicious ? 1 : 0,
+            'suspicious_reason' => $reason,
+            'message'           => $message,
+            'login_at'          => $now,
+            'last_activity_at'  => $now,
+            'created_at'        => $now,
         ]);
+
+        if ($suspicious) {
+            Services::notifier()->broadcast('Suspicious login detected', trim($username . ' - ' . $reason), [
+                'type'       => $status === 'failed' ? 'warning' : 'error',
+                'module'     => 'login_logs',
+                'priority'   => 'high',
+                'action_url' => site_url('login-logs?suspicious=1'),
+                'created_by' => null,
+            ]);
+        }
+
+        return $id ? (int) $id : null;
+    }
+
+    protected function detectSuspicious(?int $userId, string $username, string $ip, string $browser, string $status): array
+    {
+        $reasons = [];
+
+        if ($userId) {
+            $priorIp = $this->loginLogs
+                ->where('user_id', $userId)
+                ->where('status', 'success')
+                ->where('ip_address', $ip)
+                ->countAllResults();
+            if ($priorIp === 0) {
+                $reasons[] = 'new IP address';
+            }
+
+            $priorBrowser = $this->loginLogs
+                ->where('user_id', $userId)
+                ->where('status', 'success')
+                ->where('browser', $browser)
+                ->countAllResults();
+            if ($browser !== '' && $priorBrowser === 0) {
+                $reasons[] = 'new browser/device';
+            }
+        }
+
+        if ($status === 'failed') {
+            $recentFailures = $this->loginLogs
+                ->where('status', 'failed')
+                ->groupStart()
+                    ->where('username', $username)
+                    ->orWhere('ip_address', $ip)
+                ->groupEnd()
+                ->where('created_at >=', date('Y-m-d H:i:s', time() - 15 * 60))
+                ->countAllResults();
+
+            if ($recentFailures >= 3) {
+                $reasons[] = 'multiple failed attempts';
+            }
+        }
+
+        return [$reasons !== [], implode(', ', $reasons)];
     }
 }

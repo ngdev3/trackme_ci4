@@ -12,6 +12,7 @@
 
 <!-- Prevent theme flash: apply saved appearance + custom colours before paint -->
 <script>
+    window.APP_BASE_URL = <?= json_encode(rtrim(site_url(), '/')) ?>;
     (function () {
         var t = localStorage.getItem('erp-theme') || 'light';
         document.documentElement.setAttribute('data-bs-theme', t);

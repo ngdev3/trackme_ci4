@@ -6,6 +6,7 @@ use CodeIgniter\Config\BaseService;
 use App\Libraries\Acl;
 use App\Libraries\ActivityLogger;
 use App\Libraries\Auth;
+use App\Libraries\Notifier;
 
 /**
  * Services Configuration file.
@@ -55,5 +56,13 @@ class Services extends BaseService
             return static::getSharedInstance('activityLogger');
         }
         return new ActivityLogger();
+    }
+
+    public static function notifier(bool $getShared = true): Notifier
+    {
+        if ($getShared) {
+            return static::getSharedInstance('notifier');
+        }
+        return new Notifier();
     }
 }
