@@ -1,5 +1,24 @@
 <?php /** Sliced content — rendered inside app/Views/layout.php via BaseController::render(). */ ?>
 <?php
+$me   = current_user();
+$hour = (int) date('G');
+$greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
+?>
+<!-- ===================== Welcome hero ===================== -->
+<div class="tm-hero">
+    <div class="tm-hero-copy">
+        <span class="tm-hero-badge"><i class="bi bi-broadcast"></i> Live console</span>
+        <h2><?= esc($greet) ?>, <?= esc(($me['name'] ?? 'Admin')) ?> 👋</h2>
+        <p><?= esc(date('l, d M Y')) ?> &middot; Here's what's happening across your workspace today.</p>
+    </div>
+    <div class="tm-hero-actions">
+        <a href="<?= site_url('users/create') ?>" class="btn btn-light btn-sm"><i class="bi bi-person-plus me-1"></i> New User</a>
+        <a href="<?= site_url('roles') ?>" class="btn btn-outline-light btn-sm"><i class="bi bi-shield-lock me-1"></i> Roles</a>
+        <a href="<?= site_url('permissions') ?>" class="btn btn-outline-light btn-sm"><i class="bi bi-grid-3x3-gap me-1"></i> Permissions</a>
+    </div>
+</div>
+
+<?php
 $k     = $kpis ?? [];
 $act   = (int) ($k['active_users'] ?? 0);
 $inact = (int) ($k['inactive_users'] ?? 0);

@@ -1,42 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Set New Password &middot; ERP Admin</title>
-    <script>document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('erp-theme') || 'light');</script>
-    <link rel="stylesheet" href="<?= base_url('assets/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/vendor/bootstrap/bootstrap.min.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
-</head>
-<body>
-<div class="auth-wrapper">
-    <div class="card auth-card shadow-lg">
-        <div class="card-body p-4 p-md-5">
-            <div class="text-center mb-4">
-                <i class="bi bi-shield-lock display-4 text-primary"></i>
-                <h4 class="fw-bold mt-2 mb-0">Set a new password</h4>
-                <p class="text-secondary"><?= esc($email) ?></p>
-            </div>
+<?= view('partials/auth_top', [
+    'pageTitle' => 'Set New Password',
+    'heroBadge' => 'Secure Reset',
+    'heroTitle' => 'Choose a strong <em>new password.</em>',
+    'heroLede'  => 'Pick a password you have not used before. Once updated you can sign straight back into your dashboard.',
+]) ?>
 
-            <?= flash_alerts() ?>
+                <div class="mobile-logo"><i class="bi bi-shield-lock"></i></div>
+                <h2>New password 🔒</h2>
+                <p class="subtitle"><?= esc($email) ?></p>
 
-            <form action="<?= site_url('reset-password') ?>" method="post">
-                <?= csrf_field() ?>
-                <input type="hidden" name="token" value="<?= esc($token, 'attr') ?>">
-                <div class="mb-3">
-                    <label class="form-label">New password</label>
-                    <input type="password" name="password" class="form-control" minlength="8" required autofocus>
-                    <div class="form-text">At least 8 characters.</div>
+                <?= flash_alerts() ?>
+
+                <form action="<?= site_url('reset-password') ?>" method="post">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="token" value="<?= esc($token, 'attr') ?>">
+
+                    <div class="auth-field">
+                        <label class="auth-label" for="password">New password</label>
+                        <div class="input-wrap">
+                            <span class="input-icon"><i class="bi bi-lock"></i></span>
+                            <input id="password" class="auth-control" type="password" name="password"
+                                   minlength="8" placeholder="At least 8 characters" required autofocus>
+                            <button type="button" class="toggle-pass" data-toggle-pass="password" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="auth-field">
+                        <label class="auth-label" for="password_confirm">Confirm password</label>
+                        <div class="input-wrap">
+                            <span class="input-icon"><i class="bi bi-lock-fill"></i></span>
+                            <input id="password_confirm" class="auth-control" type="password" name="password_confirm"
+                                   minlength="8" placeholder="Re-enter password" required>
+                            <button type="button" class="toggle-pass" data-toggle-pass="password_confirm" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="login-button" type="submit">
+                        <span>Update password</span>
+                        <i class="bi bi-check2-circle"></i>
+                    </button>
+                </form>
+
+                <div class="text-center">
+                    <a href="<?= site_url('login') ?>" class="back-link"><i class="bi bi-arrow-left"></i> Back to sign in</a>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Confirm password</label>
-                    <input type="password" name="password_confirm" class="form-control" minlength="8" required>
-                </div>
-                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check2-circle me-1"></i> Update Password</button>
-            </form>
-        </div>
-    </div>
-</div>
-</body>
-</html>
+
+<?= view('partials/auth_bottom') ?>
+</content>

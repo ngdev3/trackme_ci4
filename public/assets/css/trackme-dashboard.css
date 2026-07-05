@@ -5,6 +5,54 @@
  * Theme-aware via Bootstrap CSS variables (works in dark mode).
  * ------------------------------------------------------------------ */
 
+/* Welcome hero banner (TrackmeNew-style gradient landing) */
+.tm-hero {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 24px;
+    padding: 22px 26px;
+    border-radius: 18px;
+    color: #fff;
+    background:
+        radial-gradient(120% 160% at 90% -20%, rgba(255,255,255,.22), transparent 55%),
+        linear-gradient(120deg, var(--erp-primary, #4e73df), color-mix(in srgb, var(--erp-primary, #4e73df) 55%, #7e5bef));
+    box-shadow: 0 10px 30px rgba(var(--erp-primary-rgb, 78,115,223), .28);
+    animation: tmIn .45s ease both;
+}
+.tm-hero::after {
+    content: "";
+    position: absolute;
+    right: -40px; bottom: -60px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.08);
+    pointer-events: none;
+}
+.tm-hero-copy { position: relative; z-index: 1; min-width: 0; }
+.tm-hero-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 4px 12px; margin-bottom: 10px;
+    font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    border-radius: 999px; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.28);
+}
+.tm-hero h2 { font-family: "Space Grotesk","Inter",sans-serif; margin: 0 0 4px; font-size: 1.55rem; font-weight: 700; color: #fff; }
+.tm-hero p { margin: 0; color: rgba(255,255,255,.82); font-size: .9rem; }
+.tm-hero-actions { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; }
+.tm-hero-actions .btn-light { color: var(--erp-primary, #4e73df); font-weight: 600; }
+.tm-hero-actions .btn-outline-light { color: #fff; border-color: rgba(255,255,255,.55); }
+.tm-hero-actions .btn-outline-light:hover { background: rgba(255,255,255,.16); border-color: #fff; }
+
+@media (max-width: 575.98px) {
+    .tm-hero { padding: 18px 18px; }
+    .tm-hero h2 { font-size: 1.25rem; }
+    .tm-hero-actions .btn { flex: 1 1 auto; }
+}
+
 /* White widget box */
 .tm-box {
     background: var(--bs-body-bg);
@@ -42,7 +90,7 @@
     color: var(--bs-secondary-color, #8a929b); margin: 0 0 2px; font-weight: 600;
 }
 .tm-ministat .tm-label .up { color: #1cc88a; margin-right: 3px; }
-.tm-ministat .tm-value { font-size: 1.9rem; font-weight: 700; line-height: 1; color: var(--bs-emphasis-color); }
+.tm-ministat .tm-value { font-family: "Space Grotesk", "Inter", sans-serif; font-size: 1.9rem; font-weight: 700; line-height: 1; color: var(--bs-emphasis-color); }
 
 /* Icon gradient variants */
 .tm-ic-blue   { background: linear-gradient(135deg,#4e73df,#224abe); }
