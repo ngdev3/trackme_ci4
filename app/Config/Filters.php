@@ -15,6 +15,7 @@ use CodeIgniter\Filters\SecureHeaders;
 use App\Filters\AuthFilter;
 use App\Filters\PermissionFilter;
 use App\Filters\GuestFilter;
+use App\Filters\AutoSetup;
 
 class Filters extends BaseFilters
 {
@@ -40,6 +41,7 @@ class Filters extends BaseFilters
         'auth'          => AuthFilter::class,
         'permission'    => PermissionFilter::class,
         'guest'         => GuestFilter::class,
+        'autosetup'     => AutoSetup::class,
     ];
 
     /**
@@ -78,6 +80,7 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'autosetup', // keep DB schema in sync on CLI-less deploys (runs pending migrations)
             'csrf' => ['except' => ['api/*']],
             'invalidchars',
         ],
