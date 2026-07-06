@@ -19,6 +19,25 @@ class App extends BaseConfig
     public string $baseURL = 'http://localhost:8080/';
 
     /**
+     * Auto-detect the base URL from the incoming request host when it has NOT
+     * been set explicitly via `.env` (app.baseURL). This lets the same build
+     * run on any domain (e.g. production) with no server-side `.env`, while a
+     * local/dev `.env` still overrides it. Prevents the CI4 default
+     * `http://localhost:8080/` from leaking into production redirects.
+     */
+    public function __construct()
+    {
+        parent::__construct(); // applies any app.baseURL from .env first
+
+        if ($this->baseURL === 'http://localhost:8080/' && isset($_SERVER['HTTP_HOST'])) {
+            $secure = (! empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+                || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+                || (($_SERVER['HTTP_X_FORWARDED_SSL'] ?? '') === 'on');
+            $this->baseURL = ($secure ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/';
+        }
+    }
+
+    /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.
      * If you want to accept multiple Hostnames, set this.
      *
