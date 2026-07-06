@@ -4,7 +4,7 @@
  * DELETE once the site works.   Open: https://hissabkitaab.com/diag.php
  */
 header('Content-Type: text/plain; charset=utf-8');
-
+echo "TestingTestingTestingTestingTesting";
 $public = __DIR__;
 $root   = dirname($public);
 
