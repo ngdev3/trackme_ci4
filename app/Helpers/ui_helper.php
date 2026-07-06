@@ -87,3 +87,29 @@ if (! function_exists('old_value')) {
         return $default;
     }
 }
+
+if (! function_exists('erp_languages')) {
+    /**
+     * The 12 UI languages offered by the in-app translator.
+     * Keyed by Google-translate language code => native name / English name / flag.
+     *
+     * @return array<string, array{native:string, name:string, flag:string}>
+     */
+    function erp_languages(): array
+    {
+        return [
+            'en'    => ['native' => 'English',   'name' => 'English',    'flag' => '🇬🇧'],
+            'hi'    => ['native' => 'हिन्दी',      'name' => 'Hindi',      'flag' => '🇮🇳'],
+            'zh-CN' => ['native' => '中文',        'name' => 'Chinese',    'flag' => '🇨🇳'],
+            'es'    => ['native' => 'Español',    'name' => 'Spanish',    'flag' => '🇪🇸'],
+            'ar'    => ['native' => 'العربية',     'name' => 'Arabic',     'flag' => '🇸🇦'],
+            'fr'    => ['native' => 'Français',   'name' => 'French',     'flag' => '🇫🇷'],
+            'bn'    => ['native' => 'বাংলা',       'name' => 'Bengali',    'flag' => '🇧🇩'],
+            'pt'    => ['native' => 'Português',  'name' => 'Portuguese', 'flag' => '🇵🇹'],
+            'ru'    => ['native' => 'Русский',    'name' => 'Russian',    'flag' => '🇷🇺'],
+            'ur'    => ['native' => 'اردو',        'name' => 'Urdu',       'flag' => '🇵🇰'],
+            'de'    => ['native' => 'Deutsch',    'name' => 'German',     'flag' => '🇩🇪'],
+            'ja'    => ['native' => '日本語',      'name' => 'Japanese',   'flag' => '🇯🇵'],
+        ];
+    }
+}

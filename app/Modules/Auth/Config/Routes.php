@@ -13,6 +13,15 @@ $routes->group('', ['namespace' => 'Modules\Auth\Controllers'], static function 
     $routes->get('reset-password/(:segment)', 'AuthController::resetPassword/$1', ['filter' => 'guest']);
     $routes->post('reset-password', 'AuthController::updatePassword', ['filter' => 'guest']);
 
+    // Social sign-in (OAuth 2.0) — {provider} = google, and future apple/github/…
+    // Callback serves BOTH the guest login flow and the authenticated link flow;
+    // it validates the anti-CSRF state itself, so no guest/auth filter is applied.
+    $routes->get('auth/(:segment)/callback', 'SocialAuthController::callback/$1');
+    $routes->get('auth/(:segment)', 'SocialAuthController::redirect/$1', ['filter' => 'guest']);
+
     // Authenticated
     $routes->get('logout', 'AuthController::logout', ['filter' => 'auth']);
+    // Connect / disconnect a social account from the profile page.
+    $routes->get('account/link/(:segment)', 'SocialAuthController::link/$1', ['filter' => 'auth']);
+    $routes->post('account/unlink/(:segment)', 'SocialAuthController::unlink/$1', ['filter' => 'auth']);
 });

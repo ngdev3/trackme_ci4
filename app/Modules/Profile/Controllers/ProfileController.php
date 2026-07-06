@@ -11,11 +11,19 @@ class ProfileController extends BaseController
 
     public function index()
     {
+        $oauth = config('OAuth');
+
         return $this->render('index', [
-            'title'      => 'My Profile',
-            'breadcrumb' => [['label' => 'My Profile']],
-            'row'        => current_user(),
-            'errors'     => session()->getFlashdata('errors') ?? [],
+            'title'         => 'My Profile',
+            'breadcrumb'    => [['label' => 'My Profile']],
+            'row'           => current_user(),
+            'errors'        => session()->getFlashdata('errors') ?? [],
+            'oauthProviders'=> $oauth->providers,
+            'oauthEnabled'  => array_filter(
+                array_fill_keys(array_keys($oauth->providers), true),
+                static fn ($_, $key) => $oauth->enabled($key),
+                ARRAY_FILTER_USE_BOTH
+            ),
         ]);
     }
 

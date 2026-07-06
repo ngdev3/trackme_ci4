@@ -49,6 +49,8 @@
                     </button>
                 </form>
 
+                <?= view('partials/social_login') ?>
+
                 <div class="demo-note">
                     <strong>Demo accounts</strong> (password: <code>Admin@123</code>)<br>
                     superadmin &middot; admin &middot; manager &middot; staff &middot; viewer

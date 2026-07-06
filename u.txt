@@ -1,0 +1,1672 @@
+HTTP/1.1 403 Forbidden
+Date: Mon, 06 Jul 2026 04:02:20 GMT
+Server: Apache/2.4.66 (Win64) OpenSSL/3.0.18 PHP/8.3.30
+X-Powered-By: PHP/8.3.30
+Cache-Control: no-store, max-age=0, no-cache
+Set-Cookie: csrf_cookie_erp=6bb39438a150d260cc9667f5d10d4d17; expires=Mon, 06 Jul 2026 06:02:21 GMT; Max-Age=7200; path=/; HttpOnly; SameSite=Lax
+Transfer-Encoding: chunked
+Content-Type: application/json; charset=UTF-8
+
+{
+    "title": "CodeIgniter\\Security\\Exceptions\\SecurityException",
+    "type": "CodeIgniter\\Security\\Exceptions\\SecurityException",
+    "code": 403,
+    "message": "The action you requested is not allowed.",
+    "file": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\Security\\Security.php",
+    "line": 258,
+    "trace": [
+        {
+            "file": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\Security\\Security.php",
+            "line": 258,
+            "function": "forDisallowedAction",
+            "class": "CodeIgniter\\Security\\Exceptions\\SecurityException",
+            "type": "::",
+            "args": []
+        },
+        {
+            "file": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\Filters\\CSRF.php",
+            "line": 52,
+            "function": "verify",
+            "class": "CodeIgniter\\Security\\Security",
+            "type": "->",
+            "args": [
+                {
+                    "protocolVersion": "1.1",
+                    "validProtocolVersions": [
+                        "1.0",
+                        "1.1",
+                        "2.0",
+                        "3.0"
+                    ],
+                    "body": null,
+                    "headers": {
+                        "Host": {
+                            "name": "Host",
+                            "value": "localhost:8077"
+                        },
+                        "User-Agent": {
+                            "name": "User-Agent",
+                            "value": "curl/8.19.0"
+                        },
+                        "Accept": {
+                            "name": "Accept",
+                            "value": "*/*"
+                        }
+                    },
+                    "headerMap": {
+                        "host": "Host",
+                        "user-agent": "User-Agent",
+                        "accept": "Accept"
+                    },
+                    "method": "POST",
+                    "uri": {
+                        "uriString": null,
+                        "baseURL": {
+                            "uriString": null,
+                            "baseURL": null,
+                            "segments": [
+                                "ERP"
+                            ],
+                            "scheme": "http",
+                            "user": null,
+                            "password": null,
+                            "host": "localhost",
+                            "port": 8077,
+                            "path": "/ERP/",
+                            "fragment": "",
+                            "query": [],
+                            "defaultPorts": {
+                                "http": 80,
+                                "https": 443,
+                                "ftp": 21,
+                                "sftp": 22
+                            },
+                            "showPassword": false,
+                            "silent": false,
+                            "rawQueryString": false
+                        },
+                        "segments": [
+                            "account",
+                            "unlink",
+                            "google"
+                        ],
+                        "scheme": "http",
+                        "user": null,
+                        "password": null,
+                        "host": "localhost",
+                        "port": 8077,
+                        "path": "/ERP/account/unlink/google",
+                        "fragment": "",
+                        "query": [],
+                        "defaultPorts": {
+                            "http": 80,
+                            "https": 443,
+                            "ftp": 21,
+                            "sftp": 22
+                        },
+                        "showPassword": false,
+                        "silent": false,
+                        "rawQueryString": false,
+                        "basePathWithoutIndexPage": "/ERP/",
+                        "indexPage": "",
+                        "baseSegments": [
+                            "ERP"
+                        ],
+                        "routePath": "account/unlink/google"
+                    },
+                    "config": {
+                        "baseURL": "http://localhost:8077/ERP/",
+                        "allowedHostnames": [],
+                        "indexPage": "",
+                        "uriProtocol": "REQUEST_URI",
+                        "permittedURIChars": "a-z 0-9~%.:_\\-",
+                        "defaultLocale": "en",
+                        "negotiateLocale": false,
+                        "supportedLocales": [
+                            "en"
+                        ],
+                        "appTimezone": "Asia/Kolkata",
+                        "charset": "UTF-8",
+                        "forceGlobalSecureRequests": false,
+                        "proxyIPs": [],
+                        "CSPEnabled": false
+                    },
+                    "ipAddress": "",
+                    "globals": {
+                        "server": {
+                            "REDIRECT_REDIRECT_STATUS": "200",
+                            "REDIRECT_STATUS": "200",
+                            "HTTP_HOST": "localhost:8077",
+                            "HTTP_USER_AGENT": "curl/8.19.0",
+                            "HTTP_ACCEPT": "*/*",
+                            "PATH": "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Program Files\\nodejs\\;C:\\Users\\Rajat\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\Rajat\\AppData\\Roaming\\npm;C:\\Users\\Rajat\\AppData\\Local\\GitHubDesktop\\bin;C:\\Users\\Rajat\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\Program Files\\Java\\jdk-21.0.11\\bin;D:\\xampp\\php;C:\\composer;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;c:\\Users\\Rajat\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\debugCommand;c:\\Users\\Rajat\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\copilotCli;C:\\Users\\Rajat\\AppData\\Roaming\\Composer\\vendor\\bin;D:\\sdk\\platform-tools;D:\\sdk\\platform-tools;C:\\Users\\Rajat\\AppData\\Local\\Programs\\Ollama;C:\\Users\\Rajat\\AppData\\Local\\Programs\\codebase-memory-mcp",
+                            "SystemRoot": "C:\\Windows",
+                            "COMSPEC": "C:\\Windows\\system32\\cmd.exe",
+                            "PATHEXT": ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC",
+                            "WINDIR": "C:\\Windows",
+                            "SERVER_SIGNATURE": "",
+                            "SERVER_SOFTWARE": "Apache/2.4.66 (Win64) OpenSSL/3.0.18 PHP/8.3.30",
+                            "SERVER_NAME": "localhost",
+                            "SERVER_ADDR": "::1",
+                            "SERVER_PORT": "8077",
+                            "REMOTE_ADDR": "::1",
+                            "DOCUMENT_ROOT": "D:/laragon/www",
+                            "REQUEST_SCHEME": "http",
+                            "CONTEXT_PREFIX": "",
+                            "CONTEXT_DOCUMENT_ROOT": "D:/laragon/www",
+                            "SERVER_ADMIN": "you@example.com",
+                            "SCRIPT_FILENAME": "D:/laragon/www/ERP/public/index.php",
+                            "REMOTE_PORT": "50274",
+                            "REDIRECT_URL": "/ERP/public/account/unlink/google",
+                            "GATEWAY_INTERFACE": "CGI/1.1",
+                            "SERVER_PROTOCOL": "HTTP/1.1",
+                            "REQUEST_METHOD": "POST",
+                            "QUERY_STRING": "",
+                            "REQUEST_URI": "/ERP/account/unlink/google",
+                            "SCRIPT_NAME": "/ERP/public/index.php",
+                            "PATH_INFO": "/account/unlink/google",
+                            "PATH_TRANSLATED": "D:\\laragon\\www\\account\\unlink\\google",
+                            "PHP_SELF": "/ERP/public/index.php/account/unlink/google",
+                            "REQUEST_TIME_FLOAT": 1783310540.896822,
+                            "REQUEST_TIME": 1783310540,
+                            "CI_ENVIRONMENT": "development",
+                            "app.baseURL": "http://localhost:8077/ERP/",
+                            "app.forceGlobalSecureRequests": "false",
+                            "app.appTimezone": "Asia/Kolkata",
+                            "app.indexPage": "",
+                            "database.default.hostname": "localhost",
+                            "database.default.database": "erp_admin",
+                            "database.default.username": "root",
+                            "database.default.password": "",
+                            "database.default.DBDriver": "MySQLi",
+                            "database.default.DBPrefix": "",
+                            "database.default.port": "3309",
+                            "database.default.charset": "utf8mb4",
+                            "database.default.DBCollat": "utf8mb4_general_ci",
+                            "encryption.key": "hex2bin:8f3d2b1a9c7e6f4d5a8b2c1e9d7f6a3b4c5d6e7f8091a2b3c4d5e6f7a8b9c0d1e",
+                            "security.csrfProtection": "cookie",
+                            "security.tokenRandomize": "true",
+                            "security.tokenName": "csrf_token_erp",
+                            "security.headerName": "X-CSRF-TOKEN",
+                            "security.cookieName": "csrf_cookie_erp",
+                            "security.expires": "7200",
+                            "security.regenerate": "true",
+                            "security.redirect": "false",
+                            "security.samesite": "Lax",
+                            "session.driver": "'CodeIgniter\\Session\\Handlers\\FileHandler'",
+                            "session.cookieName": "erp_session",
+                            "session.expiration": "7200",
+                            "session.matchIP": "false",
+                            "session.timeToUpdate": "300",
+                            "session.regenerateDestroy": "false",
+                            "logger.threshold": "4"
+                        },
+                        "post": [],
+                        "get": [],
+                        "cookie": []
+                    },
+                    "path": "account/unlink/google",
+                    "files": null,
+                    "negotiator": null,
+                    "defaultLocale": "en",
+                    "locale": "en",
+                    "validLocales": [
+                        "en"
+                    ],
+                    "oldInput": [],
+                    "userAgent": {
+                        "agent": "curl/8.19.0",
+                        "isBrowser": false,
+                        "isRobot": false,
+                        "isMobile": false,
+                        "config": {
+                            "platforms": {
+                                "windows nt 10.0": "Windows 10",
+                                "windows nt 6.3": "Windows 8.1",
+                                "windows nt 6.2": "Windows 8",
+                                "windows nt 6.1": "Windows 7",
+                                "windows nt 6.0": "Windows Vista",
+                                "windows nt 5.2": "Windows 2003",
+                                "windows nt 5.1": "Windows XP",
+                                "windows nt 5.0": "Windows 2000",
+                                "windows nt 4.0": "Windows NT 4.0",
+                                "winnt4.0": "Windows NT 4.0",
+                                "winnt 4.0": "Windows NT",
+                                "winnt": "Windows NT",
+                                "windows 98": "Windows 98",
+                                "win98": "Windows 98",
+                                "windows 95": "Windows 95",
+                                "win95": "Windows 95",
+                                "windows phone": "Windows Phone",
+                                "windows": "Unknown Windows OS",
+                                "android": "Android",
+                                "blackberry": "BlackBerry",
+                                "iphone": "iOS",
+                                "ipad": "iOS",
+                                "ipod": "iOS",
+                                "os x": "Mac OS X",
+                                "ppc mac": "Power PC Mac",
+                                "freebsd": "FreeBSD",
+                                "ppc": "Macintosh",
+                                "linux": "Linux",
+                                "debian": "Debian",
+                                "sunos": "Sun Solaris",
+                                "beos": "BeOS",
+                                "apachebench": "ApacheBench",
+                                "aix": "AIX",
+                                "irix": "Irix",
+                                "osf": "DEC OSF",
+                                "hp-ux": "HP-UX",
+                                "netbsd": "NetBSD",
+                                "bsdi": "BSDi",
+                                "openbsd": "OpenBSD",
+                                "gnu": "GNU/Linux",
+                                "unix": "Unknown Unix OS",
+                                "symbian": "Symbian OS"
+                            },
+                            "browsers": {
+                                "OPR": "Opera",
+                                "Flock": "Flock",
+                                "Edge": "Spartan",
+                                "Edg": "Edge",
+                                "Chrome": "Chrome",
+                                "Opera.*?Version": "Opera",
+                                "Opera": "Opera",
+                                "MSIE": "Internet Explorer",
+                                "Internet Explorer": "Internet Explorer",
+                                "Trident.* rv": "Internet Explorer",
+                                "Shiira": "Shiira",
+                                "Firefox": "Firefox",
+                                "Chimera": "Chimera",
+                                "Phoenix": "Phoenix",
+                                "Firebird": "Firebird",
+                                "Camino": "Camino",
+                                "Netscape": "Netscape",
+                                "OmniWeb": "OmniWeb",
+                                "Safari": "Safari",
+                                "Mozilla": "Mozilla",
+                                "Konqueror": "Konqueror",
+                                "icab": "iCab",
+                                "Lynx": "Lynx",
+                                "Links": "Links",
+                                "hotjava": "HotJava",
+                                "amaya": "Amaya",
+                                "IBrowse": "IBrowse",
+                                "Maxthon": "Maxthon",
+                                "Ubuntu": "Ubuntu Web Browser",
+                                "Vivaldi": "Vivaldi"
+                            },
+                            "mobiles": {
+                                "mobileexplorer": "Mobile Explorer",
+                                "palmsource": "Palm",
+                                "palmscape": "Palmscape",
+                                "motorola": "Motorola",
+                                "nokia": "Nokia",
+                                "palm": "Palm",
+                                "iphone": "Apple iPhone",
+                                "ipad": "iPad",
+                                "ipod": "Apple iPod Touch",
+                                "sony": "Sony Ericsson",
+                                "ericsson": "Sony Ericsson",
+                                "blackberry": "BlackBerry",
+                                "cocoon": "O2 Cocoon",
+                                "blazer": "Treo",
+                                "lg": "LG",
+                                "amoi": "Amoi",
+                                "xda": "XDA",
+                                "mda": "MDA",
+                                "vario": "Vario",
+                                "htc": "HTC",
+                                "samsung": "Samsung",
+                                "sharp": "Sharp",
+                                "sie-": "Siemens",
+                                "alcatel": "Alcatel",
+                                "benq": "BenQ",
+                                "ipaq": "HP iPaq",
+                                "mot-": "Motorola",
+                                "playstation portable": "PlayStation Portable",
+                                "playstation 3": "PlayStation 3",
+                                "playstation vita": "PlayStation Vita",
+                                "hiptop": "Danger Hiptop",
+                                "nec-": "NEC",
+                                "panasonic": "Panasonic",
+                                "philips": "Philips",
+                                "sagem": "Sagem",
+                                "sanyo": "Sanyo",
+                                "spv": "SPV",
+                                "zte": "ZTE",
+                                "sendo": "Sendo",
+                                "nintendo dsi": "Nintendo DSi",
+                                "nintendo ds": "Nintendo DS",
+                                "nintendo 3ds": "Nintendo 3DS",
+                                "wii": "Nintendo Wii",
+                                "open web": "Open Web",
+                                "openweb": "OpenWeb",
+                                "android": "Android",
+                                "symbian": "Symbian",
+                                "SymbianOS": "SymbianOS",
+                                "elaine": "Palm",
+                                "series60": "Symbian S60",
+                                "windows ce": "Windows CE",
+                                "obigo": "Obigo",
+                                "netfront": "Netfront Browser",
+                                "openwave": "Openwave Browser",
+                                "mobilexplorer": "Mobile Explorer",
+                                "operamini": "Opera Mini",
+                                "opera mini": "Opera Mini",
+                                "opera mobi": "Opera Mobile",
+                                "fennec": "Firefox Mobile",
+                                "digital paths": "Digital Paths",
+                                "avantgo": "AvantGo",
+                                "xiino": "Xiino",
+                                "novarra": "Novarra Transcoder",
+                                "vodafone": "Vodafone",
+                                "docomo": "NTT DoCoMo",
+                                "o2": "O2",
+                                "mobile": "Generic Mobile",
+                                "wireless": "Generic Mobile",
+                                "j2me": "Generic Mobile",
+                                "midp": "Generic Mobile",
+                                "cldc": "Generic Mobile",
+                                "up.link": "Generic Mobile",
+                                "up.browser": "Generic Mobile",
+                                "smartphone": "Generic Mobile",
+                                "cellphone": "Generic Mobile"
+                            },
+                            "robots": {
+                                "googlebot": "Googlebot",
+                                "google-pagerenderer": "Google Page Renderer",
+                                "google-read-aloud": "Google Read Aloud",
+                                "google-safety": "Google Safety Bot",
+                                "msnbot": "MSNBot",
+                                "baiduspider": "Baiduspider",
+                                "bingbot": "Bing",
+                                "bingpreview": "BingPreview",
+                                "slurp": "Inktomi Slurp",
+                                "yahoo": "Yahoo",
+                                "ask jeeves": "Ask Jeeves",
+                                "fastcrawler": "FastCrawler",
+                                "infoseek": "InfoSeek Robot 1.0",
+                                "lycos": "Lycos",
+                                "yandex": "YandexBot",
+                                "mediapartners-google": "MediaPartners Google",
+                                "CRAZYWEBCRAWLER": "Crazy Webcrawler",
+                                "adsbot-google": "AdsBot Google",
+                                "feedfetcher-google": "Feedfetcher Google",
+                                "curious george": "Curious George",
+                                "ia_archiver": "Alexa Crawler",
+                                "MJ12bot": "Majestic-12",
+                                "Uptimebot": "Uptimebot",
+                                "duckduckbot": "DuckDuckBot",
+                                "sogou": "Sogou Spider",
+                                "exabot": "Exabot",
+                                "bot": "Generic Bot",
+                                "crawler": "Generic Crawler",
+                                "spider": "Generic Spider"
+                            }
+                        },
+                        "platform": "Unknown Platform",
+                        "browser": "",
+                        "version": "",
+                        "mobile": "",
+                        "robot": "",
+                        "referrer": null
+                    }
+                }
+            ]
+        },
+        {
+            "file": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\Filters\\Filters.php",
+            "line": 241,
+            "function": "before",
+            "class": "CodeIgniter\\Filters\\CSRF",
+            "type": "->",
+            "args": [
+                "[CodeIgniter\\HTTP\\IncomingRequest Object *RECURSION*]",
+                null
+            ]
+        },
+        {
+            "file": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\Filters\\Filters.php",
+            "line": 221,
+            "function": "runBefore",
+            "class": "CodeIgniter\\Filters\\Filters",
+            "type": "->",
+            "args": [
+                [
+                    [
+                        "App\\Filters\\AutoSetup",
+                        []
+                    ],
+                    [
+                        "CodeIgniter\\Filters\\CSRF",
+                        []
+                    ],
+                    [
+                        "CodeIgniter\\Filters\\InvalidChars",
+                        []
+                    ],
+                    [
+                        "App\\Filters\\AuthFilter",
+                        []
+                    ]
+                ]
+            ]
+        },
+        {
+            "file": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\CodeIgniter.php",
+            "line": 488,
+            "function": "run",
+            "class": "CodeIgniter\\Filters\\Filters",
+            "type": "->",
+            "args": [
+                "account/unlink/google",
+                "before"
+            ]
+        },
+        {
+            "file": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\CodeIgniter.php",
+            "line": 363,
+            "function": "handleRequest",
+            "class": "CodeIgniter\\CodeIgniter",
+            "type": "->",
+            "args": [
+                null,
+                {
+                    "handler": "file",
+                    "backupHandler": "dummy",
+                    "prefix": "",
+                    "ttl": 60,
+                    "reservedCharacters": "{}()/\\@:",
+                    "file": {
+                        "storePath": "D:\\laragon\\www\\ERP\\writable\\cache/",
+                        "mode": 416
+                    },
+                    "memcached": {
+                        "host": "127.0.0.1",
+                        "port": 11211,
+                        "weight": 1,
+                        "raw": false
+                    },
+                    "redis": {
+                        "host": "127.0.0.1",
+                        "password": null,
+                        "port": 6379,
+                        "timeout": 0,
+                        "async": false,
+                        "persistent": false,
+                        "database": 0
+                    },
+                    "validHandlers": {
+                        "apcu": "CodeIgniter\\Cache\\Handlers\\ApcuHandler",
+                        "dummy": "CodeIgniter\\Cache\\Handlers\\DummyHandler",
+                        "file": "CodeIgniter\\Cache\\Handlers\\FileHandler",
+                        "memcached": "CodeIgniter\\Cache\\Handlers\\MemcachedHandler",
+                        "predis": "CodeIgniter\\Cache\\Handlers\\PredisHandler",
+                        "redis": "CodeIgniter\\Cache\\Handlers\\RedisHandler",
+                        "wincache": "CodeIgniter\\Cache\\Handlers\\WincacheHandler"
+                    },
+                    "cacheQueryString": false,
+                    "cacheStatusCodes": []
+                },
+                false
+            ]
+        },
+        {
+            "file": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\Boot.php",
+            "line": 417,
+            "function": "run",
+            "class": "CodeIgniter\\CodeIgniter",
+            "type": "->",
+            "args": []
+        },
+        {
+            "file": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\Boot.php",
+            "line": 68,
+            "function": "runCodeIgniter",
+            "class": "CodeIgniter\\Boot",
+            "type": "::",
+            "args": [
+                {
+                    "startTime": 1783310540.992079,
+                    "totalTime": null,
+                    "config": "[Config\\App Object *RECURSION*]",
+                    "benchmark": {
+                        "timers": {
+                            "total_execution": {
+                                "start": 1783310540.992079,
+                                "end": null
+                            },
+                            "bootstrap": {
+                                "start": 1783310541.010198,
+                                "end": 1783310541.067154
+                            },
+                            "required_before_filters": {
+                                "start": 1783310541.06716,
+                                "end": 1783310541.07674
+                            },
+                            "routing": {
+                                "start": 1783310541.076756,
+                                "end": 1783310541.091051
+                            },
+                            "before_filters": {
+                                "start": 1783310541.091672,
+                                "end": null
+                            }
+                        }
+                    },
+                    "request": "[CodeIgniter\\HTTP\\IncomingRequest Object *RECURSION*]",
+                    "response": {
+                        "protocolVersion": "1.1",
+                        "validProtocolVersions": [
+                            "1.0",
+                            "1.1",
+                            "2.0",
+                            "3.0"
+                        ],
+                        "body": null,
+                        "headers": {
+                            "Cache-Control": {
+                                "name": "Cache-Control",
+                                "value": [
+                                    "no-store",
+                                    "max-age=0",
+                                    "no-cache"
+                                ]
+                            },
+                            "Content-Type": {
+                                "name": "Content-Type",
+                                "value": "text/html; charset=UTF-8"
+                            }
+                        },
+                        "headerMap": {
+                            "cache-control": "Cache-Control",
+                            "content-type": "Content-Type"
+                        },
+                        "reason": "Forbidden",
+                        "statusCode": 403,
+                        "pretend": false,
+                        "CSP": {
+                            "directives": {
+                                "base-uri": "baseURI",
+                                "child-src": "childSrc",
+                                "connect-src": "connectSrc",
+                                "default-src": "defaultSrc",
+                                "font-src": "fontSrc",
+                                "form-action": "formAction",
+                                "frame-ancestors": "frameAncestors",
+                                "frame-src": "frameSrc",
+                                "img-src": "imageSrc",
+                                "media-src": "mediaSrc",
+                                "object-src": "objectSrc",
+                                "plugin-types": "pluginTypes",
+                                "script-src": "scriptSrc",
+                                "style-src": "styleSrc",
+                                "sandbox": "sandbox",
+                                "manifest-src": "manifestSrc",
+                                "script-src-elem": "scriptSrcElem",
+                                "script-src-attr": "scriptSrcAttr",
+                                "style-src-elem": "styleSrcElem",
+                                "style-src-attr": "styleSrcAttr",
+                                "worker-src": "workerSrc",
+                                "report-uri": "reportURI",
+                                "report-to": "reportTo"
+                            },
+                            "baseURI": null,
+                            "childSrc": "self",
+                            "connectSrc": "self",
+                            "defaultSrc": null,
+                            "fontSrc": null,
+                            "formAction": "self",
+                            "frameAncestors": null,
+                            "frameSrc": null,
+                            "imageSrc": "self",
+                            "mediaSrc": null,
+                            "objectSrc": "self",
+                            "pluginTypes": null,
+                            "scriptSrc": {
+                                "self": false
+                            },
+                            "styleSrc": {
+                                "self": false
+                            },
+                            "sandbox": null,
+                            "reportURI": null,
+                            "reportTo": null,
+                            "manifestSrc": null,
+                            "scriptSrcElem": "self",
+                            "scriptSrcAttr": "self",
+                            "styleSrcElem": "self",
+                            "styleSrcAttr": "self",
+                            "workerSrc": [],
+                            "upgradeInsecureRequests": false,
+                            "reportOnly": false,
+                            "validSources": [
+                                "self",
+                                "none",
+                                "unsafe-inline",
+                                "unsafe-eval",
+                                "strict-dynamic",
+                                "unsafe-hashes",
+                                "report-sample",
+                                "unsafe-allow-redirects",
+                                "wasm-unsafe-eval",
+                                "trusted-types-eval",
+                                "report-sha256",
+                                "report-sha384",
+                                "report-sha512"
+                            ],
+                            "nonces": [],
+                            "styleNonce": null,
+                            "scriptNonce": null,
+                            "styleNonceTag": "",
+                            "scriptNonceTag": "",
+                            "autoNonce": true,
+                            "tempHeaders": [],
+                            "reportOnlyHeaders": [],
+                            "CSPEnabled": false,
+                            "reportingEndpoints": []
+                        },
+                        "cookieStore": {
+                            "cookies": {
+                                "csrf_cookie_erp;/;": {
+                                    "prefix": "",
+                                    "name": "csrf_cookie_erp",
+                                    "value": "6bb39438a150d260cc9667f5d10d4d17",
+                                    "expires": 1783317741,
+                                    "path": "/",
+                                    "domain": "",
+                                    "secure": false,
+                                    "httponly": true,
+                                    "samesite": "Lax",
+                                    "raw": false
+                                }
+                            }
+                        },
+                        "bodyFormat": "html"
+                    },
+                    "router": {
+                        "collection": {
+                            "defaultNamespace": "App\\Controllers\\",
+                            "defaultController": "Home",
+                            "defaultMethod": "index",
+                            "defaultPlaceholder": "any",
+                            "translateURIDashes": false,
+                            "autoRoute": false,
+                            "override404": null,
+                            "routeFiles": [
+                                "D:\\laragon\\www\\ERP\\app\\Config\\Routes.php"
+                            ],
+                            "placeholders": {
+                                "any": ".*",
+                                "segment": "[^/]+",
+                                "alphanum": "[a-zA-Z0-9]+",
+                                "num": "[0-9]+",
+                                "alpha": "[a-zA-Z]+",
+                                "hash": "[^/]+"
+                            },
+                            "routes": {
+                                "*": [],
+                                "OPTIONS": [],
+                                "GET": {
+                                    "__hot-reload": {
+                                        "name": "__hot-reload",
+                                        "handler": "[Closure]",
+                                        "from": "__hot-reload"
+                                    },
+                                    "/": {
+                                        "name": "/",
+                                        "handler": "[Closure]",
+                                        "from": "/"
+                                    },
+                                    "login": {
+                                        "name": "login",
+                                        "handler": "\\Modules\\Auth\\Controllers\\AuthController::login",
+                                        "from": "login"
+                                    },
+                                    "forgot-password": {
+                                        "name": "forgot-password",
+                                        "handler": "\\Modules\\Auth\\Controllers\\AuthController::forgotPassword",
+                                        "from": "forgot-password"
+                                    },
+                                    "reset-password/([^/]+)": {
+                                        "name": "reset-password/([^/]+)",
+                                        "handler": "\\Modules\\Auth\\Controllers\\AuthController::resetPassword/$1",
+                                        "from": "reset-password/(:segment)"
+                                    },
+                                    "auth/([^/]+)/callback": {
+                                        "name": "auth/([^/]+)/callback",
+                                        "handler": "\\Modules\\Auth\\Controllers\\SocialAuthController::callback/$1",
+                                        "from": "auth/(:segment)/callback"
+                                    },
+                                    "auth/([^/]+)": {
+                                        "name": "auth/([^/]+)",
+                                        "handler": "\\Modules\\Auth\\Controllers\\SocialAuthController::redirect/$1",
+                                        "from": "auth/(:segment)"
+                                    },
+                                    "logout": {
+                                        "name": "logout",
+                                        "handler": "\\Modules\\Auth\\Controllers\\AuthController::logout",
+                                        "from": "logout"
+                                    },
+                                    "account/link/([^/]+)": {
+                                        "name": "account/link/([^/]+)",
+                                        "handler": "\\Modules\\Auth\\Controllers\\SocialAuthController::link/$1",
+                                        "from": "account/link/(:segment)"
+                                    },
+                                    "dashboard": {
+                                        "name": "dashboard",
+                                        "handler": "\\Modules\\Dashboard\\Controllers\\DashboardController::index",
+                                        "from": "dashboard"
+                                    },
+                                    "dashboard/analytics": {
+                                        "name": "dashboard/analytics",
+                                        "handler": "\\Modules\\Dashboard\\Controllers\\DashboardController::analytics",
+                                        "from": "dashboard/analytics"
+                                    },
+                                    "users": {
+                                        "name": "users",
+                                        "handler": "\\Modules\\Users\\Controllers\\UserController::index",
+                                        "from": "users"
+                                    },
+                                    "users/create": {
+                                        "name": "users/create",
+                                        "handler": "\\Modules\\Users\\Controllers\\UserController::create",
+                                        "from": "users/create"
+                                    },
+                                    "users/edit/([0-9]+)": {
+                                        "name": "users/edit/([0-9]+)",
+                                        "handler": "\\Modules\\Users\\Controllers\\UserController::edit/$1",
+                                        "from": "users/edit/(:num)"
+                                    },
+                                    "users/toggle/([0-9]+)": {
+                                        "name": "users/toggle/([0-9]+)",
+                                        "handler": "\\Modules\\Users\\Controllers\\UserController::toggleStatus/$1",
+                                        "from": "users/toggle/(:num)"
+                                    },
+                                    "user-types": {
+                                        "name": "user-types",
+                                        "handler": "\\Modules\\UserTypes\\Controllers\\UserTypeController::index",
+                                        "from": "user-types"
+                                    },
+                                    "user-types/create": {
+                                        "name": "user-types/create",
+                                        "handler": "\\Modules\\UserTypes\\Controllers\\UserTypeController::create",
+                                        "from": "user-types/create"
+                                    },
+                                    "user-types/edit/([0-9]+)": {
+                                        "name": "user-types/edit/([0-9]+)",
+                                        "handler": "\\Modules\\UserTypes\\Controllers\\UserTypeController::edit/$1",
+                                        "from": "user-types/edit/(:num)"
+                                    },
+                                    "user-types/toggle/([0-9]+)": {
+                                        "name": "user-types/toggle/([0-9]+)",
+                                        "handler": "\\Modules\\UserTypes\\Controllers\\UserTypeController::toggleStatus/$1",
+                                        "from": "user-types/toggle/(:num)"
+                                    },
+                                    "roles": {
+                                        "name": "roles",
+                                        "handler": "\\Modules\\Roles\\Controllers\\RoleController::index",
+                                        "from": "roles"
+                                    },
+                                    "roles/create": {
+                                        "name": "roles/create",
+                                        "handler": "\\Modules\\Roles\\Controllers\\RoleController::create",
+                                        "from": "roles/create"
+                                    },
+                                    "roles/edit/([0-9]+)": {
+                                        "name": "roles/edit/([0-9]+)",
+                                        "handler": "\\Modules\\Roles\\Controllers\\RoleController::edit/$1",
+                                        "from": "roles/edit/(:num)"
+                                    },
+                                    "roles/toggle/([0-9]+)": {
+                                        "name": "roles/toggle/([0-9]+)",
+                                        "handler": "\\Modules\\Roles\\Controllers\\RoleController::toggleStatus/$1",
+                                        "from": "roles/toggle/(:num)"
+                                    },
+                                    "modules": {
+                                        "name": "modules",
+                                        "handler": "\\Modules\\ModuleMaster\\Controllers\\ModuleController::index",
+                                        "from": "modules"
+                                    },
+                                    "modules/create": {
+                                        "name": "modules/create",
+                                        "handler": "\\Modules\\ModuleMaster\\Controllers\\ModuleController::create",
+                                        "from": "modules/create"
+                                    },
+                                    "modules/edit/([0-9]+)": {
+                                        "name": "modules/edit/([0-9]+)",
+                                        "handler": "\\Modules\\ModuleMaster\\Controllers\\ModuleController::edit/$1",
+                                        "from": "modules/edit/(:num)"
+                                    },
+                                    "modules/toggle/([0-9]+)": {
+                                        "name": "modules/toggle/([0-9]+)",
+                                        "handler": "\\Modules\\ModuleMaster\\Controllers\\ModuleController::toggleStatus/$1",
+                                        "from": "modules/toggle/(:num)"
+                                    },
+                                    "permissions": {
+                                        "name": "permissions",
+                                        "handler": "\\Modules\\Permissions\\Controllers\\PermissionController::index",
+                                        "from": "permissions"
+                                    },
+                                    "permissions/matrix/([0-9]+)": {
+                                        "name": "permissions/matrix/([0-9]+)",
+                                        "handler": "\\Modules\\Permissions\\Controllers\\PermissionController::matrix/$1",
+                                        "from": "permissions/matrix/(:num)"
+                                    },
+                                    "activity-logs": {
+                                        "name": "activity-logs",
+                                        "handler": "\\Modules\\Logs\\Controllers\\LogController::activity",
+                                        "from": "activity-logs"
+                                    },
+                                    "login-logs": {
+                                        "name": "login-logs",
+                                        "handler": "\\Modules\\Logs\\Controllers\\LogController::logins",
+                                        "from": "login-logs"
+                                    },
+                                    "login-logs/export/([^/]+)": {
+                                        "name": "login-logs/export/([^/]+)",
+                                        "handler": "\\Modules\\Logs\\Controllers\\LogController::exportLogins/$1",
+                                        "from": "login-logs/export/(:segment)"
+                                    },
+                                    "my-login-history": {
+                                        "name": "my-login-history",
+                                        "handler": "\\Modules\\Logs\\Controllers\\LogController::myLogins",
+                                        "from": "my-login-history"
+                                    },
+                                    "my-login-history/export/([^/]+)": {
+                                        "name": "my-login-history/export/([^/]+)",
+                                        "handler": "\\Modules\\Logs\\Controllers\\LogController::exportMyLogins/$1",
+                                        "from": "my-login-history/export/(:segment)"
+                                    },
+                                    "notifications": {
+                                        "name": "notifications",
+                                        "handler": "\\Modules\\Notifications\\Controllers\\NotificationController::index",
+                                        "from": "notifications"
+                                    },
+                                    "api/notifications": {
+                                        "name": "api/notifications",
+                                        "handler": "\\Modules\\Notifications\\Controllers\\NotificationController::apiIndex",
+                                        "from": "api/notifications"
+                                    },
+                                    "profile": {
+                                        "name": "profile",
+                                        "handler": "\\Modules\\Profile\\Controllers\\ProfileController::index",
+                                        "from": "profile"
+                                    }
+                                },
+                                "HEAD": [],
+                                "POST": {
+                                    "login": {
+                                        "name": "login",
+                                        "handler": "\\Modules\\Auth\\Controllers\\AuthController::attemptLogin",
+                                        "from": "login"
+                                    },
+                                    "forgot-password": {
+                                        "name": "forgot-password",
+                                        "handler": "\\Modules\\Auth\\Controllers\\AuthController::sendResetLink",
+                                        "from": "forgot-password"
+                                    },
+                                    "reset-password": {
+                                        "name": "reset-password",
+                                        "handler": "\\Modules\\Auth\\Controllers\\AuthController::updatePassword",
+                                        "from": "reset-password"
+                                    },
+                                    "account/unlink/([^/]+)": {
+                                        "name": "account/unlink/([^/]+)",
+                                        "handler": "\\Modules\\Auth\\Controllers\\SocialAuthController::unlink/$1",
+                                        "from": "account/unlink/(:segment)"
+                                    },
+                                    "users/store": {
+                                        "name": "users/store",
+                                        "handler": "\\Modules\\Users\\Controllers\\UserController::store",
+                                        "from": "users/store"
+                                    },
+                                    "users/update/([0-9]+)": {
+                                        "name": "users/update/([0-9]+)",
+                                        "handler": "\\Modules\\Users\\Controllers\\UserController::update/$1",
+                                        "from": "users/update/(:num)"
+                                    },
+                                    "users/delete/([0-9]+)": {
+                                        "name": "users/delete/([0-9]+)",
+                                        "handler": "\\Modules\\Users\\Controllers\\UserController::delete/$1",
+                                        "from": "users/delete/(:num)"
+                                    },
+                                    "user-types/store": {
+                                        "name": "user-types/store",
+                                        "handler": "\\Modules\\UserTypes\\Controllers\\UserTypeController::store",
+                                        "from": "user-types/store"
+                                    },
+                                    "user-types/update/([0-9]+)": {
+                                        "name": "user-types/update/([0-9]+)",
+                                        "handler": "\\Modules\\UserTypes\\Controllers\\UserTypeController::update/$1",
+                                        "from": "user-types/update/(:num)"
+                                    },
+                                    "user-types/delete/([0-9]+)": {
+                                        "name": "user-types/delete/([0-9]+)",
+                                        "handler": "\\Modules\\UserTypes\\Controllers\\UserTypeController::delete/$1",
+                                        "from": "user-types/delete/(:num)"
+                                    },
+                                    "roles/store": {
+                                        "name": "roles/store",
+                                        "handler": "\\Modules\\Roles\\Controllers\\RoleController::store",
+                                        "from": "roles/store"
+                                    },
+                                    "roles/update/([0-9]+)": {
+                                        "name": "roles/update/([0-9]+)",
+                                        "handler": "\\Modules\\Roles\\Controllers\\RoleController::update/$1",
+                                        "from": "roles/update/(:num)"
+                                    },
+                                    "roles/delete/([0-9]+)": {
+                                        "name": "roles/delete/([0-9]+)",
+                                        "handler": "\\Modules\\Roles\\Controllers\\RoleController::delete/$1",
+                                        "from": "roles/delete/(:num)"
+                                    },
+                                    "modules/store": {
+                                        "name": "modules/store",
+                                        "handler": "\\Modules\\ModuleMaster\\Controllers\\ModuleController::store",
+                                        "from": "modules/store"
+                                    },
+                                    "modules/update/([0-9]+)": {
+                                        "name": "modules/update/([0-9]+)",
+                                        "handler": "\\Modules\\ModuleMaster\\Controllers\\ModuleController::update/$1",
+                                        "from": "modules/update/(:num)"
+                                    },
+                                    "modules/delete/([0-9]+)": {
+                                        "name": "modules/delete/([0-9]+)",
+                                        "handler": "\\Modules\\ModuleMaster\\Controllers\\ModuleController::delete/$1",
+                                        "from": "modules/delete/(:num)"
+                                    },
+                                    "permissions/save/([0-9]+)": {
+                                        "name": "permissions/save/([0-9]+)",
+                                        "handler": "\\Modules\\Permissions\\Controllers\\PermissionController::save/$1",
+                                        "from": "permissions/save/(:num)"
+                                    },
+                                    "notifications/mark-read": {
+                                        "name": "notifications/mark-read",
+                                        "handler": "\\Modules\\Notifications\\Controllers\\NotificationController::markRead",
+                                        "from": "notifications/mark-read"
+                                    },
+                                    "notifications/mark-all-read": {
+                                        "name": "notifications/mark-all-read",
+                                        "handler": "\\Modules\\Notifications\\Controllers\\NotificationController::markAllRead",
+                                        "from": "notifications/mark-all-read"
+                                    },
+                                    "notifications/delete": {
+                                        "name": "notifications/delete",
+                                        "handler": "\\Modules\\Notifications\\Controllers\\NotificationController::delete",
+                                        "from": "notifications/delete"
+                                    },
+                                    "api/notifications/mark-read": {
+                                        "name": "api/notifications/mark-read",
+                                        "handler": "\\Modules\\Notifications\\Controllers\\NotificationController::apiMarkRead",
+                                        "from": "api/notifications/mark-read"
+                                    },
+                                    "api/notifications/mark-all-read": {
+                                        "name": "api/notifications/mark-all-read",
+                                        "handler": "\\Modules\\Notifications\\Controllers\\NotificationController::apiMarkAllRead",
+                                        "from": "api/notifications/mark-all-read"
+                                    },
+                                    "api/notifications/delete": {
+                                        "name": "api/notifications/delete",
+                                        "handler": "\\Modules\\Notifications\\Controllers\\NotificationController::apiDelete",
+                                        "from": "api/notifications/delete"
+                                    },
+                                    "profile/update": {
+                                        "name": "profile/update",
+                                        "handler": "\\Modules\\Profile\\Controllers\\ProfileController::update",
+                                        "from": "profile/update"
+                                    },
+                                    "profile/password": {
+                                        "name": "profile/password",
+                                        "handler": "\\Modules\\Profile\\Controllers\\ProfileController::changePassword",
+                                        "from": "profile/password"
+                                    }
+                                },
+                                "PATCH": [],
+                                "PUT": [],
+                                "DELETE": [],
+                                "TRACE": [],
+                                "CONNECT": [],
+                                "CLI": []
+                            },
+                            "routesNames": {
+                                "*": [],
+                                "OPTIONS": [],
+                                "GET": {
+                                    "__hot-reload": "__hot-reload",
+                                    "/": "/",
+                                    "login": "login",
+                                    "forgot-password": "forgot-password",
+                                    "reset-password/([^/]+)": "reset-password/([^/]+)",
+                                    "auth/([^/]+)/callback": "auth/([^/]+)/callback",
+                                    "auth/([^/]+)": "auth/([^/]+)",
+                                    "logout": "logout",
+                                    "account/link/([^/]+)": "account/link/([^/]+)",
+                                    "dashboard": "dashboard",
+                                    "dashboard/analytics": "dashboard/analytics",
+                                    "users": "users",
+                                    "users/create": "users/create",
+                                    "users/edit/([0-9]+)": "users/edit/([0-9]+)",
+                                    "users/toggle/([0-9]+)": "users/toggle/([0-9]+)",
+                                    "user-types": "user-types",
+                                    "user-types/create": "user-types/create",
+                                    "user-types/edit/([0-9]+)": "user-types/edit/([0-9]+)",
+                                    "user-types/toggle/([0-9]+)": "user-types/toggle/([0-9]+)",
+                                    "roles": "roles",
+                                    "roles/create": "roles/create",
+                                    "roles/edit/([0-9]+)": "roles/edit/([0-9]+)",
+                                    "roles/toggle/([0-9]+)": "roles/toggle/([0-9]+)",
+                                    "modules": "modules",
+                                    "modules/create": "modules/create",
+                                    "modules/edit/([0-9]+)": "modules/edit/([0-9]+)",
+                                    "modules/toggle/([0-9]+)": "modules/toggle/([0-9]+)",
+                                    "permissions": "permissions",
+                                    "permissions/matrix/([0-9]+)": "permissions/matrix/([0-9]+)",
+                                    "activity-logs": "activity-logs",
+                                    "login-logs": "login-logs",
+                                    "login-logs/export/([^/]+)": "login-logs/export/([^/]+)",
+                                    "my-login-history": "my-login-history",
+                                    "my-login-history/export/([^/]+)": "my-login-history/export/([^/]+)",
+                                    "notifications": "notifications",
+                                    "api/notifications": "api/notifications",
+                                    "profile": "profile"
+                                },
+                                "HEAD": [],
+                                "POST": {
+                                    "login": "login",
+                                    "forgot-password": "forgot-password",
+                                    "reset-password": "reset-password",
+                                    "account/unlink/([^/]+)": "account/unlink/([^/]+)",
+                                    "users/store": "users/store",
+                                    "users/update/([0-9]+)": "users/update/([0-9]+)",
+                                    "users/delete/([0-9]+)": "users/delete/([0-9]+)",
+                                    "user-types/store": "user-types/store",
+                                    "user-types/update/([0-9]+)": "user-types/update/([0-9]+)",
+                                    "user-types/delete/([0-9]+)": "user-types/delete/([0-9]+)",
+                                    "roles/store": "roles/store",
+                                    "roles/update/([0-9]+)": "roles/update/([0-9]+)",
+                                    "roles/delete/([0-9]+)": "roles/delete/([0-9]+)",
+                                    "modules/store": "modules/store",
+                                    "modules/update/([0-9]+)": "modules/update/([0-9]+)",
+                                    "modules/delete/([0-9]+)": "modules/delete/([0-9]+)",
+                                    "permissions/save/([0-9]+)": "permissions/save/([0-9]+)",
+                                    "notifications/mark-read": "notifications/mark-read",
+                                    "notifications/mark-all-read": "notifications/mark-all-read",
+                                    "notifications/delete": "notifications/delete",
+                                    "api/notifications/mark-read": "api/notifications/mark-read",
+                                    "api/notifications/mark-all-read": "api/notifications/mark-all-read",
+                                    "api/notifications/delete": "api/notifications/delete",
+                                    "profile/update": "profile/update",
+                                    "profile/password": "profile/password"
+                                },
+                                "PATCH": [],
+                                "PUT": [],
+                                "DELETE": [],
+                                "TRACE": [],
+                                "CONNECT": [],
+                                "CLI": []
+                            },
+                            "routesOptions": {
+                                "GET": {
+                                    "__hot-reload": [],
+                                    "/": [],
+                                    "login": {
+                                        "namespace": "Modules\\Auth\\Controllers",
+                                        "filter": [
+                                            "guest"
+                                        ]
+                                    },
+                                    "forgot-password": {
+                                        "namespace": "Modules\\Auth\\Controllers",
+                                        "filter": [
+                                            "guest"
+                                        ]
+                                    },
+                                    "reset-password/([^/]+)": {
+                                        "namespace": "Modules\\Auth\\Controllers",
+                                        "filter": [
+                                            "guest"
+                                        ]
+                                    },
+                                    "auth/([^/]+)/callback": {
+                                        "namespace": "Modules\\Auth\\Controllers"
+                                    },
+                                    "auth/([^/]+)": {
+                                        "namespace": "Modules\\Auth\\Controllers",
+                                        "filter": [
+                                            "guest"
+                                        ]
+                                    },
+                                    "logout": {
+                                        "namespace": "Modules\\Auth\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "account/link/([^/]+)": {
+                                        "namespace": "Modules\\Auth\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "dashboard": {
+                                        "namespace": "Modules\\Dashboard\\Controllers",
+                                        "filter": [
+                                            "permission:dashboard,view"
+                                        ]
+                                    },
+                                    "dashboard/analytics": {
+                                        "namespace": "Modules\\Dashboard\\Controllers",
+                                        "filter": [
+                                            "permission:dashboard,view"
+                                        ]
+                                    },
+                                    "users": {
+                                        "namespace": "Modules\\Users\\Controllers",
+                                        "filter": [
+                                            "permission:users,view"
+                                        ]
+                                    },
+                                    "users/create": {
+                                        "namespace": "Modules\\Users\\Controllers",
+                                        "filter": [
+                                            "permission:users,add"
+                                        ]
+                                    },
+                                    "users/edit/([0-9]+)": {
+                                        "namespace": "Modules\\Users\\Controllers",
+                                        "filter": [
+                                            "permission:users,edit"
+                                        ]
+                                    },
+                                    "users/toggle/([0-9]+)": {
+                                        "namespace": "Modules\\Users\\Controllers",
+                                        "filter": [
+                                            "permission:users,edit"
+                                        ]
+                                    },
+                                    "user-types": {
+                                        "namespace": "Modules\\UserTypes\\Controllers",
+                                        "filter": [
+                                            "permission:user_types,view"
+                                        ]
+                                    },
+                                    "user-types/create": {
+                                        "namespace": "Modules\\UserTypes\\Controllers",
+                                        "filter": [
+                                            "permission:user_types,add"
+                                        ]
+                                    },
+                                    "user-types/edit/([0-9]+)": {
+                                        "namespace": "Modules\\UserTypes\\Controllers",
+                                        "filter": [
+                                            "permission:user_types,edit"
+                                        ]
+                                    },
+                                    "user-types/toggle/([0-9]+)": {
+                                        "namespace": "Modules\\UserTypes\\Controllers",
+                                        "filter": [
+                                            "permission:user_types,edit"
+                                        ]
+                                    },
+                                    "roles": {
+                                        "namespace": "Modules\\Roles\\Controllers",
+                                        "filter": [
+                                            "permission:roles,view"
+                                        ]
+                                    },
+                                    "roles/create": {
+                                        "namespace": "Modules\\Roles\\Controllers",
+                                        "filter": [
+                                            "permission:roles,add"
+                                        ]
+                                    },
+                                    "roles/edit/([0-9]+)": {
+                                        "namespace": "Modules\\Roles\\Controllers",
+                                        "filter": [
+                                            "permission:roles,edit"
+                                        ]
+                                    },
+                                    "roles/toggle/([0-9]+)": {
+                                        "namespace": "Modules\\Roles\\Controllers",
+                                        "filter": [
+                                            "permission:roles,edit"
+                                        ]
+                                    },
+                                    "modules": {
+                                        "namespace": "Modules\\ModuleMaster\\Controllers",
+                                        "filter": [
+                                            "permission:modules,view"
+                                        ]
+                                    },
+                                    "modules/create": {
+                                        "namespace": "Modules\\ModuleMaster\\Controllers",
+                                        "filter": [
+                                            "permission:modules,add"
+                                        ]
+                                    },
+                                    "modules/edit/([0-9]+)": {
+                                        "namespace": "Modules\\ModuleMaster\\Controllers",
+                                        "filter": [
+                                            "permission:modules,edit"
+                                        ]
+                                    },
+                                    "modules/toggle/([0-9]+)": {
+                                        "namespace": "Modules\\ModuleMaster\\Controllers",
+                                        "filter": [
+                                            "permission:modules,edit"
+                                        ]
+                                    },
+                                    "permissions": {
+                                        "namespace": "Modules\\Permissions\\Controllers",
+                                        "filter": [
+                                            "permission:permissions,view"
+                                        ]
+                                    },
+                                    "permissions/matrix/([0-9]+)": {
+                                        "namespace": "Modules\\Permissions\\Controllers",
+                                        "filter": [
+                                            "permission:permissions,view"
+                                        ]
+                                    },
+                                    "activity-logs": {
+                                        "namespace": "Modules\\Logs\\Controllers",
+                                        "filter": [
+                                            "permission:activity_logs,view"
+                                        ]
+                                    },
+                                    "login-logs": {
+                                        "namespace": "Modules\\Logs\\Controllers",
+                                        "filter": [
+                                            "permission:login_logs,view"
+                                        ]
+                                    },
+                                    "login-logs/export/([^/]+)": {
+                                        "namespace": "Modules\\Logs\\Controllers",
+                                        "filter": [
+                                            "permission:login_logs,export"
+                                        ]
+                                    },
+                                    "my-login-history": {
+                                        "namespace": "Modules\\Logs\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "my-login-history/export/([^/]+)": {
+                                        "namespace": "Modules\\Logs\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "notifications": {
+                                        "namespace": "Modules\\Notifications\\Controllers",
+                                        "filter": [
+                                            "permission:notifications,view"
+                                        ]
+                                    },
+                                    "api/notifications": {
+                                        "namespace": "Modules\\Notifications\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "profile": {
+                                        "namespace": "Modules\\Profile\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    }
+                                },
+                                "POST": {
+                                    "login": {
+                                        "namespace": "Modules\\Auth\\Controllers",
+                                        "filter": [
+                                            "guest"
+                                        ]
+                                    },
+                                    "forgot-password": {
+                                        "namespace": "Modules\\Auth\\Controllers",
+                                        "filter": [
+                                            "guest"
+                                        ]
+                                    },
+                                    "reset-password": {
+                                        "namespace": "Modules\\Auth\\Controllers",
+                                        "filter": [
+                                            "guest"
+                                        ]
+                                    },
+                                    "account/unlink/([^/]+)": {
+                                        "namespace": "Modules\\Auth\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "users/store": {
+                                        "namespace": "Modules\\Users\\Controllers",
+                                        "filter": [
+                                            "permission:users,add"
+                                        ]
+                                    },
+                                    "users/update/([0-9]+)": {
+                                        "namespace": "Modules\\Users\\Controllers",
+                                        "filter": [
+                                            "permission:users,edit"
+                                        ]
+                                    },
+                                    "users/delete/([0-9]+)": {
+                                        "namespace": "Modules\\Users\\Controllers",
+                                        "filter": [
+                                            "permission:users,delete"
+                                        ]
+                                    },
+                                    "user-types/store": {
+                                        "namespace": "Modules\\UserTypes\\Controllers",
+                                        "filter": [
+                                            "permission:user_types,add"
+                                        ]
+                                    },
+                                    "user-types/update/([0-9]+)": {
+                                        "namespace": "Modules\\UserTypes\\Controllers",
+                                        "filter": [
+                                            "permission:user_types,edit"
+                                        ]
+                                    },
+                                    "user-types/delete/([0-9]+)": {
+                                        "namespace": "Modules\\UserTypes\\Controllers",
+                                        "filter": [
+                                            "permission:user_types,delete"
+                                        ]
+                                    },
+                                    "roles/store": {
+                                        "namespace": "Modules\\Roles\\Controllers",
+                                        "filter": [
+                                            "permission:roles,add"
+                                        ]
+                                    },
+                                    "roles/update/([0-9]+)": {
+                                        "namespace": "Modules\\Roles\\Controllers",
+                                        "filter": [
+                                            "permission:roles,edit"
+                                        ]
+                                    },
+                                    "roles/delete/([0-9]+)": {
+                                        "namespace": "Modules\\Roles\\Controllers",
+                                        "filter": [
+                                            "permission:roles,delete"
+                                        ]
+                                    },
+                                    "modules/store": {
+                                        "namespace": "Modules\\ModuleMaster\\Controllers",
+                                        "filter": [
+                                            "permission:modules,add"
+                                        ]
+                                    },
+                                    "modules/update/([0-9]+)": {
+                                        "namespace": "Modules\\ModuleMaster\\Controllers",
+                                        "filter": [
+                                            "permission:modules,edit"
+                                        ]
+                                    },
+                                    "modules/delete/([0-9]+)": {
+                                        "namespace": "Modules\\ModuleMaster\\Controllers",
+                                        "filter": [
+                                            "permission:modules,delete"
+                                        ]
+                                    },
+                                    "permissions/save/([0-9]+)": {
+                                        "namespace": "Modules\\Permissions\\Controllers",
+                                        "filter": [
+                                            "permission:permissions,edit"
+                                        ]
+                                    },
+                                    "notifications/mark-read": {
+                                        "namespace": "Modules\\Notifications\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "notifications/mark-all-read": {
+                                        "namespace": "Modules\\Notifications\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "notifications/delete": {
+                                        "namespace": "Modules\\Notifications\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "api/notifications/mark-read": {
+                                        "namespace": "Modules\\Notifications\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "api/notifications/mark-all-read": {
+                                        "namespace": "Modules\\Notifications\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "api/notifications/delete": {
+                                        "namespace": "Modules\\Notifications\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "profile/update": {
+                                        "namespace": "Modules\\Profile\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    },
+                                    "profile/password": {
+                                        "namespace": "Modules\\Profile\\Controllers",
+                                        "filter": [
+                                            "auth"
+                                        ]
+                                    }
+                                }
+                            },
+                            "HTTPVerb": "POST",
+                            "defaultHTTPMethods": [
+                                "GET",
+                                "HEAD",
+                                "POST",
+                                "PATCH",
+                                "PUT",
+                                "DELETE",
+                                "OPTIONS",
+                                "TRACE",
+                                "CONNECT",
+                                "CLI"
+                            ],
+                            "group": null,
+                            "currentSubdomain": null,
+                            "currentOptions": null,
+                            "didDiscover": true,
+                            "fileLocator": {
+                                "autoloader": {
+                                    "prefixes": {
+                                        "CodeIgniter": [
+                                            "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\"
+                                        ],
+                                        "Config": [
+                                            "D:\\laragon\\www\\ERP\\app\\Config\\"
+                                        ],
+                                        "App": [
+                                            "D:\\laragon\\www\\ERP\\app\\"
+                                        ],
+                                        "Modules": [
+                                            "D:\\laragon\\www\\ERP\\app\\Modules\\"
+                                        ],
+                                        "Modules\\Auth": [
+                                            "D:\\laragon\\www\\ERP\\app\\Modules/Auth\\"
+                                        ],
+                                        "Modules\\Dashboard": [
+                                            "D:\\laragon\\www\\ERP\\app\\Modules/Dashboard\\"
+                                        ],
+                                        "Modules\\Users": [
+                                            "D:\\laragon\\www\\ERP\\app\\Modules/Users\\"
+                                        ],
+                                        "Modules\\UserTypes": [
+                                            "D:\\laragon\\www\\ERP\\app\\Modules/UserTypes\\"
+                                        ],
+                                        "Modules\\Roles": [
+                                            "D:\\laragon\\www\\ERP\\app\\Modules/Roles\\"
+                                        ],
+                                        "Modules\\ModuleMaster": [
+                                            "D:\\laragon\\www\\ERP\\app\\Modules/ModuleMaster\\"
+                                        ],
+                                        "Modules\\Permissions": [
+                                            "D:\\laragon\\www\\ERP\\app\\Modules/Permissions\\"
+                                        ],
+                                        "Modules\\Logs": [
+                                            "D:\\laragon\\www\\ERP\\app\\Modules/Logs\\"
+                                        ],
+                                        "Modules\\Notifications": [
+                                            "D:\\laragon\\www\\ERP\\app\\Modules/Notifications\\"
+                                        ],
+                                        "Modules\\Profile": [
+                                            "D:\\laragon\\www\\ERP\\app\\Modules/Profile\\"
+                                        ],
+                                        "Tests\\Support": [
+                                            "D:\\laragon\\www\\ERP\\vendor\\composer/../../tests/_support\\"
+                                        ],
+                                        "Psr\\Log": [
+                                            "D:\\laragon\\www\\ERP\\vendor\\composer/../psr/log/src\\"
+                                        ],
+                                        "Psr\\Container": [
+                                            "D:\\laragon\\www\\ERP\\vendor\\composer/../psr/container/src\\"
+                                        ],
+                                        "PhpParser": [
+                                            "D:\\laragon\\www\\ERP\\vendor\\composer/../nikic/php-parser/lib/PhpParser\\"
+                                        ],
+                                        "Laminas\\Escaper": [
+                                            "D:\\laragon\\www\\ERP\\vendor\\composer/../laminas/laminas-escaper/src\\"
+                                        ],
+                                        "Faker": [
+                                            "D:\\laragon\\www\\ERP\\vendor\\composer/../fakerphp/faker/src/Faker\\"
+                                        ],
+                                        "DeepCopy": [
+                                            "D:\\laragon\\www\\ERP\\vendor\\composer/../myclabs/deep-copy/src/DeepCopy\\"
+                                        ]
+                                    },
+                                    "classmap": {
+                                        "Psr\\Log\\AbstractLogger": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/PSR/Log/AbstractLogger.php",
+                                        "Psr\\Log\\InvalidArgumentException": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/PSR/Log/InvalidArgumentException.php",
+                                        "Psr\\Log\\LoggerAwareInterface": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/PSR/Log/LoggerAwareInterface.php",
+                                        "Psr\\Log\\LoggerAwareTrait": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/PSR/Log/LoggerAwareTrait.php",
+                                        "Psr\\Log\\LoggerInterface": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/PSR/Log/LoggerInterface.php",
+                                        "Psr\\Log\\LoggerTrait": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/PSR/Log/LoggerTrait.php",
+                                        "Psr\\Log\\LogLevel": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/PSR/Log/LogLevel.php",
+                                        "Psr\\Log\\NullLogger": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/PSR/Log/NullLogger.php",
+                                        "Laminas\\Escaper\\Exception\\ExceptionInterface": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/Escaper/Exception/ExceptionInterface.php",
+                                        "Laminas\\Escaper\\Exception\\InvalidArgumentException": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/Escaper/Exception/InvalidArgumentException.php",
+                                        "Laminas\\Escaper\\Exception\\RuntimeException": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/Escaper/Exception/RuntimeException.php",
+                                        "Laminas\\Escaper\\EscaperInterface": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/Escaper/EscaperInterface.php",
+                                        "Laminas\\Escaper\\Escaper": "D:\\laragon\\www\\ERP\\vendor\\codeigniter4\\framework\\system\\ThirdParty/Escaper/Escaper.php"
+                                    },
+                                    "files": [],
+                                    "helpers": [
+                                        "url",
+                                        "auth",
+                                        "menu",
+                                        "ui"
+                                    ],
+                                    "registeredClosures": [
+                                        "[Closure]",
+                                        "[Closure]"
+                                    ],
+                                    "composerPath": "D:\\laragon\\www\\ERP\\vendor/autoload.php"
+                                },
+                                "invalidClassnames": []
+                            },
+                            "moduleConfig": {
+                                "enabled": true,
+                                "discoverInComposer": true,
+                                "aliases": [
+                                    "events",
+                                    "filters",
+                                    "registrars",
+                                    "routes",
+                                    "services"
+                                ],
+                                "composerPackages": []
+                            },
+                            "prioritize": false,
+                            "prioritizeDetected": false,
+                            "httpHost": "localhost:8077",
+                            "useSupportedLocalesOnly": false
+                        },
+                        "directory": null,
+                        "controller": "\\Modules\\Auth\\Controllers\\SocialAuthController",
+                        "method": "unlink",
+                        "params": [
+                            "google"
+                        ],
+                        "indexPage": "index.php",
+                        "translateURIDashes": false,
+                        "matchedRoute": [
+                            "account/unlink/([^/]+)",
+                            "\\Modules\\Auth\\Controllers\\SocialAuthController::unlink/$1"
+                        ],
+                        "matchedRouteOptions": {
+                            "namespace": "Modules\\Auth\\Controllers",
+                            "filter": [
+                                "auth"
+                            ]
+                        },
+                        "detectedLocale": null,
+                        "filtersInfo": [
+                            "auth"
+                        ],
+                        "autoRouter": null,
+                        "routeAttributes": {
+                            "class": [],
+                            "method": []
+                        },
+                        "permittedURIChars": "a-z 0-9~%.:_\\-"
+                    },
+                    "controller": "\\Modules\\Auth\\Controllers\\SocialAuthController",
+                    "method": "unlink",
+                    "output": null,
+                    "context": "web",
+                    "enableFilters": true,
+                    "returnResponse": false,
+                    "bufferLevel": 1,
+                    "pageCache": {
+                        "cacheQueryString": false,
+                        "ttl": 0,
+                        "cache": {
+                            "prefix": "",
+                            "path": "D:\\laragon\\www\\ERP\\writable\\cache/",
+                            "mode": 416
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "file": "D:\\laragon\\www\\ERP\\public\\index.php",
+            "line": 59,
+            "function": "bootWeb",
+            "class": "CodeIgniter\\Boot",
+            "type": "::",
+            "args": [
+                {
+                    "systemDirectory": "D:\\laragon\\www\\ERP\\app\\Config/../../vendor/codeigniter4/framework/system",
+                    "appDirectory": "D:\\laragon\\www\\ERP\\app\\Config/..",
+                    "writableDirectory": "D:\\laragon\\www\\ERP\\app\\Config/../../writable",
+                    "testsDirectory": "D:\\laragon\\www\\ERP\\app\\Config/../../tests",
+                    "viewDirectory": "D:\\laragon\\www\\ERP\\app\\Config/../Views",
+                    "envDirectory": "D:\\laragon\\www\\ERP\\app\\Config/../../"
+                }
+            ]
+        }
+    ]
+}

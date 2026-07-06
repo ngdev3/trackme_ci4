@@ -1,5 +1,9 @@
 <?php
 $u = current_user();
+
+/* 12 most-spoken languages for the in-app UI translator (shared helper). */
+$erpLanguages = erp_languages();
+
 $topNotifications = [];
 $unreadNotifications = 0;
 try {
@@ -149,6 +153,30 @@ $notificationIconMap = [
                 </div>
             </li>
 
+            <li class="nav-item dropdown topbar-lang">
+                <a class="nav-link nav-square topbar-trigger" href="#" data-bs-toggle="dropdown" aria-expanded="false" title="Language">
+                    <i class="bi bi-translate"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end topbar-dropdown lang-dropdown">
+                    <div class="dropdown-head">
+                        <strong>Language</strong>
+                        <span class="badge text-bg-light border" data-lang-current translate="no">English</span>
+                    </div>
+                    <div class="lang-list">
+                        <?php foreach ($erpLanguages as $code => $lang): ?>
+                            <button type="button" class="dropdown-item lang-option" data-lang="<?= esc($code, 'attr') ?>" data-lang-label="<?= esc($lang['native'], 'attr') ?>" translate="no">
+                                <span class="lang-flag"><?= $lang['flag'] ?></span>
+                                <span>
+                                    <strong><?= esc($lang['native']) ?></strong>
+                                    <small><?= esc($lang['name']) ?></small>
+                                </span>
+                                <i class="bi bi-check2 lang-check"></i>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </li>
+
             <li class="nav-item">
                 <a class="nav-link nav-square" href="#" data-theme-toggle title="Toggle dark / light">
                     <i class="bi bi-moon-stars-fill" data-theme-icon></i>
@@ -164,6 +192,8 @@ $notificationIconMap = [
                 <a class="nav-link user-chip dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown" href="#" aria-expanded="false">
                     <?php if (! empty($u['profile_image'])): ?>
                         <img src="<?= base_url('uploads/users/' . $u['profile_image']) ?>" class="avatar-sm" alt="avatar">
+                    <?php elseif (! empty($u['avatar_url'])): ?>
+                        <img src="<?= esc($u['avatar_url'], 'attr') ?>" class="avatar-sm" alt="avatar" referrerpolicy="no-referrer">
                     <?php else: ?>
                         <span class="avatar-sm avatar-fallback"><i class="bi bi-person"></i></span>
                     <?php endif; ?>

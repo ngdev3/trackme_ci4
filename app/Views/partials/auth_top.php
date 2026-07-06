@@ -46,6 +46,9 @@ $pos = $positions[array_rand($positions)];
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= base_url('assets/css/auth.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/i18n.css') ?>">
+    <!-- Gate the login screen until the chosen UI language has been applied -->
+    <?= $this->include('partials/lang_boot') ?>
     <style>
         :root {
             --auth-brand:   <?= $pal['brand'] ?>;
@@ -63,6 +66,9 @@ $pos = $positions[array_rand($positions)];
 <body class="auth-body">
     <div id="authLoader"><div class="auth-spinner"></div></div>
 
+    <!-- Language loader + first-visit chooser (shown on first visit / login screen) -->
+    <?= $this->include('partials/lang_widgets') ?>
+
     <div class="space" aria-hidden="true">
         <span class="nebula n1"></span><span class="nebula n2"></span>
         <span class="nebula n3"></span><span class="nebula n4"></span>
@@ -70,6 +76,27 @@ $pos = $positions[array_rand($positions)];
         <span class="dust d1"></span><span class="dust d2"></span><span class="dust d3"></span>
         <span class="dust d4"></span><span class="dust d5"></span>
         <span class="shooting"></span><span class="shooting s2"></span><span class="shooting s3"></span>
+    </div>
+
+    <!-- Language switcher (visible on the login screen) -->
+    <div class="auth-lang" id="authLang">
+        <button type="button" class="auth-lang-btn" data-lang-toggle translate="no">
+            <i class="bi bi-translate"></i>
+            <span data-lang-current>English</span>
+            <i class="bi bi-chevron-down auth-lang-caret"></i>
+        </button>
+        <div class="auth-lang-menu">
+            <?php foreach (erp_languages() as $code => $lang): ?>
+                <button type="button" class="lang-option auth-lang-item" data-lang="<?= esc($code, 'attr') ?>" data-lang-label="<?= esc($lang['native'], 'attr') ?>" translate="no">
+                    <span class="lang-flag"><?= $lang['flag'] ?></span>
+                    <span class="auth-lang-text">
+                        <strong><?= esc($lang['native']) ?></strong>
+                        <small><?= esc($lang['name']) ?></small>
+                    </span>
+                    <i class="bi bi-check2 lang-check"></i>
+                </button>
+            <?php endforeach; ?>
+        </div>
     </div>
 
     <main class="login-page">

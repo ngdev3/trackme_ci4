@@ -40,4 +40,3 @@
                 </div>
 
 <?= view('partials/auth_bottom') ?>
-</content>

@@ -16,6 +16,7 @@ class UserModel extends Model
     protected $allowedFields = [
         'name', 'email', 'mobile', 'username', 'password', 'user_type_id',
         'profile_image', 'status', 'remember_token', 'last_login_at',
+        'auth_provider', 'provider_id', 'avatar_url',
     ];
 
     protected $validationRules = [
@@ -51,6 +52,37 @@ class UserModel extends Model
             ->orWhere('email', $login)
             ->groupEnd()
             ->first();
+    }
+
+    /**
+     * Find an account previously linked to a social provider.
+     */
+    public function findByProvider(string $provider, string $providerId): ?array
+    {
+        return $this->where('auth_provider', $provider)
+            ->where('provider_id', $providerId)
+            ->first();
+    }
+
+    /**
+     * Derive a unique, DB-safe username from an email/name seed. Checks against
+     * soft-deleted rows too, since the unique index spans them.
+     */
+    public function generateUniqueUsername(string $seed): string
+    {
+        $base = strtolower((string) preg_replace('/[^a-z0-9_]/i', '', explode('@', $seed)[0] ?? ''));
+        if (strlen($base) < 3) {
+            $base = 'user' . $base;
+        }
+        $base      = substr($base, 0, 90);
+        $candidate = $base;
+        $i         = 0;
+        while ($this->withDeleted()->where('username', $candidate)->first()) {
+            $i++;
+            $candidate = substr($base, 0, 88 - strlen((string) $i)) . '_' . $i;
+        }
+
+        return $candidate;
     }
 
     /**

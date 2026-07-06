@@ -32,6 +32,9 @@
     <?php endforeach; ?>
 </head>
 <body class="layout-fixed sidebar-expand-lg">
+<!-- Language loader (hides the page until the chosen language applies) + first-visit chooser -->
+<?= $this->include('partials/lang_widgets') ?>
+
 <!-- Top page-loading progress bar -->
 <div id="pageLoader" class="page-loader"><div class="page-loader-bar"></div></div>
 
@@ -75,6 +78,20 @@
 </div>
 
 <?= $this->include('partials/theme_panel') ?>
+
+<!-- In-app language translator (whole-UI, 12 languages) -->
+<div id="google_translate_element" aria-hidden="true"></div>
+<script>
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            includedLanguages: 'en,hi,zh-CN,es,ar,fr,bn,pt,ru,ur,de,ja',
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
+</script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script src="<?= base_url('assets/js/i18n.js') ?>"></script>
 
 <script src="<?= base_url('assets/vendor/jquery/jquery.min.js') ?>"></script>
 <script src="<?= base_url('assets/vendor/bootstrap/bootstrap.bundle.min.js') ?>"></script>
