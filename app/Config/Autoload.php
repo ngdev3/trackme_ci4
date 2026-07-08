@@ -53,6 +53,18 @@ class Autoload extends AutoloadConfig
         'Modules\Logs'         => APPPATH . 'Modules/Logs',
         'Modules\Notifications'=> APPPATH . 'Modules/Notifications',
         'Modules\Profile'      => APPPATH . 'Modules/Profile',
+        'Modules\Api'          => APPPATH . 'Modules/Api',
+        'Modules\Settings'     => APPPATH . 'Modules/Settings',
+        'Modules\Calculator'   => APPPATH . 'Modules/Calculator',
+        'Modules\Notes'        => APPPATH . 'Modules/Notes',
+        'Modules\Reminders'    => APPPATH . 'Modules/Reminders',
+        'Modules\Company'      => APPPATH . 'Modules/Company',
+        'Modules\FirmUsers'    => APPPATH . 'Modules/FirmUsers',
+        'Modules\SuperAdmin'   => APPPATH . 'Modules/SuperAdmin',
+        'Modules\Accounting'   => APPPATH . 'Modules/Accounting',
+        'Modules\Rokad'        => APPPATH . 'Modules/Rokad',
+        'Modules\Transactions' => APPPATH . 'Modules/Transactions',
+        'Modules\Passwords'    => APPPATH . 'Modules/Passwords',
     ];
 
     /**
@@ -102,5 +114,5 @@ class Autoload extends AutoloadConfig
      *
      * @var list<string>
      */
-    public $helpers = ['auth', 'menu', 'ui'];
+    public $helpers = ['auth', 'menu', 'ui', 'settings', 'hashid', 'format'];
 }

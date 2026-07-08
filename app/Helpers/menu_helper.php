@@ -18,10 +18,21 @@ if (! function_exists('sidebar_modules')) {
         $acl     = Services::acl();
         $all     = (new ModuleModel())->activeOrdered();
         $viewable = array_flip($acl->viewableModuleCodes());
+        $superOnly = [
+            'logs' => true,
+            'activity_logs' => true,
+            'login_logs' => true,
+            'roles' => true,
+            'user_types' => true,
+            'permissions' => true,
+        ];
 
-        $isVisible = static function (array $m) use ($acl, $viewable): bool {
+        $isVisible = static function (array $m) use ($acl, $viewable, $superOnly): bool {
             if ($acl->isSuperAdmin()) {
                 return true;
+            }
+            if (isset($superOnly[$m['code']])) {
+                return false;
             }
             return isset($viewable[$m['code']]);
         };
@@ -30,12 +41,15 @@ if (! function_exists('sidebar_modules')) {
         $tree = [];
         foreach ($all as $m) {
             if ($m['parent_id'] === null) {
+                if (! $acl->isSuperAdmin() && isset($superOnly[$m['code']])) {
+                    continue;
+                }
                 $tree[(int) $m['id']] = $m + ['children' => []];
             }
         }
         foreach ($all as $m) {
             if ($m['parent_id'] !== null && isset($tree[(int) $m['parent_id']])) {
-                if (! empty($m['url']) && ! $isVisible($m)) {
+                if (! $isVisible($m)) {
                     continue; // hide leaf the user cannot view
                 }
                 $tree[(int) $m['parent_id']]['children'][] = $m;
@@ -59,18 +73,110 @@ if (! function_exists('sidebar_modules')) {
     }
 }
 
+if (! function_exists('render_firm_sidebar')) {
+    /**
+     * Firm-side navigation for customers and firm users: a fixed menu of firm
+     * modules filtered by the user's firm role via firm_can(). Only built
+     * modules are listed, so there are no dead links.
+     */
+    function render_firm_sidebar(): string
+    {
+        helper(['company', 'auth']);
+
+        // [module-code, label, icon, url, children[]]
+        $menu = [
+            ['dashboard', 'Dashboard', 'bi bi-speedometer2', 'dashboard', []],
+            ['rokad', 'Rokad Parcha', 'bi bi-cash-stack', 'rokad', []],
+            ['accounting', 'Accounting', 'bi bi-calculator', null, [
+                ['Overview', 'accounting'],
+                ['Ledgers', 'accounting/ledgers'],
+                ['Day Book', 'accounting/vouchers'],
+            ]],
+            ['notes', 'Notes', 'bi bi-sticky', 'notes', []],
+            ['reminders', 'Reminders', 'bi bi-alarm', 'reminders', []],
+            ['passwords', 'Password Manager', 'bi bi-shield-lock', 'passwords', []],
+            ['firm_users', 'Firm Users', 'bi bi-people', 'firm-users', []],
+        ];
+
+        $html = '';
+        foreach ($menu as [$code, $label, $icon, $url, $children]) {
+            if (! firm_can($code)) {
+                continue;
+            }
+            // Password Manager access is governed by app RBAC (its routes use a
+            // permission filter), so mirror that here to avoid a dead menu link.
+            if ($code === 'passwords' && function_exists('can') && ! can('passwords', 'view')) {
+                continue;
+            }
+
+            if ($children === []) {
+                $active = is_menu_active($url) ? ' active' : '';
+                $html .= '<li class="nav-item"><a href="' . site_url($url) . '" class="nav-link' . $active . '">'
+                    . '<i class="nav-icon ' . esc($icon) . '"></i><p>' . esc($label) . '</p></a></li>';
+                continue;
+            }
+
+            $bestIdx = -1;
+            $bestLen = -1;
+            foreach ($children as $i => [$clabel, $curl]) {
+                $len = menu_match_len($curl);
+                if ($len > $bestLen) {
+                    $bestLen = $len;
+                    $bestIdx = $i;
+                }
+            }
+            $childActive = $bestLen >= 0;
+            $childHtml   = '';
+            foreach ($children as $i => [$clabel, $curl]) {
+                $ca = ($i === $bestIdx);
+                $childHtml .= '<li class="nav-item"><a href="' . site_url($curl) . '" class="nav-link' . ($ca ? ' active' : '') . '">'
+                    . '<i class="nav-icon bi bi-dot"></i><p>' . esc($clabel) . '</p></a></li>';
+            }
+            $html .= '<li class="nav-item' . ($childActive ? ' menu-open' : '') . '">'
+                . '<a href="#" class="nav-link' . ($childActive ? ' active' : '') . '">'
+                . '<i class="nav-icon ' . esc($icon) . '"></i><p>' . esc($label) . '<i class="nav-arrow bi bi-chevron-right"></i></p></a>'
+                . '<ul class="nav nav-treeview">' . $childHtml . '</ul></li>';
+        }
+
+        return $html;
+    }
+}
+
 if (! function_exists('is_menu_active')) {
     /**
      * Whether a module URL matches the current request (first path segment).
      */
     function is_menu_active(?string $url): bool
     {
+        return menu_match_len($url) >= 0;
+    }
+}
+
+if (! function_exists('menu_match_len')) {
+    /**
+     * How well a menu URL matches the current request: the length of the URL
+     * when it is an exact match or a prefix of the current path (so sub-pages
+     * like `users/edit/5` keep the `users` item active), or -1 when it does not
+     * match. Longer = more specific, which lets callers pick the best child.
+     *
+     * Uses uri_string() (app-relative) so it works under a sub-directory install
+     * such as /ERP/ — getUri()->getPath() would wrongly include "ERP".
+     */
+    function menu_match_len(?string $url): int
+    {
         if (empty($url)) {
-            return false;
+            return -1;
         }
-        $current = trim(Services::request()->getUri()->getPath(), '/');
-        $first   = explode('/', $current)[0] ?? '';
-        return $first === trim($url, '/');
+        helper('url');
+        $current = trim(uri_string(), '/');
+        $url     = trim($url, '/');
+        if ($url === '') {
+            return -1;
+        }
+        if ($current === $url || str_starts_with($current, $url . '/')) {
+            return strlen($url);
+        }
+        return -1;
     }
 }
 
@@ -96,12 +202,20 @@ if (! function_exists('render_sidebar')) {
                 continue;
             }
 
-            // Parent with children.
-            $childActive = false;
+            // Parent with children — highlight only the most specific match.
+            $bestIdx = -1;
+            $bestLen = -1;
+            foreach ($node['children'] as $i => $child) {
+                $len = menu_match_len($child['url']);
+                if ($len > $bestLen) {
+                    $bestLen = $len;
+                    $bestIdx = $i;
+                }
+            }
+            $childActive = $bestLen >= 0;
             $childHtml   = '';
-            foreach ($node['children'] as $child) {
-                $ca = is_menu_active($child['url']);
-                $childActive = $childActive || $ca;
+            foreach ($node['children'] as $i => $child) {
+                $ca = ($i === $bestIdx);
                 $childHtml .= '<li class="nav-item">'
                     . '<a href="' . site_url($child['url']) . '" class="nav-link' . ($ca ? ' active' : '') . '">'
                     . '<i class="nav-icon ' . esc($child['icon'] ?: 'bi bi-circle') . '"></i><p>' . esc($child['name']) . '</p></a></li>';
