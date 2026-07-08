@@ -1,0 +1,156 @@
+/* =============================================================================
+ * Redesigned real-time firm dashboard.
+ * Theme-aware (light/dark via data-bs-theme), responsive, self-contained.
+ * ========================================================================== */
+
+.dl-wrap {
+    --dl-radius: 18px;
+    --dl-card-bg: var(--bs-body-bg, #fff);
+    --dl-border: color-mix(in srgb, var(--bs-body-color, #1e293b) 12%, transparent);
+    --dl-muted: color-mix(in srgb, var(--bs-body-color, #1e293b) 60%, transparent);
+    --dl-shadow: 0 4px 18px rgba(15, 23, 42, .06);
+}
+[data-bs-theme="dark"] .dl-wrap { --dl-shadow: 0 4px 18px rgba(0, 0, 0, .35); }
+
+/* ---- Hero ---------------------------------------------------------------- */
+.dl-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--dl-radius);
+    padding: 1.5rem 1.75rem;
+    color: #fff;
+    background: linear-gradient(135deg, var(--bs-primary, #4f46e5) 0%, #7c3aed 55%, var(--bs-info, #0ea5e9) 120%);
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--bs-primary, #4f46e5) 35%, transparent);
+}
+.dl-hero::after {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+        radial-gradient(600px 200px at 90% -20%, rgba(255,255,255,.25), transparent 60%),
+        radial-gradient(400px 200px at 10% 120%, rgba(255,255,255,.12), transparent 60%);
+    pointer-events: none;
+}
+.dl-hero > * { position: relative; z-index: 1; }
+.dl-hero-kicker { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; opacity: .85; font-weight: 600; }
+.dl-hero-title { font-size: clamp(1.4rem, 2.4vw, 2rem); font-weight: 800; margin: .1rem 0 .15rem; line-height: 1.1; }
+.dl-hero-sub { opacity: .9; font-weight: 500; }
+.dl-hero-cash { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 800; letter-spacing: -.02em; }
+.dl-hero-clock { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.05rem; opacity: .95; }
+
+/* Live badge with pulsing dot */
+.dl-live {
+    display: inline-flex; align-items: center; gap: .45rem;
+    background: rgba(255,255,255,.16); backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,.28);
+    padding: .3rem .7rem; border-radius: 999px;
+    font-size: .74rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+}
+.dl-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 0 rgba(74,222,128,.7); animation: dl-pulse 1.8s infinite; }
+@keyframes dl-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(74,222,128,.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(74,222,128,0); }
+    100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+}
+.dl-updated { font-size: .74rem; opacity: .85; }
+
+.dl-hero-filter select,
+.dl-hero-filter input {
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); color: #fff;
+}
+.dl-hero-filter select option { color: #111; }
+.dl-hero-filter input::-webkit-calendar-picker-indicator { filter: invert(1); }
+
+/* ---- KPI cards ----------------------------------------------------------- */
+.dl-kpi {
+    position: relative;
+    background: var(--dl-card-bg);
+    border: 1px solid var(--dl-border);
+    border-radius: var(--dl-radius);
+    padding: 1.05rem 1.15rem;
+    box-shadow: var(--dl-shadow);
+    height: 100%;
+    overflow: hidden;
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+.dl-kpi:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(15,23,42,.12); }
+.dl-kpi::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: var(--dl-accent, var(--bs-primary));
+}
+.dl-kpi-top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.dl-kpi-label { color: var(--dl-muted); font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.dl-kpi-icon {
+    width: 40px; height: 40px; border-radius: 12px; flex: 0 0 auto;
+    display: grid; place-items: center; font-size: 1.15rem; color: #fff;
+    background: var(--dl-accent, var(--bs-primary));
+}
+.dl-kpi-value { font-size: clamp(1.25rem, 2vw, 1.7rem); font-weight: 800; letter-spacing: -.02em; margin-top: .4rem; font-variant-numeric: tabular-nums; }
+.dl-kpi-sub { font-size: .78rem; color: var(--dl-muted); margin-top: .15rem; }
+.dl-kpi-sub .up { color: #16a34a; font-weight: 700; }
+.dl-kpi-sub .down { color: #dc2626; font-weight: 700; }
+
+/* value flash when it changes on a live refresh */
+.dl-flash { animation: dl-flash 1s ease; }
+@keyframes dl-flash {
+    0%   { background: color-mix(in srgb, var(--dl-accent, #4f46e5) 22%, transparent); }
+    100% { background: transparent; }
+}
+
+/* ---- Counter chips ------------------------------------------------------- */
+.dl-chips { display: flex; flex-wrap: wrap; gap: .6rem; }
+.dl-chip {
+    display: flex; align-items: center; gap: .55rem;
+    background: var(--dl-card-bg); border: 1px solid var(--dl-border);
+    border-radius: 12px; padding: .55rem .85rem; box-shadow: var(--dl-shadow);
+    text-decoration: none; color: inherit; transition: border-color .15s, transform .15s;
+    flex: 1 1 auto; min-width: 130px;
+}
+.dl-chip:hover { transform: translateY(-2px); border-color: var(--dl-accent, var(--bs-primary)); }
+.dl-chip i { font-size: 1.15rem; color: var(--dl-accent, var(--bs-primary)); }
+.dl-chip .n { font-weight: 800; font-size: 1.05rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.dl-chip .l { font-size: .72rem; color: var(--dl-muted); }
+
+/* ---- Cards / panels ------------------------------------------------------ */
+.dl-card {
+    background: var(--dl-card-bg); border: 1px solid var(--dl-border);
+    border-radius: var(--dl-radius); box-shadow: var(--dl-shadow); height: 100%;
+}
+.dl-card-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.15rem .5rem; }
+.dl-card-title { font-weight: 700; margin: 0; display: flex; align-items: center; gap: .5rem; }
+.dl-card-body { padding: .5rem 1.15rem 1.15rem; }
+.dl-chart { position: relative; height: 300px; }
+.dl-chart-sm { position: relative; height: 240px; }
+
+/* ---- Activity feed ------------------------------------------------------- */
+.dl-feed { list-style: none; margin: 0; padding: 0; max-height: 360px; overflow-y: auto; }
+.dl-feed li {
+    display: flex; align-items: center; gap: .8rem;
+    padding: .6rem .25rem; border-bottom: 1px dashed var(--dl-border);
+}
+.dl-feed li:last-child { border-bottom: 0; }
+.dl-feed-ic { width: 34px; height: 34px; border-radius: 10px; flex: 0 0 auto; display: grid; place-items: center; color: #fff; font-size: .95rem; }
+.dl-feed-ic.jama { background: #16a34a; }
+.dl-feed-ic.naam { background: #dc2626; }
+.dl-feed-main { flex: 1 1 auto; min-width: 0; }
+.dl-feed-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-feed-meta { font-size: .74rem; color: var(--dl-muted); }
+.dl-feed-amt { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dl-feed-amt.jama { color: #16a34a; }
+.dl-feed-amt.naam { color: #dc2626; }
+.dl-feed li.dl-new { animation: dl-slidein .5s ease; }
+@keyframes dl-slidein { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+/* ---- Top parties --------------------------------------------------------- */
+.dl-party { display: flex; align-items: center; gap: .7rem; padding: .55rem .1rem; border-bottom: 1px dashed var(--dl-border); }
+.dl-party:last-child { border-bottom: 0; }
+.dl-party-av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--bs-primary), var(--bs-info)); flex: 0 0 auto; }
+.dl-party-name { font-weight: 600; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-party-net { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.dl-empty { text-align: center; color: var(--dl-muted); padding: 2rem 1rem; }
+.dl-empty i { font-size: 2rem; display: block; margin-bottom: .4rem; opacity: .6; }
+
+@media (max-width: 575.98px) {
+    .dl-hero { padding: 1.15rem; }
+    .dl-chart { height: 240px; }
+}

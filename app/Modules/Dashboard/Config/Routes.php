@@ -8,4 +8,6 @@ $routes->group('dashboard', ['namespace' => 'Modules\Dashboard\Controllers'], st
     $routes->get('/', 'DashboardController::index', ['filter' => 'permission:dashboard,view']);
     // AJAX analytics feed (JSON) consumed by the dashboard widgets.
     $routes->get('analytics', 'DashboardController::analytics', ['filter' => 'permission:dashboard,view']);
+    // Real-time feed (JSON) polled by the firm dashboard for live KPIs + activity.
+    $routes->get('live', 'DashboardController::live', ['filter' => 'permission:dashboard,view']);
 });
