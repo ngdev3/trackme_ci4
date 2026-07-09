@@ -47,3 +47,14 @@ Options -Indexes
 # Disable server signature start
 ServerSignature Off
 # Disable server signature end
+
+# Development-friendly asset refresh. PHP templates append ?v=filemtime to
+# local assets, and these headers prevent browsers from reusing stale CSS/JS
+# when a file is requested directly.
+<IfModule mod_headers.c>
+	<FilesMatch "\.(css|js)$">
+		Header set Cache-Control "no-cache, no-store, must-revalidate"
+		Header set Pragma "no-cache"
+		Header set Expires "0"
+	</FilesMatch>
+</IfModule>

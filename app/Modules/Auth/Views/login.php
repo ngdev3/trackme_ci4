@@ -56,6 +56,6 @@
                     superadmin &middot; admin &middot; manager &middot; staff &middot; viewer
                 </div>
 
-                <div class="login-copyright">&copy; <?= date('Y') ?> ERP Admin. All rights reserved.</div>
+                <div class="login-copyright">&copy; <?= date('Y') ?> <?= esc(setting('app_name', 'ERP Admin')) ?>. All rights reserved.</div>
 
 <?= view('partials/auth_bottom') ?>

@@ -60,6 +60,7 @@ class PermissionController extends BaseController
         // perm[module_id][] = permission_id
         $posted = (array) $this->request->getPost('perm');
         $map    = [];
+
         foreach ($posted as $moduleId => $permIds) {
             $map[(int) $moduleId] = array_map('intval', (array) $permIds);
         }

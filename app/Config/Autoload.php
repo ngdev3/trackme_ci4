@@ -65,6 +65,7 @@ class Autoload extends AutoloadConfig
         'Modules\Rokad'        => APPPATH . 'Modules/Rokad',
         'Modules\Transactions' => APPPATH . 'Modules/Transactions',
         'Modules\Passwords'    => APPPATH . 'Modules/Passwords',
+        'Modules\Help'         => APPPATH . 'Modules/Help',
     ];
 
     /**

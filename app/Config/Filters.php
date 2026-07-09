@@ -16,6 +16,11 @@ use App\Filters\AuthFilter;
 use App\Filters\PermissionFilter;
 use App\Filters\GuestFilter;
 use App\Filters\AutoSetup;
+use App\Filters\MustChangePassword;
+use App\Filters\FirmPermFilter;
+use App\Filters\RequireCompany;
+use App\Filters\SuperAdminFilter;
+use App\Filters\UserActionLogFilter;
 
 class Filters extends BaseFilters
 {
@@ -42,6 +47,11 @@ class Filters extends BaseFilters
         'permission'    => PermissionFilter::class,
         'guest'         => GuestFilter::class,
         'autosetup'     => AutoSetup::class,
+        'mustchange'    => MustChangePassword::class,
+        'requirecompany'=> RequireCompany::class,
+        'superadmin'    => SuperAdminFilter::class,
+        'firmperm'      => FirmPermFilter::class,
+        'useractionlog' => UserActionLogFilter::class,
     ];
 
     /**
@@ -65,7 +75,7 @@ class Filters extends BaseFilters
         'after' => [
             'pagecache',   // Web Page Caching
             'performance', // Performance Metrics
-            'toolbar',     // Debug Toolbar
+            // 'toolbar' (CodeIgniter debug toolbar) removed — hides the CI logo/bar bottom-right.
         ],
     ];
 
@@ -83,9 +93,12 @@ class Filters extends BaseFilters
             'autosetup', // keep DB schema in sync on CLI-less deploys (runs pending migrations)
             'csrf' => ['except' => ['api/*']],
             'invalidchars',
+            'mustchange',     // force a pending password change before anything else
+            'requirecompany', // social sign-ups must create a company before proceeding
         ],
         'after' => [
             'secureheaders',
+            'useractionlog',
         ],
     ];
 

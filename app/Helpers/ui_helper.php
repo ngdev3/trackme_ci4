@@ -71,6 +71,39 @@ if (! function_exists('flash_alerts')) {
     }
 }
 
+if (! function_exists('erp_asset')) {
+    /**
+     * Build a public asset URL with a filemtime cache-buster for local files.
+     *
+     * This keeps development changes visible immediately without manual hard
+     * refreshes, while still allowing browsers to cache each exact asset
+     * version safely.
+     */
+    function erp_asset(string $path): string
+    {
+        $base = rtrim(base_url(), '/') . '/';
+        if (str_starts_with($path, $base)) {
+            $clean = substr($path, strlen($base));
+            $url   = $path;
+        } elseif (preg_match('#^(https?:)?//#i', $path)) {
+            return $path;
+        } else {
+            $clean = ltrim($path, '/');
+            $url   = base_url($clean);
+        }
+
+        $file  = FCPATH . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $clean);
+
+        if (is_file($file)) {
+            $url = preg_replace('/([?&])v=\d+(&?)/', '$1', $url);
+            $url = rtrim($url, '?&');
+            $url .= (str_contains($url, '?') ? '&' : '?') . 'v=' . filemtime($file);
+        }
+
+        return $url;
+    }
+}
+
 if (! function_exists('old_value')) {
     /**
      * Repopulate a form field: old input, else the model value, else default.
@@ -111,5 +144,154 @@ if (! function_exists('erp_languages')) {
             'de'    => ['native' => 'Deutsch',    'name' => 'German',     'flag' => '🇩🇪'],
             'ja'    => ['native' => '日本語',      'name' => 'Japanese',   'flag' => '🇯🇵'],
         ];
+    }
+}
+
+if (! function_exists('user_avatar_url')) {
+    /**
+     * Resolve a user's avatar URL: an uploaded profile image wins over a social
+     * provider picture. Returns null when the user has neither (caller shows a
+     * fallback). Accepts any user array; defaults to the current user.
+     */
+    function user_avatar_url(?array $user = null): ?string
+    {
+        $user ??= function_exists('current_user') ? current_user() : null;
+        if (! $user) {
+            return null;
+        }
+        if (! empty($user['profile_image'])) {
+            return base_url('uploads/users/' . $user['profile_image']);
+        }
+        if (! empty($user['avatar_url'])) {
+            return $user['avatar_url'];
+        }
+        return null;
+    }
+}
+
+if (! function_exists('user_avatar')) {
+    /**
+     * Render a user's avatar as an <img> when one exists, else a person-icon
+     * fallback bubble. `$class` is applied to both so sizing stays consistent.
+     */
+    function user_avatar(?array $user = null, string $class = 'avatar-sm', string $fallbackIcon = 'bi-person'): string
+    {
+        $url = user_avatar_url($user);
+        if ($url !== null) {
+            return '<img src="' . esc($url, 'attr') . '" class="' . esc($class, 'attr') . '" alt="avatar" referrerpolicy="no-referrer">';
+        }
+        return '<span class="' . esc($class, 'attr') . ' avatar-fallback"><i class="bi ' . esc($fallbackIcon, 'attr') . '"></i></span>';
+    }
+}
+
+if (! function_exists('profile_score')) {
+    /**
+     * Profile completeness score. Each criterion contributes its weight when
+     * satisfied; the total is normalised to a 0-100 percentage with a strength
+     * label. Returns the percent, label, colour and a per-item checklist so the
+     * profile page can show what is still pending.
+     *
+     * @return array{percent:int,label:string,color:string,done:int,total:int,items:list<array{key:string,label:string,done:bool,hint:string,weight:int}>}
+     */
+    function profile_score(array $u): array
+    {
+        $has = static fn (string $k): bool => isset($u[$k]) && trim((string) $u[$k]) !== '';
+
+        $criteria = [
+            ['key' => 'name',    'label' => 'Full name added',        'weight' => 15, 'done' => $has('name'),
+             'hint' => 'Add your full name.'],
+            ['key' => 'email',   'label' => 'Email address added',    'weight' => 15, 'done' => $has('email'),
+             'hint' => 'Add a valid email address.'],
+            ['key' => 'mobile',  'label' => 'Mobile number added',    'weight' => 20, 'done' => $has('mobile'),
+             'hint' => 'Add your mobile number.'],
+            ['key' => 'avatar',  'label' => 'Profile photo uploaded', 'weight' => 25,
+             'done' => $has('profile_image') || $has('avatar_url'),
+             'hint' => 'Upload a profile photo.'],
+            ['key' => 'password','label' => 'Password set',           'weight' => 15, 'done' => $has('password'),
+             'hint' => 'Set a password so you can sign in without a social account.'],
+            ['key' => 'social',  'label' => 'Social account linked',  'weight' => 10, 'done' => $has('provider_id'),
+             'hint' => 'Link a Google account for one-click sign-in.'],
+        ];
+
+        return score_from_criteria($criteria);
+    }
+}
+
+if (! function_exists('score_from_criteria')) {
+    /**
+     * Turn a weighted criteria list into a normalised score result. Each item is
+     * `['label'=>, 'weight'=>int, 'done'=>bool, 'hint'=>?]`. Shared by
+     * profile_score() and company_score().
+     *
+     * @param list<array{label:string,weight:int,done:bool,hint?:string,key?:string}> $criteria
+     * @return array{percent:int,label:string,color:string,done:int,total:int,items:array}
+     */
+    function score_from_criteria(array $criteria): array
+    {
+        $total   = array_sum(array_column($criteria, 'weight'));
+        $earned  = array_sum(array_map(static fn ($c) => $c['done'] ? $c['weight'] : 0, $criteria));
+        $percent = $total > 0 ? (int) round($earned / $total * 100) : 0;
+        $doneCnt = count(array_filter($criteria, static fn ($c) => $c['done']));
+
+        if ($percent >= 100) {
+            [$label, $color] = ['Complete', 'success'];
+        } elseif ($percent >= 75) {
+            [$label, $color] = ['Strong', 'primary'];
+        } elseif ($percent >= 50) {
+            [$label, $color] = ['Good', 'info'];
+        } elseif ($percent >= 25) {
+            [$label, $color] = ['Basic', 'warning'];
+        } else {
+            [$label, $color] = ['Weak', 'danger'];
+        }
+
+        return [
+            'percent' => $percent,
+            'label'   => $label,
+            'color'   => $color,
+            'done'    => $doneCnt,
+            'total'   => count($criteria),
+            'items'   => $criteria,
+        ];
+    }
+}
+
+if (! function_exists('company_score')) {
+    /**
+     * Company profile completeness score — how fully a firm's books/compliance
+     * details are filled in. Mirrors profile_score() but for a company record.
+     *
+     * @return array{percent:int,label:string,color:string,done:int,total:int,items:array}
+     */
+    function company_score(array $c): array
+    {
+        $has     = static fn (string $k): bool => isset($c[$k]) && trim((string) $c[$k]) !== '';
+        $gst     = strtoupper(trim((string) ($c['gst_number'] ?? '')));
+        $gstOk   = $gst !== '' && preg_match(\App\Models\CompanyModel::GST_REGEX, $gst) === 1;
+
+        $criteria = [
+            ['key' => 'name',     'label' => 'Company name set',        'weight' => 10, 'done' => $has('name'),
+             'hint' => 'Add the company / firm name.'],
+            ['key' => 'fy',       'label' => 'Financial year set',      'weight' => 10, 'done' => $has('financial_year_from'),
+             'hint' => 'Set the financial year start.'],
+            ['key' => 'books',    'label' => 'Books beginning date set','weight' => 5,  'done' => $has('books_beginning_from'),
+             'hint' => 'Set the books-beginning date.'],
+            ['key' => 'state',    'label' => 'State selected',          'weight' => 10, 'done' => $has('state'),
+             'hint' => 'Select the company state.'],
+            ['key' => 'country',  'label' => 'Country selected',        'weight' => 5,  'done' => $has('country'),
+             'hint' => 'Select the country.'],
+            ['key' => 'gsttype',  'label' => 'GST registration type',   'weight' => 10, 'done' => $has('gst_registration_type'),
+             'hint' => 'Choose the GST registration type.'],
+            ['key' => 'gstno',    'label' => 'Valid GSTIN added',       'weight' => 20, 'done' => $gstOk,
+             'hint' => 'Add a valid 15-character GSTIN.'],
+            ['key' => 'biztype',  'label' => 'Business type set',       'weight' => 10, 'done' => $has('business_type'),
+             'hint' => 'Select the business type.'],
+            ['key' => 'mobile',   'label' => 'Contact mobile added',    'weight' => 10, 'done' => $has('mobile'),
+             'hint' => 'Add a contact mobile number.'],
+            ['key' => 'email',    'label' => 'Contact email added',     'weight' => 10, 'done' => $has('email'),
+             'hint' => 'Add a contact email address.'],
+        ];
+
+        return score_from_criteria($criteria);
     }
 }

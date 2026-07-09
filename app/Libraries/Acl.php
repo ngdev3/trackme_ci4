@@ -4,17 +4,21 @@ namespace App\Libraries;
 
 use App\Models\ModuleModel;
 use App\Models\RolePermissionModel;
+use App\Models\UserPermissionModel;
 use Config\Services;
 
 /**
  * Access-control lookups driven entirely by the database.
  *
- * A Super Admin role bypasses every check. All other roles are resolved
- * against the role_permissions matrix. Results are memoised per request.
+ * A Super Admin role bypasses every check. All other users are resolved
+ * against the role_permissions matrix (via their roles) PLUS any grants
+ * assigned directly to the user in user_permissions — the two are merged
+ * (union). Results are memoised per request.
  */
 class Acl
 {
     protected RolePermissionModel $rolePerms;
+    protected UserPermissionModel $userPerms;
     protected ModuleModel $modules;
     protected $session;
 
@@ -25,6 +29,7 @@ class Acl
     public function __construct()
     {
         $this->rolePerms = new RolePermissionModel();
+        $this->userPerms = new UserPermissionModel();
         $this->modules   = new ModuleModel();
         $this->session   = Services::session();
     }
@@ -42,6 +47,12 @@ class Acl
         return (array) ($this->session->get('role_ids') ?? []);
     }
 
+    protected function userId(): ?int
+    {
+        $id = $this->session->get('user_id');
+        return $id ? (int) $id : null;
+    }
+
     /**
      * Actions the current user may perform on a module.
      *
@@ -53,7 +64,9 @@ class Acl
             return ['view', 'add', 'edit', 'delete', 'print', 'export', 'approve'];
         }
         if (! array_key_exists($moduleCode, $this->actionCache)) {
-            $this->actionCache[$moduleCode] = $this->rolePerms->actionsFor($this->roleIds(), $moduleCode);
+            $roleActions = $this->rolePerms->actionsFor($this->roleIds(), $moduleCode);
+            $userActions = ($uid = $this->userId()) ? $this->userPerms->actionsFor($uid, $moduleCode) : [];
+            $this->actionCache[$moduleCode] = array_values(array_unique(array_merge($roleActions, $userActions)));
         }
         return $this->actionCache[$moduleCode];
     }
@@ -82,7 +95,9 @@ class Acl
             return $rows;
         }
         if ($this->viewableCache === null) {
-            $this->viewableCache = $this->rolePerms->viewableModuleCodes($this->roleIds());
+            $roleCodes = $this->rolePerms->viewableModuleCodes($this->roleIds());
+            $userCodes = ($uid = $this->userId()) ? $this->userPerms->viewableModuleCodes($uid) : [];
+            $this->viewableCache = array_values(array_unique(array_merge($roleCodes, $userCodes)));
         }
         return $this->viewableCache;
     }

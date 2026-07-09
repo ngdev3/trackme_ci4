@@ -141,6 +141,10 @@ class SocialAuthController extends BaseController
         }
 
         activity_log('Auth', 'Login', 'User logged in via ' . ucfirst($provider));
-        return redirect()->to(site_url('dashboard'))->with('success', $message);
+
+        // Route per account type (super_admin / customer / firm_user); a
+        // brand-new customer with no firm lands on company creation.
+        helper('company');
+        return redirect()->to(post_login_url())->with('success', $message);
     }
 }

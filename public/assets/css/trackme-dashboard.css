@@ -40,7 +40,7 @@
     font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
     border-radius: 999px; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.28);
 }
-.tm-hero h2 { font-family: "Space Grotesk","Inter",sans-serif; margin: 0 0 4px; font-size: 1.55rem; font-weight: 700; color: #fff; }
+.tm-hero h2 { font-family: "Inter","Inter",sans-serif; margin: 0 0 4px; font-size: 1.55rem; font-weight: 700; color: #fff; }
 .tm-hero p { margin: 0; color: rgba(255,255,255,.82); font-size: .9rem; }
 .tm-hero-actions { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; }
 .tm-hero-actions .btn-light { color: var(--erp-primary, #4e73df); font-weight: 600; }
@@ -90,7 +90,7 @@
     color: var(--bs-secondary-color, #8a929b); margin: 0 0 2px; font-weight: 600;
 }
 .tm-ministat .tm-label .up { color: #1cc88a; margin-right: 3px; }
-.tm-ministat .tm-value { font-family: "Space Grotesk", "Inter", sans-serif; font-size: 1.9rem; font-weight: 700; line-height: 1; color: var(--bs-emphasis-color); }
+.tm-ministat .tm-value { font-family: "Inter", "Inter", sans-serif; font-size: 1.9rem; font-weight: 700; line-height: 1; color: var(--bs-emphasis-color); }
 
 /* Icon gradient variants */
 .tm-ic-blue   { background: linear-gradient(135deg,#4e73df,#224abe); }

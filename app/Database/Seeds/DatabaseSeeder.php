@@ -121,8 +121,8 @@ class DatabaseSeeder extends Seeder
         };
         $all = ['view', 'add', 'edit', 'delete', 'print', 'export', 'approve'];
 
-        // Admin — full access to most modules, but NOT the Access Control group.
-        foreach (['dashboard', 'users', 'user_types', 'roles', 'activity_logs', 'login_logs', 'notifications'] as $m) {
+        // Admin — full access to most modules, but NOT Access Control or Logs.
+        foreach (['dashboard', 'users', 'user_types', 'roles', 'notifications'] as $m) {
             $grant('admin', $m, $all);
         }
         // Manager — manage users, view supporting masters.
@@ -169,6 +169,16 @@ class DatabaseSeeder extends Seeder
                 'role_id' => $roleIds[$u['role']],
             ]);
         }
+
+        // ---------------------------------------------------------------
+        // 7. Web-app settings, the Settings module + control hierarchy
+        // ---------------------------------------------------------------
+        $this->call(AppSettingsSeeder::class);
+
+        // ---------------------------------------------------------------
+        // 8. Calculator module + access
+        // ---------------------------------------------------------------
+        $this->call(CalculatorSeeder::class);
     }
 
     /**

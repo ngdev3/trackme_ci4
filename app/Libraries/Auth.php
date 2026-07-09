@@ -104,9 +104,11 @@ class Auth
     /**
      * Sign a user in from a verified social (OAuth) profile.
      *
-     * Recognises an existing account by provider id or email (preventing
-     * duplicates), or creates a fresh passwordless account for new users, then
-     * establishes the normal app session. Returns [success(bool), message].
+     * Only pre-existing database accounts may sign in: the profile is matched
+     * by linked provider id first, then by email. If no account matches, the
+     * sign-in is refused (no self-service account is created). On the first
+     * social login the provider identity is linked to the matched account.
+     * Returns [success(bool), message].
      */
     public function loginWithOAuth(OAuthUserProfile $profile): array
     {
@@ -118,9 +120,8 @@ class Auth
         }
 
         // Match an existing account: by linked provider id first, then email.
-        $user  = $this->users->findByProvider($profile->provider, $profile->providerId)
+        $user = $this->users->findByProvider($profile->provider, $profile->providerId)
             ?? $this->users->where('email', $profile->email)->first();
-        $isNew = false;
 
         if ($user) {
             if ((int) $user['status'] !== 1) {
@@ -140,14 +141,20 @@ class Auth
                 $this->users->update($user['id'], $patch);
                 $user = array_merge($user, $patch);
             }
+            $isNew = false;
         } else {
+            // Gmail sign-up: create a fresh passwordless account for a new email.
             $newId = $this->createOAuthUser($profile);
             if (! $newId) {
-                return [false, 'We could not create your account. Please contact the administrator.'];
+                return [false, 'We could not create your account. Please try again or contact the administrator.'];
             }
             $user  = $this->users->find($newId);
             $isNew = true;
         }
+
+        // Flag so the caller can route a brand-new user through onboarding
+        // (company creation) instead of straight to the dashboard.
+        $this->session->set('oauth_is_new_user', $isNew);
 
         $this->establishSession($user);
         $this->users->update($user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
@@ -170,8 +177,51 @@ class Auth
         }
 
         return [true, $isNew
-            ? 'Welcome, ' . $user['name'] . '! Your account has been created.'
+            ? 'Welcome, ' . $user['name'] . '! Let\'s set up your company.'
             : 'Welcome back, ' . $user['name'] . '!'];
+    }
+
+    /**
+     * Create a new passwordless account from a verified social profile. New
+     * self-service users get the read-only Viewer role by default; their real
+     * access comes from their company membership (owner/admin) once they create
+     * a company during onboarding.
+     */
+    protected function createOAuthUser(OAuthUserProfile $profile): ?int
+    {
+        $id = $this->users->insert([
+            'name'          => $profile->name !== '' ? $profile->name : 'User',
+            'email'         => $profile->email,
+            'username'      => $this->users->generateUniqueUsername($profile->email ?: $profile->name),
+            'password'      => null,
+            'auth_provider' => $profile->provider,
+            'provider_id'   => $profile->providerId,
+            'avatar_url'    => $profile->picture,
+            'user_type_id'  => $this->defaultTypeId('viewer'),
+            'account_type'  => 'customer', // Gmail sign-ups are tenant customers
+            'status'        => 1,
+        ], true);
+
+        if (! $id) {
+            log_message('error', '[OAuth] user create failed: ' . implode(' ', $this->users->errors() ?: []));
+            return null;
+        }
+        if ($roleId = $this->defaultRoleId('viewer')) {
+            $this->users->syncRoles((int) $id, [$roleId]);
+        }
+        return (int) $id;
+    }
+
+    protected function defaultTypeId(string $code): ?int
+    {
+        $row = Database::connect()->table('user_types')->select('id')->where('code', $code)->get()->getRowArray();
+        return $row ? (int) $row['id'] : null;
+    }
+
+    protected function defaultRoleId(string $code): ?int
+    {
+        $row = Database::connect()->table('roles')->select('id')->where('code', $code)->get()->getRowArray();
+        return $row ? (int) $row['id'] : null;
     }
 
     /**
@@ -230,45 +280,58 @@ class Auth
     }
 
     /**
-     * Create a new passwordless account from a social profile. New self-service
-     * users get the read-only Viewer type/role by default (least privilege).
+     * Start impersonating another user (Super Admin "access account"). Stores
+     * the original admin so it can be restored, then establishes the target's
+     * session. Callers MUST verify the current user is a Super Admin first.
      */
-    protected function createOAuthUser(OAuthUserProfile $profile): ?int
+    public function impersonate(int $targetId): array
     {
-        $id = $this->users->insert([
-            'name'          => $profile->name !== '' ? $profile->name : 'User',
-            'email'         => $profile->email,
-            'username'      => $this->users->generateUniqueUsername($profile->email ?: $profile->name),
-            'password'      => null,
-            'auth_provider' => $profile->provider,
-            'provider_id'   => $profile->providerId,
-            'avatar_url'    => $profile->picture,
-            'user_type_id'  => $this->defaultTypeId('viewer'),
-            'status'        => 1,
-        ], true);
-
-        if (! $id) {
-            log_message('error', '[OAuth] user create failed: ' . implode(' ', $this->users->errors() ?: []));
-            return null;
+        $target = $this->users->find($targetId);
+        if (! $target) {
+            return [false, 'User not found.'];
+        }
+        if ((int) $target['id'] === (int) $this->id()) {
+            return [false, 'You cannot impersonate your own account.'];
+        }
+        if ((int) $target['status'] !== 1) {
+            return [false, 'That account is inactive and cannot be accessed.'];
         }
 
-        if ($roleId = $this->defaultRoleId('viewer')) {
-            $this->users->syncRoles((int) $id, [$roleId]);
+        $adminId   = (int) $this->id();
+        $adminName = (string) $this->session->get('user_name');
+
+        Services::company()->clear();          // drop the admin's (empty) firm context
+        $this->establishSession($target);       // become the target user
+        $this->session->set([
+            'impersonator_id'   => $adminId,
+            'impersonator_name' => $adminName,
+        ]);
+
+        return [true, 'You are now viewing the account of ' . $target['name'] . '.'];
+    }
+
+    /** Return from impersonation to the original Super Admin account. */
+    public function stopImpersonating(): array
+    {
+        $adminId = (int) $this->session->get('impersonator_id');
+        if ($adminId === 0) {
+            return [false, 'You are not impersonating anyone.'];
         }
+        $admin = $this->users->find($adminId);
+        $this->session->remove(['impersonator_id', 'impersonator_name']);
+        if (! $admin) {
+            $this->logout();
+            return [false, 'Your original account could not be restored. Please sign in again.'];
+        }
+        Services::company()->clear();
+        $this->establishSession($admin);
 
-        return (int) $id;
+        return [true, 'Welcome back — restored your Super Admin session.'];
     }
 
-    protected function defaultTypeId(string $code): ?int
+    public function isImpersonating(): bool
     {
-        $row = Database::connect()->table('user_types')->select('id')->where('code', $code)->get()->getRowArray();
-        return $row ? (int) $row['id'] : null;
-    }
-
-    protected function defaultRoleId(string $code): ?int
-    {
-        $row = Database::connect()->table('roles')->select('id')->where('code', $code)->get()->getRowArray();
-        return $row ? (int) $row['id'] : null;
+        return (bool) $this->session->get('impersonator_id');
     }
 
     /**
@@ -302,7 +365,7 @@ class Auth
         $this->loginLogs->closeSession($logId ? (int) $logId : null);
         // Expire remember cookie.
         service('response')->deleteCookie('erp_remember');
-        $this->session->remove(['user_id', 'user_name', 'user_email', 'username', 'role_ids', 'is_superadmin', 'login_log_id']);
+        $this->session->remove(['user_id', 'user_name', 'user_email', 'username', 'role_ids', 'is_superadmin', 'login_log_id', 'account_type', 'company_id', 'company_name', 'company_role', 'company_permissions', 'impersonator_id', 'impersonator_name']);
         $this->session->destroy();
     }
 
@@ -322,6 +385,7 @@ class Auth
             'username'     => $user['username'],
             'role_ids'     => $roleIds,
             'is_superadmin'=> $isSuper,
+            'account_type' => $user['account_type'] ?? 'customer',
         ]);
         // Regenerate the session id to prevent fixation. No-op outside an HTTP
         // request (CLI has no active session to regenerate).

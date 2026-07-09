@@ -16,7 +16,8 @@ class UserModel extends Model
     protected $allowedFields = [
         'name', 'email', 'mobile', 'username', 'password', 'user_type_id',
         'profile_image', 'status', 'remember_token', 'last_login_at',
-        'auth_provider', 'provider_id', 'avatar_url',
+        'auth_provider', 'provider_id', 'avatar_url', 'account_type',
+        'must_change_password', 'mobile_login_enabled', 'web_push_enabled', 'parent_id',
     ];
 
     protected $validationRules = [
@@ -116,5 +117,51 @@ class UserModel extends Model
     public function countActive(): int
     {
         return $this->where('status', 1)->countAllResults();
+    }
+
+    /**
+     * All user ids beneath $rootId in the control hierarchy (children,
+     * grandchildren, …), not including $rootId itself. Walks parent_id
+     * breadth-first with a visited guard so cycles can't loop forever.
+     *
+     * @return list<int>
+     */
+    public function descendantIds(int $rootId): array
+    {
+        $collected = [];
+        $frontier  = [$rootId];
+        $guard     = 0;
+        while ($frontier !== [] && $guard++ < 100) {
+            $rows = $this->db->table('users')
+                ->select('id')
+                ->whereIn('parent_id', $frontier)
+                ->where('deleted_at', null)
+                ->get()->getResultArray();
+            $next = [];
+            foreach ($rows as $r) {
+                $id = (int) $r['id'];
+                if (! in_array($id, $collected, true)) {
+                    $collected[] = $id;
+                    $next[]      = $id;
+                }
+            }
+            $frontier = $next;
+        }
+        return $collected;
+    }
+
+    /**
+     * Ids the given user is allowed to manage. Super admins get null (meaning
+     * "no restriction — everyone"); everyone else gets their descendants plus
+     * themselves.
+     *
+     * @return list<int>|null
+     */
+    public function manageableIds(int $userId, bool $isSuper): ?array
+    {
+        if ($isSuper) {
+            return null;
+        }
+        return array_values(array_unique(array_merge([$userId], $this->descendantIds($userId))));
     }
 }

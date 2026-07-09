@@ -17,7 +17,7 @@
             closeButton: true,
             progressBar: true,
             newestOnTop: true,
-            positionClass: 'toast-top-right',
+            positionClass: 'toast-bottom-right',
             timeOut: 3500,
             extendedTimeOut: 1500,
             showMethod: 'fadeIn',
@@ -33,12 +33,26 @@
     window.erpNotify = function (type, message, title) {
         type = ICONS[type] ? type : 'info';
         if (window.toastr) {
+            window.toastr.options.positionClass = 'toast-bottom-right';
+            var container = document.getElementById('toast-container');
+            if (container) {
+                container.classList.remove(
+                    'toast-top-right',
+                    'toast-top-left',
+                    'toast-top-center',
+                    'toast-top-full-width',
+                    'toast-bottom-left',
+                    'toast-bottom-center',
+                    'toast-bottom-full-width'
+                );
+                container.classList.add('toast-bottom-right');
+            }
             window.toastr[type](message, title || '');
             return;
         }
         // Fallback to SweetAlert2 toast.
         if (window.Swal) {
-            Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true })
+            Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 3500, timerProgressBar: true })
                 .fire({ icon: type, title: message });
         } else {
             alert(message);

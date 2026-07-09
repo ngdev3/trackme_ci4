@@ -32,10 +32,41 @@ $notificationIconMap = [
                     <i class="bi bi-list"></i>
                 </a>
             </li>
+            <?php
+            // Build the searchable destinations for the top-bar quick search,
+            // filtered by what this user can actually reach.
+            helper(['company', 'auth']);
+            $navSearch = [];
+            $nsAdd = static function (string $label, string $url, string $icon, string $kw = '') use (&$navSearch) {
+                $navSearch[] = ['label' => $label, 'url' => site_url($url), 'icon' => $icon, 'kw' => $kw];
+            };
+            $nsAdd('Dashboard', 'dashboard', 'bi-speedometer2', 'home overview');
+            if (function_exists('can') && can('transactions', 'view')) {
+                $nsAdd('Hisaab Kitaab Vahi', 'transactions', 'bi-journal-text', 'jama naam transactions ledger');
+                $nsAdd('Account Statement', 'transactions/statement', 'bi-file-earmark-text', 'party ledger');
+            }
+            if (function_exists('firm_can') && firm_can('rokad')) {
+                $nsAdd('Rokad Parcha', 'rokad', 'bi-cash-stack', 'cash book rokad');
+            }
+            if (function_exists('firm_can') && firm_can('accounting')) {
+                $nsAdd('Ledgers', 'accounting/ledgers', 'bi-journals', 'accounting');
+                $nsAdd('Day Book (Vouchers)', 'accounting/vouchers', 'bi-receipt', 'vouchers accounting');
+            }
+            if (function_exists('can') && can('notes', 'view')) { $nsAdd('Notes', 'notes', 'bi-sticky', 'notes'); }
+            if (function_exists('can') && can('reminders', 'view')) { $nsAdd('Reminders', 'reminders', 'bi-alarm', 'reminders'); }
+            if (function_exists('can') && can('passwords', 'view')) { $nsAdd('Password Manager', 'passwords', 'bi-shield-lock', 'password vault'); }
+            if (function_exists('firm_can') && firm_can('firm_users')) { $nsAdd('Firm Users', 'firm-users', 'bi-people', 'staff team'); }
+            if (session('account_type') !== 'firm_user') { $nsAdd('Company Profile', 'company/profile', 'bi-building', 'firm company switch'); }
+            $nsAdd('My Profile', 'profile', 'bi-person', 'account profile');
+            $nsAdd('Settings', 'settings', 'bi-gear', 'settings preferences');
+            $nsAdd('Help & Support', 'help', 'bi-life-preserver', 'help support faq contact whatsapp email');
+            ?>
             <li class="nav-item topbar-search-item d-none d-md-block ms-1">
-                <div class="top-search">
+                <div class="top-search" id="navSearchBox">
                     <i class="bi bi-search"></i>
-                    <input type="search" placeholder="Search ERP option..." aria-label="Search ERP option">
+                    <input type="search" id="navSearchInput" placeholder="Search ERP option..." aria-label="Search ERP option"
+                           autocomplete="off" role="combobox" aria-expanded="false" aria-controls="navSearchResults">
+                    <div class="nav-search-results" id="navSearchResults" role="listbox" hidden></div>
                 </div>
             </li>
         </ul>
@@ -51,16 +82,16 @@ $notificationIconMap = [
             $switchReturnQs = (string) service('request')->getServer('QUERY_STRING');
             $switchReturn   = urlencode(uri_string() . ($switchReturnQs !== '' ? '?' . $switchReturnQs : ''));
             ?>
-            <li class="nav-item topbar-company d-none d-xxl-block">
-                <div class="company-chip">
+            <li class="nav-item topbar-company d-none d-md-flex align-items-center">
+                <a class="company-chip text-decoration-none" href="<?= site_url('company/profile') ?>" title="Active company — click to view / switch">
+                    <i class="bi bi-building-fill company-chip-ic"></i>
                     <?php if ($activeCompany): ?>
-                        <span data-current-firm-name><?= esc($activeCompany['name']) ?></span>
-                        <strong>FY</strong>
-                        <span data-current-firm-code><?= esc(date('Y', strtotime($activeCompany['financial_year_from']))) ?></span>
+                        <span class="company-chip-name" data-current-firm-name><?= esc($activeCompany['name']) ?></span>
+                        <span class="company-chip-fy"><strong>FY</strong> <span data-current-firm-code><?= esc(date('Y', strtotime($activeCompany['financial_year_from']))) ?></span></span>
                     <?php else: ?>
-                        <span data-current-firm-name>No company</span>
+                        <span class="company-chip-name" data-current-firm-name>No company</span>
                     <?php endif; ?>
-                </div>
+                </a>
             </li>
 
             <li class="nav-item dropdown topbar-firm">
@@ -165,6 +196,11 @@ $notificationIconMap = [
             </li>
 
             <li class="nav-item">
+                <a class="nav-link nav-square" href="<?= site_url('help') ?>" title="Help &amp; Support">
+                    <i class="bi bi-question-circle"></i>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link nav-square" href="<?= site_url('dashboard') ?>" title="Go to dashboard">
                     <i class="bi bi-house-door"></i>
                 </a>
@@ -218,6 +254,7 @@ $notificationIconMap = [
                     <a href="<?= site_url('profile') ?>" class="dropdown-item"><i class="bi bi-person me-2"></i>My Profile</a>
                     <a href="<?= site_url('profile') ?>#change-password" class="dropdown-item"><i class="bi bi-key me-2"></i>Change Password</a>
                     <a href="<?= site_url('my-login-history') ?>" class="dropdown-item"><i class="bi bi-clock-history me-2"></i>Login History</a>
+                    <a href="<?= site_url('help') ?>" class="dropdown-item"><i class="bi bi-life-preserver me-2"></i>Help &amp; Support</a>
                     <a href="#" class="dropdown-item" data-theme-toggle><i class="bi bi-moon-stars me-2"></i>Toggle Theme</a>
                     <div class="dropdown-divider"></div>
                     <div class="profile-palette">
@@ -235,3 +272,77 @@ $notificationIconMap = [
         </ul>
     </div>
 </nav>
+
+<!-- Top-bar quick search (client-side over the user's accessible destinations) -->
+<style>
+    .top-search { position: relative; }
+    .nav-search-results {
+        position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 1080;
+        background: var(--bs-body-bg, #fff); border: 1px solid var(--erp-border, rgba(0,0,0,.12));
+        border-radius: 12px; box-shadow: 0 12px 34px rgba(15,23,42,.18); padding: 6px; max-height: 60vh; overflow-y: auto;
+    }
+    .nav-search-item {
+        display: flex; align-items: center; gap: .6rem; padding: .5rem .6rem; border-radius: 8px;
+        color: inherit; text-decoration: none; cursor: pointer; font-size: .92rem;
+    }
+    .nav-search-item .bi { font-size: 1.05rem; opacity: .8; width: 1.2rem; text-align: center; }
+    .nav-search-item small { color: var(--bs-secondary-color, #6c757d); margin-left: auto; }
+    .nav-search-item.active, .nav-search-item:hover { background: var(--bs-primary-bg-subtle, #e7f1ff); }
+    .nav-search-empty { padding: .75rem .6rem; color: var(--bs-secondary-color, #6c757d); font-size: .9rem; text-align: center; }
+</style>
+<script>
+(function () {
+    var INDEX = <?= json_encode(array_values($navSearch ?? []), JSON_UNESCAPED_SLASHES) ?>;
+    var input = document.getElementById('navSearchInput');
+    var panel = document.getElementById('navSearchResults');
+    if (!input || !panel) { return; }
+    var active = -1, shown = [];
+
+    function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+    function render(list) {
+        shown = list; active = -1;
+        if (!list.length) { panel.innerHTML = '<div class="nav-search-empty">No matches. Try “ledger”, “password”, “help”…</div>'; }
+        else {
+            panel.innerHTML = list.map(function (it, i) {
+                return '<a class="nav-search-item" href="' + it.url + '" data-i="' + i + '">'
+                    + '<i class="bi ' + esc(it.icon) + '"></i><span>' + esc(it.label) + '</span></a>';
+            }).join('');
+        }
+        panel.hidden = false; input.setAttribute('aria-expanded', 'true');
+    }
+
+    function close() { panel.hidden = true; input.setAttribute('aria-expanded', 'false'); active = -1; }
+
+    function search(q) {
+        q = q.trim().toLowerCase();
+        if (!q) { close(); return; }
+        var res = INDEX.filter(function (it) {
+            return (it.label + ' ' + (it.kw || '')).toLowerCase().indexOf(q) !== -1;
+        }).slice(0, 8);
+        render(res);
+    }
+
+    function highlight() {
+        panel.querySelectorAll('.nav-search-item').forEach(function (el, i) {
+            el.classList.toggle('active', i === active);
+        });
+    }
+
+    input.addEventListener('input', function () { search(input.value); });
+    input.addEventListener('focus', function () { if (input.value.trim()) { search(input.value); } });
+    input.addEventListener('keydown', function (e) {
+        if (panel.hidden) { return; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, shown.length - 1); highlight(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); highlight(); }
+        else if (e.key === 'Enter') {
+            e.preventDefault();
+            var pick = active >= 0 ? shown[active] : shown[0];
+            if (pick) { window.location.href = pick.url; }
+        } else if (e.key === 'Escape') { close(); input.blur(); }
+    });
+    document.addEventListener('click', function (e) {
+        if (!panel.hidden && !e.target.closest('#navSearchBox')) { close(); }
+    });
+})();
+</script>

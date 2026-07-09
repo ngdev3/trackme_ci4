@@ -12,11 +12,13 @@ class ProfileController extends BaseController
     public function index()
     {
         $oauth = config('OAuth');
+        $user  = current_user();
 
         return $this->render('index', [
             'title'         => 'My Profile',
             'breadcrumb'    => [['label' => 'My Profile']],
-            'row'           => current_user(),
+            'row'           => $user,
+            'score'         => profile_score($user),
             'errors'        => session()->getFlashdata('errors') ?? [],
             'oauthProviders'=> $oauth->providers,
             'oauthEnabled'  => array_filter(
@@ -39,7 +41,7 @@ class ProfileController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        (new UserModel())->allowValidation(false)->update($id, [
+        (new UserModel())->skipValidation(true)->update($id, [
             'name'   => $this->request->getPost('name'),
             'email'  => $this->request->getPost('email'),
             'mobile' => $this->request->getPost('mobile'),
@@ -47,6 +49,57 @@ class ProfileController extends BaseController
 
         activity_log('Profile', 'Edit', 'Updated own profile');
         return redirect()->to(site_url('profile'))->with('success', 'Profile updated.');
+    }
+
+    /** Directory (under public/) where user avatars are stored. */
+    private const AVATAR_DIR = FCPATH . 'uploads/users/';
+
+    public function uploadAvatar()
+    {
+        if (! $this->validate([
+            'avatar' => [
+                'label' => 'Photo',
+                'rules' => 'uploaded[avatar]|is_image[avatar]|max_size[avatar,4096]'
+                    . '|mime_in[avatar,image/png,image/jpeg,image/jpg,image/webp,image/gif]',
+            ],
+        ])) {
+            return redirect()->to(site_url('profile'))->with('error', implode(' ', $this->validator->getErrors()));
+        }
+
+        $file = $this->request->getFile('avatar');
+        if (! $file || ! $file->isValid()) {
+            return redirect()->to(site_url('profile'))->with('error', 'Upload failed. Please try again.');
+        }
+
+        if (! is_dir(self::AVATAR_DIR)) {
+            @mkdir(self::AVATAR_DIR, 0755, true);
+        }
+
+        $newName = 'u' . user_id() . '_' . bin2hex(random_bytes(6)) . '.' . $file->getExtension();
+        $file->move(self::AVATAR_DIR, $newName);
+
+        // Remove the previous uploaded file (if any) so old avatars don't pile up.
+        $old = current_user()['profile_image'] ?? '';
+        if ($old && is_file(self::AVATAR_DIR . $old)) {
+            @unlink(self::AVATAR_DIR . $old);
+        }
+
+        (new UserModel())->skipValidation(true)->update(user_id(), ['profile_image' => $newName]);
+        activity_log('Profile', 'Edit', 'Updated profile photo');
+
+        return redirect()->to(site_url('profile'))->with('success', 'Profile photo updated.');
+    }
+
+    public function removeAvatar()
+    {
+        $old = current_user()['profile_image'] ?? '';
+        if ($old && is_file(self::AVATAR_DIR . $old)) {
+            @unlink(self::AVATAR_DIR . $old);
+        }
+        (new UserModel())->skipValidation(true)->update(user_id(), ['profile_image' => null]);
+        activity_log('Profile', 'Edit', 'Removed profile photo');
+
+        return redirect()->to(site_url('profile'))->with('success', 'Profile photo removed.');
     }
 
     public function changePassword()
@@ -65,8 +118,9 @@ class ProfileController extends BaseController
             return redirect()->back()->with('error', 'Current password is incorrect.');
         }
 
-        (new UserModel())->allowValidation(false)->update(user_id(), [
-            'password' => password_hash((string) $this->request->getPost('new_password'), PASSWORD_DEFAULT),
+        (new UserModel())->skipValidation(true)->update(user_id(), [
+            'password'             => password_hash((string) $this->request->getPost('new_password'), PASSWORD_DEFAULT),
+            'must_change_password' => 0,
         ]);
 
         activity_log('Profile', 'Edit', 'Changed own password');

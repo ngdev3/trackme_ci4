@@ -51,6 +51,38 @@ if (! function_exists('can')) {
     }
 }
 
+if (! function_exists('account_type')) {
+    /**
+     * Top-level account type of the signed-in user:
+     * 'super_admin' | 'customer' | 'firm_user' (or null for guests).
+     */
+    function account_type(): ?string
+    {
+        return Services::session()->get('account_type');
+    }
+}
+
+if (! function_exists('is_super_admin_account')) {
+    function is_super_admin_account(): bool
+    {
+        return account_type() === 'super_admin';
+    }
+}
+
+if (! function_exists('is_customer')) {
+    function is_customer(): bool
+    {
+        return account_type() === 'customer';
+    }
+}
+
+if (! function_exists('is_firm_user')) {
+    function is_firm_user(): bool
+    {
+        return account_type() === 'firm_user';
+    }
+}
+
 if (! function_exists('activity_log')) {
     /**
      * Record an activity-log entry.

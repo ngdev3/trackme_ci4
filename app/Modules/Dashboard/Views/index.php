@@ -30,6 +30,12 @@ $routine = array(
     array('time' => '14:00', 'title' => 'Module audit', 'note' => 'Review permissions, new activity, and role coverage.', 'icon' => 'bi-grid-3x3-gap'),
     array('time' => '17:30', 'title' => 'Closeout snapshot', 'note' => 'Confirm login health and export anything pending.', 'icon' => 'bi-clipboard2-check'),
 );
+
+// Dashboard widget visibility from web-app Settings (default: show everything).
+$dashWidgets = settings()->getArray('dashboard_widgets', array());
+$showWidget  = static function ($key) use ($dashWidgets) {
+    return ! array_key_exists($key, $dashWidgets) || ! empty($dashWidgets[$key]);
+};
 ?>
 
 <section class="dash-landing dash-reveal">
@@ -59,6 +65,7 @@ $routine = array(
     </div>
 </section>
 
+<?php if ($showWidget('weather')): ?>
 <section class="dash-weather-band">
     <article class="dash-card dash-weather dash-reveal weather-loading" id="weatherCard">
         <div class="weather-sky" aria-hidden="true">
@@ -99,7 +106,9 @@ $routine = array(
         </div>
     </article>
 </section>
+<?php endif; ?>
 
+<?php if ($showWidget('stats')): ?>
 <section class="dash-kpi-grid">
     <article class="dash-card dash-kpi dash-reveal">
         <span class="dash-card-icon blue"><i class="bi bi-people"></i></span>
@@ -134,6 +143,7 @@ $routine = array(
         <small><?= (int) (isset($k['activity_today']) ? $k['activity_today'] : 0) ?> actions today</small>
     </article>
 </section>
+<?php endif; ?>
 
 <section class="dash-routine-grid">
     <article class="dash-card dash-routine dash-reveal">

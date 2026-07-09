@@ -30,7 +30,7 @@ abstract class BaseController extends Controller
      *
      * @var list<string>
      */
-    protected $helpers = ['url', 'form', 'auth', 'menu', 'ui', 'text'];
+    protected $helpers = ['url', 'form', 'auth', 'menu', 'ui', 'text', 'settings', 'format'];
 
     /**
      * @return void
@@ -39,6 +39,16 @@ abstract class BaseController extends Controller
     {
         // Caution: Do not edit this line.
         parent::initController($request, $response, $logger);
+
+        // Apply the configured display timezone app-wide (Settings → Localization).
+        try {
+            $tz = (string) (setting('timezone') ?: config('App')->appTimezone ?: 'UTC');
+            if ($tz !== '' && in_array($tz, timezone_identifiers_list(), true)) {
+                date_default_timezone_set($tz);
+            }
+        } catch (\Throwable $e) {
+            // Settings/DB not ready (e.g. install) — keep the framework default.
+        }
     }
 
     /**

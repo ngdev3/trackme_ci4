@@ -94,13 +94,18 @@ if (! function_exists('render_firm_sidebar')) {
             ]],
             ['notes', 'Notes', 'bi bi-sticky', 'notes', []],
             ['reminders', 'Reminders', 'bi bi-alarm', 'reminders', []],
-            ['passwords', 'Password Manager', 'bi bi-shield-lock', 'passwords', []],
+            ['passwords', 'Password Manager', 'bi bi-shield-lock', null, [
+                ['Password List', 'passwords/list'],
+                ['Add Password', 'passwords/add'],
+            ]],
             ['firm_users', 'Firm Users', 'bi bi-people', 'firm-users', []],
+            ['help', 'Help &amp; Support', 'bi bi-life-preserver', 'help', []],
         ];
 
         $html = '';
         foreach ($menu as [$code, $label, $icon, $url, $children]) {
-            if (! firm_can($code)) {
+            // Help & Support is open to every signed-in user.
+            if ($code !== 'help' && ! firm_can($code)) {
                 continue;
             }
             // Password Manager access is governed by app RBAC (its routes use a

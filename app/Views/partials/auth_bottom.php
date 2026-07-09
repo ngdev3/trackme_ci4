@@ -19,8 +19,8 @@
     </script>
     <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
-    <script src="<?= base_url('assets/vendor/jquery/jquery.min.js') ?>"></script>
-    <script src="<?= base_url('assets/js/auth.js') ?>"></script>
-    <script src="<?= base_url('assets/js/i18n.js') ?>"></script>
+    <script src="<?= erp_asset('assets/vendor/jquery/jquery.min.js') ?>"></script>
+    <script src="<?= erp_asset('assets/js/auth.js') ?>"></script>
+    <script src="<?= erp_asset('assets/js/i18n.js') ?>"></script>
 </body>
 </html>

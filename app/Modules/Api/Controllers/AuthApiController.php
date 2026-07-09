@@ -1,0 +1,132 @@
+<?php
+
+namespace Modules\Api\Controllers;
+
+use App\Models\ApiTokenModel;
+use App\Models\PasswordResetModel;
+use App\Models\UserModel;
+
+/**
+ * Stateless auth API for the mobile app.
+ *
+ *   POST /api/v1/auth/login            {login, password}
+ *   POST /api/v1/auth/forgot-password  {email}
+ *   POST /api/v1/auth/change-password  (Bearer) {current_password, new_password}
+ *   POST /api/v1/auth/logout           (Bearer)
+ */
+class AuthApiController extends BaseApiController
+{
+    /**
+     * Authenticate and issue a bearer token. Enforces the per-user mobile-login
+     * toggle and surfaces the must_change_password flag so the app can route the
+     * user to a change-password screen.
+     */
+    public function login()
+    {
+        $login    = trim((string) $this->input('login', ''));
+        $password = (string) $this->input('password', '');
+
+        if ($login === '' || $password === '') {
+            return $this->failValidationErrors('login and password are required.');
+        }
+
+        $user = (new UserModel())->findByLogin($login);
+        if (! $user || ! $user['password'] || ! password_verify($password, $user['password'])) {
+            return $this->failUnauthorized('Invalid credentials.');
+        }
+        if ((int) $user['status'] !== 1) {
+            return $this->failForbidden('Your account is inactive.');
+        }
+        if ((int) ($user['mobile_login_enabled'] ?? 1) !== 1) {
+            return $this->failForbidden('Mobile app access is disabled for this account.');
+        }
+
+        $token = (new ApiTokenModel())->issue((int) $user['id'], 'mobile');
+        (new UserModel())->update((int) $user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
+
+        return $this->respond([
+            'status'                => 'success',
+            'token'                 => $token,
+            'token_type'            => 'Bearer',
+            'must_change_password'  => (int) ($user['must_change_password'] ?? 0) === 1,
+            'user'                  => $this->publicUser($user),
+        ]);
+    }
+
+    /**
+     * Generate a password-reset token. Always responds the same way to avoid
+     * account enumeration.
+     */
+    public function forgotPassword()
+    {
+        $email = trim((string) $this->input('email', ''));
+        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->failValidationErrors('A valid email is required.');
+        }
+
+        $user = (new UserModel())->where('email', $email)->first();
+        if ($user) {
+            $token = bin2hex(random_bytes(32));
+            (new PasswordResetModel())->insert([
+                'email'      => $email,
+                'token'      => hash('sha256', $token),
+                'expires_at' => date('Y-m-d H:i:s', time() + 3600),
+                'created_at' => date('Y-m-d H:i:s'),
+            ]);
+            // In production this token is emailed; logged here for the build.
+            log_message('info', 'API password reset for {email}: {token}', ['email' => $email, 'token' => $token]);
+        }
+
+        return $this->respond([
+            'status'  => 'success',
+            'message' => 'If that email exists, a password reset link has been sent.',
+        ]);
+    }
+
+    /**
+     * Change the authenticated user's password and clear must_change_password.
+     */
+    public function changePassword()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+
+        $current = (string) $this->input('current_password', '');
+        $new     = (string) $this->input('new_password', '');
+
+        if (strlen($new) < 8) {
+            return $this->failValidationErrors('New password must be at least 8 characters.');
+        }
+        if (! $user['password'] || ! password_verify($current, $user['password'])) {
+            return $this->failValidationErrors('Current password is incorrect.');
+        }
+        if (password_verify($new, $user['password'])) {
+            return $this->failValidationErrors('New password must differ from the current one.');
+        }
+
+        (new UserModel())->update((int) $user['id'], [
+            'password'             => password_hash($new, PASSWORD_DEFAULT),
+            'must_change_password' => 0,
+        ]);
+
+        return $this->respond(['status' => 'success', 'message' => 'Password updated.']);
+    }
+
+    /**
+     * Revoke the presented token.
+     */
+    public function logout()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $header = (string) $this->request->getHeaderLine('Authorization');
+        if (preg_match('/Bearer\s+([a-f0-9]{64})/i', $header, $m)) {
+            (new ApiTokenModel())->where('token', $m[1])->delete();
+        }
+        return $this->respond(['status' => 'success', 'message' => 'Logged out.']);
+    }
+}

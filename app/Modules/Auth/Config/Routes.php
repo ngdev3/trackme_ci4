@@ -21,6 +21,11 @@ $routes->group('', ['namespace' => 'Modules\Auth\Controllers'], static function 
 
     // Authenticated
     $routes->get('logout', 'AuthController::logout', ['filter' => 'auth']);
+    // Return from Super Admin impersonation (reachable while impersonating any user).
+    $routes->get('impersonate/stop', 'AuthController::stopImpersonating', ['filter' => 'auth']);
+    // Forced / self-service password change (the mustchange filter lets these through).
+    $routes->get('account/change-password', 'AuthController::changePassword', ['filter' => 'auth']);
+    $routes->post('account/change-password', 'AuthController::updateForcedPassword', ['filter' => 'auth']);
     // Connect / disconnect a social account from the profile page.
     $routes->get('account/link/(:segment)', 'SocialAuthController::link/$1', ['filter' => 'auth']);
     $routes->post('account/unlink/(:segment)', 'SocialAuthController::unlink/$1', ['filter' => 'auth']);

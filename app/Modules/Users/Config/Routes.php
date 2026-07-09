@@ -6,6 +6,7 @@ use CodeIgniter\Router\RouteCollection;
 
 $routes->group('users', ['namespace' => 'Modules\Users\Controllers'], static function (RouteCollection $routes) {
     $routes->get('/', 'UserController::index', ['filter' => 'permission:users,view']);
+    $routes->get('list', 'UserController::list', ['filter' => 'permission:users,view']);
     $routes->get('create', 'UserController::create', ['filter' => 'permission:users,add']);
     $routes->post('store', 'UserController::store', ['filter' => 'permission:users,add']);
     $routes->get('edit/(:num)', 'UserController::edit/$1', ['filter' => 'permission:users,edit']);

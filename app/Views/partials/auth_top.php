@@ -39,14 +39,15 @@ $pos = $positions[array_rand($positions)];
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= esc($pageTitle) ?> &middot; ERP Admin</title>
-    <link rel="stylesheet" href="<?= base_url('assets/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/vendor/bootstrap/bootstrap.min.css') ?>">
+    <title><?= esc($pageTitle) ?> &middot; <?= esc(setting('app_name', 'ERP Admin')) ?></title>
+    <link rel="icon" type="image/svg+xml" href="<?= erp_asset('assets/img/favicon.svg') ?>">
+    <link rel="stylesheet" href="<?= erp_asset('assets/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
+    <link rel="stylesheet" href="<?= erp_asset('assets/vendor/bootstrap/bootstrap.min.css') ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= base_url('assets/css/auth.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/css/i18n.css') ?>">
+    <link rel="stylesheet" href="<?= erp_asset('assets/css/auth.css') ?>">
+    <link rel="stylesheet" href="<?= erp_asset('assets/css/i18n.css') ?>">
     <!-- Gate the login screen until the chosen UI language has been applied -->
     <?= $this->include('partials/lang_boot') ?>
     <style>
@@ -117,7 +118,7 @@ $pos = $positions[array_rand($positions)];
                     <div class="brand-row">
                         <div class="hero-brand-mark"><i class="bi bi-boxes"></i></div>
                         <div>
-                            <b>ERP Admin</b>
+                            <b><?= esc(setting('app_name', 'ERP Admin')) ?></b>
                             <small>Operations Control Suite</small>
                         </div>
                     </div>

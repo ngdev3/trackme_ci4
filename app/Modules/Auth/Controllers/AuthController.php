@@ -39,7 +39,8 @@ class AuthController extends BaseController
         }
 
         activity_log('Auth', 'Login', 'User logged in');
-        return redirect()->to(site_url('dashboard'))->with('success', $message);
+        helper('company');
+        return redirect()->to(post_login_url())->with('success', $message);
     }
 
     public function logout()
@@ -47,6 +48,54 @@ class AuthController extends BaseController
         activity_log('Auth', 'Logout', 'User logged out');
         auth()->logout();
         return redirect()->to(site_url('login'))->with('success', 'You have been logged out.');
+    }
+
+    /** Return from Super Admin impersonation to the original account's dashboard. */
+    public function stopImpersonating()
+    {
+        [$ok, $msg] = auth()->stopImpersonating();
+        return redirect()->to(site_url($ok ? 'dashboard' : 'login'))->with($ok ? 'success' : 'error', $msg);
+    }
+
+    // ---------------------------------------------------------------
+    // Forced password change (must_change_password flag)
+    // ---------------------------------------------------------------
+    public function changePassword()
+    {
+        return view($this->moduleView . 'change_password', [
+            'forced' => (bool) (current_user()['must_change_password'] ?? false),
+            'errors' => session()->getFlashdata('errors') ?? [],
+        ]);
+    }
+
+    public function updateForcedPassword()
+    {
+        $rules = [
+            'current_password' => 'required',
+            'new_password'     => 'required|min_length[8]',
+            'confirm_password' => 'required|matches[new_password]',
+        ];
+        if (! $this->validate($rules)) {
+            return redirect()->back()->with('errors', $this->validator->getErrors());
+        }
+
+        $user = current_user();
+        if (! $user || ! password_verify((string) $this->request->getPost('current_password'), (string) $user['password'])) {
+            return redirect()->back()->with('error', 'Your current password is incorrect.');
+        }
+
+        $new = (string) $this->request->getPost('new_password');
+        if (password_verify($new, (string) $user['password'])) {
+            return redirect()->back()->with('error', 'Please choose a password different from your current one.');
+        }
+
+        (new UserModel())->update((int) $user['id'], [
+            'password'             => password_hash($new, PASSWORD_DEFAULT),
+            'must_change_password' => 0,
+        ]);
+
+        activity_log('Auth', 'Edit', 'Completed a required password change');
+        return redirect()->to(site_url('dashboard'))->with('success', 'Your password has been updated.');
     }
 
     // ---------------------------------------------------------------
@@ -119,8 +168,9 @@ class AuthController extends BaseController
         $user  = $users->where('email', $row['email'])->first();
         if ($user) {
             $users->update($user['id'], [
-                'password'       => password_hash((string) $this->request->getPost('password'), PASSWORD_DEFAULT),
-                'remember_token' => null,
+                'password'             => password_hash((string) $this->request->getPost('password'), PASSWORD_DEFAULT),
+                'remember_token'       => null,
+                'must_change_password' => 0,
             ]);
         }
 

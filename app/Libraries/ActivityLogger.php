@@ -6,8 +6,7 @@ use App\Models\ActivityLogModel;
 use Config\Services;
 
 /**
- * Records important user actions (login, logout, add, edit, delete,
- * permission changes) to the activity_logs table.
+ * Records important user actions to the activity_logs table.
  */
 class ActivityLogger
 {
@@ -22,6 +21,11 @@ class ActivityLogger
     {
         $req     = service('request');
         $session = Services::session();
+
+        $impersonatorId = $session->get('impersonator_id');
+        if ($impersonatorId) {
+            $description = trim($description . ' [Impersonated by user #' . $impersonatorId . ']');
+        }
 
         $this->model->insert([
             'user_id'     => $session->get('user_id'),

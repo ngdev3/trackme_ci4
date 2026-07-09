@@ -1,5 +1,12 @@
 <!-- Footer -->
-<footer class="app-footer">
-    <div class="float-end d-none d-sm-inline">CodeIgniter <?= \CodeIgniter\CodeIgniter::CI_VERSION ?> &middot; AdminLTE 4</div>
-    <strong>&copy; <?= date('Y') ?> ERP Admin.</strong> All rights reserved.
+<footer class="app-footer erp-footer">
+    <div class="erp-footer-brand">
+        <span class="erp-footer-logo"><i class="bi bi-boxes"></i></span>
+        <span class="erp-footer-name"><b><?= esc(setting('app_name', 'ERP Admin')) ?></b></span>
+        <span class="erp-footer-tag">— plan smarter, grow faster</span>
+    </div>
+    <div class="erp-footer-meta">
+        <span class="erp-footer-made">Made with <i class="bi bi-heart-fill"></i> for growing businesses</span>
+        <span class="erp-footer-copy">&copy; <?= date('Y') ?> &middot; All rights reserved</span>
+    </div>
 </footer>

@@ -1,0 +1,70 @@
+/* ------------------------------------------------------------------
+ * TrackmeNew-style data table for ERP.
+ * White rounded widget card, Space-Grotesk title with accent bar,
+ * uppercase muted headers, dashed row dividers, hover tint, pill
+ * cells and a soft footer strip. Theme-aware (works in dark mode)
+ * via Bootstrap CSS variables — matches trackme-dashboard.css.
+ * ------------------------------------------------------------------ */
+
+.tm-table-card {
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+    overflow: hidden;
+    animation: tmIn .45s ease both;
+}
+.tm-table-card:hover { box-shadow: 0 .4rem 1.1rem rgba(0, 0, 0, .1); }
+@keyframes tmIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* header strip */
+.tm-table-head {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid var(--bs-border-color);
+    background: color-mix(in srgb, var(--bs-primary) 4%, var(--bs-body-bg));
+}
+.tm-table-title {
+    display: inline-flex; align-items: center; gap: 10px; margin: 0;
+    font-family: "Inter", "Inter", sans-serif; font-weight: 700; font-size: 1rem;
+    color: var(--bs-emphasis-color);
+}
+.tm-table-title::before {
+    content: ""; width: 4px; height: 20px; border-radius: 3px;
+    background: linear-gradient(var(--bs-primary), color-mix(in srgb, var(--bs-primary) 50%, #7e5bef));
+}
+.tm-table-tools { display: flex; align-items: center; gap: 8px; }
+
+/* the table itself */
+.tm-table { width: 100%; margin: 0; border-collapse: separate; border-spacing: 0; }
+.tm-table thead th {
+    background: var(--bs-secondary-bg, #f6f7fb);
+    font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--bs-secondary-color, #8a929b);
+    padding: 12px 16px; border-bottom: 2px solid var(--bs-border-color); white-space: nowrap;
+}
+.tm-table tbody td {
+    padding: 12px 16px; vertical-align: middle;
+    border-bottom: 1px dashed var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+.tm-table tbody tr { transition: background .15s ease; animation: tmRow .4s both ease; }
+.tm-table tbody tr:hover td { background: color-mix(in srgb, var(--bs-primary) 6%, transparent); }
+.tm-table tbody tr:last-child td { border-bottom: 0; }
+@keyframes tmRow { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tm-table-card, .tm-table tbody tr { animation: none !important; } }
+
+/* footer strip: count + pagination */
+.tm-table-foot {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between;
+    padding: 12px 18px; border-top: 1px solid var(--bs-border-color);
+    background: color-mix(in srgb, var(--bs-primary) 3%, var(--bs-body-bg));
+}
+.tm-table-count { font-size: .82rem; color: var(--bs-secondary-color, #8a929b); }
+.tm-table-foot .pagination { margin: 0; }
+
+/* pill value (Trackme "top-5" value chip) */
+.tm-pill {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: .74rem; font-weight: 600;
+    color: var(--bs-primary); background: rgba(var(--bs-primary-rgb, 78, 115, 223), .12);
+}

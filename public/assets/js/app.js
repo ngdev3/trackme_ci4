@@ -320,4 +320,96 @@
         document.body.appendChild(form);
         form.submit();
     }
+
+    /* ---------------- Form input guard (app-wide) ----------------
+     * Enforces each field's own HTML5 rules (required / min / max /
+     * maxlength / pattern / type) consistently on every form, and clamps
+     * number inputs to their declared range so an oversized value can't be
+     * submitted or distort the layout. This is the client half; controllers
+     * must still validate server-side. Opt a whole form out with
+     * [data-no-validate]; opt a single number field out with [data-no-clamp].
+     */
+    (function () {
+        function clampNumber(input) {
+            if (input.disabled || input.readOnly || input.hasAttribute('data-no-clamp')) { return; }
+            const raw = String(input.value).trim();
+            if (raw === '') { return; }
+            const v = parseFloat(raw);
+            if (isNaN(v)) { return; }
+            let out = v;
+            const min = input.getAttribute('min');
+            const max = input.getAttribute('max');
+            if (min !== null && min !== '' && out < parseFloat(min)) { out = parseFloat(min); }
+            if (max !== null && max !== '' && out > parseFloat(max)) { out = parseFloat(max); }
+            if (out !== v) {
+                input.value = String(out);
+                if (window.erpNotify) { window.erpNotify('warning', 'Value adjusted to the allowed range.'); }
+            }
+        }
+
+        document.addEventListener('change', function (e) {
+            const t = e.target;
+            if (t && t.matches && t.matches('input[type="number"]')) { clampNumber(t); }
+        });
+
+        // Capture phase: stop an invalid submit before any page-specific handler runs.
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            if (!(form instanceof HTMLFormElement) || form.hasAttribute('data-no-validate')) { return; }
+            form.querySelectorAll('input[type="number"]').forEach(clampNumber);
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+                form.classList.add('was-validated');
+                if (typeof form.reportValidity === 'function') { form.reportValidity(); }
+            }
+        }, true);
+    })();
+
+    /* ---------------- Date pickers (flatpickr, app-wide) ----------------
+     * Turns every native date / datetime field into the modern flatpickr
+     * calendar that opens on a single click anywhere in the field. Values stay
+     * in the server's format (Y-m-d, or "Y-m-d H:i" for datetime). Opt a field
+     * out with [data-no-fp]. Also initialises fields injected later (modals/AJAX).
+     */
+    (function () {
+        if (!window.flatpickr) { return; }
+
+        function initIn(root) {
+            var scope = root && root.querySelectorAll ? root : document;
+            scope.querySelectorAll('input[type="date"], input[type="datetime-local"]').forEach(function (el) {
+                if (el._flatpickr || el.hasAttribute('data-no-fp')) { return; }
+                var isDateTime = el.getAttribute('type') === 'datetime-local';
+                // Drop the native control so only flatpickr's calendar shows.
+                el.type = 'text';
+                if (!el.getAttribute('placeholder')) {
+                    el.setAttribute('placeholder', isDateTime ? 'YYYY-MM-DD HH:MM' : 'YYYY-MM-DD');
+                }
+                window.flatpickr(el, {
+                    dateFormat: isDateTime ? 'Y-m-d H:i' : 'Y-m-d',
+                    enableTime: isDateTime,
+                    time_24hr: true,
+                    minuteIncrement: 5,
+                    allowInput: true,      // still typeable
+                    clickOpens: true,      // open on field click
+                    disableMobile: true    // use the advanced UI on mobile too
+                });
+            });
+        }
+
+        initIn(document);
+
+        // Re-init fields added after load (Bootstrap modals, AJAX partials).
+        if (window.MutationObserver) {
+            new MutationObserver(function (mutations) {
+                mutations.forEach(function (m) {
+                    Array.prototype.forEach.call(m.addedNodes || [], function (n) {
+                        if (n.nodeType !== 1) { return; }
+                        if (n.matches && n.matches('input[type="date"], input[type="datetime-local"]')) { initIn(n.parentNode); }
+                        else if (n.querySelector && n.querySelector('input[type="date"], input[type="datetime-local"]')) { initIn(n); }
+                    });
+                });
+            }).observe(document.body, { childList: true, subtree: true });
+        }
+    })();
 })();

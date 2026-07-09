@@ -17,7 +17,7 @@ use App\Models\PasswordModel;
  */
 class PasswordController extends BaseController
 {
-    protected $helpers = ['url', 'form', 'auth', 'menu', 'ui', 'text', 'settings', 'company'];
+    protected $helpers = ['url', 'form', 'auth', 'menu', 'ui', 'text', 'settings', 'company', 'hashid'];
 
     protected string $moduleCode = 'passwords';
     protected string $baseRoute  = 'passwords';
@@ -43,6 +43,26 @@ class PasswordController extends BaseController
     private function cid(): ?int
     {
         return company_id();
+    }
+
+    /**
+     * Accept current opaque IDs while keeping old numeric URLs/forms working.
+     */
+    private function decodeId($id): int
+    {
+        $id = trim((string) $id);
+        if ($id === '') {
+            return 0;
+        }
+        if (ctype_digit($id)) {
+            return (int) $id;
+        }
+        return unhid($id);
+    }
+
+    private function encodedUrl(string $action, int $id): string
+    {
+        return site_url($this->baseRoute . '/' . trim($action, '/') . '/' . hid($id));
     }
 
     // ---------------------------------------------------------------
@@ -81,7 +101,10 @@ class PasswordController extends BaseController
             'canDelete'  => can('passwords', 'delete'),
             'moduleCode' => $this->moduleCode,
             'baseRoute'  => $this->baseRoute,
-            'css'        => [base_url('assets/css/tm-table.css')],
+            'css'        => [
+                base_url('assets/css/tm-table.css'),
+                base_url('assets/css/passwords.css'),
+            ],
         ]);
     }
 
@@ -90,7 +113,7 @@ class PasswordController extends BaseController
     // ---------------------------------------------------------------
     public function view($id = null)
     {
-        $row = $this->vault->findForCompany((int) $id, $this->cid());
+        $row = $this->vault->findForCompany($this->decodeId($id), $this->cid());
         if (! $row) {
             return redirect()->to(site_url('passwords'))->with('error', 'Password entry not found.');
         }
@@ -109,6 +132,7 @@ class PasswordController extends BaseController
             'canDelete'  => can('passwords', 'delete'),
             'moduleCode' => $this->moduleCode,
             'baseRoute'  => $this->baseRoute,
+            'css'        => [base_url('assets/css/passwords.css')],
         ]);
     }
 
@@ -122,7 +146,7 @@ class PasswordController extends BaseController
 
     public function edit($id = null)
     {
-        $row = $this->vault->findForCompany((int) $id, $this->cid());
+        $row = $this->vault->findForCompany($this->decodeId($id), $this->cid());
         if (! $row) {
             return redirect()->to(site_url('passwords'))->with('error', 'Password entry not found.');
         }
@@ -145,6 +169,7 @@ class PasswordController extends BaseController
             'errors'      => session()->getFlashdata('errors') ?? [],
             'moduleCode'  => $this->moduleCode,
             'baseRoute'   => $this->baseRoute,
+            'css'         => [base_url('assets/css/passwords.css')],
         ];
     }
 
@@ -158,7 +183,7 @@ class PasswordController extends BaseController
 
     public function update($id = null)
     {
-        return $this->persist((int) $id);
+        return $this->persist($this->decodeId($id));
     }
 
     private function persist(?int $id)
@@ -198,7 +223,7 @@ class PasswordController extends BaseController
             }
             $this->vault->update($id, $data);
             activity_log('Passwords', 'Edit', "Password entry #{$id} ({$title}) updated");
-            return redirect()->to(site_url('passwords/view/' . $id))->with('success', 'Password entry updated.');
+            return redirect()->to($this->encodedUrl('view', $id))->with('success', 'Password entry updated.');
         }
 
         // New entry.
@@ -207,7 +232,7 @@ class PasswordController extends BaseController
         $data['created_by']   = $this->uid();
         $newId = (int) $this->vault->insert($data);
         activity_log('Passwords', 'Add', "Password entry #{$newId} ({$title}) added");
-        return redirect()->to(site_url('passwords/view/' . $newId))->with('success', 'Password entry added.');
+        return redirect()->to(site_url('passwords/list'))->with('success', 'Password entry added.');
     }
 
     // ---------------------------------------------------------------
@@ -215,7 +240,7 @@ class PasswordController extends BaseController
     // ---------------------------------------------------------------
     public function reveal($id = null)
     {
-        $row = $this->vault->findForCompany((int) $id, $this->cid());
+        $row = $this->vault->findForCompany($this->decodeId($id), $this->cid());
         if (! $row) {
             return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'Not found']);
         }
@@ -230,7 +255,7 @@ class PasswordController extends BaseController
     // ---------------------------------------------------------------
     public function delete($id = null)
     {
-        $id  = (int) $id;
+        $id  = $this->decodeId($id);
         $row = $this->vault->findForCompany($id, $this->cid());
         if (! $row) {
             return redirect()->to(site_url('passwords'))->with('error', 'Password entry not found.');

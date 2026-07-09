@@ -3,6 +3,9 @@
 namespace App\Libraries;
 
 use App\Models\NotificationModel;
+use App\Models\PushSubscriptionModel;
+use App\Models\SettingModel;
+use App\Models\UserModel;
 use Config\Services;
 
 class Notifier
@@ -53,7 +56,68 @@ class Notifier
             return null;
         }
 
+        // Best-effort browser push for user-targeted notifications. Never let a
+        // push failure affect the calling action.
+        if ($payload['user_id']) {
+            try {
+                $this->webPush((int) $payload['user_id'], $payload['title'], $payload['message'], $payload['action_url']);
+            } catch (\Throwable $e) {
+                log_message('error', 'Web push failed: ' . $e->getMessage());
+            }
+        }
+
         return $id ? (int) $id : null;
+    }
+
+    /**
+     * Deliver a Web Push message to every browser a user has subscribed, subject
+     * to the global toggle, valid VAPID keys and the user's own web_push flag.
+     * Prunes subscriptions the push service reports as gone (404/410).
+     */
+    protected function webPush(int $userId, string $title, string $message, ?string $url): void
+    {
+        $settings = new SettingModel();
+        if ($settings->get('web_push_enabled', 0, '1') !== '1') {
+            return;
+        }
+        $public  = (string) $settings->get('vapid_public_key', 0, '');
+        $private = (string) $settings->get('vapid_private_key', 0, '');
+        if ($public === '' || $private === '') {
+            return;
+        }
+
+        $user = (new UserModel())->find($userId);
+        if (! $user || (int) ($user['web_push_enabled'] ?? 1) !== 1) {
+            return;
+        }
+
+        $subs = new PushSubscriptionModel();
+        $rows = $subs->forUser($userId);
+        if ($rows === []) {
+            return;
+        }
+
+        $vapid = [
+            'publicKey'  => $public,
+            'privateKey' => $private,
+            'subject'    => (string) $settings->get('vapid_subject', 0, 'mailto:admin@example.com'),
+        ];
+        $payload = json_encode([
+            'title' => $title,
+            'body'  => $message,
+            'url'   => $url ?: site_url('notifications'),
+        ]);
+
+        foreach ($rows as $row) {
+            $res = \App\Libraries\WebPush::send(
+                ['endpoint' => $row['endpoint'], 'p256dh' => $row['p256dh'], 'auth' => $row['auth']],
+                (string) $payload,
+                $vapid
+            );
+            if (in_array($res['status'], [404, 410], true)) {
+                $subs->delete($row['id']); // subscription expired/unsubscribed
+            }
+        }
     }
 
     public function user(int $userId, string $title, string $message, array $options = []): ?int

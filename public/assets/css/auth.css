@@ -130,7 +130,7 @@ body.auth-body {
 .hero-top { position: relative; z-index: 5; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .brand-row { display: flex; align-items: center; gap: 13px; }
 .hero-brand-mark { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 14px; background: rgba(255,255,255,.95); box-shadow: 0 12px 28px rgba(0,0,0,.35); color: #2a2f66; font-size: 26px; }
-.brand-row b { font-family: "Space Grotesk", "Inter", sans-serif; font-size: 17px; font-weight: 700; letter-spacing: .3px; }
+.brand-row b { font-family: "Inter", "Inter", sans-serif; font-size: 17px; font-weight: 700; letter-spacing: .3px; }
 .brand-row small { display: block; color: rgba(255,255,255,.62); font-size: 11.5px; }
 
 .weather-card { min-width: 188px; padding: 13px 15px; border-radius: 15px;
@@ -138,7 +138,7 @@ body.auth-body {
     box-shadow: inset 0 1px 0 rgba(255,255,255,.12); backdrop-filter: blur(10px); }
 .w-top { display: flex; align-items: center; gap: 11px; }
 .w-emoji { font-size: 30px; line-height: 1; }
-.w-temp { font-family: "Space Grotesk", sans-serif; font-size: 26px; font-weight: 700; line-height: 1; }
+.w-temp { font-family: "Inter", sans-serif; font-size: 26px; font-weight: 700; line-height: 1; }
 .w-cond { font-size: 11.5px; color: rgba(235,240,255,.7); margin-top: 3px; }
 .w-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 11px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12); font-size: 11.5px; }
 .w-meta #wCity { font-weight: 600; color: rgba(255,255,255,.86); display: inline-flex; align-items: center; gap: 5px; }
@@ -150,12 +150,12 @@ body.auth-body {
 .hero-text { position: relative; z-index: 5; margin-top: auto; }
 .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; margin-bottom: 18px; font-size: 11.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #fff; border-radius: 999px; background: color-mix(in srgb, var(--auth-accent) 16%, transparent); border: 1px solid color-mix(in srgb, var(--auth-accent) 45%, transparent); }
 .hero-badge i { width: 7px; height: 7px; border-radius: 50%; background: var(--auth-accent); box-shadow: 0 0 12px var(--auth-accent); }
-.login-hero h1 { font-family: "Space Grotesk", sans-serif; margin: 0 0 14px; font-size: 40px; line-height: 1.06; font-weight: 700; letter-spacing: -.5px; max-width: 440px; }
+.login-hero h1 { font-family: "Inter", sans-serif; margin: 0 0 14px; font-size: 40px; line-height: 1.06; font-weight: 700; letter-spacing: -.5px; max-width: 440px; }
 .login-hero h1 em { font-style: normal; background: linear-gradient(110deg, var(--auth-accent), var(--auth-brand-3) 55%, var(--auth-brand-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .login-hero p { margin: 0; max-width: 400px; color: rgba(226,231,255,.74); font-size: 15px; line-height: 1.7; }
 
 .hero-foot { position: relative; z-index: 5; margin-top: 28px; display: flex; gap: 26px; flex-wrap: wrap; }
-.hero-foot div b { display: block; font-family: "Space Grotesk", sans-serif; font-size: 20px; font-weight: 700; }
+.hero-foot div b { display: block; font-family: "Inter", sans-serif; font-size: 20px; font-weight: 700; }
 .hero-foot div span { color: rgba(226,231,255,.55); font-size: 11.5px; letter-spacing: .04em; }
 
 /* ===================== SOLAR SYSTEM ===================== */
@@ -210,7 +210,7 @@ body.auth-body {
 .login-panel { display: flex; align-items: center; justify-content: center; padding: 50px 46px; background: var(--auth-panel); }
 .login-card { width: 100%; max-width: 372px; }
 .mobile-logo { display: none; width: 56px; height: 56px; margin: 0 auto 20px; align-items: center; justify-content: center; border-radius: 14px; background: linear-gradient(135deg, var(--auth-brand), var(--auth-brand-2)); color: #fff; font-size: 28px; }
-.login-card h2 { font-family: "Space Grotesk", sans-serif; margin: 0 0 8px; font-size: 29px; font-weight: 700; letter-spacing: -.3px; color: var(--auth-ink); }
+.login-card h2 { font-family: "Inter", sans-serif; margin: 0 0 8px; font-size: 29px; font-weight: 700; letter-spacing: -.3px; color: var(--auth-ink); }
 .login-card .subtitle { margin: 0 0 26px; color: var(--auth-muted); font-size: 14px; line-height: 1.55; }
 
 .auth-field { margin-bottom: 17px; }

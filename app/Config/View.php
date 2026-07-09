@@ -17,7 +17,9 @@ class View extends BaseView
      *
      * @var bool
      */
-    public $saveData = true;
+    // false → each view() call is isolated (no data leaking between calls).
+    // Prevents e.g. one field's `type`/`help` bleeding into the next form field.
+    public $saveData = false;
 
     /**
      * Parser Filters map a filter name with any PHP callable. When the

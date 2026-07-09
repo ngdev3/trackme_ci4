@@ -7,6 +7,7 @@ use App\Libraries\Acl;
 use App\Libraries\ActivityLogger;
 use App\Libraries\Auth;
 use App\Libraries\Notifier;
+use App\Libraries\Settings;
 
 /**
  * Services Configuration file.
@@ -64,5 +65,21 @@ class Services extends BaseService
             return static::getSharedInstance('notifier');
         }
         return new Notifier();
+    }
+
+    public static function company(bool $getShared = true): \App\Libraries\CompanyContext
+    {
+        if ($getShared) {
+            return static::getSharedInstance('company');
+        }
+        return new \App\Libraries\CompanyContext();
+    }
+
+    public static function settings(bool $getShared = true): Settings
+    {
+        if ($getShared) {
+            return static::getSharedInstance('settings');
+        }
+        return new Settings();
     }
 }

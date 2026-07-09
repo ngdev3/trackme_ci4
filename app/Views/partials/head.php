@@ -6,7 +6,9 @@
 ?>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= esc($title ?? 'Dashboard') ?> &middot; ERP Admin</title>
+<title><?= esc($title ?? 'Dashboard') ?> &middot; <?= esc(setting('app_name', 'ERP Admin')) ?></title>
+
+<link rel="icon" type="image/svg+xml" href="<?= erp_asset('assets/img/favicon.svg') ?>">
 
 <meta name="csrf-token" content="<?= csrf_hash() ?>" data-name="<?= csrf_token() ?>">
 
@@ -34,12 +36,16 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="<?= base_url('assets/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
-<link rel="stylesheet" href="<?= base_url('assets/vendor/bootstrap/bootstrap.min.css') ?>">
-<link rel="stylesheet" href="<?= base_url('assets/vendor/adminlte/adminlte.min.css') ?>">
-<link rel="stylesheet" href="<?= base_url('assets/vendor/sweetalert2/sweetalert2.min.css') ?>">
-<link rel="stylesheet" href="<?= base_url('assets/vendor/toastr/toastr.min.css') ?>">
-<link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
-<link rel="stylesheet" href="<?= base_url('assets/css/i18n.css') ?>">
+<link rel="stylesheet" href="<?= erp_asset('assets/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
+<link rel="stylesheet" href="<?= erp_asset('assets/vendor/bootstrap/bootstrap.min.css') ?>">
+<link rel="stylesheet" href="<?= erp_asset('assets/vendor/adminlte/adminlte.min.css') ?>">
+<link rel="stylesheet" href="<?= erp_asset('assets/vendor/sweetalert2/sweetalert2.min.css') ?>">
+<link rel="stylesheet" href="<?= erp_asset('assets/vendor/toastr/toastr.min.css') ?>">
+<link rel="stylesheet" href="<?= erp_asset('assets/vendor/flatpickr/flatpickr.min.css') ?>">
+<link rel="stylesheet" href="<?= erp_asset('assets/css/app.css') ?>">
+<link rel="stylesheet" href="<?= erp_asset('assets/css/i18n.css') ?>">
+
+<!-- Server-driven web-app settings: theme colour + alert/toast colours -->
+<?= $this->include('partials/app_settings') ?>
