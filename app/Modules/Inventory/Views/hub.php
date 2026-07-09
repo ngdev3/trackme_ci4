@@ -9,7 +9,7 @@ $fmtW = static fn ($n) => number_format((float) $n, 2);
 // Quick actions. `on` = route exists today; others show as muted "soon" chips.
 $actions = [
     ['New Inward',   'bi-box-arrow-in-down', 'in',   site_url('inventory/inward'), ! empty($canAdd)],
-    ['Stock Outward','bi-box-arrow-up',      'out',  '#', false],
+    ['Stock Outward','bi-box-arrow-up',      'out',  site_url('inventory/outward'), ! empty($canAdd)],
     ['Search',       'bi-search',            'find', '#', false],
     ['Verify',       'bi-clipboard-check',   'chk',  '#', false],
     ['Daily Closing','bi-calendar-check',    'day',  '#', false],

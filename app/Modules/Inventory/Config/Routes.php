@@ -13,6 +13,10 @@ $routes->group('inventory', ['namespace' => 'Modules\Inventory\Controllers'], st
     $routes->post('inward', 'InventoryController::storeInward', ['filter' => 'permission:inventory,add']);
     $routes->get('receipt/(:num)', 'InventoryController::receipt/$1', ['filter' => 'permission:inventory,view']);
 
+    // Task 2 — Stock Outward.
+    $routes->get('outward', 'InventoryController::outward', ['filter' => 'permission:inventory,add']);
+    $routes->post('outward', 'InventoryController::storeOutward', ['filter' => 'permission:inventory,add']);
+
     // Masters (owner/admin): products, godowns, parties.
     $routes->get('masters', 'InventoryController::masters', ['filter' => 'permission:inventory,edit']);
     $routes->post('masters/product', 'InventoryController::storeProduct', ['filter' => 'permission:inventory,edit']);

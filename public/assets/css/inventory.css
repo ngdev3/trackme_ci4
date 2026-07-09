@@ -57,6 +57,11 @@
 .inv-photo { display: flex; align-items: center; gap: .6rem; border: 2px dashed var(--erp-border, rgba(0,0,0,.2)); border-radius: 14px; padding: 1rem; cursor: pointer; color: var(--bs-secondary-color, #6c757d); }
 .inv-photo i { font-size: 1.5rem; }
 
+.inv-avail { margin-top: .5rem; font-size: .9rem; font-weight: 600; color: #16a34a; }
+.inv-avail.zero { color: #dc2626; }
+.inv-allow { display: flex; align-items: center; gap: .5rem; background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 12px; padding: .7rem .9rem; font-weight: 600; }
+.inv-allow input { width: 20px; height: 20px; }
+
 .inv-save { border: 0; border-radius: 14px; padding: 1rem; font-size: 1.15rem; font-weight: 800; color: #fff; margin-top: .25rem; }
 .inv-save.in { background: linear-gradient(135deg, #16a34a, #22c55e); }
 .inv-save.out { background: linear-gradient(135deg, #dc2626, #ef4444); }

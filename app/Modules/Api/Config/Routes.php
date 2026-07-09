@@ -22,4 +22,5 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->get('inventory/masters', 'InventoryApiController::masters');
     $routes->get('inventory/stock', 'InventoryApiController::stock');
     $routes->post('inventory/inward', 'InventoryApiController::inward');
+    $routes->post('inventory/outward', 'InventoryApiController::outward');
 });

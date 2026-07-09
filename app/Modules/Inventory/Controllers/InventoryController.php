@@ -191,6 +191,100 @@ class InventoryController extends BaseController
             ->with('success', "Inward saved. Lot {$result['lot_no']}, Entry {$result['entry_no']}.");
     }
 
+    // ===============================================================
+    // Task 2 — Stock Outward
+    // ===============================================================
+    public function outward()
+    {
+        $m = $this->masterLists();
+        if (empty($m['products']) || empty($m['warehouses'])) {
+            return $this->render('setup_needed', [
+                'title'      => 'Set up Inventory',
+                'breadcrumb' => [['label' => 'Inventory', 'url' => site_url('inventory')], ['label' => 'Setup']],
+                'needProduct'   => empty($m['products']),
+                'needWarehouse' => empty($m['warehouses']),
+                'moduleCode' => $this->moduleCode,
+                'css'        => [base_url('assets/css/inventory.css')],
+            ]);
+        }
+
+        // Current stock per product+warehouse so the form can show availability live.
+        $stock = (new \App\Models\InvStockModel())->scopedList($this->cid())->get()->getResultArray();
+        $avail = [];
+        foreach ($stock as $s) {
+            $avail[(int) $s['product_id'] . '_' . (int) $s['warehouse_id']] = (float) $s['bags'];
+        }
+
+        return $this->render('outward', $m + [
+            'title'      => 'Stock Outward',
+            'breadcrumb' => [['label' => 'Inventory', 'url' => site_url('inventory')], ['label' => 'Stock Outward']],
+            'avail'      => $avail,
+            'errors'     => session()->getFlashdata('errors') ?? [],
+            'moduleCode' => $this->moduleCode,
+            'baseRoute'  => $this->baseRoute,
+            'css'        => [base_url('assets/css/inventory.css')],
+        ]);
+    }
+
+    public function storeOutward()
+    {
+        $cid = (int) $this->cid();
+
+        $productId   = (int) $this->request->getPost('product_id');
+        $warehouseId = (int) $this->request->getPost('warehouse_id');
+        $bags        = (float) $this->request->getPost('bags');
+        $weight      = $this->request->getPost('weight') !== '' ? (float) $this->request->getPost('weight') : null;
+        $customer    = trim((string) $this->request->getPost('customer_name'));
+        $allowNeg    = (int) $this->request->getPost('allow_negative') === 1;
+
+        $errors = [];
+        if (! $this->products->findForCompany($productId, $cid)) {
+            $errors['product_id'] = 'Please choose a product.';
+        }
+        if (! $this->warehouses->findForCompany($warehouseId, $cid)) {
+            $errors['warehouse_id'] = 'Please choose a godown.';
+        }
+        if ($bags <= 0) {
+            $errors['bags'] = 'Enter the number of bags.';
+        }
+        if ($errors !== []) {
+            return redirect()->back()->withInput()->with('errors', $errors);
+        }
+
+        $partyId = null;
+        if ($customer !== '') {
+            $partyId = $this->parties->findOrCreate($cid, $customer, 'customer') ?: null;
+        }
+
+        try {
+            $result = (new InventoryService())->recordOutward([
+                'company_id'     => $cid,
+                'product_id'     => $productId,
+                'warehouse_id'   => $warehouseId,
+                'party_id'       => $partyId,
+                'bags'           => $bags,
+                'weight'         => $weight,
+                'vehicle_no'     => trim((string) $this->request->getPost('vehicle_no')) ?: null,
+                'notes'          => trim((string) $this->request->getPost('notes')) ?: null,
+                'allow_negative' => $allowNeg,
+                'source'         => 'web',
+                'created_by'     => $this->uid(),
+            ]);
+        } catch (\RuntimeException $e) {
+            // Not enough stock — send back with the available count so the worker
+            // can correct it (or confirm dispatching more if allowed).
+            $available = (float) $e->getMessage();
+            return redirect()->back()->withInput()
+                ->with('errors', ['bags' => 'Only ' . number_format($available, 0) . ' bags available in this godown.'])
+                ->with('short_available', $available);
+        }
+
+        $this->savePhoto((int) $result['movement_id'], $productId, 0, $partyId);
+
+        return redirect()->to(site_url('inventory/receipt/' . $result['movement_id']))
+            ->with('success', "Outward saved. Entry {$result['entry_no']}. {$result['available']} bags left.");
+    }
+
     /** Success / receipt screen after an entry. */
     public function receipt($id = null)
     {

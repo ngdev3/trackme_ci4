@@ -119,4 +119,67 @@ class InventoryApiController extends BaseApiController
             'available' => (new InventoryService())->availableBags($cid, $productId, $warehouseId),
         ]);
     }
+
+    /** POST record a stock outward from the app. */
+    public function outward()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $cid = $this->companyId($user);
+        if (! $cid) {
+            return $this->failValidationErrors('No company for this user.');
+        }
+
+        $productId   = (int) $this->input('product_id');
+        $warehouseId = (int) $this->input('warehouse_id');
+        $bags        = (float) $this->input('bags');
+
+        if (! (new InvProductModel())->findForCompany($productId, $cid)) {
+            return $this->failValidationErrors('Invalid product.');
+        }
+        if (! (new InvWarehouseModel())->findForCompany($warehouseId, $cid)) {
+            return $this->failValidationErrors('Invalid godown.');
+        }
+        if ($bags <= 0) {
+            return $this->failValidationErrors('Bags must be greater than zero.');
+        }
+
+        $partyId  = null;
+        $customer = trim((string) ($this->input('customer_name') ?? ''));
+        if ($customer !== '') {
+            $partyId = (new InvPartyModel())->findOrCreate($cid, $customer, 'customer') ?: null;
+        }
+
+        try {
+            $result = (new InventoryService())->recordOutward([
+                'company_id'     => $cid,
+                'product_id'     => $productId,
+                'warehouse_id'   => $warehouseId,
+                'party_id'       => $partyId,
+                'bags'           => $bags,
+                'weight'         => $this->input('weight') !== null ? (float) $this->input('weight') : null,
+                'vehicle_no'     => trim((string) ($this->input('vehicle_no') ?? '')) ?: null,
+                'notes'          => trim((string) ($this->input('notes') ?? '')) ?: null,
+                'allow_negative' => (bool) $this->input('allow_negative'),
+                'source'         => 'mobile',
+                'created_by'     => (int) $user['id'],
+            ]);
+        } catch (\RuntimeException $e) {
+            return $this->respond([
+                'status'    => 'insufficient_stock',
+                'message'   => 'Not enough stock in this godown.',
+                'available' => (float) $e->getMessage(),
+            ], 409);
+        }
+
+        return $this->respondCreated([
+            'status'    => 'ok',
+            'message'   => 'Outward saved.',
+            'entry_no'  => $result['entry_no'],
+            'weight'    => $result['weight'],
+            'available' => $result['available'],
+        ]);
+    }
 }
