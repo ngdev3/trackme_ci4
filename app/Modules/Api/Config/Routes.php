@@ -17,4 +17,9 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     // Register a browser/device push subscription for the authenticated user.
     $routes->post('push/subscribe', 'PushApiController::subscribe');
     $routes->post('push/unsubscribe', 'PushApiController::unsubscribe');
+
+    // Mandi Inventory (mobile app). Bearer-token auth; company resolved per user.
+    $routes->get('inventory/masters', 'InventoryApiController::masters');
+    $routes->get('inventory/stock', 'InventoryApiController::stock');
+    $routes->post('inventory/inward', 'InventoryApiController::inward');
 });

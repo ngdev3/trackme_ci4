@@ -109,6 +109,7 @@ if (! function_exists('render_firm_sidebar')) {
         // [module-code, label, icon, url, children[]]
         $menu = [
             ['dashboard', 'Dashboard', 'bi bi-speedometer2', 'dashboard', []],
+            ['inventory', 'Inventory', 'bi bi-box-seam', 'inventory', []],
             ['rokad', 'Rokad Parcha', 'bi bi-cash-stack', 'rokad', []],
             ['accounting', 'Accounting', 'bi bi-calculator', null, [
                 ['Overview', 'accounting'],
@@ -134,6 +135,10 @@ if (! function_exists('render_firm_sidebar')) {
             // Password Manager access is governed by app RBAC (its routes use a
             // permission filter), so mirror that here to avoid a dead menu link.
             if ($code === 'passwords' && function_exists('can') && ! can('passwords', 'view')) {
+                continue;
+            }
+            // Inventory is likewise app-RBAC gated — mirror it in the menu.
+            if ($code === 'inventory' && function_exists('can') && ! can('inventory', 'view')) {
                 continue;
             }
             if ($code === 'passwords' && function_exists('can') && ! can('passwords', 'add')) {
