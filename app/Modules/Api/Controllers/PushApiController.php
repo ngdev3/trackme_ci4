@@ -17,10 +17,6 @@ class PushApiController extends BaseApiController
         if (! $user) {
             return $this->failUnauthorized('Invalid or missing token.');
         }
-        if ((int) ($user['web_push_enabled'] ?? 1) !== 1) {
-            return $this->failForbidden('Web push is disabled for this account.');
-        }
-
         $endpoint = (string) $this->input('endpoint', '');
         $p256dh   = (string) $this->input('p256dh', '');
         $auth     = (string) $this->input('auth', '');

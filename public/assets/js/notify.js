@@ -28,10 +28,17 @@
         };
     }
 
-    var ICONS = { success: 'success', error: 'error', warning: 'warning', info: 'info' };
+    var TYPES = {
+        success: { icon: 'success', color: '#198754' },
+        warning: { icon: 'warning', color: '#f59f00' },
+        error: { icon: 'error', color: '#dc3545' },
+        danger: { icon: 'error', color: '#dc3545' },
+        info: { icon: 'info', color: '#0d6efd' }
+    };
 
     window.erpNotify = function (type, message, title) {
-        type = ICONS[type] ? type : 'info';
+        type = TYPES[type] ? type : 'info';
+        if (type === 'danger') { type = 'error'; }
         if (window.toastr) {
             window.toastr.options.positionClass = 'toast-bottom-right';
             var container = document.getElementById('toast-container');
@@ -52,7 +59,15 @@
         }
         // Fallback to SweetAlert2 toast.
         if (window.Swal) {
-            Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 3500, timerProgressBar: true })
+            Swal.mixin({
+                toast: true,
+                position: 'bottom-end',
+                showConfirmButton: false,
+                timer: 3500,
+                timerProgressBar: true,
+                showClass: { popup: 'swal2-show' },
+                hideClass: { popup: 'swal2-hide' }
+            })
                 .fire({ icon: type, title: message });
         } else {
             alert(message);
@@ -71,14 +86,19 @@
             if (confirm(opts.text || 'Are you sure?')) { if (opts.onConfirm) { opts.onConfirm(); } }
             return;
         }
+        var icon = TYPES[opts.icon] ? TYPES[opts.icon].icon : 'warning';
+        var confirmColor = opts.confirmColor || (icon === 'error' ? TYPES.error.color : (icon === 'warning' ? TYPES.warning.color : TYPES.info.color));
         Swal.fire({
             title: opts.title || 'Are you sure?',
             text: opts.text || '',
-            icon: opts.icon || 'warning',
+            icon: icon,
             showCancelButton: true,
             confirmButtonText: opts.confirmText || 'Yes',
             cancelButtonText: opts.cancelText || 'Cancel',
-            confirmButtonColor: opts.confirmColor || '#0d6efd',
+            confirmButtonColor: confirmColor,
+            cancelButtonColor: '#6c757d',
+            buttonsStyling: true,
+            customClass: { popup: 'erp-swal', confirmButton: 'erp-swal-confirm', cancelButton: 'erp-swal-cancel' },
             reverseButtons: true
         }).then(function (res) {
             if (res.isConfirmed && opts.onConfirm) { opts.onConfirm(); }

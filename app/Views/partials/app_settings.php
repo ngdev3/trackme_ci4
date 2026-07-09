@@ -24,7 +24,7 @@ $font      = $color((string) setting('font_color', '#1f2a3d'), '#1f2a3d');
 $bg        = $color((string) setting('background_color', '#eef2f8'), '#eef2f8');
 $sidebar   = $color((string) setting('sidebar_color', '#0e1626'), '#0e1626');
 $header    = $color((string) setting('header_color', '#ffffff'), '#ffffff');
-$themeMode = in_array(setting('theme_mode', 'light'), ['light', 'dark', 'system'], true) ? setting('theme_mode', 'light') : 'light';
+$themeMode = in_array(setting('theme_mode', 'system'), ['light', 'dark', 'system'], true) ? setting('theme_mode', 'system') : 'system';
 
 $toastSuccess = '#198754';
 $toastError   = '#dc3545';

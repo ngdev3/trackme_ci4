@@ -1,11 +1,7 @@
 <?php
 
 /**
- * Locale-aware formatting helpers driven by the Settings module.
- *
- * Currency symbol, number grouping (Indian lakh/crore vs International),
- * decimals, and date/time formats all read from global settings so the whole
- * app can be re-localised from Settings → Localization without code changes.
+ * Formatting helpers using application defaults.
  */
 
 if (! function_exists('indian_number_format')) {
@@ -37,9 +33,9 @@ if (! function_exists('money')) {
      */
     function money($amount, bool $withSymbol = true): string
     {
-        $symbol   = (string) setting('currency_symbol', '₹');
-        $grouping = (string) setting('number_grouping', 'indian');
-        $decimals = (int) setting('currency_decimals', 2);
+        $symbol   = '₹';
+        $grouping = 'indian';
+        $decimals = 2;
 
         $value = (float) $amount;
         $neg   = $value < 0;
@@ -64,7 +60,7 @@ if (! function_exists('fmt_date')) {
         if ($value === null || $value === '' || $value === '0000-00-00' || $value === '0000-00-00 00:00:00') {
             return '';
         }
-        $format ??= (string) setting('date_format', 'd M Y');
+        $format ??= 'd M Y';
         try {
             $dt = $value instanceof \DateTimeInterface ? $value : new \DateTime((string) $value);
         } catch (\Exception $e) {
@@ -83,8 +79,8 @@ if (! function_exists('fmt_datetime')) {
         if ($format !== null) {
             return fmt_date($value, $format);
         }
-        $df = (string) setting('date_format', 'd M Y');
-        $tf = (string) setting('time_format', 'h:i A');
+        $df = 'd M Y';
+        $tf = 'h:i A';
         return fmt_date($value, trim($df . ' ' . $tf));
     }
 }

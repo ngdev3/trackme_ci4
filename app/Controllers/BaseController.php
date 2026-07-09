@@ -40,9 +40,9 @@ abstract class BaseController extends Controller
         // Caution: Do not edit this line.
         parent::initController($request, $response, $logger);
 
-        // Apply the configured display timezone app-wide (Settings → Localization).
+        // Apply the app display timezone.
         try {
-            $tz = (string) (setting('timezone') ?: config('App')->appTimezone ?: 'UTC');
+            $tz = (string) (config('App')->appTimezone ?: 'UTC');
             if ($tz !== '' && in_array($tz, timezone_identifiers_list(), true)) {
                 date_default_timezone_set($tz);
             }

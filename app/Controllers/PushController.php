@@ -16,10 +16,6 @@ class PushController extends BaseController
             return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Not authenticated.']);
         }
         $user = current_user();
-        if ((int) ($user['web_push_enabled'] ?? 1) !== 1) {
-            return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Web push is disabled for your account.']);
-        }
-
         $body     = $this->request->getJSON(true) ?: [];
         $endpoint = (string) ($body['endpoint'] ?? '');
         $p256dh   = (string) ($body['p256dh'] ?? '');

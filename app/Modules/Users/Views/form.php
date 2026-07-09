@@ -83,7 +83,6 @@
                     <?php
                         $mustChange = old('must_change_password', ($row['must_change_password'] ?? 0));
                         $mobileOn   = old('mobile_login_enabled', ($row['mobile_login_enabled'] ?? 1));
-                        $pushOn     = old('web_push_enabled', ($row['web_push_enabled'] ?? 1));
                     ?>
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="checkbox" name="must_change_password" value="1"
@@ -94,11 +93,6 @@
                         <input class="form-check-input" type="checkbox" name="mobile_login_enabled" value="1"
                                id="mobile_login_enabled" <?= (int) $mobileOn === 1 ? 'checked' : '' ?>>
                         <label class="form-check-label" for="mobile_login_enabled">Allow mobile app / API login</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="web_push_enabled" value="1"
-                               id="web_push_enabled" <?= (int) $pushOn === 1 ? 'checked' : '' ?>>
-                        <label class="form-check-label" for="web_push_enabled">Allow web push notifications</label>
                     </div>
                 </div>
             </div>

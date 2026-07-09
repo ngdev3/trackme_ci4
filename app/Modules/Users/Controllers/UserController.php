@@ -338,7 +338,6 @@ class UserController extends BaseController
             'profile_image'=> $this->handleUpload(),
             'must_change_password' => (int) (bool) $this->request->getPost('must_change_password'),
             'mobile_login_enabled' => (int) (bool) $this->request->getPost('mobile_login_enabled'),
-            'web_push_enabled'     => (int) (bool) $this->request->getPost('web_push_enabled'),
             'account_type' => 'super_admin',
             // Control hierarchy: the creator owns the new account.
             'parent_id'    => user_id(),
@@ -396,7 +395,6 @@ class UserController extends BaseController
             'status'       => (int) ($this->request->getPost('status') ?? 1),
             'must_change_password' => (int) (bool) $this->request->getPost('must_change_password'),
             'mobile_login_enabled' => (int) (bool) $this->request->getPost('mobile_login_enabled'),
-            'web_push_enabled'     => (int) (bool) $this->request->getPost('web_push_enabled'),
         ];
         if ($this->isSuper()) {
             $data['user_type_id'] = $this->sanitizeTypeId($this->request->getPost('user_type_id') ?: null);

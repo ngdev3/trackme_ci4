@@ -8,7 +8,7 @@ use CodeIgniter\Database\Migration;
  * Per-user access controls:
  *   - must_change_password : force a password change on next login
  *   - mobile_login_enabled : may this account sign in to the mobile app / API
- *   - web_push_enabled     : may this account receive browser push notifications
+ *   - web_push_enabled     : legacy column retained for existing installs
  *   - parent_id            : the user who created/controls this account (hierarchy)
  */
 class AddUserAccessColumns extends Migration

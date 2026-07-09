@@ -71,8 +71,8 @@ class DashboardController extends BaseController
                 base_url('assets/js/dashboard.js'),
             ],
             'inline_js'    => 'window.ERP_DASH={analyticsUrl:' . json_encode(site_url('dashboard/analytics'))
-                . ',defaultCity:' . json_encode((string) setting('weather_city', 'New Delhi'))
-                . ',weatherUnits:' . json_encode((string) setting('weather_units', 'metric')) . '};',
+                . ',defaultCity:' . json_encode('New Delhi')
+                . ',weatherUnits:' . json_encode('metric') . '};',
         ];
 
         return $this->render('index', $data);

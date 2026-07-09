@@ -5,8 +5,8 @@
  */
 helper(['url', 'settings', 'ui']);
 $appName = function_exists('setting') ? setting('app_name', 'ERP Admin') : 'ERP Admin';
-$themeMode = function_exists('setting') ? setting('theme_mode', 'light') : 'light';
-$themeMode = in_array($themeMode, ['light', 'dark', 'system'], true) ? $themeMode : 'light';
+$themeMode = function_exists('setting') ? setting('theme_mode', 'system') : 'system';
+$themeMode = in_array($themeMode, ['light', 'dark', 'system'], true) ? $themeMode : 'system';
 $isImpersonating = (bool) session('impersonator_id');
 $deniedModule    = $module ?? '';
 $dashboardLoops  = $deniedModule === 'dashboard'; // the "Back to Dashboard" button would loop

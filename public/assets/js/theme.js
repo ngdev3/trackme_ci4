@@ -8,7 +8,7 @@
 
     var root = document.documentElement;
     var DEFAULTS = {
-        theme_mode: 'light',
+        theme_mode: 'system',
         font_color: '#1f2a3d',
         background_color: '#eef2f8',
         primary_color: '#0d6efd',
@@ -59,7 +59,7 @@
         var header = cleanHex(appearance.header_color, DEFAULTS.header_color);
 
         root.setAttribute('data-bs-theme', effectiveMode(appearance.theme_mode));
-        root.setAttribute('data-erp-appearance-mode', appearance.theme_mode || 'light');
+        root.setAttribute('data-erp-appearance-mode', appearance.theme_mode || 'system');
 
         root.style.setProperty('--bs-primary', primary);
         root.style.setProperty('--bs-primary-rgb', hexToRgb(primary));

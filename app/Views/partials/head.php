@@ -16,7 +16,7 @@
 $headColor = static function (string $val, string $default): string {
     return preg_match('/^#[0-9a-fA-F]{6}$/', $val) ? $val : $default;
 };
-$headMode = in_array(setting('theme_mode', 'light'), ['light', 'dark', 'system'], true) ? setting('theme_mode', 'light') : 'light';
+$headMode = in_array(setting('theme_mode', 'system'), ['light', 'dark', 'system'], true) ? setting('theme_mode', 'system') : 'system';
 $headAppearance = [
     'theme_mode'       => $headMode,
     'font_color'       => $headColor((string) setting('font_color', '#1f2a3d'), '#1f2a3d'),
@@ -39,7 +39,7 @@ $headAppearance = [
         var hx = function (h) { var m = String(h || '').replace('#', ''); var n = parseInt(m, 16); return (n >> 16 & 255) + ', ' + (n >> 8 & 255) + ', ' + (n & 255); };
         var r = document.documentElement;
         r.setAttribute('data-bs-theme', mode);
-        r.setAttribute('data-erp-appearance-mode', a.theme_mode || 'light');
+        r.setAttribute('data-erp-appearance-mode', a.theme_mode || 'system');
         r.style.setProperty('--bs-primary', a.primary_color);
         r.style.setProperty('--bs-primary-rgb', hx(a.primary_color));
         r.style.setProperty('--bs-secondary', a.secondary_color);
