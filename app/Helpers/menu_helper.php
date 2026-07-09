@@ -113,6 +113,11 @@ if (! function_exists('render_firm_sidebar')) {
             if ($code === 'passwords' && function_exists('can') && ! can('passwords', 'view')) {
                 continue;
             }
+            if ($code === 'passwords' && function_exists('can') && ! can('passwords', 'add')) {
+                $children = array_values(array_filter($children, static function ($child) {
+                    return (isset($child[1]) ? $child[1] : '') !== 'passwords/add';
+                }));
+            }
 
             if ($children === []) {
                 $active = is_menu_active($url) ? ' active' : '';
