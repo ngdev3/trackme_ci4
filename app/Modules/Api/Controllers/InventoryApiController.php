@@ -65,6 +65,25 @@ class InventoryApiController extends BaseApiController
         return $this->respond(['status' => 'ok', 'stock' => $rows]);
     }
 
+    /** GET stock search (product / party / godown / SKU / lot) — card data for the app. */
+    public function search()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $cid = $this->companyId($user);
+        if (! $cid) {
+            return $this->failValidationErrors('No company for this user.');
+        }
+        $q = trim((string) ($this->input('q') ?? $this->request->getGet('q') ?? ''));
+        return $this->respond([
+            'status'  => 'ok',
+            'q'       => $q,
+            'results' => (new InvStockModel())->search($cid, $q),
+        ]);
+    }
+
     /** POST record a stock inward from the app. */
     public function inward()
     {

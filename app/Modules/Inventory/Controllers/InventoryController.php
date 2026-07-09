@@ -192,6 +192,29 @@ class InventoryController extends BaseController
     }
 
     // ===============================================================
+    // Task 3 — Stock Search (cards; voice + QR fill the search box)
+    // ===============================================================
+    public function search()
+    {
+        $cid = $this->cid();
+        $q   = trim((string) $this->request->getGet('q'));
+        $results = ($q !== '' || $this->request->getGet('all') !== null)
+            ? (new \App\Models\InvStockModel())->search($cid, $q)
+            : [];
+
+        return $this->render('search', [
+            'title'      => 'Stock Search',
+            'breadcrumb' => [['label' => 'Inventory', 'url' => site_url('inventory')], ['label' => 'Search']],
+            'q'          => $q,
+            'results'    => $results,
+            'searched'   => $q !== '' || $this->request->getGet('all') !== null,
+            'moduleCode' => $this->moduleCode,
+            'baseRoute'  => $this->baseRoute,
+            'css'        => [base_url('assets/css/inventory.css')],
+        ]);
+    }
+
+    // ===============================================================
     // Task 2 — Stock Outward
     // ===============================================================
     public function outward()

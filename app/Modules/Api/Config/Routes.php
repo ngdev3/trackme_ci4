@@ -21,6 +21,7 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     // Mandi Inventory (mobile app). Bearer-token auth; company resolved per user.
     $routes->get('inventory/masters', 'InventoryApiController::masters');
     $routes->get('inventory/stock', 'InventoryApiController::stock');
+    $routes->get('inventory/search', 'InventoryApiController::search');
     $routes->post('inventory/inward', 'InventoryApiController::inward');
     $routes->post('inventory/outward', 'InventoryApiController::outward');
 });

@@ -10,7 +10,7 @@ $fmtW = static fn ($n) => number_format((float) $n, 2);
 $actions = [
     ['New Inward',   'bi-box-arrow-in-down', 'in',   site_url('inventory/inward'), ! empty($canAdd)],
     ['Stock Outward','bi-box-arrow-up',      'out',  site_url('inventory/outward'), ! empty($canAdd)],
-    ['Search',       'bi-search',            'find', '#', false],
+    ['Search',       'bi-search',            'find', site_url('inventory/search'), true],
     ['Verify',       'bi-clipboard-check',   'chk',  '#', false],
     ['Daily Closing','bi-calendar-check',    'day',  '#', false],
     ['Reports',      'bi-graph-up',          'rep',  '#', false],

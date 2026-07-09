@@ -51,4 +51,61 @@ class InvStockModel extends Model
         }
         return $b;
     }
+
+    /**
+     * Worker stock search. Matches a free-text term against product name, godown
+     * name, product SKU/QR, lot number or party (supplier/customer) name, and
+     * returns rich cards (bags, weight, godown, rack, status). Blank term = all.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function search(?int $companyId, string $q, int $limit = 60): array
+    {
+        // Latest rack for a product+godown (from its most recent lot).
+        $rackSub = '(SELECT l.rack FROM inv_lots l WHERE l.company_id = inv_stock.company_id'
+            . ' AND l.product_id = inv_stock.product_id AND l.warehouse_id = inv_stock.warehouse_id'
+            . ' AND l.rack IS NOT NULL AND l.deleted_at IS NULL ORDER BY l.id DESC LIMIT 1)';
+
+        $b = $this->scopedList($companyId)->select($rackSub . ' AS rack', false);
+        $q = trim($q);
+
+        if ($q !== '') {
+            // Products this party has dealt with (so a party name finds their stock).
+            $partyProductIds = [];
+            $pb = $this->db->table('inv_movements m')
+                ->distinct()->select('m.product_id')
+                ->join('inv_parties pt', 'pt.id = m.party_id', 'left')
+                ->where('m.deleted_at', null)
+                ->like('pt.name', $q);
+            if ($companyId !== null) {
+                $pb->where('m.company_id', $companyId);
+            }
+            foreach ($pb->get()->getResultArray() as $r) {
+                $partyProductIds[] = (int) $r['product_id'];
+            }
+
+            $b->groupStart()
+                ->like('p.name', $q)
+                ->orLike('w.name', $q)
+                ->orWhere('p.sku', $q)
+                // Match a lot number → its product.
+                ->orWhereIn('inv_stock.product_id', $this->productsForLot($companyId, $q) ?: [0]);
+            if ($partyProductIds !== []) {
+                $b->orWhereIn('inv_stock.product_id', $partyProductIds);
+            }
+            $b->groupEnd();
+        }
+
+        return $b->orderBy('p.name', 'ASC')->orderBy('w.name', 'ASC')->limit($limit)->get()->getResultArray();
+    }
+
+    /** Product ids whose lot number matches the term (for QR / lot search). */
+    private function productsForLot(?int $companyId, string $q): array
+    {
+        $b = $this->db->table('inv_lots')->distinct()->select('product_id')->where('deleted_at', null)->like('lot_no', $q);
+        if ($companyId !== null) {
+            $b->where('company_id', $companyId);
+        }
+        return array_map(static fn ($r) => (int) $r['product_id'], $b->get()->getResultArray());
+    }
 }

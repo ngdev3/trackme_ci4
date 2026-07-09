@@ -17,6 +17,9 @@ $routes->group('inventory', ['namespace' => 'Modules\Inventory\Controllers'], st
     $routes->get('outward', 'InventoryController::outward', ['filter' => 'permission:inventory,add']);
     $routes->post('outward', 'InventoryController::storeOutward', ['filter' => 'permission:inventory,add']);
 
+    // Task 3 — Stock Search.
+    $routes->get('search', 'InventoryController::search', ['filter' => 'permission:inventory,view']);
+
     // Masters (owner/admin): products, godowns, parties.
     $routes->get('masters', 'InventoryController::masters', ['filter' => 'permission:inventory,edit']);
     $routes->post('masters/product', 'InventoryController::storeProduct', ['filter' => 'permission:inventory,edit']);
