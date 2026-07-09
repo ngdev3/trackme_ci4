@@ -90,8 +90,6 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
     <?= $this->include('partials/footer') ?>
 </div>
 
-<?= $this->include('partials/theme_panel') ?>
-
 <!-- In-app language translator (whole-UI, 12 languages) -->
 <div id="google_translate_element" aria-hidden="true"></div>
 <script>

@@ -1,6 +1,6 @@
 <?php $u = current_user(); ?>
 <!-- Sidebar -->
-<aside class="app-sidebar erp-sidebar" data-bs-theme="dark">
+<aside class="app-sidebar erp-sidebar">
     <div class="sidebar-brand erp-sidebar-brand">
         <a href="<?= site_url('dashboard') ?>" class="brand-link">
             <span class="brand-mark"><i class="bi bi-boxes"></i></span>

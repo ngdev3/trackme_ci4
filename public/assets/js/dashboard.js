@@ -419,8 +419,8 @@
             if (window.erpNotify) { window.erpNotify('info', 'Refreshing analytics…'); }
         });
 
-        // Re-render charts when the theme colour is saved (keeps charts on-brand).
-        $(document).on('click', '#themeSave', function () {
+        // Re-render charts when Appearance settings are saved.
+        $(document).on('erp:appearance-saved', function () {
             setTimeout(loadAnalytics, 150);
         });
 

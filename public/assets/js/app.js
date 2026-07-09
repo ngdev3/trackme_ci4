@@ -1,39 +1,10 @@
 /* ------------------------------------------------------------------
  * ERP Admin — global front-end behaviour.
- * Handles: dark/light appearance, page loader, delete confirmation.
- * Toast/confirm helpers live in notify.js; theming in theme.js.
+ * Handles: page loader, delete confirmation, navigation helpers.
+ * Toast/confirm helpers live in notify.js; appearance lives in theme.js.
  * ------------------------------------------------------------------ */
 (function () {
     'use strict';
-
-    const THEME_KEY = 'erp-theme';
-    const root = document.documentElement;
-
-    /* ---------------- Appearance (dark / light) ---------------- */
-    function applyMode(mode) {
-        root.setAttribute('data-bs-theme', mode);
-        localStorage.setItem(THEME_KEY, mode);
-        document.querySelectorAll('[data-theme-icon]').forEach(function (el) {
-            el.className = mode === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
-        });
-    }
-    applyMode(localStorage.getItem(THEME_KEY) || 'light');
-
-    document.addEventListener('click', function (e) {
-        // Toggle button in the navbar.
-        const toggle = e.target.closest('[data-theme-toggle]');
-        if (toggle) {
-            e.preventDefault();
-            applyMode(root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
-            return;
-        }
-        // Explicit light/dark buttons in the theme panel.
-        const setMode = e.target.closest('[data-set-mode]');
-        if (setMode) {
-            e.preventDefault();
-            applyMode(setMode.getAttribute('data-set-mode'));
-        }
-    });
 
     /* ---------------- Dropdown fallback ---------------- */
     (function () {
@@ -112,36 +83,6 @@
             });
         }
     } catch (err) {}
-
-    /* ---------------- Profile palette shortcuts ---------------- */
-    function hexToRgb(hex) {
-        const clean = (hex || '').replace('#', '');
-        if (clean.length !== 6) { return '13, 110, 253'; }
-        const n = parseInt(clean, 16);
-        return ((n >> 16) & 255) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255);
-    }
-
-    document.addEventListener('click', function (e) {
-        const choice = e.target.closest('[data-palette-choice]');
-        if (!choice) { return; }
-        e.preventDefault();
-
-        const primary = choice.getAttribute('data-primary') || '#0d6efd';
-        const secondary = choice.getAttribute('data-secondary') || '#6c757d';
-        root.style.setProperty('--bs-primary', primary);
-        root.style.setProperty('--bs-primary-rgb', hexToRgb(primary));
-        root.style.setProperty('--bs-secondary', secondary);
-        root.style.setProperty('--erp-primary', primary);
-        root.style.setProperty('--erp-primary-rgb', hexToRgb(primary));
-
-        try {
-            localStorage.setItem('erp-custom-theme', JSON.stringify({ primary: primary, secondary: secondary }));
-        } catch (err) {}
-
-        if (window.erpNotify) {
-            window.erpNotify('success', 'Color combination applied.');
-        }
-    });
 
     /* ---------------- Demo session timer ---------------- */
     (function () {

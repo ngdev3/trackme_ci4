@@ -5,6 +5,8 @@
  */
 helper(['url', 'settings', 'ui']);
 $appName = function_exists('setting') ? setting('app_name', 'ERP Admin') : 'ERP Admin';
+$themeMode = function_exists('setting') ? setting('theme_mode', 'light') : 'light';
+$themeMode = in_array($themeMode, ['light', 'dark', 'system'], true) ? $themeMode : 'light';
 $isImpersonating = (bool) session('impersonator_id');
 $deniedModule    = $module ?? '';
 $dashboardLoops  = $deniedModule === 'dashboard'; // the "Back to Dashboard" button would loop
@@ -15,7 +17,14 @@ $dashboardLoops  = $deniedModule === 'dashboard'; // the "Back to Dashboard" but
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Access Denied &middot; <?= esc($appName) ?></title>
-    <script>document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('erp-theme') || 'light');</script>
+    <script>
+        (function () {
+            var mode = <?= json_encode($themeMode) ?>;
+            document.documentElement.setAttribute('data-bs-theme', mode === 'system' && window.matchMedia
+                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : (mode === 'dark' ? 'dark' : 'light'));
+        })();
+    </script>
     <link rel="stylesheet" href="<?= erp_asset('assets/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
     <link rel="stylesheet" href="<?= erp_asset('assets/vendor/bootstrap/bootstrap.min.css') ?>">
 </head>

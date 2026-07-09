@@ -2,6 +2,8 @@
 
 namespace App\Libraries;
 
+use App\Models\SettingModel;
+
 /**
  * Self-contained Web Push (RFC 8291 "aes128gcm" content encoding + RFC 8292
  * VAPID) sender. No external Composer dependency — uses ext-openssl and
@@ -13,6 +15,30 @@ namespace App\Libraries;
  */
 class WebPush
 {
+    /**
+     * Return the app's VAPID keys, generating and storing them on first use.
+     *
+     * @return array{publicKey:string,privateKey:string,subject:string}
+     */
+    public static function ensureVapidKeys(): array
+    {
+        $settings = new SettingModel();
+        $public = (string) $settings->get('vapid_public_key', 0, '');
+        $private = (string) $settings->get('vapid_private_key', 0, '');
+
+        if ($public === '' || $private === '') {
+            [$public, $private] = self::generateVapidKeys();
+            $settings->put('vapid_public_key', $public, 0);
+            $settings->put('vapid_private_key', $private, 0);
+        }
+
+        return [
+            'publicKey' => $public,
+            'privateKey' => $private,
+            'subject' => self::defaultSubject(),
+        ];
+    }
+
     /**
      * Generate a VAPID key pair.
      *
@@ -254,6 +280,16 @@ class WebPush
             }
         }
         return null;
+    }
+
+    private static function defaultSubject(): string
+    {
+        try {
+            $host = parse_url(site_url(), PHP_URL_HOST) ?: 'localhost';
+            return 'mailto:admin@' . $host;
+        } catch (\Throwable $e) {
+            return 'mailto:admin@example.com';
+        }
     }
 
     // -----------------------------------------------------------------

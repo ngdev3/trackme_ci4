@@ -28,36 +28,13 @@ class AppSettingsSeeder extends Seeder
         // ---------------------------------------------------------------
         $defaults = [
             // Theme & colours
-            'theme_mode'                => 'light',      // light | dark
-            'sidebar_theme'             => 'dark',       // dark | light
+            'theme_mode'                => 'system',     // light | dark | system
+            'font_color'                => '#1f2a3d',
+            'background_color'          => '#eef2f8',
             'primary_color'             => '#0d6efd',
-            'accent_color'              => '#6610f2',
-            // Weather widget
-            'weather_city'              => 'New Delhi',
-            'weather_units'             => 'metric',     // metric | imperial
-            // Dashboard widgets (JSON map of section => enabled)
-            'dashboard_widgets'         => json_encode([
-                'stats'         => true,
-                'weather'       => true,
-                'recent_logins' => true,
-                'activity'      => true,
-                'notifications' => true,
-            ]),
-            // Alert / toast / dialog colours
-            'toast_success_color'       => '#198754',
-            'toast_error_color'         => '#dc3545',
-            'toast_warning_color'       => '#ffc107',
-            'toast_info_color'          => '#0dcaf0',
-            'alert_color'               => '#0d6efd',
-            'prompt_color'              => '#6610f2',
-            'confirm_color'             => '#fd7e14',
-            'sweetalert_confirm_color'  => '#198754',
-            'sweetalert_cancel_color'   => '#dc3545',
-            // Web push
-            'web_push_enabled'          => '1',
-            'vapid_public_key'          => '',
-            'vapid_private_key'         => '',
-            'vapid_subject'             => 'mailto:admin@erp.test',
+            'secondary_color'           => '#6610f2',
+            'sidebar_color'             => '#0e1626',
+            'header_color'              => '#ffffff',
         ];
 
         $existing = [];

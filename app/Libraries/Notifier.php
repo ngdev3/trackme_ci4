@@ -4,7 +4,6 @@ namespace App\Libraries;
 
 use App\Models\NotificationModel;
 use App\Models\PushSubscriptionModel;
-use App\Models\SettingModel;
 use App\Models\UserModel;
 use Config\Services;
 
@@ -71,21 +70,11 @@ class Notifier
 
     /**
      * Deliver a Web Push message to every browser a user has subscribed, subject
-     * to the global toggle, valid VAPID keys and the user's own web_push flag.
+     * to automatically managed VAPID keys and the user's own web_push flag.
      * Prunes subscriptions the push service reports as gone (404/410).
      */
     protected function webPush(int $userId, string $title, string $message, ?string $url): void
     {
-        $settings = new SettingModel();
-        if ($settings->get('web_push_enabled', 0, '1') !== '1') {
-            return;
-        }
-        $public  = (string) $settings->get('vapid_public_key', 0, '');
-        $private = (string) $settings->get('vapid_private_key', 0, '');
-        if ($public === '' || $private === '') {
-            return;
-        }
-
         $user = (new UserModel())->find($userId);
         if (! $user || (int) ($user['web_push_enabled'] ?? 1) !== 1) {
             return;
@@ -97,11 +86,7 @@ class Notifier
             return;
         }
 
-        $vapid = [
-            'publicKey'  => $public,
-            'privateKey' => $private,
-            'subject'    => (string) $settings->get('vapid_subject', 0, 'mailto:admin@example.com'),
-        ];
+        $vapid = \App\Libraries\WebPush::ensureVapidKeys();
         $payload = json_encode([
             'title' => $title,
             'body'  => $message,

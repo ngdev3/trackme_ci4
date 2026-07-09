@@ -52,7 +52,7 @@
             return Promise.reject(new Error('unsupported'));
         }
         if (!S.vapidPublicKey) {
-            if (window.erpNotify) { erpNotify('warning', 'Web push is not configured. Ask an admin to generate VAPID keys.'); }
+            if (window.erpNotify) { erpNotify('warning', 'Notifications are not available right now. Please try again later.'); }
             return Promise.reject(new Error('no-vapid'));
         }
         return Notification.requestPermission().then(function (perm) {

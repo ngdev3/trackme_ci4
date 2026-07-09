@@ -1,207 +1,236 @@
 /* ------------------------------------------------------------------
- * ERP Theme Engine (vanilla JS)
- * Live-customises primary/secondary/font/background colours via CSS
- * variables. Persists to localStorage and applies instantly (no reload).
- *
- * The design system (app.css) derives every brand colour from
- * --bs-primary via color-mix(), so setting the primary here cascades
- * to the sidebar, buttons, links, focus rings, tables, tabs, etc.
- *
- * Public API: window.ErpTheme = { apply, save, reset, load, current, DEFAULTS, PRESETS }
+ * ERP Appearance Engine
+ * Server-backed, per-user appearance settings with live preview.
+ * The only editable UI is Settings -> Appearance.
  * ------------------------------------------------------------------ */
 (function () {
     'use strict';
 
-    var KEY = 'erp-custom-theme';
-
+    var root = document.documentElement;
     var DEFAULTS = {
-        primary:   '#0d6efd',
-        secondary: '#6c757d',
-        font:      '',   // '' = inherit design-system default (respects dark mode)
-        bg:        ''    // '' = inherit design-system default
+        theme_mode: 'light',
+        font_color: '#1f2a3d',
+        background_color: '#eef2f8',
+        primary_color: '#0d6efd',
+        secondary_color: '#6610f2',
+        sidebar_color: '#0e1626',
+        header_color: '#ffffff'
     };
 
-    // Curated primary-colour presets (one-click swatches).
-    var PRESETS = [
-        '#0d6efd', '#6610f2', '#6f42c1', '#d63384',
-        '#dc3545', '#fd7e14', '#198754', '#20c997',
-        '#0dcaf0', '#0f766e', '#2563eb', '#374151'
-    ];
+    function cleanHex(hex, fallback) {
+        return /^#[0-9a-f]{6}$/i.test(hex || '') ? hex : fallback;
+    }
 
     function hexToRgb(hex) {
-        if (!hex) { return null; }
-        var m = hex.replace('#', '');
-        if (m.length === 3) { m = m[0] + m[0] + m[1] + m[1] + m[2] + m[2]; }
+        var m = cleanHex(hex, '#0d6efd').replace('#', '');
         var n = parseInt(m, 16);
         return (n >> 16 & 255) + ', ' + (n >> 8 & 255) + ', ' + (n & 255);
     }
 
-    // Darken a hex colour by pct (0..1) for hover states.
     function shade(hex, pct) {
-        if (!hex) { return hex; }
-        var m = hex.replace('#', '');
-        if (m.length === 3) { m = m[0] + m[0] + m[1] + m[1] + m[2] + m[2]; }
-        var r = parseInt(m.substr(0, 2), 16), g = parseInt(m.substr(2, 2), 16), b = parseInt(m.substr(4, 2), 16);
-        r = Math.round(r * (1 - pct)); g = Math.round(g * (1 - pct)); b = Math.round(b * (1 - pct));
+        var m = cleanHex(hex, '#0d6efd').replace('#', '');
+        var r = parseInt(m.substr(0, 2), 16);
+        var g = parseInt(m.substr(2, 2), 16);
+        var b = parseInt(m.substr(4, 2), 16);
+        r = Math.max(0, Math.min(255, Math.round(r * (1 - pct))));
+        g = Math.max(0, Math.min(255, Math.round(g * (1 - pct))));
+        b = Math.max(0, Math.min(255, Math.round(b * (1 - pct))));
         return '#' + [r, g, b].map(function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
     }
 
-    function load() {
-        try {
-            return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(KEY)) || {});
-        } catch (e) {
-            return Object.assign({}, DEFAULTS);
+    function effectiveMode(mode) {
+        if (mode === 'system') {
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        return mode === 'dark' ? 'dark' : 'light';
+    }
+
+    function currentFromServer() {
+        return Object.assign({}, DEFAULTS, window.ERP_APPEARANCE || {});
+    }
+
+    function apply(appearance) {
+        appearance = Object.assign({}, DEFAULTS, appearance || {});
+        var primary = cleanHex(appearance.primary_color, DEFAULTS.primary_color);
+        var secondary = cleanHex(appearance.secondary_color, DEFAULTS.secondary_color);
+        var font = cleanHex(appearance.font_color, DEFAULTS.font_color);
+        var bg = cleanHex(appearance.background_color, DEFAULTS.background_color);
+        var sidebar = cleanHex(appearance.sidebar_color, DEFAULTS.sidebar_color);
+        var header = cleanHex(appearance.header_color, DEFAULTS.header_color);
+
+        root.setAttribute('data-bs-theme', effectiveMode(appearance.theme_mode));
+        root.setAttribute('data-erp-appearance-mode', appearance.theme_mode || 'light');
+
+        root.style.setProperty('--bs-primary', primary);
+        root.style.setProperty('--bs-primary-rgb', hexToRgb(primary));
+        root.style.setProperty('--bs-link-color', primary);
+        root.style.setProperty('--bs-link-color-rgb', hexToRgb(primary));
+        root.style.setProperty('--bs-link-hover-color', shade(primary, 0.15));
+        root.style.setProperty('--bs-secondary', secondary);
+        root.style.setProperty('--bs-secondary-rgb', hexToRgb(secondary));
+
+        root.style.setProperty('--erp-primary', primary);
+        root.style.setProperty('--erp-primary-rgb', hexToRgb(primary));
+        root.style.setProperty('--erp-secondary', secondary);
+        root.style.setProperty('--erp-accent', secondary);
+        root.style.setProperty('--erp-app-bg', bg);
+        root.style.setProperty('--erp-ink', font);
+        root.style.setProperty('--erp-sidebar-custom', sidebar);
+        root.style.setProperty('--erp-sidebar-1', shade(sidebar, -0.08));
+        root.style.setProperty('--erp-sidebar-2', shade(sidebar, 0.2));
+        root.style.setProperty('--erp-header-bg', header);
+
+        root.style.setProperty('--bs-body-bg', bg);
+        root.style.setProperty('--bs-body-bg-rgb', hexToRgb(bg));
+        root.style.setProperty('--bs-body-color', font);
+        root.style.setProperty('--bs-body-color-rgb', hexToRgb(font));
+
+        window.ERP_APPEARANCE = Object.assign({}, appearance);
+    }
+
+    function collect(container) {
+        var out = {};
+        container.querySelectorAll('[data-appearance-field]').forEach(function (field) {
+            if (field.type === 'radio') {
+                if (field.checked) { out[field.name] = field.value; }
+            } else {
+                out[field.name] = field.value;
+            }
+        });
+        return Object.assign({}, DEFAULTS, out);
+    }
+
+    function setControls(container, appearance) {
+        appearance = Object.assign({}, DEFAULTS, appearance || {});
+        container.querySelectorAll('[data-appearance-field]').forEach(function (field) {
+            if (field.type === 'radio') {
+                field.checked = field.value === appearance.theme_mode;
+                var option = field.closest('.appearance-mode-option');
+                if (option) { option.classList.toggle('active', field.checked); }
+            } else if (appearance[field.name]) {
+                field.value = appearance[field.name];
+            }
+        });
+        updateColorLabels(container);
+    }
+
+    function updateColorLabels(container) {
+        container.querySelectorAll('[data-color-value]').forEach(function (label) {
+            var field = container.querySelector('[name="' + label.getAttribute('data-color-value') + '"]');
+            if (field) { label.textContent = field.value; }
+        });
+    }
+
+    function csrf() {
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? { name: meta.getAttribute('data-name'), token: meta.getAttribute('content') } : null;
+    }
+
+    function updateCsrf(payload) {
+        if (!payload || !payload.csrf) { return; }
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) {
+            meta.setAttribute('data-name', payload.csrf.name);
+            meta.setAttribute('content', payload.csrf.token);
         }
     }
 
-    function current() { return load(); }
-
-    /* Apply a theme object to the document root as CSS variables. */
-    function apply(theme) {
-        theme = Object.assign({}, DEFAULTS, theme || {});
-        var root = document.documentElement;
-
-        if (theme.primary) {
-            root.style.setProperty('--bs-primary', theme.primary);
-            root.style.setProperty('--bs-primary-rgb', hexToRgb(theme.primary));
-            root.style.setProperty('--bs-link-color', theme.primary);
-            root.style.setProperty('--bs-link-color-rgb', hexToRgb(theme.primary));
-            root.style.setProperty('--bs-link-hover-color', shade(theme.primary, 0.15));
-            root.style.setProperty('--erp-primary', theme.primary);
-            root.style.setProperty('--erp-primary-rgb', hexToRgb(theme.primary));
-        }
-        if (theme.secondary) {
-            root.style.setProperty('--bs-secondary', theme.secondary);
-            root.style.setProperty('--bs-secondary-rgb', hexToRgb(theme.secondary));
-            root.style.setProperty('--erp-secondary', theme.secondary);
-        }
-        // Custom background tints the whole shell (--erp-app-bg) + BS surfaces.
-        if (theme.bg) {
-            root.style.setProperty('--erp-app-bg', theme.bg);
-            root.style.setProperty('--bs-body-bg', theme.bg);
-            root.style.setProperty('--bs-body-bg-rgb', hexToRgb(theme.bg));
-        } else {
-            root.style.removeProperty('--erp-app-bg');
-            root.style.removeProperty('--bs-body-bg');
-            root.style.removeProperty('--bs-body-bg-rgb');
-        }
-        // Custom font colour drives both the design-system ink and BS body colour.
-        if (theme.font) {
-            root.style.setProperty('--erp-ink', theme.font);
-            root.style.setProperty('--bs-body-color', theme.font);
-            root.style.setProperty('--bs-body-color-rgb', hexToRgb(theme.font));
-        } else {
-            root.style.removeProperty('--erp-ink');
-            root.style.removeProperty('--bs-body-color');
-            root.style.removeProperty('--bs-body-color-rgb');
-        }
+    function post(url, data) {
+        var body = new FormData();
+        Object.keys(data || {}).forEach(function (key) { body.append(key, data[key]); });
+        var token = csrf();
+        if (token) { body.append(token.name, token.token); }
+        return fetch(url, {
+            method: 'POST',
+            body: body,
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        }).then(function (res) {
+            return res.json().then(function (json) {
+                if (!res.ok) { throw json; }
+                return json;
+            });
+        });
     }
 
-    function save(theme) {
-        localStorage.setItem(KEY, JSON.stringify(theme));
-        apply(theme);
+    apply(currentFromServer());
+
+    if (window.matchMedia) {
+        var mq = window.matchMedia('(prefers-color-scheme: dark)');
+        var onSystemChange = function () {
+            if ((window.ERP_APPEARANCE || {}).theme_mode === 'system') {
+                apply(window.ERP_APPEARANCE);
+            }
+        };
+        if (mq.addEventListener) { mq.addEventListener('change', onSystemChange); }
+        else if (mq.addListener) { mq.addListener(onSystemChange); }
     }
 
-    function reset() {
-        localStorage.removeItem(KEY);
-        var root = document.documentElement;
-        ['--bs-primary', '--bs-primary-rgb', '--bs-link-color', '--bs-link-color-rgb',
-         '--bs-link-hover-color', '--bs-secondary', '--bs-secondary-rgb',
-         '--bs-body-bg', '--bs-body-bg-rgb', '--bs-body-color', '--bs-body-color-rgb',
-         '--erp-primary', '--erp-primary-rgb', '--erp-secondary', '--erp-app-bg', '--erp-ink'
-        ].forEach(function (v) { root.style.removeProperty(v); });
-        apply(DEFAULTS);
-    }
+    window.ErpAppearance = {
+        DEFAULTS: DEFAULTS,
+        apply: apply,
+        current: function () { return Object.assign({}, DEFAULTS, window.ERP_APPEARANCE || {}); }
+    };
 
-    // Apply saved theme immediately.
-    apply(load());
-
-    window.ErpTheme = { apply: apply, save: save, reset: reset, load: load, current: current, DEFAULTS: DEFAULTS, PRESETS: PRESETS };
-
-    /* ---- Wire up the theme panel controls once the DOM is ready ---- */
     document.addEventListener('DOMContentLoaded', function () {
-        var panel = document.getElementById('themePanel');
-        if (!panel) { return; }
+        var studio = document.getElementById('appearanceStudio');
+        if (!studio) { return; }
 
-        var t = load();
-        var map = { primary: 'themePrimary', secondary: 'themeSecondary', font: 'themeFont', bg: 'themeBg' };
+        setControls(studio, currentFromServer());
 
-        // Initialise inputs from stored theme.
-        Object.keys(map).forEach(function (k) {
-            var el = document.getElementById(map[k]);
-            if (el && t[k]) { el.value = t[k]; }
+        studio.addEventListener('input', function (e) {
+            if (!e.target.matches('[data-appearance-field]')) { return; }
+            if (e.target.type === 'radio') { setControls(studio, collect(studio)); }
+            updateColorLabels(studio);
+            apply(collect(studio));
+        });
+        studio.addEventListener('change', function (e) {
+            if (!e.target.matches('[data-appearance-field]')) { return; }
+            if (e.target.type === 'radio') { setControls(studio, collect(studio)); }
+            updateColorLabels(studio);
+            apply(collect(studio));
         });
 
-        function val(id) { var e = document.getElementById(id); return e ? e.value : ''; }
-        function collect() {
-            return {
-                primary:   val('themePrimary'),
-                secondary: val('themeSecondary'),
-                font:      (document.getElementById('themeFontEnable') || {}).checked ? val('themeFont') : '',
-                bg:        (document.getElementById('themeBgEnable') || {}).checked ? val('themeBg') : ''
-            };
-        }
+        studio.addEventListener('click', function (e) {
+            var preset = e.target.closest('[data-appearance-preset]');
+            if (preset) {
+                e.preventDefault();
+                try {
+                    var data = JSON.parse(preset.getAttribute('data-appearance-preset'));
+                    setControls(studio, data);
+                    apply(collect(studio));
+                } catch (err) {}
+                return;
+            }
 
-        // Build preset swatches.
-        var grid = document.getElementById('themePresets');
-        if (grid) {
-            PRESETS.forEach(function (hex) {
-                var b = document.createElement('button');
-                b.type = 'button';
-                b.className = 'erp-preset';
-                b.style.background = hex;
-                b.setAttribute('data-preset', hex);
-                b.setAttribute('title', hex);
-                b.setAttribute('aria-label', 'Set primary colour ' + hex);
-                grid.appendChild(b);
-            });
-            grid.addEventListener('click', function (e) {
-                var sw = e.target.closest('[data-preset]');
-                if (!sw) { return; }
-                var hex = sw.getAttribute('data-preset');
-                var pi = document.getElementById('themePrimary');
-                if (pi) { pi.value = hex; }
-                markActivePreset(hex);
-                apply(collect());
-            });
-            markActivePreset(t.primary);
-        }
+            if (e.target.closest('#appearanceSave')) {
+                e.preventDefault();
+                post(studio.getAttribute('data-save-url'), collect(studio))
+                    .then(function (payload) {
+                        updateCsrf(payload);
+                        apply(payload.appearance || collect(studio));
+                        document.dispatchEvent(new CustomEvent('erp:appearance-saved'));
+                        if (window.erpNotify) { window.erpNotify('success', payload.message || 'Appearance saved.'); }
+                    })
+                    .catch(function (payload) {
+                        if (window.erpNotify) { window.erpNotify('error', payload.message || 'Could not save appearance.'); }
+                    });
+                return;
+            }
 
-        function markActivePreset(hex) {
-            if (!grid) { return; }
-            grid.querySelectorAll('.erp-preset').forEach(function (el) {
-                el.classList.toggle('active', el.getAttribute('data-preset').toLowerCase() === (hex || '').toLowerCase());
-            });
-        }
-
-        // Live preview on input.
-        panel.querySelectorAll('input[type="color"], input[type="checkbox"]').forEach(function (el) {
-            el.addEventListener('input', function () { apply(collect()); if (el.id === 'themePrimary') { markActivePreset(el.value); } });
-            el.addEventListener('change', function () { apply(collect()); });
+            if (e.target.closest('#appearanceReset')) {
+                e.preventDefault();
+                post(studio.getAttribute('data-reset-url'), {})
+                    .then(function (payload) {
+                        updateCsrf(payload);
+                        setControls(studio, payload.appearance || DEFAULTS);
+                        apply(payload.appearance || DEFAULTS);
+                        if (window.erpNotify) { window.erpNotify('info', payload.message || 'Appearance reset.'); }
+                    })
+                    .catch(function (payload) {
+                        if (window.erpNotify) { window.erpNotify('error', payload.message || 'Could not reset appearance.'); }
+                    });
+            }
         });
-
-        var saveBtn = document.getElementById('themeSave');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', function () {
-                save(collect());
-                if (window.erpNotify) { window.erpNotify('success', 'Theme saved.'); }
-            });
-        }
-
-        var resetBtn = document.getElementById('themeReset');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', function () {
-                reset();
-                var d = DEFAULTS;
-                Object.keys(map).forEach(function (k) {
-                    var el = document.getElementById(map[k]);
-                    if (el) { el.value = d[k] || (k === 'font' ? '#212529' : '#ffffff'); }
-                });
-                var fe = document.getElementById('themeFontEnable'); if (fe) { fe.checked = false; }
-                var be = document.getElementById('themeBgEnable');   if (be) { be.checked = false; }
-                markActivePreset(d.primary);
-                if (window.erpNotify) { window.erpNotify('info', 'Theme reset to default.'); }
-            });
-        }
     });
 })();

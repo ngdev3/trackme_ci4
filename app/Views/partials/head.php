@@ -12,22 +12,46 @@
 
 <meta name="csrf-token" content="<?= csrf_hash() ?>" data-name="<?= csrf_token() ?>">
 
-<!-- Prevent theme flash: apply saved appearance + custom colours before paint -->
+<?php
+$headColor = static function (string $val, string $default): string {
+    return preg_match('/^#[0-9a-fA-F]{6}$/', $val) ? $val : $default;
+};
+$headMode = in_array(setting('theme_mode', 'light'), ['light', 'dark', 'system'], true) ? setting('theme_mode', 'light') : 'light';
+$headAppearance = [
+    'theme_mode'       => $headMode,
+    'font_color'       => $headColor((string) setting('font_color', '#1f2a3d'), '#1f2a3d'),
+    'background_color' => $headColor((string) setting('background_color', '#eef2f8'), '#eef2f8'),
+    'primary_color'    => $headColor((string) setting('primary_color', '#0d6efd'), '#0d6efd'),
+    'secondary_color'  => $headColor((string) setting('secondary_color', '#6610f2'), '#6610f2'),
+    'sidebar_color'    => $headColor((string) setting('sidebar_color', '#0e1626'), '#0e1626'),
+    'header_color'     => $headColor((string) setting('header_color', '#ffffff'), '#ffffff'),
+];
+?>
+<!-- Prevent theme flash: apply server-backed user appearance before paint -->
 <script>
     window.APP_BASE_URL = <?= json_encode(rtrim(site_url(), '/')) ?>;
+    window.ERP_APPEARANCE = <?= json_encode($headAppearance) ?>;
     (function () {
-        var t = localStorage.getItem('erp-theme') || 'light';
-        document.documentElement.setAttribute('data-bs-theme', t);
-        try {
-            var c = JSON.parse(localStorage.getItem('erp-custom-theme'));
-            if (c) {
-                var r = document.documentElement, hx = function (h){var m=h.replace('#','');if(m.length===3)m=m[0]+m[0]+m[1]+m[1]+m[2]+m[2];var n=parseInt(m,16);return (n>>16&255)+', '+(n>>8&255)+', '+(n&255);};
-                if (c.primary){r.style.setProperty('--bs-primary',c.primary);r.style.setProperty('--bs-primary-rgb',hx(c.primary));r.style.setProperty('--bs-link-color',c.primary);r.style.setProperty('--erp-primary',c.primary);r.style.setProperty('--erp-primary-rgb',hx(c.primary));}
-                if (c.secondary){r.style.setProperty('--bs-secondary',c.secondary);r.style.setProperty('--erp-secondary',c.secondary);}
-                if (c.bg){r.style.setProperty('--erp-app-bg',c.bg);r.style.setProperty('--bs-body-bg',c.bg);}
-                if (c.font){r.style.setProperty('--erp-ink',c.font);r.style.setProperty('--bs-body-color',c.font);}
-            }
-        } catch (e) {}
+        var a = window.ERP_APPEARANCE || {};
+        var mode = a.theme_mode === 'system'
+            ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : (a.theme_mode === 'dark' ? 'dark' : 'light');
+        var hx = function (h) { var m = String(h || '').replace('#', ''); var n = parseInt(m, 16); return (n >> 16 & 255) + ', ' + (n >> 8 & 255) + ', ' + (n & 255); };
+        var r = document.documentElement;
+        r.setAttribute('data-bs-theme', mode);
+        r.setAttribute('data-erp-appearance-mode', a.theme_mode || 'light');
+        r.style.setProperty('--bs-primary', a.primary_color);
+        r.style.setProperty('--bs-primary-rgb', hx(a.primary_color));
+        r.style.setProperty('--bs-secondary', a.secondary_color);
+        r.style.setProperty('--bs-secondary-rgb', hx(a.secondary_color));
+        r.style.setProperty('--erp-primary', a.primary_color);
+        r.style.setProperty('--erp-primary-rgb', hx(a.primary_color));
+        r.style.setProperty('--erp-secondary', a.secondary_color);
+        r.style.setProperty('--erp-accent', a.secondary_color);
+        r.style.setProperty('--erp-ink', a.font_color);
+        r.style.setProperty('--erp-app-bg', a.background_color);
+        r.style.setProperty('--erp-header-bg', a.header_color);
+        r.style.setProperty('--erp-sidebar-custom', a.sidebar_color);
     })();
 </script>
 

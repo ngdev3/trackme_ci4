@@ -191,17 +191,6 @@ $notificationIconMap = [
             </li>
 
             <li class="nav-item">
-                <a class="nav-link nav-square" href="#" data-theme-toggle title="Toggle dark / light">
-                    <i class="bi bi-moon-stars-fill" data-theme-icon></i>
-                </a>
-            </li>
-            <li class="nav-item topbar-theme-panel d-none d-md-block">
-                <a class="nav-link nav-square" href="#" data-bs-toggle="offcanvas" data-bs-target="#themePanel" title="Customize theme">
-                    <i class="bi bi-palette"></i>
-                </a>
-            </li>
-
-            <li class="nav-item">
                 <a class="nav-link nav-square" href="<?= site_url('help') ?>" title="Help &amp; Support">
                     <i class="bi bi-question-circle"></i>
                 </a>
@@ -261,17 +250,8 @@ $notificationIconMap = [
                     <a href="<?= site_url('profile') ?>#change-password" class="dropdown-item"><i class="bi bi-key me-2"></i>Change Password</a>
                     <a href="<?= site_url('my-login-history') ?>" class="dropdown-item"><i class="bi bi-clock-history me-2"></i>Login History</a>
                     <a href="<?= site_url('help') ?>" class="dropdown-item"><i class="bi bi-life-preserver me-2"></i>Help &amp; Support</a>
-                    <a href="#" class="dropdown-item" data-theme-toggle><i class="bi bi-moon-stars me-2"></i>Toggle Theme</a>
+                    <a href="<?= site_url('settings') ?>#tab-appearance" class="dropdown-item"><i class="bi bi-palette me-2"></i>Appearance Settings</a>
                     <div class="dropdown-divider"></div>
-                    <div class="profile-palette">
-                        <span>Color Combination</span>
-                        <div class="palette-row">
-                            <button type="button" class="palette-choice blue" data-palette-choice data-primary="#0d6efd" data-secondary="#6c757d" title="Blue"></button>
-                            <button type="button" class="palette-choice green" data-palette-choice data-primary="#198754" data-secondary="#20c997" title="Green"></button>
-                            <button type="button" class="palette-choice orange" data-palette-choice data-primary="#e85d24" data-secondary="#f59f00" title="Orange"></button>
-                            <button type="button" class="palette-choice slate" data-palette-choice data-primary="#526f8b" data-secondary="#78909c" title="Slate"></button>
-                        </div>
-                    </div>
                     <a href="<?= site_url('logout') ?>" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i><?= session('impersonator_id') ? 'Log out completely' : 'Logout' ?></a>
                 </div>
             </li>

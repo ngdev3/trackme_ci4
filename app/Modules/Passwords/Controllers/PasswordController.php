@@ -7,26 +7,26 @@ use App\Libraries\PasswordVault;
 use App\Models\PasswordModel;
 
 /**
- * Password Manager — a company-scoped, encrypted credential vault with search,
+ * Password Manager - a company-scoped, encrypted credential vault with search,
  * category filter, add/edit/delete and an on-demand (permission-checked) reveal.
  *
  * Scope: per-company (shared with a company's members, gated by the `passwords`
  * module permissions). `created_by` records the author. Passwords are stored
- * encrypted and only decrypted on an explicit reveal call — never rendered into
+ * encrypted and only decrypted on an explicit reveal call - never rendered into
  * a listing.
  */
 class PasswordController extends BaseController
 {
     protected $helpers = ['url', 'form', 'auth', 'menu', 'ui', 'text', 'settings', 'company', 'hashid'];
 
-    protected string $moduleCode = 'passwords';
-    protected string $baseRoute  = 'passwords';
+    protected $moduleCode = 'passwords';
+    protected $baseRoute  = 'passwords';
 
     /** Preset categories offered in the form (free text is also allowed). */
-    private const CATEGORIES = ['Website', 'Email', 'Banking', 'Social', 'Server / Hosting', 'Application', 'API / Keys', 'Other'];
+    private static $categories = ['Website', 'Email', 'Banking', 'Social', 'Server / Hosting', 'Application', 'API / Keys', 'Other'];
 
-    protected PasswordModel $vault;
-    protected PasswordVault $crypt;
+    protected $vault;
+    protected $crypt;
 
     public function __construct()
     {
@@ -34,13 +34,13 @@ class PasswordController extends BaseController
         $this->crypt = new PasswordVault();
     }
 
-    private function uid(): int
+    private function uid()
     {
         return (int) user_id();
     }
 
-    /** The active company id — all vault data is scoped to it. */
-    private function cid(): ?int
+    /** The active company id - all vault data is scoped to it. */
+    private function cid()
     {
         return company_id();
     }
@@ -48,7 +48,7 @@ class PasswordController extends BaseController
     /**
      * Accept current opaque IDs while keeping old numeric URLs/forms working.
      */
-    private function decodeId($id): int
+    private function decodeId($id)
     {
         $id = trim((string) $id);
         if ($id === '') {
@@ -60,7 +60,7 @@ class PasswordController extends BaseController
         return unhid($id);
     }
 
-    private function encodedUrl(string $action, int $id): string
+    private function encodedUrl($action, $id)
     {
         return site_url($this->baseRoute . '/' . trim($action, '/') . '/' . hid($id));
     }
@@ -109,18 +109,18 @@ class PasswordController extends BaseController
     }
 
     // ---------------------------------------------------------------
-    // Details view (a single record — read-only)
+    // Details view (a single record - read-only)
     // ---------------------------------------------------------------
     public function view($id = null)
     {
         $row = $this->vault->findForCompany($this->decodeId($id), $this->cid());
         if (! $row) {
-            return redirect()->to(site_url('passwords'))->with('error', 'Password entry not found.');
+            return redirect()->to(site_url('passwords/list'))->with('error', 'Password entry not found.');
         }
         $creator = null;
         if (! empty($row['created_by'])) {
             $u = (new \App\Models\UserModel())->find((int) $row['created_by']);
-            $creator = $u['name'] ?? ($u['username'] ?? null);
+            $creator = isset($u['name']) ? $u['name'] : (isset($u['username']) ? $u['username'] : null);
         }
 
         return $this->render('view', [
@@ -148,12 +148,12 @@ class PasswordController extends BaseController
     {
         $row = $this->vault->findForCompany($this->decodeId($id), $this->cid());
         if (! $row) {
-            return redirect()->to(site_url('passwords'))->with('error', 'Password entry not found.');
+            return redirect()->to(site_url('passwords/list'))->with('error', 'Password entry not found.');
         }
         return $this->render('form', $this->formData($row, 'edit'));
     }
 
-    private function formData(?array $row, string $mode): array
+    private function formData($row, $mode)
     {
         return [
             'title'      => $mode === 'edit' ? 'Edit Password' : 'Add Password',
@@ -163,10 +163,10 @@ class PasswordController extends BaseController
             ],
             'row'         => $row,
             'mode'        => $mode,
-            'presetCats'  => self::CATEGORIES,
+            'presetCats'  => self::$categories,
             // The current password is pre-filled (decrypted) only when editing.
-            'currentPass' => $row ? $this->crypt->decrypt($row['password_enc'] ?? '') : '',
-            'errors'      => session()->getFlashdata('errors') ?? [],
+            'currentPass' => $row ? $this->crypt->decrypt(isset($row['password_enc']) ? $row['password_enc'] : '') : '',
+            'errors'      => session()->getFlashdata('errors') ?: [],
             'moduleCode'  => $this->moduleCode,
             'baseRoute'   => $this->baseRoute,
             'css'         => [base_url('assets/css/passwords.css')],
@@ -186,7 +186,7 @@ class PasswordController extends BaseController
         return $this->persist($this->decodeId($id));
     }
 
-    private function persist(?int $id)
+    private function persist($id)
     {
         $title = trim((string) $this->request->getPost('title'));
         $pass  = (string) $this->request->getPost('password');
@@ -215,7 +215,7 @@ class PasswordController extends BaseController
         if ($id !== null) {
             $existing = $this->vault->findForCompany($id, $this->cid());
             if (! $existing) {
-                return redirect()->to(site_url('passwords'))->with('error', 'Password entry not found.');
+                return redirect()->to(site_url('passwords/list'))->with('error', 'Password entry not found.');
             }
             // Only re-encrypt when a new password was entered; blank keeps the old one.
             if ($pass !== '') {
@@ -236,7 +236,7 @@ class PasswordController extends BaseController
     }
 
     // ---------------------------------------------------------------
-    // Reveal (AJAX) — decrypt one entry's password on demand
+    // Reveal (AJAX) - decrypt one entry's password on demand
     // ---------------------------------------------------------------
     public function reveal($id = null)
     {
@@ -246,7 +246,7 @@ class PasswordController extends BaseController
         }
         return $this->response->setJSON([
             'status'   => 'success',
-            'password' => $this->crypt->decrypt($row['password_enc'] ?? ''),
+            'password' => $this->crypt->decrypt(isset($row['password_enc']) ? $row['password_enc'] : ''),
         ]);
     }
 
@@ -258,10 +258,10 @@ class PasswordController extends BaseController
         $id  = $this->decodeId($id);
         $row = $this->vault->findForCompany($id, $this->cid());
         if (! $row) {
-            return redirect()->to(site_url('passwords'))->with('error', 'Password entry not found.');
+            return redirect()->to(site_url('passwords/list'))->with('error', 'Password entry not found.');
         }
         $this->vault->delete($id);
         activity_log('Passwords', 'Delete', "Password entry #{$id} ({$row['title']}) deleted");
-        return redirect()->to(site_url('passwords'))->with('success', 'Password entry deleted.');
+        return redirect()->to(site_url('passwords/list'))->with('success', 'Password entry deleted.');
     }
 }

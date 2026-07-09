@@ -135,6 +135,10 @@ if (! function_exists('render_firm_sidebar')) {
                     $bestIdx = $i;
                 }
             }
+            if ($code === 'passwords' && $bestLen < 0 && is_menu_active('passwords')) {
+                $bestIdx = 0;
+                $bestLen = strlen('passwords');
+            }
             $childActive = $bestLen >= 0;
             $childHtml   = '';
             foreach ($children as $i => [$clabel, $curl]) {
