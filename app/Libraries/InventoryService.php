@@ -75,7 +75,7 @@ class InventoryService
         ]);
 
         $entryNo    = $this->movements->nextEntryNo($companyId, 'inward');
-        $movementId = (int) $this->movements->insert([
+        $movementId = (int) $this->movements->insert(array_filter([
             'company_id'    => $companyId,
             'entry_no'      => $entryNo,
             'movement_type' => 'inward',
@@ -86,12 +86,15 @@ class InventoryService
             'lot_id'        => $lotId,
             'bags'          => $bags,
             'weight'        => $weight,
+            'rate'          => isset($d['rate']) ? round((float) $d['rate'], 2) : 0,
+            'amount'        => isset($d['amount']) ? round((float) $d['amount'], 2) : 0,
             'rack'          => $d['rack'] ?? null,
             'notes'         => $d['notes'] ?? null,
             'photo'         => $d['photo'] ?? null,
             'source'        => $d['source'] ?? 'web',
             'created_by'    => $d['created_by'] ?? null,
-        ]);
+            'created_at'    => $d['created_at'] ?? null,
+        ], static fn ($v) => $v !== null));
 
         $this->stock->applyDelta($companyId, $productId, $warehouseId, $bags, $weight);
 
@@ -131,7 +134,7 @@ class InventoryService
         $this->db->transStart();
 
         $entryNo    = $this->movements->nextEntryNo($companyId, 'outward');
-        $movementId = (int) $this->movements->insert([
+        $movementId = (int) $this->movements->insert(array_filter([
             'company_id'    => $companyId,
             'entry_no'      => $entryNo,
             'movement_type' => 'outward',
@@ -141,12 +144,15 @@ class InventoryService
             'party_id'      => $d['party_id'] ?? null,
             'bags'          => $bags,
             'weight'        => $weight,
+            'rate'          => isset($d['rate']) ? round((float) $d['rate'], 2) : 0,
+            'amount'        => isset($d['amount']) ? round((float) $d['amount'], 2) : 0,
             'vehicle_no'    => $d['vehicle_no'] ?? null,
             'notes'         => $d['notes'] ?? null,
             'photo'         => $d['photo'] ?? null,
             'source'        => $d['source'] ?? 'web',
             'created_by'    => $d['created_by'] ?? null,
-        ]);
+            'created_at'    => $d['created_at'] ?? null,
+        ], static fn ($v) => $v !== null));
 
         // Reduce the fast balance and draw down lots oldest-first (FIFO).
         $this->stock->applyDelta($companyId, $productId, $warehouseId, -$bags, -$weight);

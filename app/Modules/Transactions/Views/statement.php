@@ -20,6 +20,7 @@ $stmtQs = array_filter(['party' => $party, 'from' => $from, 'to' => $to]);
             <a href="<?= site_url('transactions/list') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-table"></i> Rokad Vahi</a>
             <?php if (! empty($hasParty)): ?>
                 <a href="<?= site_url('transactions/statement/print') . '?' . http_build_query($stmtQs) ?>" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print</a>
+                <a href="<?= site_url('transactions/statement/pdf') . '?' . http_build_query($stmtQs + ['per' => 500]) ?>" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
             <?php endif; ?>
         </div>
     </div>

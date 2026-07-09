@@ -10,10 +10,12 @@ $fmtW = static fn ($n) => number_format((float) $n, 2);
 $actions = [
     ['New Inward',   'bi-box-arrow-in-down', 'in',   site_url('inventory/inward'), ! empty($canAdd)],
     ['Stock Outward','bi-box-arrow-up',      'out',  site_url('inventory/outward'), ! empty($canAdd)],
+    ['Voice Entry',  'bi-mic',               'voice',site_url('inventory/voice'), ! empty($canAdd)],
     ['Search',       'bi-search',            'find', site_url('inventory/search'), true],
     ['Verify',       'bi-clipboard-check',   'chk',  site_url('inventory/verify'), ! empty($canAdd)],
-    ['Daily Closing','bi-calendar-check',    'day',  '#', false],
-    ['Reports',      'bi-graph-up',          'rep',  '#', false],
+    ['Daily Closing','bi-calendar-check',    'day',  site_url('inventory/closing'), true],
+    ['Dashboard',    'bi-speedometer2',      'dash', site_url('inventory/dashboard'), true],
+    ['Reports',      'bi-graph-up',          'rep',  site_url('inventory/reports'), true],
 ];
 ?>
 <div class="inv-ws">
@@ -129,12 +131,14 @@ $actions = [
                                     $isIn = (int) $r['direction'] === 1;
                                 ?>
                                     <li>
-                                        <span class="inv-feed-ic <?= $isIn ? 'in' : 'out' ?>"><i class="bi <?= $isIn ? 'bi-arrow-down' : 'bi-arrow-up' ?>"></i></span>
-                                        <span class="inv-feed-main">
-                                            <span class="inv-feed-name"><?= esc($r['product_name']) ?> <small>· <?= esc($r['warehouse_name']) ?></small></span>
-                                            <span class="inv-feed-meta"><?= esc($r['entry_no']) ?> · <?= esc(date('d M, H:i', strtotime($r['created_at']))) ?><?= ! empty($r['party_name']) ? ' · ' . esc($r['party_name']) : '' ?></span>
-                                        </span>
-                                        <span class="inv-feed-bags <?= $isIn ? 'in' : 'out' ?>"><?= $isIn ? '+' : '−' ?><?= $fmt($r['bags']) ?></span>
+                                        <a class="inv-feed-link" href="<?= site_url('inventory/entry/' . $r['id']) ?>">
+                                            <span class="inv-feed-ic <?= $isIn ? 'in' : 'out' ?>"><i class="bi <?= $isIn ? 'bi-arrow-down' : 'bi-arrow-up' ?>"></i></span>
+                                            <span class="inv-feed-main">
+                                                <span class="inv-feed-name"><?= esc($r['product_name']) ?> <small>· <?= esc($r['warehouse_name']) ?></small></span>
+                                                <span class="inv-feed-meta"><?= esc($r['entry_no']) ?> · <?= esc(date('d M, H:i', strtotime($r['created_at']))) ?><?= ! empty($r['party_name']) ? ' · ' . esc($r['party_name']) : '' ?></span>
+                                            </span>
+                                            <span class="inv-feed-bags <?= $isIn ? 'in' : 'out' ?>"><?= $isIn ? '+' : '−' ?><?= $fmt($r['bags']) ?></span>
+                                        </a>
                                     </li>
                                 <?php endforeach; ?>
                             </ul>

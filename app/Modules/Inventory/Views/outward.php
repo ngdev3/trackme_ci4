@@ -71,10 +71,10 @@ $short = session()->getFlashdata('short_available');
             </div>
 
             <div class="inv-field">
-                <label>Photo <span class="opt">(optional)</span></label>
+                <label>Proof — photo / bill / challan / voice note <span class="opt">(optional)</span></label>
                 <label class="inv-photo">
-                    <input type="file" name="photo" accept="image/*" capture="environment" hidden id="photoInput">
-                    <i class="bi bi-camera"></i><span id="photoLabel">Take / choose a photo</span>
+                    <input type="file" name="attachments[]" accept="image/*,application/pdf,video/*,audio/*" capture="environment" multiple hidden id="photoInput">
+                    <i class="bi bi-paperclip"></i><span id="photoLabel">Add photos, bills, challans, videos or voice notes</span>
                 </label>
             </div>
 
@@ -129,7 +129,10 @@ $short = session()->getFlashdata('short_available');
     showAvail();
     var photo = document.getElementById('photoInput');
     if (photo) photo.addEventListener('change', function () {
-        document.getElementById('photoLabel').textContent = photo.files.length ? photo.files[0].name : 'Take / choose a photo';
+        var n = photo.files.length;
+        document.getElementById('photoLabel').textContent = n
+            ? (n + ' file' + (n > 1 ? 's' : '') + ' selected')
+            : 'Add photos, bills, challans, videos or voice notes';
     });
 })();
 </script>

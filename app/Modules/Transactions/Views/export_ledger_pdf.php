@@ -29,6 +29,9 @@ $fmt = fn ($n) => number_format((float) $n, 2);
     <div class="head">
         <h1><?= esc($firm['name'] ?? 'Jama / Naam Ledger') ?></h1>
         <small>Transactions Ledger &middot; Generated <?= date('d M Y, H:i') ?></small>
+        <?php if (! empty($limit) && (int) ($summary['count'] ?? 0) > count($rows)): ?>
+            <br><small>Showing <?= count($rows) ?> of <?= (int) $summary['count'] ?> filtered entries<?= ! empty($offset) ? ', starting from #' . ((int) $offset + 1) : '' ?>.</small>
+        <?php endif; ?>
     </div>
 
     <table>

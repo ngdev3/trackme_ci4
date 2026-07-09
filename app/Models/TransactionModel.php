@@ -156,6 +156,16 @@ class TransactionModel extends Model
         return $b->orderBy('txn_date', 'DESC')->orderBy('id', 'DESC')->findAll();
     }
 
+    /** Filtered rows with an explicit limit, used by memory-sensitive PDF exports. */
+    public function limitedFiltered(?int $userId, array $f, int $limit, int $offset = 0): array
+    {
+        $limit  = max(1, $limit);
+        $offset = max(0, $offset);
+
+        $b = $this->applyFilters($this->scoped($userId), $f);
+        return $b->orderBy('txn_date', 'DESC')->orderBy('id', 'DESC')->findAll($limit, $offset);
+    }
+
     /** Totals for the filtered set: jama, naam, net (jama−naam), count. */
     public function summary(?int $userId, array $f): array
     {

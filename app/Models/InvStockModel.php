@@ -32,6 +32,24 @@ class InvStockModel extends Model
         );
     }
 
+    /**
+     * Current bags on hand per product for a company (summed across godowns).
+     *
+     * @return array<int, float> productId => bags
+     */
+    public function bagsByProduct(int $companyId): array
+    {
+        $rows = $this->select('product_id, COALESCE(SUM(bags), 0) AS bags')
+            ->where('company_id', $companyId)
+            ->groupBy('product_id')
+            ->findAll();
+        $out = [];
+        foreach ($rows as $r) {
+            $out[(int) $r['product_id']] = (float) $r['bags'];
+        }
+        return $out;
+    }
+
     /** Current bags available for a product+warehouse (0 if none). */
     public function bagsAt(int $companyId, int $productId, int $warehouseId): float
     {

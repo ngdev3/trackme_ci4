@@ -22,9 +22,17 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->get('inventory/masters', 'InventoryApiController::masters');
     $routes->get('inventory/stock', 'InventoryApiController::stock');
     $routes->get('inventory/search', 'InventoryApiController::search');
+    $routes->post('inventory/voice/parse', 'InventoryApiController::voiceParse');
     $routes->post('inventory/inward', 'InventoryApiController::inward');
     $routes->post('inventory/outward', 'InventoryApiController::outward');
     $routes->post('inventory/verify', 'InventoryApiController::verify');
+    $routes->get('inventory/entry/(:num)/attachments', 'InventoryApiController::entryAttachments/$1');
+    $routes->post('inventory/entry/(:num)/attach', 'InventoryApiController::attachToEntry/$1');
+    $routes->get('inventory/dashboard', 'InventoryApiController::dashboard');
+    $routes->get('inventory/reports/(:alpha)', 'InventoryApiController::report/$1');
+    $routes->get('inventory/closing', 'InventoryApiController::closingSummary');
+    $routes->post('inventory/closing/close', 'InventoryApiController::closeDay');
+    $routes->post('inventory/closing/reopen', 'InventoryApiController::reopenDay');
     $routes->get('inventory/corrections', 'InventoryApiController::corrections');
     $routes->post('inventory/corrections/approve/(:num)', 'InventoryApiController::approveCorrection/$1');
 });

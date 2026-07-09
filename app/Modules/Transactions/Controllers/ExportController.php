@@ -49,7 +49,12 @@ class ExportController extends BaseController
     // =================================================================
     public function ledger(string $format = 'csv')
     {
-        $rows = $this->txns->allFiltered($this->scope(), $this->filters());
+        $scope   = $this->scope();
+        $filters = $this->filters();
+        $summary = $this->txns->summary($scope, $filters);
+        $rows    = $format === 'pdf'
+            ? $this->txns->limitedFiltered($scope, $filters, $this->pdfRowLimit(), $this->pdfRowOffset())
+            : $this->txns->allFiltered($scope, $filters);
 
         $headers = ['Txn No', 'Date', 'Party', 'Type', 'Mode', 'Amount', 'Status', 'Remarks'];
         $matrix  = array_map(static fn ($r) => [
@@ -69,11 +74,31 @@ class ExportController extends BaseController
             'xlsx' => $this->xlsx($name, 'Transactions', $headers, $matrix),
             'pdf'  => $this->pdf($name, view('Modules\Transactions\Views\export_ledger_pdf', [
                 'rows'    => $rows,
-                'summary' => $this->txns->summary($this->scope(), $this->filters()),
+                'summary' => $summary,
+                'limit'   => $this->pdfRowLimit(),
+                'offset'  => $this->pdfRowOffset(),
                 'firm'    => function_exists('current_company') ? current_company() : null,
             ])),
             default => $this->csv($name, $headers, $matrix),
         };
+    }
+
+    private function pdfRowLimit(): int
+    {
+        $per = (int) $this->request->getGet('per');
+        if (in_array($per, [10, 25, 50, 100], true)) {
+            return $per;
+        }
+
+        return 500;
+    }
+
+    private function pdfRowOffset(): int
+    {
+        $page = (int) ($this->request->getGet('page') ?: $this->request->getGet('page_transactions'));
+        $page = max(1, $page);
+
+        return ($page - 1) * $this->pdfRowLimit();
     }
 
     // =================================================================

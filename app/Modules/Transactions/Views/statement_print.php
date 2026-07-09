@@ -12,6 +12,9 @@ $range   = ($from || $to)
     ? (($from ? date('d M Y', strtotime($from)) : 'Start') . '  —  ' . ($to ? date('d M Y', strtotime($to)) : 'Latest'))
     : 'All time';
 $genOn   = date('d M Y, h:i A');
+$pdfTotalRows = $pdfTotalRows ?? null;
+$pdfOffset    = (int) ($pdfOffset ?? 0);
+$pdfShownRows = is_array($rows ?? null) ? count($rows) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -123,6 +126,9 @@ $genOn   = date('d M Y, h:i A');
         <div class="meta-box">
             <div class="meta-line"><span>Period</span><b><?= esc($range) ?></b></div>
             <div class="meta-line"><span>Entries</span><b><?= number_format((int) $count) ?></b></div>
+            <?php if ($noPrint && $pdfTotalRows !== null && (int) $pdfTotalRows > $pdfShownRows): ?>
+                <div class="meta-line"><span>PDF Rows</span><b><?= number_format($pdfShownRows) ?> of <?= number_format((int) $pdfTotalRows) ?><?= $pdfOffset > 0 ? ' from #' . number_format($pdfOffset + 1) : '' ?></b></div>
+            <?php endif; ?>
             <div class="meta-line"><span>Generated</span><b><?= esc($genOn) ?></b></div>
         </div>
     </div>

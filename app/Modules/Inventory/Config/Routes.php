@@ -4,36 +4,26 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 
+/*
+ * Simple Inventory — three easy screens only:
+ *   /inventory            Daily stock IN (Purchase) / OUT (Sale)
+ *   /inventory/products   Product master (quick add)
+ *   /inventory/position   Stock position by day / month / year
+ *
+ * The earlier advanced screens (voice, verify, closing, dashboard, reports,
+ * attachments) are retired from the web UI; their controllers remain on disk but
+ * are no longer routed. The mobile REST API is unaffected.
+ */
 $routes->group('inventory', ['namespace' => 'Modules\Inventory\Controllers'], static function (RouteCollection $routes) {
-    // Worker hub (big buttons).
-    $routes->get('/', 'InventoryController::index', ['filter' => 'permission:inventory,view']);
+    // Daily IN / OUT (home).
+    $routes->get('/', 'StockController::index', ['filter' => 'permission:inventory,view']);
+    $routes->post('save', 'StockController::save', ['filter' => 'permission:inventory,add']);
 
-    // Task 1 — Stock Inward.
-    $routes->get('inward', 'InventoryController::inward', ['filter' => 'permission:inventory,add']);
-    $routes->post('inward', 'InventoryController::storeInward', ['filter' => 'permission:inventory,add']);
-    $routes->get('receipt/(:num)', 'InventoryController::receipt/$1', ['filter' => 'permission:inventory,view']);
+    // Product master.
+    $routes->get('products', 'StockController::products', ['filter' => 'permission:inventory,view']);
+    $routes->post('products', 'StockController::storeProduct', ['filter' => 'permission:inventory,add']);
+    $routes->post('products/delete/(:num)', 'StockController::deleteProduct/$1', ['filter' => 'permission:inventory,delete']);
 
-    // Task 2 — Stock Outward.
-    $routes->get('outward', 'InventoryController::outward', ['filter' => 'permission:inventory,add']);
-    $routes->post('outward', 'InventoryController::storeOutward', ['filter' => 'permission:inventory,add']);
-
-    // Task 3 — Stock Search.
-    $routes->get('search', 'InventoryController::search', ['filter' => 'permission:inventory,view']);
-
-    // Task 4 — Physical Verification + correction requests.
-    $routes->get('verify', 'InventoryController::verify', ['filter' => 'permission:inventory,add']);
-    $routes->post('verify', 'InventoryController::storeVerification', ['filter' => 'permission:inventory,add']);
-    $routes->get('corrections', 'InventoryController::corrections', ['filter' => 'permission:inventory,view']);
-    $routes->post('corrections/approve/(:num)', 'InventoryController::approveCorrection/$1', ['filter' => 'permission:inventory,approve']);
-    $routes->post('corrections/reject/(:num)', 'InventoryController::rejectCorrection/$1', ['filter' => 'permission:inventory,approve']);
-
-    // Masters (owner/admin): products, godowns, parties.
-    $routes->get('masters', 'InventoryController::masters', ['filter' => 'permission:inventory,edit']);
-    $routes->post('masters/product', 'InventoryController::storeProduct', ['filter' => 'permission:inventory,edit']);
-    $routes->post('masters/warehouse', 'InventoryController::storeWarehouse', ['filter' => 'permission:inventory,edit']);
-    $routes->post('masters/party', 'InventoryController::storeParty', ['filter' => 'permission:inventory,edit']);
-    $routes->post('masters/delete/(:alpha)/(:num)', 'InventoryController::deleteMaster/$1/$2', ['filter' => 'permission:inventory,delete']);
-
-    // Serve an attachment file.
-    $routes->get('attachment/(:num)', 'InventoryController::attachment/$1', ['filter' => 'permission:inventory,view']);
+    // Stock position (day / month / year).
+    $routes->get('position', 'StockController::position', ['filter' => 'permission:inventory,view']);
 });

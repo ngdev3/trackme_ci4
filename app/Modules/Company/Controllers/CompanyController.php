@@ -184,6 +184,7 @@ class CompanyController extends BaseController
         }
 
         $role = Services::company()->role();
+        $companies = Services::company()->userCompanies();
 
         return $this->render('profile', [
             'title'      => 'Company Profile',
@@ -192,10 +193,35 @@ class CompanyController extends BaseController
             'score'      => company_score($company),
             'role'       => $role,
             'canEdit'    => in_array($role, ['owner', 'admin'], true),
-            'companies'  => Services::company()->userCompanies(),
+            'companies'  => $companies,
+            'entryCounts'=> $this->transactionEntryCounts($companies),
             'activeId'   => (int) $company['id'],
             'errors'     => session()->getFlashdata('errors') ?? [],
         ]);
+    }
+
+    /** Active Jama/Naam transaction counts keyed by company id. */
+    private function transactionEntryCounts(array $companies): array
+    {
+        $ids = array_values(array_unique(array_map(static fn ($company) => (int) ($company['id'] ?? 0), $companies)));
+        $ids = array_values(array_filter($ids, static fn (int $id) => $id > 0));
+        if ($ids === []) {
+            return [];
+        }
+
+        $rows = db_connect()->table('transactions')
+            ->select('company_id, COUNT(*) AS cnt')
+            ->where('deleted_at', null)
+            ->whereIn('company_id', $ids)
+            ->groupBy('company_id')
+            ->get()
+            ->getResultArray();
+
+        $counts = array_fill_keys($ids, 0);
+        foreach ($rows as $row) {
+            $counts[(int) $row['company_id']] = (int) $row['cnt'];
+        }
+        return $counts;
     }
 
     /** Update the active company's details. Owner / admin only. */

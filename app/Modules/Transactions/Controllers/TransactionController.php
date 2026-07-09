@@ -8,6 +8,8 @@ use App\Models\ReminderModel;
 use App\Models\TransactionAttachmentModel;
 use App\Models\TransactionModel;
 use Config\Services;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 /**
  * Jama (money received) / Naam (money paid) transaction register — a clean,
@@ -197,6 +199,55 @@ class TransactionController extends BaseController
         return view('Modules\Transactions\Views\statement_print', $data + [
             'firm' => function_exists('current_company') ? current_company() : null,
         ]);
+    }
+
+    /** Inline PDF account statement, bounded so large test ledgers do not exhaust Dompdf memory. */
+    public function statementPdf()
+    {
+        $data = $this->statementData();
+        if (! $data['hasParty']) {
+            return redirect()->to(site_url('transactions/statement'))->with('error', 'Choose an account to export its statement.');
+        }
+
+        $limit  = $this->statementPdfLimit();
+        $offset = max(0, (int) $this->request->getGet('offset'));
+        $rows   = $data['rows'] ?? [];
+
+        $data['pdfTotalRows'] = count($rows);
+        $data['pdfLimit']     = $limit;
+        $data['pdfOffset']    = $offset;
+        $data['rows']         = array_slice($rows, $offset, $limit);
+
+        $html = view('Modules\Transactions\Views\statement_pdf', $data + [
+            'firm'    => function_exists('current_company') ? current_company() : null,
+            'noPrint' => true,
+        ]);
+
+        $options = new Options();
+        $options->set('isRemoteEnabled', false);
+        $options->set('defaultFont', 'DejaVu Sans');
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $name = preg_replace('/[^A-Za-z0-9_-]+/', '_', (string) $data['party']) ?: 'account_statement';
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/pdf')
+            ->setHeader('Content-Disposition', 'inline; filename="' . $name . '_statement.pdf"')
+            ->setBody($dompdf->output());
+    }
+
+    private function statementPdfLimit(): int
+    {
+        $per = (int) $this->request->getGet('per');
+        if (in_array($per, [10, 25, 50, 100, 250, 500], true)) {
+            return $per;
+        }
+
+        return 500;
     }
 
     // ===============================================================

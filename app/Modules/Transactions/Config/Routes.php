@@ -13,6 +13,7 @@ $routes->group('transactions', ['namespace' => 'Modules\Transactions\Controllers
     // Account (party) statement — searchable per-account ledger + print
     $routes->get('statement', 'TransactionController::statement', ['filter' => 'permission:transactions,view']);
     $routes->get('statement/print', 'TransactionController::statementPrint', ['filter' => 'permission:transactions,view']);
+    $routes->get('statement/pdf', 'TransactionController::statementPdf', ['filter' => 'permission:transactions,view']);
 
     $routes->get('create', 'TransactionController::create', ['filter' => 'permission:transactions,add']);
     $routes->post('store', 'TransactionController::store', ['filter' => 'permission:transactions,add']);

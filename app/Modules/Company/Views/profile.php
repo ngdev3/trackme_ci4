@@ -38,13 +38,20 @@ $ro  = ! $canEdit; // read-only flag
                     </div>
                     <div class="company-switch-list">
                         <?php foreach ($companies as $firm): ?>
-                            <?php $isActive = (int) $firm['id'] === (int) $activeId; ?>
+                            <?php
+                            $firmId = (int) $firm['id'];
+                            $isActive = $firmId === (int) $activeId;
+                            $entryCount = (int) ($entryCounts[$firmId] ?? 0);
+                            ?>
                             <a class="company-switch-item d-flex align-items-center gap-2 p-2 rounded text-decoration-none <?= $isActive ? 'active' : '' ?>"
-                               href="<?= $isActive ? '#' : site_url('company/switch/' . $firm['id'] . '?return=profile') ?>">
+                               href="<?= $isActive ? '#' : site_url('company/switch/' . $firmId . '?return=profile') ?>">
                                 <span class="firm-dot bg-primary"></span>
                                 <span class="flex-grow-1 text-truncate">
                                     <span class="fw-semibold d-block text-truncate"><?= esc($firm['name']) ?></span>
                                     <small class="text-muted text-capitalize"><?= esc($firm['membership_role'] ?? 'member') ?> &middot; <?= esc($firm['state'] ?? '') ?></small>
+                                </span>
+                                <span class="badge rounded-pill text-bg-light border company-entry-count">
+                                    <?= esc(number_format($entryCount)) ?> entries
                                 </span>
                                 <?php if ($isActive): ?>
                                     <i class="bi bi-check-circle-fill text-success"></i>
@@ -237,4 +244,5 @@ $ro  = ! $canEdit; // read-only flag
 .company-switch-item:hover { background: var(--bs-primary-bg-subtle, #e7f1ff); }
 .company-switch-item.active { border-color: var(--bs-primary, #0d6efd); background: var(--bs-primary-bg-subtle, #e7f1ff); }
 .company-switch-item .firm-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+.company-entry-count { flex: 0 0 auto; font-weight: 600; }
 </style>

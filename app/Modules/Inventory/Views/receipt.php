@@ -19,17 +19,14 @@ $isIn = ($row['movement_type'] ?? '') === 'inward';
             <div><small>Date &amp; Time</small><strong><?= esc(date('d M Y, H:i', strtotime($row['created_at']))) ?></strong></div>
         </div>
 
-        <?php if (! empty($attachments)): ?>
-            <div class="inv-receipt-photos">
-                <?php foreach ($attachments as $a): if ($a['kind'] === 'image'): ?>
-                    <img src="<?= site_url('inventory/attachment/' . $a['id']) ?>" alt="proof">
-                <?php endif; endforeach; ?>
-            </div>
-        <?php endif; ?>
+        <div class="inv-receipt-att">
+            <?= view('Modules\Inventory\Views\_attachments', ['attachments' => $attachments, 'canDelete' => false]) ?>
+        </div>
 
         <div class="d-flex gap-2 mt-4 justify-content-center flex-wrap">
-            <a href="<?= site_url('inventory/inward') ?>" class="btn btn-primary btn-lg"><i class="bi bi-plus-circle me-1"></i>New Inward</a>
-            <a href="<?= site_url('inventory') ?>" class="btn btn-light border btn-lg"><i class="bi bi-house me-1"></i>Inventory Home</a>
+            <a href="<?= site_url('inventory/entry/' . $row['id']) ?>" class="btn inv-btn-in btn-lg"><i class="bi bi-paperclip me-1"></i>Add / manage proof</a>
+            <a href="<?= site_url('inventory/' . ($isIn ? 'inward' : 'outward')) ?>" class="btn btn-primary btn-lg"><i class="bi bi-plus-circle me-1"></i>New <?= $isIn ? 'Inward' : 'Outward' ?></a>
+            <a href="<?= site_url('inventory') ?>" class="btn btn-light border btn-lg"><i class="bi bi-house me-1"></i>Home</a>
         </div>
     </div>
 </div>

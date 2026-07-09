@@ -18,8 +18,8 @@ class InvMovementModel extends Model
     protected $useTimestamps  = true;
     protected $allowedFields  = [
         'company_id', 'entry_no', 'movement_type', 'direction', 'product_id', 'warehouse_id',
-        'party_id', 'lot_id', 'bags', 'weight', 'rack', 'vehicle_no', 'reason', 'notes',
-        'photo', 'source', 'day_closed', 'created_by',
+        'party_id', 'lot_id', 'bags', 'weight', 'rate', 'amount', 'rack', 'vehicle_no', 'reason', 'notes',
+        'photo', 'source', 'day_closed', 'created_by', 'created_at',
     ];
 
     public const TYPES = ['inward', 'outward', 'adjustment'];

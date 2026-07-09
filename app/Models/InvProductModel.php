@@ -12,7 +12,7 @@ class InvProductModel extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = true;
     protected $useTimestamps  = true;
-    protected $allowedFields  = ['company_id', 'name', 'unit', 'avg_weight', 'sku', 'low_stock', 'status'];
+    protected $allowedFields  = ['company_id', 'name', 'unit', 'avg_weight', 'rate', 'sku', 'low_stock', 'status'];
 
     /** Active products for a company (for dropdowns), alphabetical. */
     public function forCompany(?int $companyId): array
