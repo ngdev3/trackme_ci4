@@ -69,6 +69,29 @@ if (! function_exists('sidebar_modules')) {
                 $result[] = $node;
             }
         }
+
+        // Enforce fixed placements regardless of stored sort order or newly added
+        // modules: Dashboard first, "Hisaab Kitaab Vahi" (transactions) directly
+        // after it, and Settings always last. Everything else keeps its order.
+        $rank = static function (array $node): int {
+            switch ($node['code']) {
+                case 'dashboard':    return -2;
+                case 'transactions': return -1;   // Hisaab Kitaab Vahi — right after Dashboard
+                case 'settings':     return PHP_INT_MAX; // always last
+                default:             return 0;
+            }
+        };
+        usort($result, static function (array $a, array $b) use ($rank): int {
+            $ra = $rank($a);
+            $rb = $rank($b);
+            if ($ra !== $rb) {
+                return $ra <=> $rb;
+            }
+            // Preserve the existing relative order for everything else.
+            return ((int) ($a['sort_order'] ?? 0) <=> (int) ($b['sort_order'] ?? 0))
+                ?: ((int) ($a['id'] ?? 0) <=> (int) ($b['id'] ?? 0));
+        });
+
         return $result;
     }
 }
