@@ -54,7 +54,13 @@ $notificationIconMap = [
             }
             if (function_exists('can') && can('notes', 'view')) { $nsAdd('Notes', 'notes', 'bi-sticky', 'notes'); }
             if (function_exists('can') && can('reminders', 'view')) { $nsAdd('Reminders', 'reminders', 'bi-alarm', 'reminders'); }
-            if (function_exists('can') && can('passwords', 'view')) { $nsAdd('Password Manager', 'passwords', 'bi-shield-lock', 'password vault'); }
+            if (function_exists('can') && can('passwords', 'view')) {
+                $nsAdd('Password Manager', 'passwords/list', 'bi-shield-lock', 'password vault list');
+                $nsAdd('Password List', 'passwords/list', 'bi-list-check', 'password vault credentials');
+            }
+            if (function_exists('can') && can('passwords', 'add')) {
+                $nsAdd('Add Password', 'passwords/add', 'bi-plus-circle', 'password vault create new');
+            }
             if (function_exists('firm_can') && firm_can('firm_users')) { $nsAdd('Firm Users', 'firm-users', 'bi-people', 'staff team'); }
             if (session('account_type') !== 'firm_user') { $nsAdd('Company Profile', 'company/profile', 'bi-building', 'firm company switch'); }
             $nsAdd('My Profile', 'profile', 'bi-person', 'account profile');
