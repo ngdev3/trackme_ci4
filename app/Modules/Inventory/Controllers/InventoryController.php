@@ -73,15 +73,40 @@ class InventoryController extends BaseController
             }
             return (float) ($b->get()->getRowArray()['bags'] ?? 0);
         };
-        $todayIn  = $sumBags('inward');
-        $todayOut = $sumBags('outward');
+
+        // Live current stock (per product + godown) — the heart of the workspace.
+        $stock = (new \App\Models\InvStockModel())->scopedList($cid)
+            ->orderBy('p.name', 'ASC')->orderBy('w.name', 'ASC')->get()->getResultArray();
+
+        $totalBags = 0.0;
+        $totalWt   = 0.0;
+        $lowCount  = 0;
+        foreach ($stock as $s) {
+            $totalBags += (float) $s['bags'];
+            $totalWt   += (float) $s['weight'];
+            if ((float) $s['bags'] > 0 && (int) $s['low_stock'] > 0 && (float) $s['bags'] <= (int) $s['low_stock']) {
+                $lowCount++;
+            }
+        }
+
+        // Recent movements (the activity feed).
+        $recent = $mv->scopedList($cid)->orderBy('inv_movements.id', 'DESC')->limit(8)->get()->getResultArray();
 
         return $this->render('hub', [
             'title'      => 'Inventory',
             'breadcrumb' => [['label' => 'Inventory']],
-            'todayIn'    => $todayIn,
-            'todayOut'   => $todayOut,
+            'todayIn'    => $sumBags('inward'),
+            'todayOut'   => $sumBags('outward'),
+            'stock'      => $stock,
+            'recent'     => $recent,
+            'totalBags'  => $totalBags,
+            'totalWt'    => $totalWt,
+            'lowCount'   => $lowCount,
+            'productCount'   => count($this->products->forCompany($cid)),
+            'warehouseCount' => count($this->warehouses->forCompany($cid)),
+            'hasMasters' => ! empty($this->products->forCompany($cid)) && ! empty($this->warehouses->forCompany($cid)),
             'canAdd'     => can('inventory', 'add'),
+            'canEdit'    => can('inventory', 'edit'),
             'moduleCode' => $this->moduleCode,
             'baseRoute'  => $this->baseRoute,
             'css'        => [base_url('assets/css/inventory.css')],
