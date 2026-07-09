@@ -183,6 +183,55 @@ class InventoryService
         }
     }
 
+    /**
+     * Reconcile system stock to a counted physical figure. Writes an adjustment
+     * ledger row (signed by whether stock went up or down) and moves the balance
+     * by exactly the difference. Called only after an owner/admin approves a
+     * correction request — never by a worker directly.
+     *
+     * @return array{movement_id:int, entry_no:string}
+     */
+    public function recordAdjustment(array $d): array
+    {
+        $companyId   = (int) $d['company_id'];
+        $productId   = (int) $d['product_id'];
+        $warehouseId = (int) $d['warehouse_id'];
+        $delta       = round((float) $d['delta_bags'], 2);          // physical − system (signed)
+        $direction   = $delta >= 0 ? 1 : -1;
+        $bags        = abs($delta);
+        $weight      = $this->resolveWeight($companyId, $productId, $bags, null) * ($delta >= 0 ? 1 : 1);
+
+        $this->db->transStart();
+
+        $entryNo    = $this->movements->nextEntryNo($companyId, 'adjustment');
+        $movementId = (int) $this->movements->insert([
+            'company_id'    => $companyId,
+            'entry_no'      => $entryNo,
+            'movement_type' => 'adjustment',
+            'direction'     => $direction,
+            'product_id'    => $productId,
+            'warehouse_id'  => $warehouseId,
+            'bags'          => $bags,
+            'weight'        => $weight,
+            'reason'        => $d['reason'] ?? null,
+            'notes'         => $d['notes'] ?? null,
+            'source'        => $d['source'] ?? 'web',
+            'created_by'    => $d['created_by'] ?? null,
+        ]);
+
+        // Move the balance by the signed difference so system now equals physical.
+        $this->stock->applyDelta($companyId, $productId, $warehouseId, $delta, $direction * $weight);
+
+        $this->db->transComplete();
+
+        if (function_exists('activity_log')) {
+            $sign = $delta >= 0 ? '+' : '−';
+            activity_log('Inventory', 'Edit', "Adjustment {$entryNo}: {$sign}{$bags} bags ({$d['reason']})");
+        }
+
+        return ['movement_id' => $movementId, 'entry_no' => $entryNo];
+    }
+
     /** Bags currently available for a product+warehouse. */
     public function availableBags(int $companyId, int $productId, int $warehouseId): float
     {

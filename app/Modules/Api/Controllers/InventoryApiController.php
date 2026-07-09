@@ -201,4 +201,108 @@ class InventoryApiController extends BaseApiController
             'available' => $result['available'],
         ]);
     }
+
+    /** Whether the API caller may approve corrections for this company (owner/admin). */
+    private function canApprove(int $companyId, array $user): bool
+    {
+        $m = (new CompanyUserModel())->membership($companyId, (int) $user['id']);
+        return $m && in_array($m['role'] ?? '', ['owner', 'admin'], true);
+    }
+
+    /** POST submit a physical-verification correction request. */
+    public function verify()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $cid = $this->companyId($user);
+        if (! $cid) {
+            return $this->failValidationErrors('No company for this user.');
+        }
+
+        $productId   = (int) $this->input('product_id');
+        $warehouseId = (int) $this->input('warehouse_id');
+        $physical    = (float) $this->input('physical_bags');
+        $reason      = (string) ($this->input('reason') ?? '');
+
+        if (! (new InvProductModel())->findForCompany($productId, $cid)) {
+            return $this->failValidationErrors('Invalid product.');
+        }
+        if (! (new InvWarehouseModel())->findForCompany($warehouseId, $cid)) {
+            return $this->failValidationErrors('Invalid godown.');
+        }
+
+        $system = (new InventoryService())->availableBags($cid, $productId, $warehouseId);
+        $diff   = round($physical - $system, 2);
+        if ($diff == 0.0) {
+            return $this->respond(['status' => 'match', 'message' => 'Physical matches system. No correction needed.', 'system' => $system]);
+        }
+        if (! array_key_exists($reason, \App\Models\InvCorrectionModel::REASONS)) {
+            return $this->failValidationErrors('Select a valid reason: ' . implode(', ', array_keys(\App\Models\InvCorrectionModel::REASONS)));
+        }
+
+        $id = (new \App\Models\InvCorrectionModel())->insert([
+            'company_id' => $cid, 'product_id' => $productId, 'warehouse_id' => $warehouseId,
+            'system_bags' => $system, 'physical_bags' => $physical, 'difference' => $diff,
+            'reason' => $reason, 'note' => trim((string) ($this->input('note') ?? '')) ?: null,
+            'status' => 'pending', 'requested_by' => (int) $user['id'],
+        ]);
+
+        return $this->respondCreated([
+            'status' => 'pending_approval', 'message' => 'Correction request submitted. Stock unchanged until approved.',
+            'correction_id' => (int) $id, 'system' => $system, 'physical' => $physical, 'difference' => $diff,
+        ]);
+    }
+
+    /** GET list correction requests for the company. */
+    public function corrections()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $cid = $this->companyId($user);
+        if (! $cid) {
+            return $this->failValidationErrors('No company for this user.');
+        }
+        $rows = (new \App\Models\InvCorrectionModel())->scopedList($cid)
+            ->orderBy('inv_corrections.id', 'DESC')->findAll(100);
+        return $this->respond(['status' => 'ok', 'can_approve' => $this->canApprove($cid, $user), 'corrections' => $rows]);
+    }
+
+    /** POST approve a correction (owner/admin only) → auto adjustment entry. */
+    public function approveCorrection($id = null)
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $cid = $this->companyId($user);
+        if (! $cid) {
+            return $this->failValidationErrors('No company for this user.');
+        }
+        if (! $this->canApprove($cid, $user)) {
+            return $this->failForbidden('Only the owner or an admin can approve corrections.');
+        }
+        $model = new \App\Models\InvCorrectionModel();
+        $c     = $model->findForCompany((int) $id, $cid);
+        if (! $c || $c['status'] !== 'pending') {
+            return $this->failNotFound('Correction not found or already reviewed.');
+        }
+        $result = (new InventoryService())->recordAdjustment([
+            'company_id' => $cid, 'product_id' => (int) $c['product_id'], 'warehouse_id' => (int) $c['warehouse_id'],
+            'delta_bags' => (float) $c['difference'], 'reason' => $c['reason'],
+            'notes' => 'Correction #' . $c['id'], 'source' => 'mobile', 'created_by' => (int) $user['id'],
+        ]);
+        $model->update((int) $c['id'], [
+            'status' => 'approved', 'movement_id' => $result['movement_id'],
+            'reviewed_by' => (int) $user['id'], 'reviewed_at' => date('Y-m-d H:i:s'),
+        ]);
+        return $this->respond([
+            'status' => 'ok', 'message' => 'Approved. Adjustment created and stock reconciled.',
+            'entry_no' => $result['entry_no'],
+            'available' => (new InventoryService())->availableBags($cid, (int) $c['product_id'], (int) $c['warehouse_id']),
+        ]);
+    }
 }

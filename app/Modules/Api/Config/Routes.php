@@ -24,4 +24,7 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->get('inventory/search', 'InventoryApiController::search');
     $routes->post('inventory/inward', 'InventoryApiController::inward');
     $routes->post('inventory/outward', 'InventoryApiController::outward');
+    $routes->post('inventory/verify', 'InventoryApiController::verify');
+    $routes->get('inventory/corrections', 'InventoryApiController::corrections');
+    $routes->post('inventory/corrections/approve/(:num)', 'InventoryApiController::approveCorrection/$1');
 });

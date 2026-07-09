@@ -11,7 +11,7 @@ $actions = [
     ['New Inward',   'bi-box-arrow-in-down', 'in',   site_url('inventory/inward'), ! empty($canAdd)],
     ['Stock Outward','bi-box-arrow-up',      'out',  site_url('inventory/outward'), ! empty($canAdd)],
     ['Search',       'bi-search',            'find', site_url('inventory/search'), true],
-    ['Verify',       'bi-clipboard-check',   'chk',  '#', false],
+    ['Verify',       'bi-clipboard-check',   'chk',  site_url('inventory/verify'), ! empty($canAdd)],
     ['Daily Closing','bi-calendar-check',    'day',  '#', false],
     ['Reports',      'bi-graph-up',          'rep',  '#', false],
 ];

@@ -215,6 +215,164 @@ class InventoryController extends BaseController
     }
 
     // ===============================================================
+    // Task 4 — Physical Stock Verification + correction requests
+    // ===============================================================
+
+    /** Owner/admin (or super admin) may approve corrections; workers may not. */
+    private function canApprove(): bool
+    {
+        return is_super_admin_account() || in_array(company_role(), ['owner', 'admin'], true);
+    }
+
+    public function verify()
+    {
+        $m = $this->masterLists();
+        if (empty($m['products']) || empty($m['warehouses'])) {
+            return redirect()->to(site_url('inventory/masters'))->with('error', 'Add products and godowns first.');
+        }
+        // System stock per product+warehouse so the form can show it live.
+        $stock = (new \App\Models\InvStockModel())->scopedList($this->cid())->get()->getResultArray();
+        $sys   = [];
+        foreach ($stock as $s) {
+            $sys[(int) $s['product_id'] . '_' . (int) $s['warehouse_id']] = (float) $s['bags'];
+        }
+        return $this->render('verify', $m + [
+            'title'      => 'Verify Stock',
+            'breadcrumb' => [['label' => 'Inventory', 'url' => site_url('inventory')], ['label' => 'Verify Stock']],
+            'sys'        => $sys,
+            'reasons'    => \App\Models\InvCorrectionModel::REASONS,
+            'errors'     => session()->getFlashdata('errors') ?? [],
+            'canApprove' => $this->canApprove(),
+            'moduleCode' => $this->moduleCode,
+            'css'        => [base_url('assets/css/inventory.css')],
+        ]);
+    }
+
+    public function storeVerification()
+    {
+        $cid = (int) $this->cid();
+
+        $productId   = (int) $this->request->getPost('product_id');
+        $warehouseId = (int) $this->request->getPost('warehouse_id');
+        $physical    = (float) $this->request->getPost('physical_bags');
+        $reason      = (string) $this->request->getPost('reason');
+
+        $errors = [];
+        if (! $this->products->findForCompany($productId, $cid)) {
+            $errors['product_id'] = 'Please choose a product.';
+        }
+        if (! $this->warehouses->findForCompany($warehouseId, $cid)) {
+            $errors['warehouse_id'] = 'Please choose a godown.';
+        }
+        if ($this->request->getPost('physical_bags') === '' || $physical < 0) {
+            $errors['physical_bags'] = 'Enter the counted physical bags.';
+        }
+        if ($errors !== []) {
+            return redirect()->back()->withInput()->with('errors', $errors);
+        }
+
+        $system = (new InventoryService())->availableBags($cid, $productId, $warehouseId);
+        $diff   = round($physical - $system, 2);
+
+        if ($diff == 0.0) {
+            return redirect()->to(site_url('inventory/verify'))->with('success', 'Physical count matches the system. No correction needed.');
+        }
+        if (! array_key_exists($reason, \App\Models\InvCorrectionModel::REASONS)) {
+            return redirect()->back()->withInput()->with('errors', ['reason' => 'Please select a reason for the difference.']);
+        }
+
+        // Workers can only REQUEST — never adjust. Record a pending correction.
+        (new \App\Models\InvCorrectionModel())->insert([
+            'company_id'    => $cid,
+            'product_id'    => $productId,
+            'warehouse_id'  => $warehouseId,
+            'system_bags'   => $system,
+            'physical_bags' => $physical,
+            'difference'    => $diff,
+            'reason'        => $reason,
+            'note'          => trim((string) $this->request->getPost('note')) ?: null,
+            'status'        => 'pending',
+            'requested_by'  => $this->uid(),
+        ]);
+        activity_log('Inventory', 'Add', "Correction requested: {$diff} bags ({$reason})");
+
+        return redirect()->to(site_url('inventory/corrections'))
+            ->with('success', 'Correction request submitted for owner/admin approval. Stock is unchanged until approved.');
+    }
+
+    /** List correction requests (approvers see approve/reject controls). */
+    public function corrections()
+    {
+        $cid  = $this->cid();
+        $rows = (new \App\Models\InvCorrectionModel())->scopedList($cid)
+            ->orderBy("FIELD(inv_corrections.status,'pending','approved','rejected')", '', false)
+            ->orderBy('inv_corrections.id', 'DESC')->findAll(100);
+
+        return $this->render('corrections', [
+            'title'      => 'Stock Corrections',
+            'breadcrumb' => [['label' => 'Inventory', 'url' => site_url('inventory')], ['label' => 'Corrections']],
+            'rows'       => $rows,
+            'reasons'    => \App\Models\InvCorrectionModel::REASONS,
+            'canApprove' => $this->canApprove(),
+            'moduleCode' => $this->moduleCode,
+            'css'        => [base_url('assets/css/inventory.css')],
+        ]);
+    }
+
+    public function approveCorrection($id = null)
+    {
+        if (! $this->canApprove()) {
+            return redirect()->to(site_url('inventory/corrections'))->with('error', 'Only the owner or an admin can approve corrections.');
+        }
+        $cid = (int) $this->cid();
+        $c   = (new \App\Models\InvCorrectionModel())->findForCompany((int) $id, $cid);
+        if (! $c || $c['status'] !== 'pending') {
+            return redirect()->to(site_url('inventory/corrections'))->with('error', 'Correction not found or already reviewed.');
+        }
+
+        $result = (new InventoryService())->recordAdjustment([
+            'company_id'   => $cid,
+            'product_id'   => (int) $c['product_id'],
+            'warehouse_id' => (int) $c['warehouse_id'],
+            'delta_bags'   => (float) $c['difference'],
+            'reason'       => $c['reason'],
+            'notes'        => 'Correction #' . $c['id'] . ($c['note'] ? ' — ' . $c['note'] : ''),
+            'source'       => 'web',
+            'created_by'   => $this->uid(),
+        ]);
+
+        (new \App\Models\InvCorrectionModel())->update((int) $c['id'], [
+            'status'      => 'approved',
+            'movement_id' => $result['movement_id'],
+            'reviewed_by' => $this->uid(),
+            'reviewed_at' => date('Y-m-d H:i:s'),
+        ]);
+        activity_log('Inventory', 'Edit', "Correction #{$c['id']} approved → adjustment {$result['entry_no']}");
+
+        return redirect()->to(site_url('inventory/corrections'))->with('success', "Approved. Adjustment {$result['entry_no']} created and stock reconciled.");
+    }
+
+    public function rejectCorrection($id = null)
+    {
+        if (! $this->canApprove()) {
+            return redirect()->to(site_url('inventory/corrections'))->with('error', 'Only the owner or an admin can reject corrections.');
+        }
+        $cid = (int) $this->cid();
+        $c   = (new \App\Models\InvCorrectionModel())->findForCompany((int) $id, $cid);
+        if (! $c || $c['status'] !== 'pending') {
+            return redirect()->to(site_url('inventory/corrections'))->with('error', 'Correction not found or already reviewed.');
+        }
+        (new \App\Models\InvCorrectionModel())->update((int) $c['id'], [
+            'status'      => 'rejected',
+            'reviewed_by' => $this->uid(),
+            'review_note' => trim((string) $this->request->getPost('review_note')) ?: null,
+            'reviewed_at' => date('Y-m-d H:i:s'),
+        ]);
+        activity_log('Inventory', 'Edit', "Correction #{$c['id']} rejected");
+        return redirect()->to(site_url('inventory/corrections'))->with('success', 'Correction rejected. Stock unchanged.');
+    }
+
+    // ===============================================================
     // Task 2 — Stock Outward
     // ===============================================================
     public function outward()

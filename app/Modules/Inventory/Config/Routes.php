@@ -20,6 +20,13 @@ $routes->group('inventory', ['namespace' => 'Modules\Inventory\Controllers'], st
     // Task 3 — Stock Search.
     $routes->get('search', 'InventoryController::search', ['filter' => 'permission:inventory,view']);
 
+    // Task 4 — Physical Verification + correction requests.
+    $routes->get('verify', 'InventoryController::verify', ['filter' => 'permission:inventory,add']);
+    $routes->post('verify', 'InventoryController::storeVerification', ['filter' => 'permission:inventory,add']);
+    $routes->get('corrections', 'InventoryController::corrections', ['filter' => 'permission:inventory,view']);
+    $routes->post('corrections/approve/(:num)', 'InventoryController::approveCorrection/$1', ['filter' => 'permission:inventory,approve']);
+    $routes->post('corrections/reject/(:num)', 'InventoryController::rejectCorrection/$1', ['filter' => 'permission:inventory,approve']);
+
     // Masters (owner/admin): products, godowns, parties.
     $routes->get('masters', 'InventoryController::masters', ['filter' => 'permission:inventory,edit']);
     $routes->post('masters/product', 'InventoryController::storeProduct', ['filter' => 'permission:inventory,edit']);
