@@ -27,9 +27,19 @@ class TransactionModel extends Model
         'txn_date' => 'required|valid_date[Y-m-d]',
         'name'     => 'required|min_length[1]|max_length[191]',
         'type'     => 'in_list[jama,naam]',
-        'amount'   => 'required|numeric|greater_than[0]',
+        'amount'   => 'required|numeric|greater_than[0]|less_than_equal_to[9999999999.99]',
         'status'   => 'in_list[paid,pending,overdue,cancelled,draft]',
     ];
+
+    protected $validationMessages = [
+        'amount' => [
+            'greater_than'        => 'Amount must be more than 0.',
+            'less_than_equal_to'  => 'Amount is too large — please check the value (max ₹9,99,99,99,999.99).',
+        ],
+    ];
+
+    /** Hard ceiling for a single entry — guards fat-finger amounts (F-7). Fits DECIMAL(15,2). */
+    public const MAX_AMOUNT = 9999999999.99;
 
     public const TYPES    = ['jama', 'naam'];
     public const STATUSES = ['paid', 'pending', 'overdue', 'cancelled', 'draft'];

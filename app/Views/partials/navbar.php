@@ -1,6 +1,13 @@
 <?php
 $u = current_user();
 
+/* Human-readable role label shown in the top bar so the user always knows
+   which hat they are wearing: Super Admin, or their firm role (Owner/Admin/…),
+   falling back to the account type. */
+$erpRoleLabel = session('account_type') === 'super_admin'
+    ? 'Super Admin'
+    : ucwords(str_replace('_', ' ', (string) (session('company_role') ?: session('account_type') ?: 'User')));
+
 /* 12 most-spoken languages for the in-app UI translator (shared helper). */
 $erpLanguages = erp_languages();
 
@@ -48,7 +55,8 @@ $notificationIconMap = [
             if (function_exists('firm_can') && firm_can('rokad')) {
                 $nsAdd('Rokad Parcha', 'rokad', 'bi-cash-stack', 'cash book rokad');
             }
-            if (function_exists('firm_can') && firm_can('accounting')) {
+            // Accounting is reserved for the Super Admin only.
+            if (is_super_admin_account() && function_exists('firm_can') && firm_can('accounting')) {
                 $nsAdd('Ledgers', 'accounting/ledgers', 'bi-journals', 'accounting');
                 $nsAdd('Day Book (Vouchers)', 'accounting/vouchers', 'bi-receipt', 'vouchers accounting');
             }
@@ -61,7 +69,8 @@ $notificationIconMap = [
             if (function_exists('can') && can('passwords', 'add')) {
                 $nsAdd('Add Password', 'passwords/add', 'bi-plus-circle', 'password vault create new');
             }
-            if (function_exists('firm_can') && firm_can('firm_users')) { $nsAdd('Firm Users', 'firm-users', 'bi-people', 'staff team'); }
+            // Firm Users is reserved for the Super Admin only.
+            if (is_super_admin_account() && function_exists('firm_can') && firm_can('firm_users')) { $nsAdd('Firm Users', 'firm-users', 'bi-people', 'staff team'); }
             if (session('account_type') !== 'firm_user') { $nsAdd('Company Profile', 'company/profile', 'bi-building', 'firm company switch'); }
             $nsAdd('My Profile', 'profile', 'bi-person', 'account profile');
             $nsAdd('Settings', 'settings', 'bi-gear', 'settings preferences');
@@ -119,7 +128,7 @@ $notificationIconMap = [
                             <?php if ((int) $firm['id'] === (int) $activeCompanyId): ?><i class="bi bi-check2 ms-auto"></i><?php endif; ?>
                         </a>
                     <?php endforeach; endif; ?>
-                    <?php if (in_array(session('company_role'), ['owner', 'admin'], true)): ?>
+                    <?php if (is_super_admin_account()): ?>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="<?= site_url('firm-users') ?>"><i class="bi bi-people me-2"></i>Manage Firm Users</a>
                     <?php endif; ?>
@@ -209,9 +218,15 @@ $notificationIconMap = [
             <?php endif; ?>
             <li class="nav-item">
                 <a class="nav-link nav-square text-danger" href="<?= site_url('logout') ?>" title="Logout"
-                   onclick="return confirm('Log out of your account?');">
+                   data-confirm="You will be signed out of your account." data-confirm-title="Log out?" data-confirm-btn="Yes, log out" data-confirm-icon="warning">
                     <i class="bi bi-box-arrow-right"></i>
                 </a>
+            </li>
+
+            <li class="nav-item d-none d-md-flex align-items-center">
+                <span class="badge rounded-pill erp-role-badge" title="Your role in the app">
+                    <i class="bi bi-person-badge me-1"></i><span translate="no"><?= esc($erpRoleLabel) ?></span>
+                </span>
             </li>
 
             <li class="nav-item dropdown">
@@ -261,6 +276,12 @@ $notificationIconMap = [
 
 <!-- Top-bar quick search (client-side over the user's accessible destinations) -->
 <style>
+    .erp-role-badge {
+        background: var(--bs-primary-bg-subtle, #e7f1ff);
+        color: var(--bs-primary-text-emphasis, #0a58ca);
+        border: 1px solid var(--bs-primary-border-subtle, #b6d4fe);
+        font-weight: 600; font-size: .78rem; padding: .35rem .7rem; letter-spacing: .2px;
+    }
     .top-search { position: relative; }
     .nav-search-results {
         position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 1080;

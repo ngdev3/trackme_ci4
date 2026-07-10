@@ -106,24 +106,54 @@ if (! function_exists('render_firm_sidebar')) {
     {
         helper(['company', 'auth']);
 
+        // No active company (e.g. brand-new user, or just deleted their last
+        // firm): lock the workspace down to the essentials until they create one.
+        if (! company_id()) {
+            $mini = [
+                ['company/create', 'Create Company', 'bi bi-plus-circle'],
+                ['settings', 'Settings', 'bi bi-gear'],
+                ['help', 'Help & Support', 'bi bi-life-preserver'],
+            ];
+            $html = '';
+            foreach ($mini as [$url, $label, $icon]) {
+                if ($url === 'settings' && function_exists('can') && ! can('settings', 'view')) {
+                    continue;
+                }
+                $active = is_menu_active($url) ? ' active' : '';
+                $html .= '<li class="nav-item"><a href="' . site_url($url) . '" class="nav-link' . $active . '">'
+                    . '<i class="nav-icon ' . esc($icon) . '"></i><p>' . esc($label) . '</p></a></li>';
+            }
+            return $html;
+        }
+
         // [module-code, label, icon, url, children[]]
+        // Mirrors the canonical module tree (see `modules` table) minus the
+        // super-admin-only sections, so a firm owner/admin sees the same core
+        // app menu — with "HissabKitaab Vahi" (transactions) right after the
+        // dashboard, exactly like the admin sidebar.
+        // Accounting and Firm Users are intentionally NOT here — they are
+        // reserved for the Super Admin only (see request). "Opening Balance"
+        // is the renamed Shri Rokad Nagad screen. "Trash" holds soft-deleted
+        // companies and is owner/admin-only (via firm_can).
         $menu = [
             ['dashboard', 'Dashboard', 'bi bi-speedometer2', 'dashboard', []],
-            ['inventory', 'Inventory', 'bi bi-box-seam', 'inventory', []],
-            ['rokad', 'Rokad Parcha', 'bi bi-cash-stack', 'rokad', []],
-            ['accounting', 'Accounting', 'bi bi-calculator', null, [
-                ['Overview', 'accounting'],
-                ['Ledgers', 'accounting/ledgers'],
-                ['Day Book', 'accounting/vouchers'],
+            ['rokad', 'HissabKitaab Vahi', 'bi bi-journal-text', null, [
+                ['Rokadh Parcha', 'transactions'],
+                ['Rokad Vahi', 'transactions/list'],
+                ['Account Statement', 'transactions/statement'],
+                ['Opening Balance', 'transactions/opening'],
             ]],
+            ['inventory', 'Inventory', 'bi bi-box-seam', 'inventory', []],
             ['notes', 'Notes', 'bi bi-sticky', 'notes', []],
             ['reminders', 'Reminders', 'bi bi-alarm', 'reminders', []],
             ['passwords', 'Password Manager', 'bi bi-shield-lock', null, [
                 ['Password List', 'passwords/list'],
                 ['Add Password', 'passwords/add'],
             ]],
-            ['firm_users', 'Firm Users', 'bi bi-people', 'firm-users', []],
-            ['help', 'Help &amp; Support', 'bi bi-life-preserver', 'help', []],
+            ['calculator', 'Calculator', 'bi bi-calculator-fill', 'calculator', []],
+            ['firm_users', 'Trash', 'bi bi-trash', 'company/trash', []],
+            ['settings', 'Settings', 'bi bi-gear', 'settings', []],
+            ['help', 'Help & Support', 'bi bi-life-preserver', 'help', []],
         ];
 
         $html = '';
@@ -139,6 +169,10 @@ if (! function_exists('render_firm_sidebar')) {
             }
             // Inventory is likewise app-RBAC gated — mirror it in the menu.
             if ($code === 'inventory' && function_exists('can') && ! can('inventory', 'view')) {
+                continue;
+            }
+            // Settings route is permission-gated too — only show if reachable.
+            if ($code === 'settings' && function_exists('can') && ! can('settings', 'view')) {
                 continue;
             }
             if ($code === 'passwords' && function_exists('can') && ! can('passwords', 'add')) {

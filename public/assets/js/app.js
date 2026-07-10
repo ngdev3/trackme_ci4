@@ -262,6 +262,47 @@
         form.submit();
     }
 
+    /* ---------------- In-app confirm (data-confirm) ----------------
+     * Any form or link carrying [data-confirm] shows the app's own popup
+     * (erpConfirm / SweetAlert2) instead of the browser's default confirm().
+     * Attributes:
+     *   data-confirm="Body text"          (required — the question)
+     *   data-confirm-title="Title"
+     *   data-confirm-btn="Yes, do it"
+     *   data-confirm-icon="warning|error|info|success"
+     */
+    function askConfirm(el, onOk) {
+        var opts = {
+            title: el.getAttribute('data-confirm-title') || 'Are you sure?',
+            text: el.getAttribute('data-confirm') || '',
+            icon: el.getAttribute('data-confirm-icon') || 'warning',
+            confirmText: el.getAttribute('data-confirm-btn') || 'Yes',
+            onConfirm: onOk
+        };
+        if (window.erpConfirm) { window.erpConfirm(opts); }
+        else if (confirm(opts.text || 'Are you sure?')) { onOk(); }
+    }
+
+    // Forms: intercept submit, confirm in-app, then submit for real.
+    document.addEventListener('submit', function (e) {
+        var form = e.target;
+        if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-confirm')) { return; }
+        e.preventDefault();
+        e.stopPropagation();
+        askConfirm(form, function () { form.submit(); }); // native submit() skips this listener
+    }, true);
+
+    // Links (e.g. logout): intercept click, confirm in-app, then navigate.
+    document.addEventListener('click', function (e) {
+        var link = e.target.closest('a[data-confirm]');
+        if (!link) { return; }
+        e.preventDefault();
+        askConfirm(link, function () {
+            var href = link.getAttribute('href');
+            if (href && href !== '#') { window.location.href = href; }
+        });
+    });
+
     /* ---------------- Form input guard (app-wide) ----------------
      * Enforces each field's own HTML5 rules (required / min / max /
      * maxlength / pattern / type) consistently on every form, and clamps

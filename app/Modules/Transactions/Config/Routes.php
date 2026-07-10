@@ -17,6 +17,8 @@ $routes->group('transactions', ['namespace' => 'Modules\Transactions\Controllers
 
     $routes->get('create', 'TransactionController::create', ['filter' => 'permission:transactions,add']);
     $routes->post('store', 'TransactionController::store', ['filter' => 'permission:transactions,add']);
+    // Inline "Add Entry +" on the Rokadh Parcha (AJAX, no page reload).
+    $routes->post('quick-store', 'TransactionController::quickStore', ['filter' => 'permission:transactions,add']);
     $routes->get('view/(:segment)', 'TransactionController::view/$1', ['filter' => 'permission:transactions,view']);
     $routes->get('edit/(:segment)', 'TransactionController::edit/$1', ['filter' => 'permission:transactions,edit']);
     $routes->post('update/(:segment)', 'TransactionController::update/$1', ['filter' => 'permission:transactions,edit']);

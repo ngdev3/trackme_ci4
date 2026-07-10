@@ -14,6 +14,19 @@ $old = fn ($k, $d = '') => esc(old($k, $defaults[$k] ?? $d));
                 </div>
             </div>
 
+<?php if (empty($hasCompany)): ?>
+                <!-- Standalone "skip" form: no required fields, so it bypasses the
+                     app-wide HTML5 submit guard. The skip button below targets it
+                     via its form="" attribute even though it sits in the main form. -->
+                <form id="skipStartForm" action="<?= site_url('company/quick-start') ?>" method="post" data-no-validate class="d-none"
+                      data-confirm="We'll create a starter company named &ldquo;<?= esc($accountName ?? 'My Company', 'attr') ?>&rdquo; from your account name. You can rename it and add details anytime under Company Profile."
+                      data-confirm-title="Start without a name?"
+                      data-confirm-btn="Yes, continue"
+                      data-confirm-icon="info">
+                    <?= csrf_field() ?>
+                </form>
+            <?php endif; ?>
+
             <form action="<?= site_url('company/store') ?>" method="post" autocomplete="off">
                 <?= csrf_field() ?>
                 <div class="card-body">
@@ -24,10 +37,15 @@ $old = fn ($k, $d = '') => esc(old($k, $defaults[$k] ?? $d));
                     <h6 class="text-uppercase text-muted small fw-bold mb-3"><i class="bi bi-info-circle me-1"></i>Primary details</h6>
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Company / Firm Name <span class="text-danger">*</span></label>
+                            <label class="form-label">Company / Firm / Shop Name <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control form-control-lg" required autofocus
                                    value="<?= esc(old('name')) ?>" placeholder="e.g. Acme Traders Pvt Ltd">
                             <?= $err('name') ?>
+                            <?php if (empty($hasCompany)): ?>
+                                <div class="form-text">Don't have a name yet? You can
+                                    <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="document.getElementById('quickStartBtn').click()">skip and start with a starter company</button>
+                                    named after your account.</div>
+                            <?php endif; ?>
                         </div>
 
                         <div class="col-md-6">
@@ -77,6 +95,18 @@ $old = fn ($k, $d = '') => esc(old($k, $defaults[$k] ?? $d));
                                    value="<?= esc(old('gst_number')) ?>" placeholder="27ABCDE1234F1Z5">
                             <?= $err('gst_number') ?>
                         </div>
+
+                        <?php if (empty($hasCompany)): ?>
+                        <div class="col-md-6">
+                            <label class="form-label">Opening Cash Balance <span class="text-muted small">(if any)</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">&#8377;</span>
+                                <input type="number" step="0.01" name="opening_balance" class="form-control"
+                                       value="<?= esc(old('opening_balance')) ?>" placeholder="0.00">
+                            </div>
+                            <div class="form-text">Cash-in-hand you are starting your books with. You can change it later from <strong>Opening Balance</strong> in the menu.</div>
+                        </div>
+                        <?php endif; ?>
                     </div>
 
                     <hr class="my-4">
@@ -107,13 +137,20 @@ $old = fn ($k, $d = '') => esc(old($k, $defaults[$k] ?? $d));
                     </div>
                 </div>
 
-                <div class="card-footer d-flex justify-content-between align-items-center">
+                <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <?php if (! empty($hasCompany)): ?>
                         <a href="<?= site_url('dashboard') ?>" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Cancel</a>
                     <?php else: ?>
                         <a href="<?= site_url('logout') ?>" class="btn btn-outline-secondary"><i class="bi bi-box-arrow-right"></i> Sign out</a>
                     <?php endif; ?>
-                    <button class="btn btn-primary btn-lg" type="submit"><i class="bi bi-check2-circle me-1"></i> Create Company</button>
+                    <div class="d-flex gap-2 ms-auto">
+                        <?php if (empty($hasCompany)): ?>
+                            <button id="quickStartBtn" class="btn btn-outline-primary btn-lg" type="submit" form="skipStartForm">
+                                <i class="bi bi-magic me-1"></i> Skip &amp; use my account name
+                            </button>
+                        <?php endif; ?>
+                        <button class="btn btn-primary btn-lg" type="submit"><i class="bi bi-check2-circle me-1"></i> Create Company</button>
+                    </div>
                 </div>
             </form>
         </div>

@@ -41,4 +41,21 @@ class CompanyModel extends Model
             ->orderBy('companies.id', 'DESC')
             ->findAll();
     }
+
+    /** Soft-deleted (trashed) companies a user belongs to, most recent first. */
+    public function trashedForUser(int $userId): array
+    {
+        return $this->onlyDeleted()
+            ->select('companies.*, company_users.role AS membership_role')
+            ->join('company_users', 'company_users.company_id = companies.id')
+            ->where('company_users.user_id', $userId)
+            ->orderBy('companies.deleted_at', 'DESC')
+            ->findAll();
+    }
+
+    /** All soft-deleted companies (Super Admin view). */
+    public function trashedAll(): array
+    {
+        return $this->onlyDeleted()->orderBy('deleted_at', 'DESC')->findAll();
+    }
 }

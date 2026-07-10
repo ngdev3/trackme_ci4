@@ -306,6 +306,79 @@ class TransactionController extends BaseController
         return $this->persist(null);
     }
 
+    /**
+     * Inline "Add Entry +" from the Rokadh Parcha — creates a Jama or Naam entry
+     * and returns JSON (the new row + recomputed day totals) so the register can
+     * reflect it without a full page reload.
+     */
+    public function quickStore()
+    {
+        $rules = [
+            'txn_date' => 'required|valid_date[Y-m-d]',
+            'name'     => 'required|max_length[191]',
+            'type'     => 'in_list[jama,naam]',
+            'amount'   => 'required|numeric|greater_than[0]',
+        ];
+        if (! $this->validate($rules)) {
+            return $this->response->setStatusCode(422)->setJSON([
+                'ok'      => false,
+                'message' => implode(' ', $this->validator->getErrors()),
+                'csrf'    => ['name' => csrf_token(), 'hash' => csrf_hash()],
+            ]);
+        }
+
+        $type = $this->request->getPost('type') === 'naam' ? 'naam' : 'jama';
+        $date = date('Y-m-d', strtotime((string) $this->request->getPost('txn_date')));
+        $mode = (string) $this->request->getPost('payment_mode');
+        $data = [
+            'txn_date'     => $date,
+            'name'         => trim((string) $this->request->getPost('name')),
+            'type'         => $type,
+            'amount'       => round((float) $this->request->getPost('amount'), 2),
+            'payment_mode' => in_array($mode, TransactionModel::MODES, true) ? $mode : 'cash',
+            'status'       => 'paid',
+            'notes'        => trim((string) $this->request->getPost('notes')) ?: null,
+            'user_id'      => $this->uid(),
+            'company_id'   => company_id(),
+            'source'       => 'web',
+            'txn_no'       => $this->txns->nextTxnNo((int) company_id()),
+        ];
+        $newId = (int) $this->txns->insert($data);
+        activity_log('Transactions', 'Add', "Transaction {$data['txn_no']} added (quick)");
+
+        // Recompute the day's figures so the card stays accurate after insertion.
+        $scope         = $this->scope();
+        $ob            = new \App\Libraries\OpeningBalance($scope, (int) company_id());
+        $opening       = $ob->carryInto($date);
+        [$jama, $naam] = $this->txns->rangeTotals($scope, $date, $date);
+        $closing       = round($opening + $jama - $naam, 2);
+        $fmt           = static fn ($n) => number_format((float) $n, 2);
+
+        return $this->response->setJSON([
+            'ok'      => true,
+            'message' => 'Entry ' . $data['txn_no'] . ' added.',
+            'onDate'  => $date,
+            'entry'   => [
+                'hid'     => hid($newId),
+                'name'    => $data['name'],
+                'amount'  => $fmt($data['amount']),
+                'type'    => $type,
+                'txn_no'  => $data['txn_no'],
+                'notes'   => $data['notes'],
+                'editUrl' => site_url('transactions/edit/' . hid($newId)),
+                'delUrl'  => site_url('transactions/delete/' . hid($newId)),
+            ],
+            'totals'  => [
+                'jamaColTotal' => $fmt($opening + $jama),
+                'totalNaam'    => $fmt($naam),
+                'closing'      => $fmt($closing),
+                'closingNeg'   => $closing < 0,
+            ],
+            'perms'   => ['edit' => can($this->moduleCode, 'edit'), 'delete' => can($this->moduleCode, 'delete')],
+            'csrf'    => ['name' => csrf_token(), 'hash' => csrf_hash()],
+        ]);
+    }
+
     public function update($id = null)
     {
         $rid = unhid($id);

@@ -182,10 +182,11 @@ class Auth
     }
 
     /**
-     * Create a new passwordless account from a verified social profile. New
-     * self-service users get the read-only Viewer role by default; their real
-     * access comes from their company membership (owner/admin) once they create
-     * a company during onboarding.
+     * Create a new passwordless account from a verified social profile. A new
+     * self-service sign-up is the admin of their own workspace: they get the
+     * Admin role (full access to the app modules) and become owner of the firm
+     * they create during onboarding. This keeps their page access in step with
+     * the firm menu they see, so nothing they can see 403s on them.
      */
     protected function createOAuthUser(OAuthUserProfile $profile): ?int
     {
@@ -197,7 +198,7 @@ class Auth
             'auth_provider' => $profile->provider,
             'provider_id'   => $profile->providerId,
             'avatar_url'    => $profile->picture,
-            'user_type_id'  => $this->defaultTypeId('viewer'),
+            'user_type_id'  => $this->defaultTypeId('admin') ?? $this->defaultTypeId('viewer'),
             'account_type'  => 'customer', // Gmail sign-ups are tenant customers
             'status'        => 1,
         ], true);
@@ -206,7 +207,9 @@ class Auth
             log_message('error', '[OAuth] user create failed: ' . implode(' ', $this->users->errors() ?: []));
             return null;
         }
-        if ($roleId = $this->defaultRoleId('viewer')) {
+        // Admin RBAC role so a new customer can use every firm module they see;
+        // fall back to Viewer only if an Admin role is somehow missing.
+        if ($roleId = ($this->defaultRoleId('admin') ?? $this->defaultRoleId('viewer'))) {
             $this->users->syncRoles((int) $id, [$roleId]);
         }
         return (int) $id;

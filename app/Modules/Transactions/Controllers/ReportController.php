@@ -158,6 +158,7 @@ class ReportController extends BaseController
             return $this->render('report_day', $data + $common + [
                 'prevDate' => date('Y-m-d', strtotime($date . ' -1 day')),
                 'nextDate' => date('Y-m-d', strtotime($date . ' +1 day')),
+                'parties'  => $this->txns->partyDirectory($this->scope()),
             ]);
         }
 

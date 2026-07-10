@@ -19,8 +19,8 @@ use Config\Services;
  */
 class RequireCompany implements FilterInterface
 {
-    /** Paths that stay reachable while onboarding is pending. */
-    private const ALLOW = ['company', 'logout', 'account/change-password', 'impersonate'];
+    /** Paths that stay reachable while onboarding is pending (no active company). */
+    private const ALLOW = ['company', 'logout', 'account/change-password', 'impersonate', 'settings', 'help'];
 
     public function before(RequestInterface $request, $arguments = null)
     {

@@ -22,6 +22,14 @@ class ExportController extends BaseController
 
     protected TransactionModel $txns;
 
+    /**
+     * Hard ceiling of rows we will attempt to render into a single PDF. dompdf
+     * builds the entire table in memory, so a huge dataset (notably the Super
+     * Admin's all-firms scope over a wide period) OOMs. Past this we steer the
+     * user to CSV/Excel, which stream and never blow up.
+     */
+    private const MAX_PDF_ROWS = 1500;
+
     public function __construct()
     {
         $this->txns = new TransactionModel();
@@ -138,6 +146,14 @@ class ExportController extends BaseController
 
         $name = 'rokadh_parcha_' . date('Ymd_His');
 
+        // The report path is not row-capped (a cash book must show every entry),
+        // so guard the memory-hungry PDF renderer against oversized datasets.
+        if ($format === 'pdf' && count($data['rows']) > self::MAX_PDF_ROWS) {
+            return redirect()->back()->with('error',
+                'This report has ' . number_format(count($data['rows'])) . ' entries — too many for a PDF. '
+                . 'Export to Excel or CSV instead, or choose a narrower period.');
+        }
+
         return match ($format) {
             'xlsx' => $this->xlsx($name, 'Rokadh Parcha', $headers, $matrix),
             'pdf'  => $this->pdf($name, view('Modules\Transactions\Views\report_print', $data + [
@@ -201,6 +217,16 @@ class ExportController extends BaseController
 
     private function pdf(string $name, string $html)
     {
+        // dompdf assembles the whole document in memory. The default 512M ceiling
+        // is not enough for a full-page ledger table, so give the render headroom
+        // (and time) — this is what stopped the Super Admin export OOM. We only
+        // raise the limit, never lower an already-generous one, and restore it.
+        $prevMemory = ini_get('memory_limit');
+        if ($this->memoryBytes($prevMemory) !== -1 && $this->memoryBytes($prevMemory) < 1024 * 1024 * 1024) {
+            @ini_set('memory_limit', '1024M');
+        }
+        @set_time_limit(120);
+
         $options = new Options();
         $options->set('isRemoteEnabled', false);
         $options->set('defaultFont', 'DejaVu Sans');
@@ -209,10 +235,31 @@ class ExportController extends BaseController
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
+        $body = $dompdf->output();
+
+        @ini_set('memory_limit', $prevMemory); // restore for the rest of the request
 
         return $this->response
             ->setHeader('Content-Type', 'application/pdf')
             ->setHeader('Content-Disposition', 'attachment; filename="' . $name . '.pdf"')
-            ->setBody($dompdf->output());
+            ->setBody($body);
+    }
+
+    /** Parse a PHP memory_limit string (e.g. "512M", "1G", "-1") into bytes; -1 = unlimited. */
+    private function memoryBytes(string $value): int
+    {
+        $value = trim($value);
+        if ($value === '' || $value === '-1') {
+            return -1;
+        }
+        $unit   = strtolower($value[strlen($value) - 1]);
+        $number = (int) $value;
+
+        return match ($unit) {
+            'g'     => $number * 1024 * 1024 * 1024,
+            'm'     => $number * 1024 * 1024,
+            'k'     => $number * 1024,
+            default => $number,
+        };
     }
 }

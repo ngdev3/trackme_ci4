@@ -94,7 +94,7 @@ class OpeningBalance
     public function label(): string
     {
         $l = trim((string) $this->settings->get($this->companyId, self::SCOPE, 'shri_rokad_label', ''));
-        return $l !== '' ? $l : 'Shri Rokad Nagad';
+        return $l !== '' ? $l : 'Opening Balance';
     }
 
     /**

@@ -27,6 +27,37 @@ $mode = $appearance['theme_mode'] ?? 'system';
         </form>
     <?php endif; ?>
 
+    <?php
+    // Company management (danger zone) — visible to a firm owner with an active
+    // company. Super Admin runs the SaaS panel and has no firm of its own.
+    $activeFirm = service('company')->current();
+    $isOwner    = in_array(session('company_role'), ['owner'], true) || session('account_type') === 'customer';
+    ?>
+    <?php if ($activeFirm && $isOwner): ?>
+        <div class="card erp-panel mb-3 border-danger-subtle">
+            <div class="card-header erp-panel-title d-flex align-items-center">
+                <h3 class="card-title mb-0"><i class="bi bi-building-x me-1 text-danger"></i>Company</h3>
+                <a href="<?= site_url('company/trash') ?>" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-trash me-1"></i>Trash</a>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <div class="fw-semibold"><?= esc($activeFirm['name']) ?></div>
+                        <small class="text-muted">Delete this company to move it to Trash. You can restore it later, or delete it permanently from there.</small>
+                    </div>
+                    <form action="<?= site_url('company/delete/' . (int) $activeFirm['id']) ?>" method="post" data-no-validate
+                          data-confirm="&ldquo;<?= esc($activeFirm['name'], 'attr') ?>&rdquo; will be moved to Trash. It will be hidden from your companies but can be restored anytime from Settings › Trash."
+                          data-confirm-title="Delete this company?"
+                          data-confirm-btn="Yes, move to Trash"
+                          data-confirm-icon="warning">
+                        <?= csrf_field() ?>
+                        <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash me-1"></i>Delete Company</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <div class="appearance-shell" id="appearanceStudio"
          data-save-url="<?= site_url('settings/appearance') ?>"
          data-reset-url="<?= site_url('settings/appearance/reset') ?>">

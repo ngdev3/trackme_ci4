@@ -96,6 +96,7 @@ class PasswordController extends BaseController
             'search'     => $search,
             'category'   => $category,
             'categories' => $this->vault->categories($cid),
+            'stats'      => $this->stats($cid),
             'canAdd'     => can('passwords', 'add'),
             'canEdit'    => can('passwords', 'edit'),
             'canDelete'  => can('passwords', 'delete'),
@@ -106,6 +107,28 @@ class PasswordController extends BaseController
                 base_url('assets/css/passwords.css'),
             ],
         ]);
+    }
+
+    private function stats($companyId): array
+    {
+        $b = db_connect()->table('passwords')->where('deleted_at', null);
+        if ($companyId !== null) {
+            $b->where('company_id', $companyId);
+        }
+
+        $row = $b->select(
+            'COUNT(*) AS total,'
+            . "COUNT(DISTINCT NULLIF(category, '')) AS categories,"
+            . "SUM(CASE WHEN website IS NOT NULL AND website != '' THEN 1 ELSE 0 END) AS websites,"
+            . 'MAX(updated_at) AS last_updated'
+        )->get()->getRowArray();
+
+        return [
+            'total'        => (int) ($row['total'] ?? 0),
+            'categories'   => (int) ($row['categories'] ?? 0),
+            'websites'     => (int) ($row['websites'] ?? 0),
+            'last_updated' => $row['last_updated'] ?? null,
+        ];
     }
 
     // ---------------------------------------------------------------
