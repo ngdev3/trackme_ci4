@@ -13,6 +13,17 @@ $routes->get('/', static function () {
 $routes->post('push/subscribe', 'PushController::subscribe', ['filter' => 'auth']);
 $routes->post('push/unsubscribe', 'PushController::unsubscribe', ['filter' => 'auth']);
 
+// Subscription / upgrade page (where the feature gate sends restricted users).
+$routes->get('subscription', 'SubscriptionController::index', ['filter' => 'auth']);
+// Cashfree online payment: create order (AJAX) + gateway return URL.
+$routes->post('subscription/pay/(:num)', 'SubscriptionController::pay/$1', ['filter' => 'auth']);
+$routes->get('subscription/callback', 'SubscriptionController::callback', ['filter' => 'auth']);
+// Cashfree server-to-server webhook — no auth/CSRF; guarded by HMAC signature.
+$routes->post('subscription/webhook', 'SubscriptionController::webhook');
+// Customer payment history + tax receipt (PDF).
+$routes->get('subscription/transactions', 'SubscriptionController::transactions', ['filter' => 'auth']);
+$routes->get('subscription/receipt/(:segment)', 'SubscriptionController::receipt/$1', ['filter' => 'auth']);
+
 // Fresh CSRF token — lets JS refresh a form's token before an auto-submit so a
 // long-open / stale page never fails CSRF validation.
 $routes->get('csrf-token', static function () {

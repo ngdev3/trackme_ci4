@@ -26,6 +26,7 @@ $human = function ($b) { $b = (int) $b; if ($b < 1024) return $b . ' B'; if ($b 
     <table class="table tx-detail mb-0">
         <tr><th>Date</th><td><?= esc(date('d M Y', strtotime($row['txn_date']))) ?></td></tr>
         <tr><th>Party Name</th><td class="fw-semibold"><?= esc($row['name']) ?></td></tr>
+        <tr><th>Party Type</th><td><?= ! empty($row['party_type']) ? '<span class="rp-chip">' . esc($row['party_type']) . '</span>' : '—' ?></td></tr>
         <tr><th>Payment Mode</th><td><?= esc($modeLbl) ?></td></tr>
         <tr><th>Status</th><td><span class="tx-status <?= $statusCls ?>"><?= esc(ucfirst($row['status'])) ?></span></td></tr>
         <tr><th>Source</th><td><?= $srcBadge ?></td></tr>
@@ -34,7 +35,9 @@ $human = function ($b) { $b = (int) $b; if ($b < 1024) return $b . ' B'; if ($b 
     </table>
 
     <!-- Attachments -->
-    <?php if (! empty($attachments)): ?>
+    <?php if (! sub_is_pro()): ?>
+        <p class="text-secondary small mt-3 mb-0"><i class="bi bi-lock"></i> Viewing images &amp; attachments is available on the paid plan. <a href="<?= site_url('subscription') ?>">Upgrade</a>.</p>
+    <?php elseif (! empty($attachments)): ?>
         <h6 class="mt-3 mb-2"><i class="bi bi-paperclip"></i> Attachments <span class="badge text-bg-secondary"><?= count($attachments) ?></span></h6>
         <div class="tx-att-grid">
             <?php foreach ($attachments as $a):

@@ -82,6 +82,38 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
         <!-- Main content (sliced page) -->
         <div class="app-content">
             <div class="container-fluid">
+                <?php
+                // Subscription lifecycle banner. When a paid plan / trial has lapsed
+                // access silently downgrades to the Basic floor (data is preserved),
+                // so tell the customer clearly and give them a way to fix it. Also
+                // warns during the final days of an active trial.
+                helper('subscription');
+                if (function_exists('is_super_admin_account') && ! is_super_admin_account()):
+                    $subSt      = sub_state();
+                    $expReason  = $subSt['reason'] ?? '';
+                    $subExpTs   = ! empty($subSt['expires_at']) ? strtotime((string) $subSt['expires_at']) : null;
+                    $subDaysOut = $subExpTs ? (int) ceil(($subExpTs - time()) / 86400) : null;
+                    if (in_array($expReason, ['expired', 'trial_expired'], true)):
+                        $wasTrial = $expReason === 'trial_expired';
+                ?>
+                    <div class="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2" role="alert">
+                        <span><i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <?php if ($wasTrial): ?>
+                                Your <strong>free trial has ended</strong> — premium features are now locked. Subscribe to unlock them again (your data is safe).
+                            <?php else: ?>
+                                Your <strong>subscription has expired</strong> — premium features are now locked. Renew to restore full access (your data is safe).
+                            <?php endif; ?>
+                        </span>
+                        <a href="<?= site_url('subscription') ?>" class="btn btn-sm btn-warning"><i class="bi bi-gem me-1"></i> <?= $wasTrial ? 'Subscribe now' : 'Renew now' ?></a>
+                    </div>
+                <?php elseif ($expReason === 'trial' && $subDaysOut !== null && $subDaysOut <= 3): ?>
+                    <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap gap-2" role="alert">
+                        <span><i class="bi bi-hourglass-split me-1"></i>
+                            Your free trial ends in <strong><?= max(0, $subDaysOut) ?> day<?= $subDaysOut === 1 ? '' : 's' ?></strong>. Subscribe now to keep premium features without interruption.
+                        </span>
+                        <a href="<?= site_url('subscription') ?>" class="btn btn-sm btn-primary"><i class="bi bi-gem me-1"></i> View plans</a>
+                    </div>
+                <?php endif; endif; ?>
                 <?= $content ?? '' ?>
             </div>
         </div>

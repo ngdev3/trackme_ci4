@@ -78,8 +78,14 @@ class OpeningBalance
         }
 
         $curStart = sprintf('%04d-04-01', $fyStart);
-        // Nothing earlier to carry, or safety depth reached → start fresh at 0.
-        if ($depth >= 25 || ! $this->txns->hasBefore($this->scope, $curStart)) {
+        // Bottom out only when there is genuinely nothing earlier to carry: no
+        // transactions before this FY AND no explicit opening set in any earlier
+        // FY. Previously this checked transactions only, so a company that set an
+        // opening balance but had not yet recorded any entries lost that opening
+        // the moment the financial year rolled over.
+        $hasEarlierData = $this->txns->hasBefore($this->scope, $curStart)
+            || $this->latestExplicitOpeningYearBefore($fyStart) !== null;
+        if ($depth >= 25 || ! $hasEarlierData) {
             return 0.0;
         }
 
@@ -88,6 +94,35 @@ class OpeningBalance
         $prevOpening = $this->shriNagad($fyStart - 1, $depth + 1);
         $prevNet     = $this->txns->netBefore($this->scope, $curStart, $prevStart);
         return round($prevOpening + $prevNet, 2);
+    }
+
+    /**
+     * The most recent financial year strictly before $fyStart for which this
+     * company has an explicit Shri Rokad Nagad set (non-empty), or null. Lets the
+     * carry-forward roll an opening balance across years that have no
+     * transactions of their own.
+     */
+    private function latestExplicitOpeningYearBefore(int $fyStart): ?int
+    {
+        $prefix = 'shri_rokad_nagad_';
+        $rows   = $this->settings->builder()
+            ->select('`key`, `value`')
+            ->where('company_id', $this->companyId)
+            ->where('scope', self::SCOPE)
+            ->like('key', $prefix, 'after')
+            ->get()->getResultArray();
+
+        $best = null;
+        foreach ($rows as $r) {
+            if (($r['value'] ?? '') === '' || $r['value'] === null) {
+                continue;
+            }
+            $year = (int) substr((string) $r['key'], strlen($prefix));
+            if ($year > 0 && $year < $fyStart && ($best === null || $year > $best)) {
+                $best = $year;
+            }
+        }
+        return $best;
     }
 
     /** Custom, per-company display label for the opening cash. */

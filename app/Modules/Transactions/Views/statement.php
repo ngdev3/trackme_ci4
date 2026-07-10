@@ -19,8 +19,12 @@ $stmtQs = array_filter(['party' => $party, 'from' => $from, 'to' => $to]);
         <div class="d-flex flex-wrap gap-2">
             <a href="<?= site_url('transactions/list') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-table"></i> Rokad Vahi</a>
             <?php if (! empty($hasParty)): ?>
-                <a href="<?= site_url('transactions/statement/print') . '?' . http_build_query($stmtQs) ?>" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print</a>
-                <a href="<?= site_url('transactions/statement/pdf') . '?' . http_build_query($stmtQs + ['per' => 500]) ?>" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+                <?php if (sub_is_pro()): ?>
+                    <a href="<?= site_url('transactions/statement/print') . '?' . http_build_query($stmtQs) ?>" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print</a>
+                    <a href="<?= site_url('transactions/statement/pdf') . '?' . http_build_query($stmtQs + ['per' => 500]) ?>" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+                <?php else: ?>
+                    <a href="<?= site_url('subscription') ?>" class="btn btn-sm btn-outline-primary" title="Available on the paid plan"><i class="bi bi-lock"></i> Download statement</a>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </div>
@@ -38,6 +42,11 @@ $stmtQs = array_filter(['party' => $party, 'from' => $from, 'to' => $to]);
                         <i class="bi bi-chevron-down tx-combo-caret" data-tx-combo-toggle></i>
                     </div>
                     <div class="tx-combo-menu" role="listbox" hidden>
+                        <div class="tx-combo-tools" role="group" aria-label="Account filters">
+                            <button type="button" class="tx-combo-filter active" data-filter="all">All</button>
+                            <button type="button" class="tx-combo-filter tx-combo-filter-jama" data-filter="jama">Jama</button>
+                            <button type="button" class="tx-combo-filter tx-combo-filter-naam" data-filter="naam">Naam</button>
+                        </div>
                         <?php if (empty($parties)): ?>
                             <div class="tx-combo-empty">No accounts yet.</div>
                         <?php else: foreach ($parties as $p):
@@ -45,9 +54,11 @@ $stmtQs = array_filter(['party' => $party, 'from' => $from, 'to' => $to]);
                             $meta = number_format($p['count']) . ' txn' . ((int) $p['count'] === 1 ? '' : 's')
                                   . ' · ' . ($p['last_date'] ? esc(fmt_date($p['last_date'])) : 'no activity');
                         ?>
-                            <button type="button" class="tx-combo-item" role="option"
-                                    data-name="<?= esc($p['name'], 'attr') ?>"
-                                    data-search="<?= esc(mb_strtolower($p['name']), 'attr') ?>">
+                            <?php $tone = $net > 0 ? 'jama' : ($net < 0 ? 'naam' : 'neutral'); ?>
+                            <button type="button" class="tx-combo-item tx-combo-item-<?= esc($tone, 'attr') ?>" role="option"
+                                     data-name="<?= esc($p['name'], 'attr') ?>"
+                                     data-tone="<?= esc($tone, 'attr') ?>"
+                                     data-search="<?= esc(mb_strtolower($p['name']), 'attr') ?>">
                                 <span class="tx-combo-avatar"><?= esc(mb_strtoupper(mb_substr($p['name'], 0, 1))) ?></span>
                                 <span class="tx-combo-text">
                                     <span class="tx-combo-name"><?= esc($p['name']) ?></span>
@@ -97,7 +108,7 @@ $stmtQs = array_filter(['party' => $party, 'from' => $from, 'to' => $to]);
                     <?php if (empty($parties)): ?>
                         <tr><td colspan="7" class="text-center text-secondary py-5"><i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>No accounts yet.</td></tr>
                     <?php else: foreach ($parties as $p): $url = site_url('transactions/statement') . '?party=' . urlencode($p['name']); ?>
-                        <tr>
+                        <tr class="tx-row-link" data-href="<?= esc($url, 'attr') ?>" title="Open <?= esc($p['name'], 'attr') ?>'s statement">
                             <td class="fw-semibold"><a href="<?= $url ?>" class="text-decoration-none"><i class="bi bi-person-circle me-1 text-secondary"></i><?= esc($p['name']) ?></a></td>
                             <td class="text-end"><?= number_format($p['count']) ?></td>
                             <td class="text-end tx-amt-jama"><?= money($p['jama']) ?></td>
@@ -152,7 +163,7 @@ $stmtQs = array_filter(['party' => $party, 'from' => $from, 'to' => $to]);
                         <?php if (empty($rows)): ?>
                             <tr><td colspan="9" class="text-center text-secondary py-4">No transactions for this account in the selected range.</td></tr>
                         <?php else: $i = 1; foreach ($rows as $r): ?>
-                            <tr>
+                            <tr class="tx-row-view" data-tx-view data-id="<?= hid($r['id']) ?>" title="Click to view full details">
                                 <td><?= $i++ ?></td>
                                 <td class="text-nowrap"><?= esc(fmt_date($r['txn_date'])) ?></td>
                                 <td><span class="tx-no"><?= esc($r['txn_no'] ?: '—') ?></span></td>
@@ -179,7 +190,24 @@ $stmtQs = array_filter(['party' => $party, 'from' => $from, 'to' => $to]);
     </div>
 <?php endif; ?>
 
+<?= view('Modules\Transactions\Views\_modals') ?>
+
+<style>
+    .tx-row-view { cursor: pointer; }
+    .tx-row-link { cursor: pointer; }
+    .tx-row-link:hover { background: var(--bs-primary-bg-subtle, rgba(13,110,253,.08)); }
+</style>
 <script>
+(function () {
+    // Whole account row opens its statement; the name link and chevron still work on their own.
+    document.querySelectorAll('.tx-row-link').forEach(function (row) {
+        row.addEventListener('click', function (e) {
+            if (e.target.closest('a, button')) { return; }
+            var href = row.getAttribute('data-href');
+            if (href) { window.location.href = href; }
+        });
+    });
+})();
 (function () {
     var combo = document.querySelector('[data-tx-combo]');
     if (!combo) { return; }
@@ -188,22 +216,34 @@ $stmtQs = array_filter(['party' => $party, 'from' => $from, 'to' => $to]);
     var caret   = combo.querySelector('[data-tx-combo-toggle]');
     var items   = Array.prototype.slice.call(combo.querySelectorAll('.tx-combo-item'));
     var noResult = combo.querySelector('.tx-combo-noresult');
+    var filters = Array.prototype.slice.call(combo.querySelectorAll('[data-filter]'));
     var active  = -1;
+    var toneFilter = 'all';
 
     function open()  { if (menu.hidden) { menu.hidden = false; input.setAttribute('aria-expanded', 'true'); filter(); } }
     function close() { menu.hidden = true; input.setAttribute('aria-expanded', 'false'); active = -1; paintActive(); }
 
     function visibleItems() { return items.filter(function (it) { return !it.hidden; }); }
+    function filterLabel() {
+        if (toneFilter === 'jama') { return 'Jama balance'; }
+        if (toneFilter === 'naam') { return 'Naam balance'; }
+        return 'account';
+    }
 
     function filter() {
         var q = input.value.trim().toLowerCase();
         var shown = 0;
         items.forEach(function (it) {
-            var match = q === '' || it.getAttribute('data-search').indexOf(q) !== -1;
+            var textMatch = q === '' || it.getAttribute('data-search').indexOf(q) !== -1;
+            var toneMatch = toneFilter === 'all' || it.getAttribute('data-tone') === toneFilter;
+            var match = textMatch && toneMatch;
             it.hidden = !match;
             if (match) { shown++; }
         });
-        if (noResult) { noResult.hidden = shown !== 0; }
+        if (noResult) {
+            noResult.textContent = q ? 'No matching ' + filterLabel() + '.' : 'No ' + filterLabel() + ' found.';
+            noResult.hidden = items.length === 0 || shown !== 0;
+        }
         active = -1; paintActive();
     }
 
@@ -227,6 +267,15 @@ $stmtQs = array_filter(['party' => $party, 'from' => $from, 'to' => $to]);
     input.addEventListener('focus', open);
     input.addEventListener('input', function () { open(); filter(); });
     if (caret) { caret.addEventListener('mousedown', function (e) { e.preventDefault(); menu.hidden ? (input.focus(), open()) : close(); }); }
+    filters.forEach(function (btn) {
+        btn.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            toneFilter = btn.getAttribute('data-filter') || 'all';
+            filters.forEach(function (b) { b.classList.toggle('active', b === btn); });
+            open();
+            filter();
+        });
+    });
 
     input.addEventListener('keydown', function (e) {
         var vis = visibleItems();

@@ -10,12 +10,17 @@ $routes->group('transactions', ['namespace' => 'Modules\Transactions\Controllers
     $routes->get('/', 'ReportController::index', ['filter' => 'permission:transactions,view']);
     $routes->get('list', 'TransactionController::index', ['filter' => 'permission:transactions,view']);
 
+    // Type-ahead account search for the entry forms (JSON).
+    $routes->get('accounts/search', 'TransactionController::accountsSearch', ['filter' => 'permission:transactions,view']);
+
     // Account (party) statement — searchable per-account ledger + print
     $routes->get('statement', 'TransactionController::statement', ['filter' => 'permission:transactions,view']);
     $routes->get('statement/print', 'TransactionController::statementPrint', ['filter' => 'permission:transactions,view']);
     $routes->get('statement/pdf', 'TransactionController::statementPdf', ['filter' => 'permission:transactions,view']);
 
     $routes->get('create', 'TransactionController::create', ['filter' => 'permission:transactions,add']);
+    // Menu shortcuts: open the add form pre-set to Jama or Naam.
+    $routes->get('add/(jama|naam)', 'TransactionController::create/$1', ['filter' => 'permission:transactions,add']);
     $routes->post('store', 'TransactionController::store', ['filter' => 'permission:transactions,add']);
     // Inline "Add Entry +" on the Rokadh Parcha (AJAX, no page reload).
     $routes->post('quick-store', 'TransactionController::quickStore', ['filter' => 'permission:transactions,add']);
@@ -39,6 +44,11 @@ $routes->group('transactions', ['namespace' => 'Modules\Transactions\Controllers
     $routes->get('report', 'ReportController::index', ['filter' => 'permission:transactions,view']);
     $routes->get('report/print', 'ReportController::printReport', ['filter' => 'permission:transactions,view']);
     $routes->get('report/deleted', 'ReportController::deleted', ['filter' => 'permission:transactions,view']);
+
+    // Breakdown — Jama/Naam totals grouped by tag, party type and payment mode.
+    $routes->get('report/breakdown', 'ReportController::breakdown', ['filter' => 'permission:transactions,view']);
+    $routes->get('report/breakdown/print', 'ReportController::breakdownPrint', ['filter' => 'permission:transactions,view']);
+    $routes->get('report/breakdown/export/(csv|xlsx|pdf)', 'ExportController::breakdown/$1', ['filter' => 'permission:transactions,export']);
     $routes->post('report/restore/(:segment)', 'ReportController::restore/$1', ['filter' => 'permission:transactions,edit']);
 
     // Shri Rokad Nagad — per-financial-year opening cash

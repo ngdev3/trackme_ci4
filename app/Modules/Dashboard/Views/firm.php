@@ -145,8 +145,9 @@ window.DL_LIVE = <?= json_encode([
                             <li class="dl-empty"><i class="bi bi-inbox"></i>No transactions yet. Add one in the ledger to see it here live.</li>
                         <?php else: foreach ($recentTxns as $t):
                             $isJama = ($t['type'] ?? '') === 'jama';
+                            $rpUrl  = site_url('transactions/report') . '?period=day&date=' . ($t['txn_date'] ?? date('Y-m-d'));
                         ?>
-                            <li>
+                            <li class="dl-feed-link" data-href="<?= esc($rpUrl, 'attr') ?>" title="Open the Rokadh Parcha for <?= esc(date('d M Y', strtotime($t['txn_date'] ?? 'now')), 'attr') ?>">
                                 <span class="dl-feed-ic <?= $isJama ? 'jama' : 'naam' ?>"><i class="bi <?= $isJama ? 'bi-arrow-down' : 'bi-arrow-up' ?>"></i></span>
                                 <span class="dl-feed-main">
                                     <span class="dl-feed-name"><?= esc($t['name']) ?></span>
@@ -166,13 +167,15 @@ window.DL_LIVE = <?= json_encode([
                     <?php if (empty($topParties)): ?>
                         <div class="dl-empty"><i class="bi bi-person-lines-fill"></i>No party activity yet.</div>
                     <?php else: foreach ($topParties as $p):
-                        $pos = (float) $p['net'] >= 0;
+                        $pos  = (float) $p['net'] >= 0;
+                        $stmt = site_url('transactions/statement') . '?party=' . rawurlencode((string) $p['name']);
                     ?>
-                        <div class="dl-party">
+                        <a class="dl-party" href="<?= esc($stmt, 'attr') ?>" title="Open the statement for <?= esc($p['name'], 'attr') ?>">
                             <span class="dl-party-av"><?= esc(strtoupper(mb_substr($p['name'], 0, 1))) ?></span>
                             <span class="dl-party-name"><?= esc($p['name']) ?><br><span class="dl-feed-meta"><?= (int) $p['cnt'] ?> entries</span></span>
                             <span class="dl-party-net <?= $pos ? 'text-success' : 'text-danger' ?>"><?= $pos ? '+' : '-' ?><?= $plain(abs($p['net'])) ?></span>
-                        </div>
+                            <i class="bi bi-chevron-right dl-party-go"></i>
+                        </a>
                     <?php endforeach; endif; ?>
                 </div>
             </div>

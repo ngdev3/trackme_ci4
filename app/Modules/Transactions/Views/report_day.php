@@ -31,12 +31,29 @@ $partyCode = static function (string $name): string {
 };
 $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
     $net  = (float) $p['net'];
+    $tone = $net > 0 ? 'jama' : ($net < 0 ? 'naam' : 'neutral');
     $sign = $net < 0 ? '-' : '';
     $desc = 'Bal ' . $sign . '₹' . $fmt(abs($net))
         . ' · ' . (int) $p['count'] . ' ' . ((int) $p['count'] === 1 ? 'entry' : 'entries')
         . (! empty($p['last_date']) ? ' · last ' . date('d M y', strtotime($p['last_date'])) : '');
-    return ['name' => (string) $p['name'], 'code' => $partyCode((string) $p['name']), 'desc' => $desc];
+    return ['name' => (string) $p['name'], 'code' => $partyCode((string) $p['name']), 'desc' => $desc, 'net' => $net, 'tone' => $tone];
 }, $parties ?? []);
+
+// Classification: how the money moved (payment mode) and who the party is (party type).
+$partyTypes = $partyTypes ?? \App\Models\TransactionModel::PARTY_TYPES;
+
+$modeIcons = ['cash' => 'bi-cash-coin', 'upi' => 'bi-phone', 'bank' => 'bi-bank', 'cheque' => 'bi-journal-text', 'card' => 'bi-credit-card', 'other' => 'bi-three-dots'];
+$rowChips  = static function (array $r) use ($modeIcons): string {
+    $m   = ($r['payment_mode'] ?? '') ?: 'cash';
+    $lbl = \App\Models\TransactionModel::MODE_LABELS[$m] ?? ucfirst((string) $m);
+    $out = '<span class="rp-chip rp-mode-' . esc($m, 'attr') . '"><i class="bi ' . ($modeIcons[$m] ?? 'bi-three-dots') . '"></i>' . esc($lbl) . '</span>';
+
+    if (! empty($r['party_type'])) {
+        $out .= '<span class="rp-chip rp-chip-party"><i class="bi bi-person"></i>' . esc($r['party_type']) . '</span>';
+    }
+
+    return $out;
+};
 ?>
 <div class="rp-wrap">
     <!-- Firm / company name -->
@@ -73,7 +90,11 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
             <a href="<?= site_url('transactions/report') . '?period=day&date=' . $prevDate ?>" class="btn btn-outline-secondary"><i class="bi bi-chevron-left"></i> Prev</a>
             <button class="btn btn-success"><i class="bi bi-search"></i> Search</button>
             <a href="<?= site_url('transactions/report') . '?period=day&date=' . $nextDate ?>" class="btn btn-outline-secondary">Next <i class="bi bi-chevron-right"></i></a>
-            <a href="<?= site_url('transactions/report/print') . '?period=day&date=' . $period->from ?>" target="_blank" class="btn btn-primary"><i class="bi bi-printer"></i> PDF / Print</a>
+            <?php if (sub_is_pro()): ?>
+                <a href="<?= site_url('transactions/report/print') . '?period=day&date=' . $period->from ?>" target="_blank" class="btn btn-primary"><i class="bi bi-printer"></i> PDF / Print</a>
+            <?php else: ?>
+                <a href="<?= site_url('subscription') ?>" class="btn btn-outline-primary" title="Available on the paid plan"><i class="bi bi-lock"></i> PDF / Print</a>
+            <?php endif; ?>
             <a href="<?= site_url('transactions/report/deleted') . '?date=' . $period->from ?>" class="btn btn-outline-secondary"><i class="bi bi-trash"></i> Deleted Entries</a>
         </form>
     </div>
@@ -86,6 +107,11 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
         </div>
         <div class="d-flex flex-wrap gap-2">
             <a href="<?= site_url('transactions/list') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-list-ul"></i> Ledger</a>
+            <?php if (sub_is_pro()): ?>
+                <a href="<?= site_url('transactions/report/breakdown') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pie-chart"></i> Report</a>
+            <?php else: ?>
+                <a href="<?= site_url('subscription') ?>" class="btn btn-sm btn-outline-primary" title="Available on the paid plan"><i class="bi bi-lock"></i> Report</a>
+            <?php endif; ?>
             <?php if (can($moduleCode, 'add')): ?>
                 <button type="button" class="btn btn-sm btn-success" data-rp-add="jama"><i class="bi bi-plus-lg"></i> Add Deposit (Jama)</button>
                 <button type="button" class="btn btn-sm btn-danger" data-rp-add="naam"><i class="bi bi-dash-lg"></i> Add Expense (Naam)</button>
@@ -106,11 +132,13 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
                     <div class="rp-shri-val">&#8377; <?= $fmt($shri) ?></div>
                 </div>
             </div>
-            <?php if (can($moduleCode, 'edit')): ?>
+            <?php if (can($moduleCode, 'edit') && sub_is_pro()): ?>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#shriEdit"><i class="bi bi-pencil"></i> Set / Edit</button>
                     <a href="<?= site_url('transactions/opening') ?>" class="btn btn-sm btn-outline-secondary" title="All financial years"><i class="bi bi-gear"></i></a>
                 </div>
+            <?php elseif (can($moduleCode, 'edit')): ?>
+                <a href="<?= site_url('subscription') ?>" class="btn btn-sm btn-outline-primary" title="Available on the paid plan"><i class="bi bi-lock"></i> Set opening balance</a>
             <?php endif; ?>
         </div>
         <?php if (can($moduleCode, 'edit')): ?>
@@ -146,11 +174,11 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
                     </div>
 
                     <?php foreach ($jama as $r): ?>
-                        <div class="rp-entry">
+                        <div class="rp-entry rp-entry-open-view" data-tx-view data-id="<?= hid($r['id']) ?>" title="Click to view full details">
                             <div class="rp-amt"><?= $fmt($r['amount']) ?></div>
                             <div class="rp-mid">
                                 <div class="rp-party"><?= esc($r['name']) ?> <span class="rp-id">(ID-<?= hid($r['id']) ?>)</span></div>
-                                <div class="rp-meta"><?= $srcBadge($r['source'] ?? 'web') ?> <?php if (! empty($r['notes'])): ?><span><?= esc(character_limiter($r['notes'], 30)) ?></span><?php endif; ?></div>
+                                <div class="rp-meta"><?= $srcBadge($r['source'] ?? 'web') ?><?= $rowChips($r) ?><?php if (! empty($r['notes'])): ?><span><?= esc(character_limiter($r['notes'], 30)) ?></span><?php endif; ?></div>
                             </div>
                             <div class="rp-acts">
                                 <button type="button" class="rp-act rp-view" title="View" data-tx-view data-id="<?= hid($r['id']) ?>"><i class="bi bi-eye"></i></button>
@@ -175,11 +203,11 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
 
                     <div class="rp-empty" data-naam-empty <?= empty($naam) ? '' : 'hidden' ?>><i class="bi bi-inbox d-block fs-3 opacity-50 mb-1"></i>No Naam entries</div>
                     <?php foreach ($naam as $r): ?>
-                        <div class="rp-entry">
+                        <div class="rp-entry rp-entry-open-view" data-tx-view data-id="<?= hid($r['id']) ?>" title="Click to view full details">
                             <div class="rp-amt"><?= $fmt($r['amount']) ?></div>
                             <div class="rp-mid">
                                 <div class="rp-party"><?= esc($r['name']) ?> <span class="rp-id">(ID-<?= hid($r['id']) ?>)</span></div>
-                                <div class="rp-meta"><?= $srcBadge($r['source'] ?? 'web') ?> <?php if (! empty($r['notes'])): ?><span><?= esc(character_limiter($r['notes'], 30)) ?></span><?php endif; ?></div>
+                                <div class="rp-meta"><?= $srcBadge($r['source'] ?? 'web') ?><?= $rowChips($r) ?><?php if (! empty($r['notes'])): ?><span><?= esc(character_limiter($r['notes'], 30)) ?></span><?php endif; ?></div>
                             </div>
                             <div class="rp-acts">
                                 <button type="button" class="rp-act rp-view" title="View" data-tx-view data-id="<?= hid($r['id']) ?>"><i class="bi bi-eye"></i></button>
@@ -215,7 +243,7 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
 <?php if (can($moduleCode, 'add')): ?>
 <!-- Add Deposit (Jama) / Add Expense (Naam) — opened from the buttons above -->
 <div class="modal fade" id="rpAddModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <form class="modal-content" id="rpAddForm" data-no-validate autocomplete="off">
             <?= csrf_field() ?>
             <input type="hidden" name="type" id="rpAddType" value="jama">
@@ -225,24 +253,57 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3 rp-combo" id="rpPartyCombo">
-                    <label class="form-label">Party / account <span class="text-danger">*</span></label>
-                    <div class="rp-combo-field">
-                        <input type="text" name="name" id="rpAddName" class="form-control form-control-lg" placeholder="Search an account or type a new one…"
-                               autocomplete="off" role="combobox" aria-expanded="false" aria-controls="rpPartyMenu" aria-autocomplete="list">
-                        <div class="rp-combo-menu" id="rpPartyMenu" role="listbox" hidden></div>
+                <!-- Two columns: what you type on the left, how you classify it on the right. -->
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="mb-3 rp-combo" id="rpPartyCombo">
+                            <label class="form-label">Party / account <span class="text-danger">*</span></label>
+                            <div class="rp-combo-field">
+                                <input type="text" name="name" id="rpAddName" class="form-control form-control-lg" placeholder="Search an account or type a new one…"
+                                       autocomplete="off" role="combobox" aria-expanded="false" aria-controls="rpPartyMenu" aria-autocomplete="list">
+                                <div class="rp-combo-menu" id="rpPartyMenu" role="listbox" hidden></div>
+                            </div>
+                            <div class="form-text">Pick an existing account (shows its code &amp; balance) or type a new name.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Amount (&#8377;) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" min="0.01" name="amount" id="rpAddAmount" class="form-control form-control-lg" placeholder="0.00">
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label">Notes <span class="text-muted small">(optional)</span></label>
+                            <input type="text" name="notes" id="rpAddNotes" class="form-control" placeholder="Any remark">
+                        </div>
                     </div>
-                    <div class="form-text">Pick an existing account (shows its code &amp; balance) or type a new name.</div>
+
+                    <div class="col-lg-6 rp-col-classify">
+                        <div class="mb-3">
+                            <label class="form-label">Paid by</label>
+                            <div class="rp-modes" data-rp-modes role="radiogroup" aria-label="Payment mode">
+                                <?php
+                                $modeBtns = ['cash' => 'bi-cash-coin', 'upi' => 'bi-phone', 'bank' => 'bi-bank', 'cheque' => 'bi-journal-text', 'card' => 'bi-credit-card', 'other' => 'bi-three-dots'];
+                                foreach ($modeBtns as $m => $icon): ?>
+                                    <button type="button" class="rp-mode<?= $m === 'cash' ? ' active' : '' ?>" data-val="<?= esc($m, 'attr') ?>" role="radio" aria-checked="<?= $m === 'cash' ? 'true' : 'false' ?>">
+                                        <i class="bi <?= $icon ?>"></i><?= esc(\App\Models\TransactionModel::MODE_LABELS[$m]) ?>
+                                    </button>
+                                <?php endforeach; ?>
+                            </div>
+                            <input type="hidden" name="payment_mode" id="rpAddMode" value="cash">
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label">Party type <span class="text-muted small">(optional)</span></label>
+                            <div class="rp-chips" data-rp-typechips>
+                                <?php foreach ($partyTypes as $t): ?>
+                                    <button type="button" class="rp-chip-btn" data-val="<?= esc($t, 'attr') ?>"><?= esc($t) ?></button>
+                                <?php endforeach; ?>
+                            </div>
+                            <input type="text" name="party_type" id="rpAddPartyType" class="form-control" maxlength="32"
+                                   placeholder="Farmer, Firm, Trader…" autocomplete="off">
+                            <div class="form-text">Click a chip, or type your own to classify who this account is.</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Amount (&#8377;) <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" min="0.01" name="amount" id="rpAddAmount" class="form-control form-control-lg" placeholder="0.00">
-                </div>
-                <div class="mb-1">
-                    <label class="form-label">Notes <span class="text-muted small">(optional)</span></label>
-                    <input type="text" name="notes" id="rpAddNotes" class="form-control" placeholder="Any remark">
-                </div>
-                <div class="form-text">Adding to <strong><?= esc($dmy($period->from)) ?></strong>.</div>
+                <div class="form-text mt-3">Adding to <strong><?= esc($dmy($period->from)) ?></strong>.</div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -270,7 +331,10 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
     #rpAddModal .form-label { margin-bottom: .4rem; font-weight: 600; }
     #rpAddModal .form-control { padding-top: .6rem; padding-bottom: .6rem; }
     #rpAddModal .form-text { margin-top: .45rem; }
-    #rpAddModal .modal-body > .mb-3 { margin-bottom: 1.35rem !important; }
+    /* A divider between the entry column and the classification column, on wide screens only. */
+    @media (min-width: 992px) {
+        #rpAddModal .rp-col-classify { border-left: 1px solid var(--bs-border-color, #e9edf5); }
+    }
 
     /* Searchable party (account) dropdown */
     .rp-combo-field { position: relative; }
@@ -290,6 +354,53 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
     .rp-opt-new { color: var(--bs-secondary-color, #6c757d); font-size: .85rem; padding: .55rem .6rem; }
     .rp-opt + .rp-opt-new { margin-top: .25rem; border-top: 1px solid var(--bs-border-color, rgba(0,0,0,.12)); padding-top: .6rem; }
     .rp-opt-new b { color: var(--bs-body-color); }
+    .rp-combo-tools {
+        position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .35rem; margin-bottom: .4rem; padding-bottom: .4rem; background: var(--bs-body-bg, #fff);
+        border-bottom: 1px solid var(--bs-border-color, rgba(0,0,0,.12));
+    }
+    .rp-combo-filter {
+        border: 1px solid var(--bs-border-color, #dee2e6); border-radius: 8px; padding: .35rem .5rem;
+        background: var(--bs-body-bg, #fff); color: var(--bs-secondary-color, #6c757d);
+        font-size: .76rem; font-weight: 800; cursor: pointer;
+    }
+    .rp-combo-filter.active { color: var(--bs-primary, #0d6efd); border-color: var(--bs-primary, #0d6efd); background: var(--bs-primary-bg-subtle, #e7f1ff); }
+    .rp-combo-filter-jama.active { color: #15803d; border-color: #22c55e; background: rgba(34,197,94,.12); }
+    .rp-combo-filter-naam.active { color: #b91c1c; border-color: #ef4444; background: rgba(239,68,68,.12); }
+    .rp-opt { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; border: 1px solid transparent; }
+    .rp-opt:hover, .rp-opt.active { border-color: var(--bs-primary-border-subtle, #b6d4fe); }
+    .rp-opt-jama:hover, .rp-opt-jama.active { background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.34); }
+    .rp-opt-naam:hover, .rp-opt-naam.active { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.34); }
+    .rp-opt-avatar {
+        width: 34px; height: 34px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;
+        color: #fff; font-weight: 900; background: linear-gradient(135deg, #3b82f6, #2563eb); text-transform: uppercase;
+    }
+    .rp-opt-jama .rp-opt-avatar { background: linear-gradient(135deg, #22c55e, #15803d); }
+    .rp-opt-naam .rp-opt-avatar { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+    .rp-opt-bal {
+        flex: 0 0 auto; padding: .2rem .5rem; border-radius: 999px; font-size: .76rem; font-weight: 900;
+        white-space: nowrap; background: rgba(37,99,235,.10); font-variant-numeric: tabular-nums;
+    }
+    .rp-opt-bal.tx-amt-jama { background: rgba(34,197,94,.12); }
+    .rp-opt-bal.tx-amt-naam { background: rgba(239,68,68,.12); }
+
+    /* Payment mode — segmented pills, one always selected */
+    .rp-modes { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .rp-mode {
+        display: inline-flex; align-items: center; gap: .35rem; padding: .45rem .8rem; font-size: .85rem; font-weight: 600; cursor: pointer;
+        border: 1px solid var(--bs-border-color, #dee2e6); border-radius: 999px; background: var(--bs-body-bg, #fff); color: var(--bs-body-color);
+    }
+    .rp-mode:hover { border-color: var(--bs-primary, #0d6efd); }
+    .rp-mode.active { color: #fff; background: var(--bs-primary, #0d6efd); border-color: var(--bs-primary, #0d6efd); }
+
+    /* Party type — one-click suggestions above a free-text box */
+    .rp-chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .5rem; }
+    .rp-chip-btn {
+        padding: .3rem .7rem; font-size: .78rem; font-weight: 600; cursor: pointer; border-radius: 999px;
+        border: 1px dashed var(--bs-border-color, #dee2e6); background: transparent; color: var(--bs-secondary-color, #6c757d);
+    }
+    .rp-chip-btn:hover { color: var(--bs-primary, #0d6efd); border-color: var(--bs-primary, #0d6efd); }
+    .rp-chip-btn.active { color: #fff; background: var(--bs-primary, #0d6efd); border-style: solid; border-color: var(--bs-primary, #0d6efd); }
 </style>
 <script>
 (function () {
@@ -305,16 +416,26 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
         if (x) { x.addEventListener('click', function () { try { localStorage.setItem('rpOpenBalTipDismissed', '1'); } catch (e) {} tip.remove(); }); }
     }
 
+    var MODE_ICONS = { cash: 'bi-cash-coin', upi: 'bi-phone', bank: 'bi-bank', cheque: 'bi-journal-text', card: 'bi-credit-card', other: 'bi-three-dots' };
+
     function el(html) { var t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; }
     function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+    /** Mode / party-type chips — mirrors the $rowChips() helper used for server-rendered rows. */
+    function chipsHtml(e) {
+        var mode = e.mode || 'cash';
+        var html = '<span class="rp-chip rp-mode-' + esc(mode) + '"><i class="bi ' + (MODE_ICONS[mode] || 'bi-three-dots') + '"></i>' + esc(e.modeLabel || mode) + '</span>';
+        if (e.partyType) { html += '<span class="rp-chip rp-chip-party"><i class="bi bi-person"></i>' + esc(e.partyType) + '</span>'; }
+        return html;
+    }
 
     function entryHtml(e, perms) {
         var acts = '<button type="button" class="rp-act rp-view" title="View" data-tx-view data-id="' + e.hid + '"><i class="bi bi-eye"></i></button>';
         if (perms.edit)   { acts += '<a class="rp-act rp-edit" href="' + e.editUrl + '" title="Edit"><i class="bi bi-pencil"></i></a>'; }
         if (perms.delete) { acts += '<button type="button" class="rp-act rp-del" title="Delete" data-tx-delete data-action="' + e.delUrl + '" data-label="' + esc(e.txn_no) + '"><i class="bi bi-trash"></i></button>'; }
-        var meta = '<span class="rp-badge rp-badge-web"><i class="bi bi-display"></i> Web</span>';
+        var meta = '<span class="rp-badge rp-badge-web"><i class="bi bi-display"></i> Web</span>' + chipsHtml(e);
         if (e.notes) { meta += ' <span>' + esc(e.notes) + '</span>'; }
-        return '<div class="rp-entry rp-entry-new">'
+        return '<div class="rp-entry rp-entry-new rp-entry-open-view" data-tx-view data-id="' + e.hid + '" title="Click to view full details">'
             + '<div class="rp-amt">' + esc(e.amount) + '</div>'
             + '<div class="rp-mid"><div class="rp-party">' + esc(e.name) + ' <span class="rp-id">(ID-' + e.hid + ')</span></div>'
             + '<div class="rp-meta">' + meta + '</div></div>'
@@ -354,10 +475,26 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
     var typeEl  = document.getElementById('rpAddType');
     var titleEl = document.getElementById('rpAddTitle');
     var dotEl   = document.getElementById('rpAddDot');
+    var modeEl  = document.getElementById('rpAddMode');
+    var ptEl    = document.getElementById('rpAddPartyType');
     var DATE    = form.querySelector('input[name="txn_date"]').value;
 
     function modal() { return bootstrap.Modal.getOrCreateInstance(modalEl); }
     function tokenField() { return form.querySelector('input[name="' + TOKEN_NAME + '"]'); }
+
+    /** Clear the party/amount/notes trio — everything you retype for the next entry. */
+    function clearEntryFields() {
+        nameEl.value = ''; amtEl.value = ''; notesEl.value = '';
+        closeMenu();
+    }
+
+    /** Full reset, used when the popup is opened fresh. */
+    function resetForm() {
+        clearEntryFields();
+        partyFilter = 'all';
+        setMode('cash');
+        ptEl.value = ''; syncPartyChips();
+    }
 
     document.querySelectorAll('[data-rp-add]').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -372,39 +509,94 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
                 b.classList.remove('btn-success', 'btn-danger', 'btn-outline-success', 'btn-outline-danger');
                 b.classList.add(b.hasAttribute('data-outline') ? outline : solid);
             });
-            nameEl.value = ''; amtEl.value = ''; notesEl.value = ''; closeMenu();
+            resetForm();
             modal().show();
             setTimeout(function () { nameEl.focus(); }, 250);
         });
     });
 
+    // ---- Payment mode (Cash / UPI / Bank / …) — exactly one is always selected ----
+    var modeBtns = form.querySelectorAll('[data-rp-modes] .rp-mode');
+
+    function setMode(v) {
+        modeEl.value = v;
+        modeBtns.forEach(function (b) {
+            var on = b.getAttribute('data-val') === v;
+            b.classList.toggle('active', on);
+            b.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+    }
+    modeBtns.forEach(function (b) {
+        b.addEventListener('click', function () { setMode(b.getAttribute('data-val')); });
+    });
+
+    // ---- Party type — chips are shortcuts into a free-text box, so custom values still work ----
+    var ptBtns = form.querySelectorAll('[data-rp-typechips] .rp-chip-btn');
+
+    function syncPartyChips() {
+        var v = ptEl.value.trim().toLowerCase();
+        ptBtns.forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-val').toLowerCase() === v); });
+    }
+    ptBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+            var v = b.getAttribute('data-val');
+            // Clicking the selected chip again clears it.
+            ptEl.value = ptEl.value.trim().toLowerCase() === v.toLowerCase() ? '' : v;
+            syncPartyChips();
+        });
+    });
+    ptEl.addEventListener('input', syncPartyChips);
+
     // ---- Searchable party (account) dropdown ----
     var menu = document.getElementById('rpPartyMenu');
-    var active = -1, shown = [];
+    var active = -1, shown = [], partyFilter = 'all';
 
     function closeMenu() { menu.hidden = true; nameEl.setAttribute('aria-expanded', 'false'); active = -1; }
+    function partyInitial(name) { return (name || '?').trim().charAt(0).toUpperCase() || '?'; }
+    function partyMoney(v) {
+        var n = parseFloat(v || 0);
+        if (!isFinite(n)) { n = 0; }
+        return (n < 0 ? '-' : '') + String.fromCharCode(8377) + ' ' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function partyFilterLabel() {
+        if (partyFilter === 'jama') { return 'Jama balance'; }
+        if (partyFilter === 'naam') { return 'Naam balance'; }
+        return 'All accounts';
+    }
 
     function renderMenu(q) {
         q = q.trim().toLowerCase();
         shown = PARTIES.filter(function (p) {
-            return !q || (p.name + ' ' + p.code).toLowerCase().indexOf(q) !== -1;
+            var match = !q || (p.name + ' ' + p.code).toLowerCase().indexOf(q) !== -1;
+            var tone = p.tone || 'neutral';
+            return match && (partyFilter === 'all' || tone === partyFilter);
         }).slice(0, 12);
         active = -1;
+        var toolbar = '<div class="rp-combo-tools" role="group" aria-label="Account filters">'
+            + '<button type="button" class="rp-combo-filter' + (partyFilter === 'all' ? ' active' : '') + '" data-filter="all">All</button>'
+            + '<button type="button" class="rp-combo-filter rp-combo-filter-jama' + (partyFilter === 'jama' ? ' active' : '') + '" data-filter="jama">Jama</button>'
+            + '<button type="button" class="rp-combo-filter rp-combo-filter-naam' + (partyFilter === 'naam' ? ' active' : '') + '" data-filter="naam">Naam</button>'
+            + '</div>';
         var html = shown.map(function (p, i) {
-            return '<div class="rp-opt" role="option" data-i="' + i + '">'
+            var tone = p.tone || 'neutral';
+            return '<div class="rp-opt rp-opt-' + tone + '" role="option" data-i="' + i + '">'
+                + '<span class="rp-opt-avatar"></span>'
                 + '<span class="rp-opt-main"><span class="rp-opt-name"></span><span class="rp-opt-desc"></span></span>'
-                + '<span class="rp-opt-code"></span></div>';
+                + '<span class="rp-opt-bal"></span></div>';
         }).join('');
         if (q && !shown.some(function (p) { return p.name.toLowerCase() === q; })) {
             html += '<div class="rp-opt-new">“<b class="rp-new-q"></b>” — will be added as a <b>new account</b>.</div>';
         }
         if (!shown.length && !q) { html = '<div class="rp-opt-new">No saved accounts yet — just type a name.</div>'; }
-        menu.innerHTML = html;
+        menu.innerHTML = toolbar + html;
         shown.forEach(function (p, i) {
             var opt = menu.querySelector('.rp-opt[data-i="' + i + '"]');
+            var tone = p.tone || 'neutral';
+            opt.querySelector('.rp-opt-avatar').textContent = partyInitial(p.name);
             opt.querySelector('.rp-opt-name').textContent = p.name;
             opt.querySelector('.rp-opt-desc').textContent = p.desc;
-            opt.querySelector('.rp-opt-code').textContent = p.code;
+            opt.querySelector('.rp-opt-bal').textContent = partyMoney(p.net);
+            opt.querySelector('.rp-opt-bal').classList.add(tone === 'naam' ? 'tx-amt-naam' : (tone === 'jama' ? 'tx-amt-jama' : 'tx-bal'));
         });
         var nq = menu.querySelector('.rp-new-q'); if (nq) { nq.textContent = nameEl.value.trim(); }
         menu.hidden = false; nameEl.setAttribute('aria-expanded', 'true');
@@ -415,7 +607,16 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
 
     nameEl.addEventListener('input', function () { renderMenu(nameEl.value); });
     nameEl.addEventListener('focus', function () { renderMenu(nameEl.value); });
-    menu.addEventListener('mousedown', function (e) { var o = e.target.closest('.rp-opt'); if (o) { e.preventDefault(); pick(+o.getAttribute('data-i')); } });
+    menu.addEventListener('mousedown', function (e) {
+        var filterBtn = e.target.closest('[data-filter]');
+        if (filterBtn) {
+            e.preventDefault();
+            partyFilter = filterBtn.getAttribute('data-filter') || 'all';
+            renderMenu(nameEl.value);
+            return;
+        }
+        var o = e.target.closest('.rp-opt'); if (o) { e.preventDefault(); pick(+o.getAttribute('data-i')); }
+    });
     nameEl.addEventListener('keydown', function (e) {
         if (menu.hidden) { return; }
         if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, shown.length - 1); highlight(); }
@@ -443,6 +644,8 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
         fd.append('txn_date', DATE);
         fd.append('name', name);
         fd.append('amount', amt);
+        fd.append('payment_mode', modeEl.value);
+        if (ptEl.value.trim()) { fd.append('party_type', ptEl.value.trim()); }
         if (notesEl.value.trim()) { fd.append('notes', notesEl.value.trim()); }
 
         fetch(URL, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd })
@@ -456,7 +659,9 @@ $partyOptions = array_map(static function ($p) use ($partyCode, $fmt) {
                 if (PARTIES.every(function (p) { return p.name.toLowerCase() !== res.entry.name.toLowerCase(); })) {
                     PARTIES.unshift({ name: res.entry.name, code: 'NEW', desc: 'Added just now' });
                 }
-                nameEl.value = ''; amtEl.value = ''; notesEl.value = ''; closeMenu();
+                // "Save & add another" keeps mode / party type — the next entry in a run is
+                // usually the same kind of thing, and the chips stay visible on screen.
+                clearEntryFields();
                 if (keepOpen) { nameEl.focus(); } else { modal().hide(); }
             })
             .catch(function () { buttons.forEach(function (b) { b.disabled = false; }); flash('Network error — please try again.', false); });

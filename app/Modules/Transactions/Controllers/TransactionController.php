@@ -41,6 +41,12 @@ class TransactionController extends BaseController
         return (int) user_id();
     }
 
+    /** Trim, collapse inner whitespace and cap a free-text classification value. */
+    private static function cleanText(string $value, int $max): string
+    {
+        return mb_substr(trim((string) preg_replace('/\s+/u', ' ', $value)), 0, $max);
+    }
+
     /** Query scope: null for the Super Admin (all rows), else the active company. */
     private function scope(): ?int
     {
@@ -253,9 +259,12 @@ class TransactionController extends BaseController
     // ===============================================================
     // Create / edit / view
     // ===============================================================
-    public function create()
+    public function create($type = null)
     {
-        return $this->render('form', $this->formData(null, 'create'));
+        // /transactions/add/{jama|naam} (menu) sets $type; ?type= is also honoured.
+        $type = $type ?? $this->request->getGet('type');
+        $type = $type === 'naam' ? 'naam' : 'jama';
+        return $this->render('form', $this->formData(null, 'create', $type));
     }
 
     public function edit($id = null)
@@ -264,7 +273,7 @@ class TransactionController extends BaseController
         if (! $row) {
             return redirect()->to(site_url('transactions/list'))->with('error', 'Transaction not found.');
         }
-        return $this->render('form', $this->formData($row, 'edit'));
+        return $this->render('form', $this->formData($row, 'edit', $row['type']));
     }
 
     public function view($id = null)
@@ -283,15 +292,51 @@ class TransactionController extends BaseController
         ]);
     }
 
-    private function formData(?array $row, string $mode): array
+    /**
+     * Type-ahead account search for the entry forms (JSON). Keeps the party-name
+     * picker scalable — the page fetches a short match list instead of embedding
+     * every account (which would choke at thousands of parties).
+     */
+    public function accountsSearch()
     {
+        $q    = (string) $this->request->getGet('q');
+        $list = $this->txns->searchParties($this->scope(), $q, 20);
+
+        $items = array_map(static function ($p) {
+            $net  = (float) $p['net'];
+            $tone = $net > 0 ? 'jama' : ($net < 0 ? 'naam' : 'neutral');
+            $sign = $net < 0 ? '-' : '';
+            $desc = 'Bal ' . $sign . '₹' . number_format(abs($net), 2)
+                . ' · ' . $p['count'] . ' ' . ($p['count'] === 1 ? 'entry' : 'entries')
+                . ($p['last_date'] ? ' · last ' . date('d M y', strtotime($p['last_date'])) : '');
+            return [
+                'name'      => $p['name'],
+                'desc'      => $desc,
+                'net'       => $net,
+                'tone'      => $tone,
+                'count'     => (int) $p['count'],
+                'last_date' => $p['last_date'],
+            ];
+        }, $list);
+
+        return $this->response->setJSON(['ok' => true, 'items' => $items]);
+    }
+
+    private function formData(?array $row, string $mode, string $type = 'jama'): array
+    {
+        $title = $mode === 'edit'
+            ? 'Edit Transaction'
+            : ($type === 'naam' ? 'Add Expense (Naam)' : 'Add Deposit (Jama)');
+
         return [
-            'title'       => $mode === 'edit' ? 'Edit Transaction' : 'Add Transaction',
+            'title'       => $title,
             'breadcrumb'  => [['label' => 'Transactions', 'url' => site_url('transactions/list')], ['label' => $mode === 'edit' ? 'Edit' : 'Add']],
             'row'         => $row,
             'mode'        => $mode,
+            'presetType'  => $type,
             'nextNo'      => $mode === 'edit' ? ($row['txn_no'] ?? '') : $this->txns->nextTxnNo((int) company_id()),
             'attachments' => $row ? $this->files->forTransaction((int) $row['id']) : [],
+            'partyTypes'  => $this->txns->partyTypes($this->scope()),
             'errors'      => session()->getFlashdata('errors') ?? [],
             'moduleCode'  => $this->moduleCode,
             'css'         => [base_url('assets/css/transactions.css')],
@@ -327,12 +372,14 @@ class TransactionController extends BaseController
             ]);
         }
 
-        $type = $this->request->getPost('type') === 'naam' ? 'naam' : 'jama';
-        $date = date('Y-m-d', strtotime((string) $this->request->getPost('txn_date')));
-        $mode = (string) $this->request->getPost('payment_mode');
+        $type      = $this->request->getPost('type') === 'naam' ? 'naam' : 'jama';
+        $date      = date('Y-m-d', strtotime((string) $this->request->getPost('txn_date')));
+        $mode      = (string) $this->request->getPost('payment_mode');
+        $partyType = self::cleanText((string) $this->request->getPost('party_type'), 32);
         $data = [
             'txn_date'     => $date,
             'name'         => trim((string) $this->request->getPost('name')),
+            'party_type'   => $partyType ?: null,
             'type'         => $type,
             'amount'       => round((float) $this->request->getPost('amount'), 2),
             'payment_mode' => in_array($mode, TransactionModel::MODES, true) ? $mode : 'cash',
@@ -359,14 +406,17 @@ class TransactionController extends BaseController
             'message' => 'Entry ' . $data['txn_no'] . ' added.',
             'onDate'  => $date,
             'entry'   => [
-                'hid'     => hid($newId),
-                'name'    => $data['name'],
-                'amount'  => $fmt($data['amount']),
-                'type'    => $type,
-                'txn_no'  => $data['txn_no'],
-                'notes'   => $data['notes'],
-                'editUrl' => site_url('transactions/edit/' . hid($newId)),
-                'delUrl'  => site_url('transactions/delete/' . hid($newId)),
+                'hid'       => hid($newId),
+                'name'      => $data['name'],
+                'amount'    => $fmt($data['amount']),
+                'type'      => $type,
+                'txn_no'    => $data['txn_no'],
+                'notes'     => $data['notes'],
+                'mode'      => $data['payment_mode'],
+                'modeLabel' => TransactionModel::MODE_LABELS[$data['payment_mode']] ?? ucfirst($data['payment_mode']),
+                'partyType' => $data['party_type'],
+                'editUrl'   => site_url('transactions/edit/' . hid($newId)),
+                'delUrl'    => site_url('transactions/delete/' . hid($newId)),
             ],
             'totals'  => [
                 'jamaColTotal' => $fmt($opening + $jama),
@@ -397,6 +447,7 @@ class TransactionController extends BaseController
             'amount'   => 'required|numeric|greater_than[0]',
             'status'   => 'in_list[paid,pending,overdue,cancelled,draft]',
             'payment_mode' => 'permit_empty|in_list[cash,bank,upi,cheque,card,other]',
+            'party_type'   => 'permit_empty|max_length[32]',
         ];
         if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
@@ -406,6 +457,7 @@ class TransactionController extends BaseController
         $data = [
             'txn_date'     => date('Y-m-d', strtotime((string) $this->request->getPost('txn_date'))),
             'name'         => trim((string) $this->request->getPost('name')),
+            'party_type'   => self::cleanText((string) $this->request->getPost('party_type'), 32) ?: null,
             'type'         => $this->request->getPost('type') === 'naam' ? 'naam' : 'jama',
             'amount'       => round((float) $this->request->getPost('amount'), 2),
             'payment_mode' => in_array($mode, TransactionModel::MODES, true) ? $mode : 'cash',
@@ -440,7 +492,10 @@ class TransactionController extends BaseController
         }
         activity_log('Transactions', 'Add', "Transaction {$data['txn_no']} added");
 
-        return redirect()->to(site_url('transactions/view/' . hid($newId)))->with('success', 'Transaction ' . $data['txn_no'] . ' added.');
+        // After adding, land on the Rokadh Parcha for the entry's date so the new
+        // row is visible in the day's register — not the single-record view page.
+        return redirect()->to(site_url('transactions/report') . '?period=day&date=' . $data['txn_date'])
+            ->with('success', 'Transaction ' . $data['txn_no'] . ' added.');
     }
 
     public function delete($id = null)

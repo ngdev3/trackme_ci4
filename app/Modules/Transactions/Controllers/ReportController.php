@@ -156,13 +156,107 @@ class ReportController extends BaseController
         if ($data['period']->period === 'day') {
             $date = $data['period']->from;
             return $this->render('report_day', $data + $common + [
-                'prevDate' => date('Y-m-d', strtotime($date . ' -1 day')),
-                'nextDate' => date('Y-m-d', strtotime($date . ' +1 day')),
-                'parties'  => $this->txns->partyDirectory($this->scope()),
+                'prevDate'   => date('Y-m-d', strtotime($date . ' -1 day')),
+                'nextDate'   => date('Y-m-d', strtotime($date . ' +1 day')),
+                'parties'    => $this->txns->partyDirectory($this->scope()),
+                'partyTypes' => $this->txns->partyTypes($this->scope()),
             ]);
         }
 
         return $this->render('report', $data + $common);
+    }
+
+    // =================================================================
+    // Breakdown report — where the money went, by tag / party type / mode
+    // =================================================================
+
+    /** The ways the breakdown groups a book, and how each is labelled. */
+    public const GROUPS = [
+        'party_type'   => ['title' => 'By Party Type',   'icon' => 'bi-person-badge', 'empty' => 'Unspecified'],
+        'payment_mode' => ['title' => 'By Payment Mode', 'icon' => 'bi-wallet2',      'empty' => 'Unspecified'],
+    ];
+
+    /**
+     * Shared data for the breakdown screen, its print view and its exports.
+     *
+     * @param array{from?:string, to?:string, ptype?:string, group?:string, value?:string} $in
+     */
+    public function buildBreakdown(array $in): array
+    {
+        $scope = $this->scope();
+
+        $ymd  = static fn ($v) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $v) ? (string) $v : '';
+        $from = $ymd($in['from'] ?? '') ?: date('Y-m-01');
+        $to   = $ymd($in['to'] ?? '') ?: date('Y-m-d');
+        if ($to < $from) {
+            [$from, $to] = [$to, $from];
+        }
+
+        // The party-type tabs: every type present in this range, with its own count.
+        // Computed before the filter is applied, so selecting a tab never hides the others.
+        $tabs = $this->txns->groupTotals($scope, 'party_type', $from, $to);
+
+        // Only accept a value one of the tabs actually offers, so a hand-edited URL
+        // cannot filter on a type that does not exist in this range.
+        $partyTypes = $this->txns->partyTypes($scope);
+        $ptype      = trim((string) ($in['ptype'] ?? ''));
+        $f          = ['ptype' => $ptype === TransactionModel::UNSET_VALUE || in_array($ptype, $partyTypes, true) ? $ptype : ''];
+
+        [$jama, $naam] = $this->txns->rangeTotals($scope, $from, $to, $f);
+
+        $data = [
+            'from'       => $from,
+            'to'         => $to,
+            'filters'    => $f,
+            'partyTypes' => $partyTypes,
+            'tabs'       => $tabs,
+            'groups'     => [
+                'party_type'   => $this->txns->groupTotals($scope, 'party_type', $from, $to, $f),
+                'payment_mode' => $this->txns->groupTotals($scope, 'payment_mode', $from, $to, $f),
+            ],
+            'summary'    => ['jama' => $jama, 'naam' => $naam, 'net' => $jama - $naam],
+            'drill'      => null,
+        ];
+
+        // Clicking a group row lists the entries behind it. The value may legitimately
+        // be '' (unspecified), so presence of `group` is what opens the drill.
+        $group = (string) ($in['group'] ?? '');
+        if (isset(self::GROUPS[$group])) {
+            $value = (string) ($in['value'] ?? '');
+            $rows  = $this->txns->rowsByColumn($scope, $group, $value, $from, $to, $f);
+
+            $data['drill'] = [
+                'group' => $group,
+                'value' => $value,
+                'label' => $value !== '' ? $value : self::GROUPS[$group]['empty'],
+                'rows'  => $rows,
+            ];
+        }
+
+        return $data;
+    }
+
+    /** Grouped totals by tag, party type and payment mode over a date range. */
+    public function breakdown()
+    {
+        $data = $this->buildBreakdown($this->request->getGet());
+
+        return $this->render('report_breakdown', $data + [
+            'title'      => 'Report',
+            'breadcrumb' => [['label' => 'Transactions', 'url' => site_url('transactions')], ['label' => 'Report']],
+            'moduleCode' => $this->moduleCode,
+            'css'        => [base_url('assets/css/tm-table.css'), base_url('assets/css/transactions.css')],
+        ]);
+    }
+
+    /** Print-friendly breakdown (opens in a new tab). */
+    public function breakdownPrint()
+    {
+        $data = $this->buildBreakdown($this->request->getGet());
+
+        return view('Modules\Transactions\Views\report_breakdown_print', $data + [
+            'firm' => function_exists('current_company') ? current_company() : null,
+        ]);
     }
 
     /** Soft-deleted entries for a date, with the option to restore them. */
@@ -211,14 +305,18 @@ class ReportController extends BaseController
     // ===============================================================
 
     /** Settings page: set the opening cash-in-hand for each financial year. */
+    /** How many financial years to list either side of the current one. */
+    public const FY_WINDOW = 5;
+
     public function opening()
     {
         $thisFy = $this->fyStartFor(date('Y-m-d'));
 
-        // Show a window of financial years around the current one. Each carries
-        // its value (explicit or auto-rolled from the prior year's closing).
+        // Show the five financial years either side of the current one, so a book
+        // can be back-filled or set up in advance. Each carries its value (explicit
+        // or auto-rolled from the prior year's closing).
         $years = [];
-        for ($y = $thisFy + 1; $y >= $thisFy - 6; $y--) {
+        for ($y = $thisFy + self::FY_WINDOW; $y >= $thisFy - self::FY_WINDOW; $y--) {
             $years[$y] = ['value' => $this->shriNagad($y), 'auto' => ! $this->shriIsExplicit($y)];
         }
         krsort($years);

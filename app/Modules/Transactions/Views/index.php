@@ -109,14 +109,14 @@ window.TX_CHARTS = {
         <div class="d-flex flex-wrap gap-2">
             <a href="<?= site_url('transactions/report') ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-journal-text"></i> Rokadh Parcha</a>
             <a href="<?= site_url('transactions/statement') ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-person-vcard"></i> Account Statement</a>
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-download"></i> Export</button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="<?= site_url('transactions/export/csv') . '?' . http_build_query($qs) ?>"><i class="bi bi-filetype-csv me-2"></i>CSV</a></li>
-                    <li><a class="dropdown-item" href="<?= site_url('transactions/export/xlsx') . '?' . http_build_query($qs) ?>"><i class="bi bi-file-earmark-excel me-2"></i>Excel</a></li>
-                    <li><a class="dropdown-item" href="<?= site_url('transactions/export/pdf') . '?' . http_build_query($qs) ?>"><i class="bi bi-file-earmark-pdf me-2"></i>PDF</a></li>
-                </ul>
-            </div>
+            <?php if (sub_is_pro()): ?>
+                <a href="<?= site_url('transactions/export/pdf') . '?' . http_build_query($qs) ?>" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-file-earmark-pdf me-1"></i>Export PDF
+                    <span class="badge rounded-pill text-bg-primary ms-1">New</span>
+                </a>
+            <?php else: ?>
+                <a href="<?= site_url('subscription') ?>" class="btn btn-outline-primary btn-sm" title="Available on the paid plan"><i class="bi bi-lock me-1"></i>Export PDF</a>
+            <?php endif; ?>
             <?php if (can($moduleCode, 'add')): ?>
                 <a href="<?= site_url('transactions/create') ?>" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add New</a>
             <?php endif; ?>

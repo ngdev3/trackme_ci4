@@ -1,4 +1,11 @@
 <?php $u = current_user(); ?>
+<style>
+/* Plan-locked menu items: shown, but visually marked. Clicking one is caught by
+   the 'feature' route filter and redirected to the Subscription page. */
+.erp-sidebar .nav-link.is-locked { opacity: .72; }
+.erp-sidebar .nav-lock { margin-left: 6px; font-size: .72rem; color: #f59e0b; }
+.erp-sidebar .nav-link.is-locked:hover { opacity: 1; }
+</style>
 <!-- Sidebar -->
 <aside class="app-sidebar erp-sidebar">
     <div class="sidebar-brand erp-sidebar-brand">

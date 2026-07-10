@@ -104,7 +104,7 @@ if (! function_exists('render_firm_sidebar')) {
      */
     function render_firm_sidebar(): string
     {
-        helper(['company', 'auth']);
+        helper(['company', 'auth', 'subscription']);
 
         // No active company (e.g. brand-new user, or just deleted their last
         // firm): lock the workspace down to the essentials until they create one.
@@ -139,8 +139,11 @@ if (! function_exists('render_firm_sidebar')) {
             ['dashboard', 'Dashboard', 'bi bi-speedometer2', 'dashboard', []],
             ['rokad', 'HissabKitaab Vahi', 'bi bi-journal-text', null, [
                 ['Rokadh Parcha', 'transactions'],
+                ['Add Deposit (Jama)', 'transactions/add/jama'],
+                ['Add Expense (Naam)', 'transactions/add/naam'],
                 ['Rokad Vahi', 'transactions/list'],
                 ['Account Statement', 'transactions/statement'],
+                ['Report', 'transactions/report/breakdown'],
                 ['Opening Balance', 'transactions/opening'],
             ]],
             ['inventory', 'Inventory', 'bi bi-box-seam', 'inventory', []],
@@ -151,6 +154,10 @@ if (! function_exists('render_firm_sidebar')) {
                 ['Add Password', 'passwords/add'],
             ]],
             ['calculator', 'Calculator', 'bi bi-calculator-fill', 'calculator', []],
+            ['subscription', 'Subscription', 'bi bi-gem', null, [
+                ['My Plan', 'subscription'],
+                ['Payment History', 'subscription/transactions'],
+            ]],
             ['firm_users', 'Trash', 'bi bi-trash', 'company/trash', []],
             ['settings', 'Settings', 'bi bi-gear', 'settings', []],
             ['help', 'Help & Support', 'bi bi-life-preserver', 'help', []],
@@ -158,10 +165,25 @@ if (! function_exists('render_firm_sidebar')) {
 
         $html = '';
         foreach ($menu as [$code, $label, $icon, $url, $children]) {
-            // Help & Support is open to every signed-in user.
-            if ($code !== 'help' && ! firm_can($code)) {
+            // Help & Support and Subscription are open to every signed-in user.
+            if ($code !== 'help' && $code !== 'subscription' && ! firm_can($code)) {
                 continue;
             }
+            // Package feature gate — modules the active subscription package does
+            // NOT include are still SHOWN (never hidden), but flagged as locked.
+            // Clicking one hits the 'feature' route filter, which redirects to the
+            // Subscription page with an "upgrade required" message (same hasFeature()
+            // rule the routes/views enforce). "Trash" is the company recycle bin.
+            $featMap = [
+                'inventory'  => 'inventory',
+                'notes'      => 'notes',
+                'reminders'  => 'reminder',
+                'passwords'  => 'password_manager',
+                'calculator' => 'calculator',
+            ];
+            $feat   = $featMap[$code] ?? ($url === 'company/trash' ? 'trash' : null);
+            $locked = $feat !== null && ! hasFeature($feat);
+            $lockBadge = $locked ? ' <i class="nav-lock bi bi-lock-fill" title="Upgrade your plan to unlock"></i>' : '';
             // Password Manager access is governed by app RBAC (its routes use a
             // permission filter), so mirror that here to avoid a dead menu link.
             if ($code === 'passwords' && function_exists('can') && ! can('passwords', 'view')) {
@@ -183,8 +205,8 @@ if (! function_exists('render_firm_sidebar')) {
 
             if ($children === []) {
                 $active = is_menu_active($url) ? ' active' : '';
-                $html .= '<li class="nav-item"><a href="' . site_url($url) . '" class="nav-link' . $active . '">'
-                    . '<i class="nav-icon ' . esc($icon) . '"></i><p>' . esc($label) . '</p></a></li>';
+                $html .= '<li class="nav-item"><a href="' . site_url($url) . '" class="nav-link' . $active . ($locked ? ' is-locked' : '') . '">'
+                    . '<i class="nav-icon ' . esc($icon) . '"></i><p>' . esc($label) . $lockBadge . '</p></a></li>';
                 continue;
             }
 
@@ -209,8 +231,8 @@ if (! function_exists('render_firm_sidebar')) {
                     . '<i class="nav-icon bi bi-dot"></i><p>' . esc($clabel) . '</p></a></li>';
             }
             $html .= '<li class="nav-item' . ($childActive ? ' menu-open' : '') . '">'
-                . '<a href="#" class="nav-link' . ($childActive ? ' active' : '') . '">'
-                . '<i class="nav-icon ' . esc($icon) . '"></i><p>' . esc($label) . '<i class="nav-arrow bi bi-chevron-right"></i></p></a>'
+                . '<a href="#" class="nav-link' . ($childActive ? ' active' : '') . ($locked ? ' is-locked' : '') . '">'
+                . '<i class="nav-icon ' . esc($icon) . '"></i><p>' . esc($label) . $lockBadge . '<i class="nav-arrow bi bi-chevron-right"></i></p></a>'
                 . '<ul class="nav nav-treeview">' . $childHtml . '</ul></li>';
         }
 
@@ -304,6 +326,37 @@ if (! function_exists('render_sidebar')) {
                 . '<i class="nav-icon ' . $icon . '"></i><p>' . $name
                 . '<i class="nav-arrow bi bi-chevron-right"></i></p></a>'
                 . '<ul class="nav nav-treeview">' . $childHtml . '</ul></li>';
+        }
+
+        // Subscription / billing management — the admin pages are not DB modules,
+        // so add them to the Super Admin sidebar explicitly.
+        if (function_exists('is_super_admin_account') && is_super_admin_account()) {
+            $adminChildren = [
+                ['Activate Plan', 'admin/activate', 'bi bi-gem'],
+                ['Customers', 'admin/customers', 'bi bi-people'],
+                ['Firms', 'admin/firms', 'bi bi-building'],
+                ['Transactions', 'admin/transactions', 'bi bi-receipt'],
+                ['Plans & Pricing', 'admin/plans', 'bi bi-card-checklist'],
+            ];
+            $bestIdx = -1;
+            $bestLen = -1;
+            foreach ($adminChildren as $i => $c) {
+                $len = menu_match_len($c[1]);
+                if ($len > $bestLen) {
+                    $bestLen = $len;
+                    $bestIdx = $i;
+                }
+            }
+            $open  = $bestLen >= 0;
+            $inner = '';
+            foreach ($adminChildren as $i => $c) {
+                $inner .= '<li class="nav-item"><a href="' . site_url($c[1]) . '" class="nav-link' . ($i === $bestIdx ? ' active' : '') . '">'
+                    . '<i class="nav-icon ' . esc($c[2]) . '"></i><p>' . esc($c[0]) . '</p></a></li>';
+            }
+            $html .= '<li class="nav-item' . ($open ? ' menu-open' : '') . '">'
+                . '<a href="#" class="nav-link' . ($open ? ' active' : '') . '">'
+                . '<i class="nav-icon bi bi-gem"></i><p>Subscription<i class="nav-arrow bi bi-chevron-right"></i></p></a>'
+                . '<ul class="nav nav-treeview">' . $inner . '</ul></li>';
         }
 
         return $html;

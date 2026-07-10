@@ -14,14 +14,10 @@ $qs  = fn (array $extra = []) => http_build_query(array_merge(array_filter($in),
         <h3 class="tm-table-title"><i class="bi bi-journal-text"></i> Rokadh Parcha</h3>
         <div class="d-flex flex-wrap gap-2">
             <a href="<?= site_url('transactions/report/print') . '?' . $qs() ?>" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print</a>
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-download"></i> Export</button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="<?= site_url('transactions/report/export/csv') . '?' . $qs() ?>"><i class="bi bi-filetype-csv me-2"></i>CSV</a></li>
-                    <li><a class="dropdown-item" href="<?= site_url('transactions/report/export/xlsx') . '?' . $qs() ?>"><i class="bi bi-file-earmark-excel me-2"></i>Excel</a></li>
-                    <li><a class="dropdown-item" href="<?= site_url('transactions/report/export/pdf') . '?' . $qs() ?>"><i class="bi bi-file-earmark-pdf me-2"></i>PDF</a></li>
-                </ul>
-            </div>
+            <a href="<?= site_url('transactions/report/export/pdf') . '?' . $qs() ?>" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-file-earmark-pdf me-1"></i>Export PDF
+                <span class="badge rounded-pill text-bg-primary ms-1">New</span>
+            </a>
         </div>
     </div>
     <div class="card-body">

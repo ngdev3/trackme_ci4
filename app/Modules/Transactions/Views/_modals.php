@@ -49,7 +49,10 @@
     // Open the entry (view) modal — AJAX-load the fragment.
     document.addEventListener('click', function (e) {
         var v = e.target.closest('[data-tx-view]');
-        if (v) {
+        // A whole row may carry data-tx-view. Controls nested inside it (Edit, Delete)
+        // keep their own behaviour, so only a click on the row itself opens the view.
+        var control = e.target.closest('a, button, input, select, textarea, label');
+        if (v && (!control || control === v)) {
             e.preventDefault();
             var id = v.getAttribute('data-id');
             var content = entryEl.querySelector('.modal-content');

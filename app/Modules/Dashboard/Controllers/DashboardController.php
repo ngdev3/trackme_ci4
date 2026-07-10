@@ -218,6 +218,7 @@ class DashboardController extends BaseController
                 'mode'   => $r['payment_mode'] ?? 'cash',
                 'status' => $r['status'] ?? 'paid',
                 'date'   => $r['txn_date'],
+                'href'   => site_url('transactions/report') . '?period=day&date=' . $r['txn_date'],
                 'ago'    => $this->timeAgo($r['created_at'] ?? $r['txn_date']),
             ];
         }, $m->recentTxns($companyId, 8));

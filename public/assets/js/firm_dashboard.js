@@ -102,6 +102,17 @@ function erpDashLive() {
         }
     }, 1000);
 
+    // Live Activity rows open the Rokadh Parcha for that entry's date. Bound once
+    // on the persistent container so it keeps working after each poll re-render.
+    var feedEl = document.querySelector('[data-live-feed]');
+    if (feedEl) {
+        feedEl.addEventListener('click', function (e) {
+            var li = e.target.closest('.dl-feed-link');
+            var href = li && li.getAttribute('data-href');
+            if (href) { window.location.href = href; }
+        });
+    }
+
     if (!CFG || !CFG.url) { return; }
 
     function setVal(el, text) {
@@ -146,7 +157,9 @@ function erpDashLive() {
             } else {
                 feed.innerHTML = d.recent.map(function (t, i) {
                     var jama = t.type === 'jama';
-                    return '<li class="' + (i === 0 ? 'dl-new' : '') + '">'
+                    var href = t.href || '';
+                    return '<li class="dl-feed-link ' + (i === 0 ? 'dl-new' : '') + '"'
+                        + (href ? ' data-href="' + esc(href) + '"' : '') + '>'
                         + '<span class="dl-feed-ic ' + (jama ? 'jama' : 'naam') + '"><i class="bi ' + (jama ? 'bi-arrow-down' : 'bi-arrow-up') + '"></i></span>'
                         + '<span class="dl-feed-main"><span class="dl-feed-name">' + esc(t.name) + '</span>'
                         + '<span class="dl-feed-meta">' + esc(t.txn_no) + ' · ' + esc(cap(t.mode)) + ' · ' + esc(t.ago || '') + '</span></span>'

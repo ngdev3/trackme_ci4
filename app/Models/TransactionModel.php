@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use InvalidArgumentException;
 
 /**
  * Jama (money received) / Naam (money paid) transaction register.
@@ -21,14 +22,15 @@ class TransactionModel extends Model
     protected $useSoftDeletes = true;
     protected $useTimestamps  = true;
 
-    protected $allowedFields = ['user_id', 'company_id', 'txn_no', 'txn_date', 'name', 'type', 'amount', 'payment_mode', 'source', 'status', 'notes', 'delete_reason'];
+    protected $allowedFields = ['user_id', 'company_id', 'txn_no', 'txn_date', 'name', 'party_type', 'type', 'amount', 'payment_mode', 'source', 'status', 'notes', 'delete_reason'];
 
     protected $validationRules = [
-        'txn_date' => 'required|valid_date[Y-m-d]',
-        'name'     => 'required|min_length[1]|max_length[191]',
-        'type'     => 'in_list[jama,naam]',
-        'amount'   => 'required|numeric|greater_than[0]|less_than_equal_to[9999999999.99]',
-        'status'   => 'in_list[paid,pending,overdue,cancelled,draft]',
+        'txn_date'   => 'required|valid_date[Y-m-d]',
+        'name'       => 'required|min_length[1]|max_length[191]',
+        'type'       => 'in_list[jama,naam]',
+        'amount'     => 'required|numeric|greater_than[0]|less_than_equal_to[9999999999.99]',
+        'status'     => 'in_list[paid,pending,overdue,cancelled,draft]',
+        'party_type' => 'permit_empty|max_length[32]',
     ];
 
     protected $validationMessages = [
@@ -44,6 +46,9 @@ class TransactionModel extends Model
     public const TYPES    = ['jama', 'naam'];
     public const STATUSES = ['paid', 'pending', 'overdue', 'cancelled', 'draft'];
     public const MODES    = ['cash', 'bank', 'upi', 'cheque', 'card', 'other'];
+
+    /** Starting suggestions for "who is this?" — the field is free text, so a company can add its own. */
+    public const PARTY_TYPES = ['Farmer', 'Firm', 'Trader', 'Transporter', 'Labour', 'Other'];
 
     /** Human labels. */
     public const TYPE_LABELS = ['jama' => 'Jama (Received)', 'naam' => 'Naam (Paid)'];
@@ -263,12 +268,13 @@ class TransactionModel extends Model
         return $b->orderBy('id', 'DESC')->findAll();
     }
 
-    /** [jama, naam] totals within an inclusive date range. */
-    public function rangeTotals(?int $userId, string $from, string $to): array
+    /** [jama, naam] totals within an inclusive date range, optionally narrowed by party type / tag. */
+    public function rangeTotals(?int $userId, string $from, string $to, array $f = []): array
     {
-        $row = $this->scopedBuilder($userId)
-            ->where('txn_date >=', $from)->where('txn_date <=', $to)
-            ->select("COALESCE(SUM(CASE WHEN type='jama' THEN amount ELSE 0 END),0) AS j, COALESCE(SUM(CASE WHEN type='naam' THEN amount ELSE 0 END),0) AS n")
+        $b = $this->scopedBuilder($userId)->where('txn_date >=', $from)->where('txn_date <=', $to);
+        self::applyClassFilters($b, '', $f);
+
+        $row = $b->select("COALESCE(SUM(CASE WHEN type='jama' THEN amount ELSE 0 END),0) AS j, COALESCE(SUM(CASE WHEN type='naam' THEN amount ELSE 0 END),0) AS n")
             ->get()->getRowArray();
         return [(float) ($row['j'] ?? 0), (float) ($row['n'] ?? 0)];
     }
@@ -305,6 +311,114 @@ class TransactionModel extends Model
         return $out;
     }
 
+    /** Columns the breakdown report may group by. Anything else is a programming error. */
+    public const GROUPABLE = ['party_type', 'payment_mode'];
+
+    /** Filter sentinel meaning "the value is not set" — e.g. an entry with no party type. */
+    public const UNSET_VALUE = '__none';
+
+    /**
+     * Narrow a builder to the report's party-type filter.
+     * $alias is the transactions table's alias ('' when the table is unaliased).
+     *
+     * @param array{ptype?:string} $f
+     */
+    public static function applyClassFilters($b, string $alias, array $f)
+    {
+        $col = $alias === '' ? '' : $alias . '.';
+
+        $ptype = trim((string) ($f['ptype'] ?? ''));
+        if ($ptype === self::UNSET_VALUE) {
+            $b->groupStart()->where($col . 'party_type', null)->orWhere($col . 'party_type', '')->groupEnd();
+        } elseif ($ptype !== '') {
+            $b->where($col . 'party_type', $ptype);
+        }
+
+        return $b;
+    }
+
+    /**
+     * Jama / Naam totals grouped by party_type or payment_mode over a date range.
+     * A NULL or empty value collapses to the '' label, shown as "Unspecified".
+     *
+     * @return array<int, array{label:string, count:int, jama:float, naam:float, net:float}>
+     */
+    public function groupTotals(?int $companyId, string $column, string $from, string $to, array $f = []): array
+    {
+        if (! in_array($column, self::GROUPABLE, true)) {
+            throw new InvalidArgumentException("Cannot group transactions by '{$column}'.");
+        }
+
+        $b = $this->scopedBuilder($companyId)->where('txn_date >=', $from)->where('txn_date <=', $to);
+        self::applyClassFilters($b, '', $f);
+
+        $rows = $b
+            ->select("COALESCE({$column}, '') AS label, COUNT(*) AS cnt,"
+                . "COALESCE(SUM(CASE WHEN type='jama' THEN amount ELSE 0 END),0) AS jama,"
+                . "COALESCE(SUM(CASE WHEN type='naam' THEN amount ELSE 0 END),0) AS naam", false)
+            ->groupBy('label')
+            ->get()->getResultArray();
+
+        return self::shapeGroups($rows);
+    }
+
+    /** Turn raw label/cnt/jama/naam rows into the report's shape, busiest group first. */
+    public static function shapeGroups(array $rows): array
+    {
+        $out = array_map(static fn ($r) => [
+            'label' => (string) $r['label'],
+            'count' => (int) $r['cnt'],
+            'jama'  => (float) $r['jama'],
+            'naam'  => (float) $r['naam'],
+            'net'   => (float) $r['jama'] - (float) $r['naam'],
+        ], $rows);
+
+        usort($out, static fn ($a, $b) => ($b['jama'] + $b['naam']) <=> ($a['jama'] + $a['naam']));
+
+        return $out;
+    }
+
+    /** Entries behind one group cell. An empty $value means "the column is unset". */
+    public function rowsByColumn(?int $companyId, string $column, string $value, string $from, string $to, array $f = []): array
+    {
+        if (! in_array($column, self::GROUPABLE, true)) {
+            throw new InvalidArgumentException("Cannot filter transactions by '{$column}'.");
+        }
+
+        $b = $this->scoped($companyId)->where('txn_date >=', $from)->where('txn_date <=', $to);
+        if ($value === '') {
+            $b->groupStart()->where($column, null)->orWhere($column, '')->groupEnd();
+        } else {
+            $b->where($column, $value);
+        }
+        self::applyClassFilters($b, '', $f);
+
+        return $b->orderBy('txn_date', 'ASC')->orderBy('id', 'ASC')->findAll();
+    }
+
+    /**
+     * Party-type suggestions: the built-in list plus every type this book already
+     * uses, so a company's own wording (e.g. "Aadhati") comes back as a one-click chip.
+     */
+    public function partyTypes(?int $companyId): array
+    {
+        $rows = $this->scopedBuilder($companyId)
+            ->select('party_type')->distinct()
+            ->where('party_type IS NOT NULL')->where('party_type !=', '')
+            ->orderBy('party_type', 'ASC')
+            ->get()->getResultArray();
+
+        $out = [];
+        foreach (array_merge(self::PARTY_TYPES, array_column($rows, 'party_type')) as $t) {
+            $t = trim((string) $t);
+            if ($t !== '') {
+                $out[mb_strtolower($t)] = $t;
+            }
+        }
+
+        return array_values($out);
+    }
+
     // -----------------------------------------------------------------
     // Account (party) statement
     // -----------------------------------------------------------------
@@ -334,6 +448,41 @@ class TransactionModel extends Model
             'count'     => (int) $r['cnt'],
             'jama'      => (float) $r['jama'],
             'naam'      => (float) $r['naam'],
+            'net'       => (float) $r['jama'] - (float) $r['naam'],
+            'last_date' => $r['last_date'] ?: null,
+        ], $rows);
+    }
+
+    /**
+     * Type-ahead account search — a small, name-filtered slice of partyDirectory
+     * for the add/entry forms. Scales to any number of accounts because the page
+     * never embeds the whole list; it queries this as the user types.
+     *
+     * @return array<int, array{name:string, count:int, net:float, last_date:?string}>
+     */
+    public function searchParties(?int $companyId, string $q, int $limit = 20): array
+    {
+        $q     = trim($q);
+        $limit = max(1, min($limit, 50));
+
+        $b = $this->scopedBuilder($companyId)
+            ->select("name, COUNT(*) AS cnt,"
+                . "COALESCE(SUM(CASE WHEN type='jama' THEN amount ELSE 0 END),0) AS jama,"
+                . "COALESCE(SUM(CASE WHEN type='naam' THEN amount ELSE 0 END),0) AS naam,"
+                . 'MAX(txn_date) AS last_date')
+            ->where('name IS NOT NULL')->where('name !=', '');
+        if ($q !== '') {
+            $b->like('name', $q);
+        }
+
+        $rows = $b->groupBy('name')
+            ->orderBy('cnt', 'DESC')->orderBy('name', 'ASC')
+            ->limit($limit)
+            ->get()->getResultArray();
+
+        return array_map(static fn ($r) => [
+            'name'      => (string) $r['name'],
+            'count'     => (int) $r['cnt'],
             'net'       => (float) $r['jama'] - (float) $r['naam'],
             'last_date' => $r['last_date'] ?: null,
         ], $rows);

@@ -21,6 +21,7 @@ use App\Filters\FirmPermFilter;
 use App\Filters\RequireCompany;
 use App\Filters\SuperAdminFilter;
 use App\Filters\UserActionLogFilter;
+use App\Filters\ProFeature;
 
 class Filters extends BaseFilters
 {
@@ -52,6 +53,10 @@ class Filters extends BaseFilters
         'superadmin'    => SuperAdminFilter::class,
         'firmperm'      => FirmPermFilter::class,
         'useractionlog' => UserActionLogFilter::class,
+        'pro'           => ProFeature::class,
+        'feature'       => \App\Filters\FeatureGate::class,
+        'apifeature'    => \App\Filters\ApiFeature::class,
+        'sublifecycle'  => \App\Filters\SubscriptionLifecycle::class,
     ];
 
     /**
@@ -91,10 +96,11 @@ class Filters extends BaseFilters
     public array $globals = [
         'before' => [
             'autosetup', // keep DB schema in sync on CLI-less deploys (runs pending migrations)
-            'csrf' => ['except' => ['api/*']],
+            'csrf' => ['except' => ['api/*', 'subscription/webhook']],
             'invalidchars',
             'mustchange',     // force a pending password change before anything else
             'requirecompany', // social sign-ups must create a company before proceeding
+            'sublifecycle' => ['except' => ['api/*', 'subscription/webhook', 'login', 'logout', 'auth/*']],
         ],
         'after' => [
             'secureheaders',
@@ -126,5 +132,29 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        // Package feature gate. Blocks direct-URL access to modules the active
+        // package does not include (the FeatureGate filter maps each path to a
+        // feature and checks hasFeature()). This is the single backend seam —
+        // controllers/menus/views all read the same hasFeature() rule.
+        'feature' => ['before' => [
+            'calculator', 'calculator/*',   // → calculator        (Standard+)
+            'passwords', 'passwords/*',      // → password_manager  (Standard+)
+            'reminders', 'reminders/*',      // → reminder/calendar (Plus+)
+            'notes', 'notes/*',              // → notes             (Premium)
+            'inventory', 'inventory/*',      // → inventory         (Premium)
+            'company/trash',                 // → trash             (Plus+)
+        ]],
+
+        // API package gate (bearer-token aware). Inventory is Premium-only.
+        'apifeature' => ['before' => [
+            'api/v1/inventory', 'api/v1/inventory/*',
+        ]],
+
+        // NOTE: the former 'pro' URI gate is intentionally removed. Under the
+        // package model, Rokadh Parcha PDF/print, reports, attachments,
+        // statement download and opening balance belong to EVERY package (incl.
+        // Basic and the expired/Basic floor), so they are no longer gated. The
+        // 'pro' alias remains defined for backward compatibility only.
+    ];
 }

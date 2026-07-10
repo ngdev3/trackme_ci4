@@ -34,6 +34,21 @@ class CompanyController extends BaseController
         return null;
     }
 
+    /**
+     * Enforce the active package's firm cap (Basic = 2; others unlimited). Reads
+     * the limit from the plan in the DB, never a hardcoded number.
+     */
+    private function guardFirmLimit()
+    {
+        helper('subscription');
+        if (! firm_limit_reached()) {
+            return null;
+        }
+        $limit = plan_firm_limit();
+        $msg   = "You have reached the maximum limit of {$limit} firms. Upgrade to Standard or above to create unlimited firms.";
+        return redirect()->to(site_url('subscription'))->with('error', $msg)->with('locked_feature', 'firms');
+    }
+
     public function create()
     {
         if ($r = $this->guardCustomer()) {
@@ -92,6 +107,9 @@ class CompanyController extends BaseController
         if ($r = $this->guardCustomer()) {
             return $r;
         }
+        if ($r = $this->guardFirmLimit()) {
+            return $r;
+        }
         $uid  = (int) user_id();
         $base = $this->accountName();
 
@@ -127,6 +145,9 @@ class CompanyController extends BaseController
     public function store()
     {
         if ($r = $this->guardCustomer()) {
+            return $r;
+        }
+        if ($r = $this->guardFirmLimit()) {
             return $r;
         }
         $uid = (int) user_id();

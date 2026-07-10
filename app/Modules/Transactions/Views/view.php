@@ -51,6 +51,9 @@ $human = function ($b) { $b = (int) $b; if ($b < 1024) return $b . ' B'; if ($b 
                 <h3 class="tm-table-title"><i class="bi bi-paperclip"></i> Attachments <span class="badge text-bg-secondary ms-1"><?= count($attachments) ?></span></h3>
             </div>
             <div class="card-body">
+                <?php if (! sub_is_pro()): ?>
+                    <p class="text-secondary small mb-0"><i class="bi bi-lock"></i> Viewing images &amp; attachments is available on the paid plan. <a href="<?= site_url('subscription') ?>">Upgrade</a>.</p>
+                <?php else: ?>
                 <?php if (can($moduleCode, 'edit')): ?>
                     <form action="<?= site_url('transactions/attach/' . hid($row['id'])) ?>" method="post" enctype="multipart/form-data" class="mb-3">
                         <?= csrf_field() ?>
@@ -116,6 +119,7 @@ $human = function ($b) { $b = (int) $b; if ($b < 1024) return $b . ' B'; if ($b 
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
+                <?php endif; /* sub_is_pro */ ?>
             </div>
         </div>
     </div>

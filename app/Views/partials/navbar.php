@@ -51,6 +51,7 @@ $notificationIconMap = [
             if (function_exists('can') && can('transactions', 'view')) {
                 $nsAdd('Hisaab Kitaab Vahi', 'transactions', 'bi-journal-text', 'jama naam transactions ledger');
                 $nsAdd('Account Statement', 'transactions/statement', 'bi-file-earmark-text', 'party ledger');
+                $nsAdd('Report', 'transactions/report/breakdown', 'bi-pie-chart', 'breakdown tag commodity party type payment mode totals');
             }
             if (function_exists('firm_can') && firm_can('rokad')) {
                 $nsAdd('Rokad Parcha', 'rokad', 'bi-cash-stack', 'cash book rokad');
@@ -97,6 +98,27 @@ $notificationIconMap = [
             $switchReturnQs = (string) service('request')->getServer('QUERY_STRING');
             $switchReturn   = urlencode(uri_string() . ($switchReturnQs !== '' ? '?' . $switchReturnQs : ''));
             ?>
+
+            <?php
+            // Subscription chip — shows the customer's current plan, links to /subscription.
+            if (function_exists('sub_state') && ! is_super_admin_account()):
+                $ss = sub_state();
+                $sr = $ss['reason'] ?? '';
+                $planChip = null;
+                if ($sr === 'paid')  { $planChip = ['success', 'bi-patch-check-fill', ($ss['plan'] ?: 'Paid') . ' plan']; }
+                elseif ($sr === 'trial') { $planChip = ['info', 'bi-stars', 'Free trial']; }
+                elseif (in_array($sr, ['free', 'none', 'trial_expired', 'expired'], true)) { $planChip = ['warning', 'bi-lock-fill', 'Free plan']; }
+            ?>
+                <?php if ($planChip): ?>
+                    <li class="nav-item d-none d-sm-flex align-items-center">
+                        <a class="badge rounded-pill text-bg-<?= $planChip[0] ?> text-decoration-none d-inline-flex align-items-center gap-1 px-2 py-1"
+                           href="<?= site_url('subscription') ?>" title="Your subscription — click to manage">
+                            <i class="bi <?= $planChip[1] ?>"></i><span><?= esc($planChip[2]) ?></span>
+                        </a>
+                    </li>
+                <?php endif; ?>
+            <?php endif; ?>
+
             <li class="nav-item topbar-company d-none d-md-flex align-items-center">
                 <a class="company-chip text-decoration-none" href="<?= site_url('company/profile') ?>" title="Active company — click to view / switch">
                     <i class="bi bi-building-fill company-chip-ic"></i>
@@ -264,6 +286,9 @@ $notificationIconMap = [
                     <a href="<?= site_url('profile') ?>" class="dropdown-item"><i class="bi bi-person me-2"></i>My Profile</a>
                     <a href="<?= site_url('profile') ?>#change-password" class="dropdown-item"><i class="bi bi-key me-2"></i>Change Password</a>
                     <a href="<?= site_url('my-login-history') ?>" class="dropdown-item"><i class="bi bi-clock-history me-2"></i>Login History</a>
+                    <?php if (session('account_type') !== 'super_admin'): ?>
+                        <a href="<?= site_url('subscription/transactions') ?>" class="dropdown-item"><i class="bi bi-receipt me-2"></i>Payment History</a>
+                    <?php endif; ?>
                     <a href="<?= site_url('help') ?>" class="dropdown-item"><i class="bi bi-life-preserver me-2"></i>Help &amp; Support</a>
                     <a href="<?= site_url('settings') ?>#tab-appearance" class="dropdown-item"><i class="bi bi-palette me-2"></i>Appearance Settings</a>
                     <div class="dropdown-divider"></div>

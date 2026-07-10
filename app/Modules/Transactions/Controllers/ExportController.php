@@ -3,6 +3,7 @@
 namespace Modules\Transactions\Controllers;
 
 use App\Controllers\BaseController;
+use App\Libraries\OpeningBalance;
 use App\Models\TransactionModel;
 use Config\Services;
 use Dompdf\Dompdf;
@@ -78,14 +79,37 @@ class ExportController extends BaseController
 
         $name = 'transactions_' . date('Ymd_His');
 
+        // Opening (carried-forward) cash balance — the "old pending balance" before
+        // this statement's window. Only meaningful when the PDF is the full cash
+        // book for the period: no type/mode/status/search filter, a real company
+        // scope, first page, and not row-capped. Otherwise the running balance
+        // would sit next to a filtered subset and mislead, so we skip it.
+        $opening    = 0.0;
+        $hasOpening = false;
+        $cid        = company_id();
+        $otherFilter = ($filters['q'] ?? '') !== '' || ($filters['type'] ?? '') !== ''
+            || ($filters['mode'] ?? '') !== '' || ($filters['status'] ?? '') !== '';
+        if ($format === 'pdf' && ! $otherFilter && $cid !== null
+            && $this->pdfRowOffset() === 0 && ! empty($rows)
+            && (int) ($summary['count'] ?? 0) <= count($rows)) {
+            $startDate = ($filters['from'] ?? '') !== ''
+                ? $filters['from']
+                : min(array_column($rows, 'txn_date'));
+            $opening    = (new OpeningBalance($scope, (int) $cid))->carryInto($startDate);
+            $hasOpening = true;
+        }
+
         return match ($format) {
             'xlsx' => $this->xlsx($name, 'Transactions', $headers, $matrix),
             'pdf'  => $this->pdf($name, view('Modules\Transactions\Views\export_ledger_pdf', [
-                'rows'    => $rows,
-                'summary' => $summary,
-                'limit'   => $this->pdfRowLimit(),
-                'offset'  => $this->pdfRowOffset(),
-                'firm'    => function_exists('current_company') ? current_company() : null,
+                'rows'       => $rows,
+                'summary'    => $summary,
+                'filters'    => $filters,
+                'opening'    => $opening,
+                'hasOpening' => $hasOpening,
+                'limit'      => $this->pdfRowLimit(),
+                'offset'     => $this->pdfRowOffset(),
+                'firm'       => function_exists('current_company') ? current_company() : null,
             ])),
             default => $this->csv($name, $headers, $matrix),
         };
@@ -157,6 +181,49 @@ class ExportController extends BaseController
         return match ($format) {
             'xlsx' => $this->xlsx($name, 'Rokadh Parcha', $headers, $matrix),
             'pdf'  => $this->pdf($name, view('Modules\Transactions\Views\report_print', $data + [
+                'firm'    => function_exists('current_company') ? current_company() : null,
+                'noPrint' => true,
+            ])),
+            default => $this->csv($name, $headers, $matrix),
+        };
+    }
+
+    // =================================================================
+    // Breakdown report export
+    // =================================================================
+    public function breakdown(string $format = 'csv')
+    {
+        $rc   = new ReportController();
+        $data = $rc->buildBreakdown($this->request->getGet());
+
+        $headers = ['Group', 'Value', 'Entries', 'Jama', 'Naam', 'Net'];
+        $matrix  = [];
+        $money   = static fn ($n) => number_format((float) $n, 2, '.', '');
+
+        foreach (ReportController::GROUPS as $key => $meta) {
+            foreach ($data['groups'][$key] as $g) {
+                $matrix[] = [
+                    $meta['title'],
+                    $g['label'] !== '' ? $g['label'] : $meta['empty'],
+                    $g['count'],
+                    $money($g['jama']),
+                    $money($g['naam']),
+                    $money($g['net']),
+                ];
+            }
+        }
+        // Say plainly whether these totals cover the whole book or a filtered slice.
+        $ptype = $data['filters']['ptype'];
+        $label = $ptype === ''
+            ? 'All entries'
+            : 'Filtered: party type ' . ($ptype === TransactionModel::UNSET_VALUE ? 'Unspecified' : $ptype);
+        $matrix[] = ['Total', $label, '', $money($data['summary']['jama']), $money($data['summary']['naam']), $money($data['summary']['net'])];
+
+        $name = 'report_' . $data['from'] . '_to_' . $data['to'];
+
+        return match ($format) {
+            'xlsx' => $this->xlsx($name, 'Breakdown', $headers, $matrix),
+            'pdf'  => $this->pdf($name, view('Modules\Transactions\Views\report_breakdown_print', $data + [
                 'firm'    => function_exists('current_company') ? current_company() : null,
                 'noPrint' => true,
             ])),

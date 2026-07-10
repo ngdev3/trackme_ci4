@@ -22,7 +22,11 @@
                         <td class="fw-semibold"><?= esc($r['name']) ?></td>
                         <td><?= esc($r['email']) ?></td>
                         <td><span class="badge text-bg-light border"><?= (int) $r['firm_count'] ?></span></td>
-                        <td><small><?= esc($sub['plan_name'] ?? '—') ?> <span class="text-muted"><?= esc($sub['status'] ?? '') ?></span></small></td>
+                        <td>
+                            <a href="<?= site_url('admin/customers/subscription/' . $r['id']) ?>" class="text-decoration-none" title="Manage subscription">
+                                <small><?= esc($sub['plan_name'] ?? '—') ?> <span class="text-muted"><?= esc($sub['status'] ?? '') ?></span></small>
+                            </a>
+                        </td>
                         <td>
                             <form action="<?= site_url('admin/customers/payment/' . $r['id']) ?>" method="post" class="d-flex gap-1">
                                 <?= csrf_field() ?>
@@ -39,6 +43,7 @@
                             </a>
                         </td>
                         <td class="text-end text-nowrap">
+                            <a href="<?= site_url('admin/customers/subscription/' . $r['id']) ?>" class="btn btn-sm btn-outline-info" title="Manage subscription"><i class="bi bi-gem"></i></a>
                             <a href="<?= site_url('admin/impersonate/' . $r['id']) ?>" class="btn btn-sm btn-outline-primary" title="Access this account"
                                onclick="return confirm('Sign in as <?= esc($r['name'], 'attr') ?>? You can return to Super Admin anytime.');">
                                 <i class="bi bi-box-arrow-in-right"></i>
