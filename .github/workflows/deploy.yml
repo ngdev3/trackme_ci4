@@ -1,0 +1,59 @@
+name: Deploy to Hostinger
+
+# Runs on every push to main, and can be triggered by hand from the
+# Actions tab (Run workflow). Builds vendor/ on the SERVER's PHP version
+# (8.2) in the cloud runner — plenty of memory, correct platform — then
+# uploads the finished app to Hostinger over FTP. The server never runs
+# composer, so the OOM + PHP-version problems can't happen.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-hostinger
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Match the server exactly (Hostinger = PHP 8.2). This guarantees
+      # vendor/composer/platform_check.php targets 8.2, not 8.3.
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, mysqli, gd, zip, curl
+          tools: composer:v2
+
+      - name: Install PHP dependencies (production)
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - name: Deploy to Hostinger over FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Folder on the server that maps to the site root (contains the
+          # root .htaccess + public/). For a domain-scoped FTP account this
+          # is usually "./"; for the main account it is "public_html/".
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          protocol: ftps
+          # Never touch server-only files: runtime secrets, uploads, logs,
+          # sessions, cache, local DB dumps, repo/CI metadata.
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github/**
+            **/node_modules/**
+            .env
+            env
+            deploy/**
+            writable/**
+            tests/**
