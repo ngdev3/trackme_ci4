@@ -1,4 +1,4 @@
-# Production Deployment - challan.org (Hostinger)
+# Production Deployment - hissabkitaab.com (Hostinger)
 
 Code is deployed via GitHub to the server auto-pull. Two things are not stored
 in the repo and must be set up on the server once: the `.env` file and the
@@ -7,6 +7,20 @@ database contents.
 Secrets (`.env`) and DB dumps belong in the local, git-ignored `deploy/`
 folder. Never commit them.
 
+## 0. If the whole site shows "Whoops! We seem to have hit a snag"
+
+That is CodeIgniter's production error page. The #1 cause on a fresh deploy is a
+**missing or wrong `.env` database block**: `app/Config/Database.php` ships with
+blank credentials, so with no `.env` every page (login included) throws
+`Unable to connect to the database` → HTTP 500 site-wide.
+
+Fix = create `.env` in `public_html` with the correct Hostinger MySQL creds
+(section 1). You do **not** need to run migrations by hand: the `autosetup`
+before-filter auto-runs pending migrations and seeds the baseline super-admin on
+the first request once the DB connects. To see the real error while debugging,
+temporarily set `CI_ENVIRONMENT = development`, reload, then set it back to
+`production`. The exact exception is also in `writable/logs/log-YYYY-MM-DD.php`.
+
 ## 1. Environment File
 
 Create `.env` on the server in `public_html`.
@@ -14,7 +28,7 @@ Create `.env` on the server in `public_html`.
 Key production values:
 
 - `CI_ENVIRONMENT = production`
-- `app.baseURL = 'https://challan.org/'`
+- `app.baseURL = 'https://hissabkitaab.com/'`
 - `app.forceGlobalSecureRequests = true`
 - `database.default.hostname = localhost`
 - `database.default.database = u930296518_erp_admin`
@@ -75,7 +89,7 @@ chmod -R 775 writable
 
 ## 4. First Login
 
-1. Visit `https://challan.org/`.
+1. Visit `https://hissabkitaab.com/`.
 2. Sign in with the seeded super-admin account.
 3. Change the super-admin password from My Profile if it was shared during setup.
 4. Confirm there are no demo/test users in the Users module.
