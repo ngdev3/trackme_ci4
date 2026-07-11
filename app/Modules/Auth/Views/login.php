@@ -51,11 +51,10 @@
 
                 <?= view('partials/social_login') ?>
 
-                <div class="demo-note">
-                    <strong>Demo accounts</strong> (password: <code>Admin@123</code>)<br>
-                    superadmin &middot; admin &middot; manager &middot; staff &middot; viewer
+                <div class="login-copyright">
+                    &copy; <?= date('Y') ?> <?= esc(setting('app_name', 'ERP Admin')) ?>. All rights reserved.
+                    <span class="auth-policy-sep">|</span>
+                    <a href="<?= site_url('privacy') ?>" target="_blank" rel="noopener">Privacy Policy</a>
                 </div>
-
-                <div class="login-copyright">&copy; <?= date('Y') ?> <?= esc(setting('app_name', 'ERP Admin')) ?>. All rights reserved.</div>
 
 <?= view('partials/auth_bottom') ?>

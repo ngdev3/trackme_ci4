@@ -63,6 +63,10 @@ Vagrantfile
 /writable/debugbar/*
 !/writable/debugbar/index.html
 
+# Google Play service-account key + any other secret keys — never commit.
+/writable/keys/*
+!/writable/keys/index.html
+
 php_errors.log
 
 #-------------------------

@@ -13,7 +13,7 @@ class PaymentOrderModel extends Model
 
     protected $allowedFields = [
         'order_id', 'cf_order_id', 'customer_id', 'plan_id', 'amount', 'currency',
-        'status', 'payment_session_id', 'cf_payment_id', 'activated', 'refunded',
+        'gateway', 'status', 'payment_session_id', 'cf_payment_id', 'activated', 'refunded',
         'invoice_no', 'invoice_date',
     ];
 

@@ -2,6 +2,8 @@
 
 namespace Modules\Api\Controllers;
 
+use App\Libraries\OAuth\OAuthException;
+use App\Libraries\OAuth\OAuthManager;
 use App\Models\ApiTokenModel;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
@@ -10,6 +12,7 @@ use App\Models\UserModel;
  * Stateless auth API for the mobile app.
  *
  *   POST /api/v1/auth/login            {login, password}
+ *   POST /api/v1/auth/google           {id_token}
  *   POST /api/v1/auth/forgot-password  {email}
  *   POST /api/v1/auth/change-password  (Bearer) {current_password, new_password}
  *   POST /api/v1/auth/logout           (Bearer)
@@ -50,6 +53,56 @@ class AuthApiController extends BaseApiController
             'token_type'            => 'Bearer',
             'must_change_password'  => (int) ($user['must_change_password'] ?? 0) === 1,
             'user'                  => $this->publicUser($user),
+        ]);
+    }
+
+    /**
+     * Sign in with a Google ID token obtained by the app (native sign-in / GIS).
+     *
+     * The token is verified against Google (signature + audience + expiry) before
+     * we trust any of its claims, then mapped to a local account (matched by
+     * linked provider id or email, created on first sign-in). Enforces the same
+     * active + mobile-login gating as password login and issues a bearer token.
+     */
+    public function google()
+    {
+        $idToken = trim((string) $this->input('id_token', ''));
+        if ($idToken === '') {
+            return $this->failValidationErrors('id_token is required.');
+        }
+
+        try {
+            $profile = (new OAuthManager())->provider('google')->verifyIdToken($idToken);
+        } catch (OAuthException $e) {
+            return $this->failUnauthorized($e->getMessage());
+        } catch (\Throwable $e) {
+            log_message('error', '[Api] Google sign-in fatal: ' . $e->getMessage());
+            return $this->failServerError('Sign-in failed. Please try again.');
+        }
+
+        $result = auth()->findOrCreateOAuthUser($profile);
+        if (isset($result['error'])) {
+            return $this->failForbidden($result['error']);
+        }
+        $user = $result['user'];
+
+        if ((int) $user['status'] !== 1) {
+            return $this->failForbidden('Your account is inactive.');
+        }
+        if ((int) ($user['mobile_login_enabled'] ?? 1) !== 1) {
+            return $this->failForbidden('Mobile app access is disabled for this account.');
+        }
+
+        $token = (new ApiTokenModel())->issue((int) $user['id'], 'mobile');
+        (new UserModel())->update((int) $user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
+
+        return $this->respond([
+            'status'               => 'success',
+            'token'                => $token,
+            'token_type'           => 'Bearer',
+            'must_change_password' => false,
+            'is_new_user'          => (bool) ($result['is_new'] ?? false),
+            'user'                 => $this->publicUser($user),
         ]);
     }
 

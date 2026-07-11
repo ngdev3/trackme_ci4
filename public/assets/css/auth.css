@@ -276,7 +276,10 @@ body.auth-body {
 .demo-note strong { color: var(--auth-ink); }
 .demo-note code { color: var(--auth-brand); background: color-mix(in srgb, var(--auth-brand) 10%, transparent); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
 
-.login-copyright { margin-top: 24px; text-align: center; color: #9aa3c4; font-size: 12px; }
+.login-copyright { margin-top: 24px; text-align: center; color: #9aa3c4; font-size: 12px; line-height: 1.6; }
+.login-copyright a { color: var(--auth-brand); font-weight: 700; text-decoration: none; }
+.login-copyright a:hover, .login-copyright a:focus { color: color-mix(in srgb, var(--auth-brand) 75%, #000); text-decoration: none; }
+.auth-policy-sep { display: inline-block; margin: 0 6px; color: #c1c7d8; }
 .back-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 20px; color: var(--auth-muted); font-weight: 600; font-size: 13px; text-decoration: none; }
 .back-link:hover { color: var(--auth-brand); }
 

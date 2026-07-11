@@ -15,11 +15,26 @@ abstract class AbstractProvider implements ProviderInterface
     protected string $clientSecret;
     protected string $redirectUri;
 
+    /**
+     * Every OAuth client id whose ID tokens this app will accept. The web
+     * clientId plus any native (Android/iOS) client ids, since a mobile-minted
+     * token's `aud` is the platform client id, not the web one.
+     *
+     * @var list<string>
+     */
+    protected array $allowedAudiences = [];
+
     public function __construct(array $config)
     {
         $this->clientId     = (string) ($config['clientId'] ?? '');
         $this->clientSecret = (string) ($config['clientSecret'] ?? '');
         $this->redirectUri  = (string) ($config['redirectUri'] ?? '');
+
+        $this->allowedAudiences = array_values(array_unique(array_filter(array_merge(
+            [$this->clientId],
+            array_map('strval', (array) ($config['allowedAudiences'] ?? [])),
+            [(string) ($config['androidClientId'] ?? ''), (string) ($config['iosClientId'] ?? '')],
+        ))));
     }
 
     /**
@@ -72,6 +87,38 @@ abstract class AbstractProvider implements ProviderInterface
         }
 
         return $payload;
+    }
+
+    /**
+     * GET a URL and decode the JSON reply. Used for provider endpoints that
+     * verify a token server-side (e.g. Google's tokeninfo).
+     *
+     * @throws OAuthException on transport failure or a non-2xx response.
+     */
+    protected function getJson(string $url, array $query = []): array
+    {
+        if ($query !== []) {
+            $url .= (str_contains($url, '?') ? '&' : '?') . $this->buildQuery($query);
+        }
+
+        try {
+            $client   = Services::curlrequest(['timeout' => 15, 'http_errors' => false]);
+            $response = $client->get($url, ['headers' => ['Accept' => 'application/json']]);
+        } catch (\Throwable $e) {
+            log_message('error', '[OAuth] HTTP error calling {url}: {msg}', ['url' => $url, 'msg' => $e->getMessage()]);
+            throw new OAuthException('Could not reach the sign-in provider. Please check your connection and try again.');
+        }
+
+        $status = $response->getStatusCode();
+        $body   = json_decode((string) $response->getBody(), true) ?: [];
+
+        if ($status < 200 || $status >= 300) {
+            $detail = $body['error_description'] ?? ($body['error'] ?? ('HTTP ' . $status));
+            log_message('error', '[OAuth] endpoint {url} failed: {detail}', ['url' => $url, 'detail' => $detail]);
+            throw new OAuthException('Sign-in failed while verifying your identity. Please try again.');
+        }
+
+        return $body;
     }
 
     protected function base64UrlDecode(string $data): string

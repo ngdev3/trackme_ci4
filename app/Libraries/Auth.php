@@ -182,6 +182,55 @@ class Auth
     }
 
     /**
+     * Find or create the local account behind a verified OAuth profile WITHOUT
+     * touching the web session. This is the stateless counterpart of
+     * loginWithOAuth(), used by the mobile API which issues its own bearer token.
+     *
+     * Matches by linked provider id first, then email; links the identity on the
+     * first social login and creates a fresh passwordless account for an unknown
+     * email (same self-service rules as the web flow).
+     *
+     * @return array{user?: array, is_new?: bool, error?: string}
+     */
+    public function findOrCreateOAuthUser(OAuthUserProfile $profile): array
+    {
+        if ($profile->email === '') {
+            return ['error' => 'Your ' . ucfirst($profile->provider) . ' account did not share an email address.'];
+        }
+        if (! $profile->emailVerified) {
+            return ['error' => 'Your ' . ucfirst($profile->provider) . ' email address is not verified.'];
+        }
+
+        $user = $this->users->findByProvider($profile->provider, $profile->providerId)
+            ?? $this->users->where('email', $profile->email)->first();
+
+        if ($user) {
+            // Link the social identity / refresh avatar on first social login.
+            $patch = [];
+            if (empty($user['provider_id'])) {
+                $patch['auth_provider'] = $profile->provider;
+                $patch['provider_id']   = $profile->providerId;
+            }
+            if ($profile->picture && empty($user['avatar_url'])) {
+                $patch['avatar_url'] = $profile->picture;
+            }
+            if ($patch !== []) {
+                $this->users->update($user['id'], $patch);
+                $user = array_merge($user, $patch);
+            }
+
+            return ['user' => $user, 'is_new' => false];
+        }
+
+        $newId = $this->createOAuthUser($profile);
+        if (! $newId) {
+            return ['error' => 'We could not create your account. Please try again or contact the administrator.'];
+        }
+
+        return ['user' => $this->users->find($newId), 'is_new' => true];
+    }
+
+    /**
      * Create a new passwordless account from a verified social profile. A new
      * self-service sign-up is the admin of their own workspace: they get the
      * Admin role (full access to the app modules) and become owner of the firm

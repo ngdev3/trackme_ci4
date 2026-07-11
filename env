@@ -56,6 +56,17 @@
 # encryption.key =
 
 #--------------------------------------------------------------------
+# PRODUCTION SEEDING
+#--------------------------------------------------------------------
+
+# Required when running DatabaseSeeder with CI_ENVIRONMENT=production.
+# seed.superAdmin.name = 'Super Administrator'
+# seed.superAdmin.email = 'owner@example.com'
+# seed.superAdmin.username = 'superadmin'
+# seed.superAdmin.mobile = '9000000001'
+# seed.superAdmin.password = '<strong unique password>'
+
+#--------------------------------------------------------------------
 # SESSION
 #--------------------------------------------------------------------
 

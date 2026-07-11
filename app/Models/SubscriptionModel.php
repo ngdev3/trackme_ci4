@@ -42,6 +42,31 @@ class SubscriptionModel extends Model
     }
 
     /**
+     * Activate a paid plan with an explicit expiry supplied by the payment
+     * provider (Google Play Billing gives the authoritative renewal date, so we
+     * mirror it rather than computing +cycle). Idempotent per customer.
+     */
+    public function activateWithExpiry(int $customerId, int $planId, string $expiresAt, ?string $paymentId = null): void
+    {
+        $row  = $this->where('customer_id', $customerId)->orderBy('id', 'DESC')->first();
+        $data = [
+            'plan_id'            => $planId,
+            'status'             => 'active',
+            'payment_status'     => 'paid',
+            'expires_at'         => $expiresAt,
+            'expiry_notified_at' => null,
+        ];
+        if ($paymentId !== null && $paymentId !== '') {
+            $data['payment_id'] = $paymentId;
+        }
+        if ($row) {
+            $this->update($row['id'], $data);
+        } else {
+            $this->insert($data + ['customer_id' => $customerId, 'started_at' => date('Y-m-d H:i:s')]);
+        }
+    }
+
+    /**
      * Activate a paid plan for a customer, extending the paid window by the plan's
      * billing cycle (from now, or from an unexpired current expiry).
      */

@@ -1,0 +1,116 @@
+<?php
+
+namespace Modules\Api\Controllers;
+
+use App\Models\SubscriptionModel;
+use App\Models\SubscriptionPlanModel;
+
+/**
+ * Subscription / plan management for the mobile app. The subscription belongs to
+ * the customer that owns the caller's active company (mirrors the web + MeApi
+ * resolution via customer_effective_plan()). Bearer-token authenticated.
+ *
+ * NOTE: this build has no payment gateway. subscribe() assigns the chosen plan
+ * directly — a dev/no-gateway flow, not a real purchase.
+ */
+class SubscriptionApiController extends BaseApiController
+{
+    protected $helpers = ['settings', 'subscription'];
+
+    // ownerId() is inherited from BaseApiController (identical resolution:
+    // active company's owner_id, falling back to the user's own id).
+
+    private function shapePlan(array $p): array
+    {
+        $features = [];
+        foreach (SubscriptionPlanModel::FEATURE_COLUMNS as $col) {
+            if ((int) ($p['feat_' . $col] ?? 0) === 1) {
+                $features[] = function_exists('feature_label') ? feature_label($col) : $col;
+            }
+        }
+        return [
+            'id'            => (int) $p['id'],
+            'name'          => $p['name'],
+            'code'          => $p['code'],
+            'price'         => (float) $p['price'],
+            'billing_cycle' => $p['billing_cycle'],
+            'max_firms'     => $p['max_firms'] !== null ? (int) $p['max_firms'] : null,
+            'max_users'     => $p['max_users'] !== null ? (int) $p['max_users'] : null,
+            'features'      => $features,
+        ];
+    }
+
+    /** GET api/v1/subscription — current subscription + available plans. */
+    public function index()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $ownerId = $this->ownerId($user);
+
+        $sub       = (new SubscriptionModel())->forCustomer($ownerId);
+        $effective = customer_effective_plan($ownerId);
+        $plans     = array_map(fn (array $p) => $this->shapePlan($p), (new SubscriptionPlanModel())->active());
+
+        $current = null;
+        if ($sub) {
+            $current = [
+                'plan_id'        => $sub['plan_id'] !== null ? (int) $sub['plan_id'] : null,
+                'plan_name'      => $effective['name'] ?? ($sub['plan_name'] ?? null),
+                'plan_code'      => $effective['code'] ?? ($sub['plan_code'] ?? null),
+                'status'         => $sub['status'],
+                'payment_status' => $sub['payment_status'],
+                'started_at'     => $sub['started_at'],
+                'expires_at'     => $sub['expires_at'],
+            ];
+        }
+
+        return $this->respond([
+            'status'    => 'ok',
+            'current'   => $current,
+            'effective' => ['name' => $effective['name'] ?? null, 'code' => $effective['code'] ?? null],
+            'plans'     => $plans,
+        ]);
+    }
+
+    /** POST api/v1/subscription/subscribe — assign the chosen plan (no gateway). */
+    public function subscribe()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $ownerId = $this->ownerId($user);
+
+        $planId = (int) $this->input('plan_id');
+        $plan   = (new SubscriptionPlanModel())->find($planId);
+        if (! $plan || (int) $plan['status'] !== 1) {
+            return $this->failValidationErrors('Invalid or inactive plan.');
+        }
+
+        $subs = new SubscriptionModel();
+        if ((float) $plan['price'] <= 0) {
+            // Free plan — activate without a paid window.
+            $row  = $subs->where('customer_id', $ownerId)->orderBy('id', 'DESC')->first();
+            $data = ['plan_id' => $planId, 'status' => 'active', 'payment_status' => 'free', 'expires_at' => null];
+            if ($row) {
+                $subs->update($row['id'], $data);
+            } else {
+                $subs->insert($data + ['customer_id' => $ownerId, 'started_at' => date('Y-m-d H:i:s')]);
+            }
+        } else {
+            $subs->activatePaid($ownerId, $plan);
+        }
+
+        if (function_exists('activity_log')) {
+            activity_log('Subscription', 'Edit', "Switched to plan {$plan['name']} (mobile)");
+        }
+
+        return $this->respond([
+            'status'  => 'ok',
+            'message' => "Subscription updated to {$plan['name']}.",
+            'plan'    => $plan['name'],
+        ]);
+    }
+}

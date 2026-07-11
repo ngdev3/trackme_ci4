@@ -67,6 +67,54 @@ abstract class BaseApiController extends Controller
     }
 
     /**
+     * Resolve + authorise the active company for the API caller. A `company_id`
+     * may be supplied (JSON/POST/GET) but is always validated against the user's
+     * memberships, so one firm's data can never be reached by another. Falls back
+     * to the user's first company. Shared by every company-scoped module API.
+     */
+    protected function resolveCompanyId(array $user): ?int
+    {
+        $members   = new \App\Models\CompanyUserModel();
+        $requested = (int) ($this->input('company_id') ?? $this->request->getGet('company_id') ?? 0);
+        if ($requested > 0 && $members->isMember($requested, (int) $user['id'])) {
+            return $requested;
+        }
+        $companies = (new \App\Models\CompanyModel())->forUser((int) $user['id']);
+        return $companies !== [] ? (int) $companies[0]['id'] : null;
+    }
+
+    /**
+     * The customer id that owns the caller's active company (the subscription
+     * holder). Falls back to the user's own id. Mirrors the resolution used by
+     * the subscription / billing controllers so feature checks line up with /me.
+     */
+    protected function ownerId(array $user): int
+    {
+        $cid = $this->resolveCompanyId($user);
+        if ($cid) {
+            $company = (new \App\Models\CompanyModel())->find($cid);
+            if ($company && ! empty($company['owner_id'])) {
+                return (int) $company['owner_id'];
+            }
+        }
+        return (int) $user['id'];
+    }
+
+    /**
+     * Does the caller's package include $feature? Enforces the same plan gating
+     * server-side that the app applies to the menu, so a gated endpoint can't be
+     * reached just by calling it directly.
+     */
+    protected function apiHasFeature(array $user, string $feature): bool
+    {
+        helper('subscription');
+        if (! function_exists('customer_has_feature')) {
+            return false;
+        }
+        return customer_has_feature($this->ownerId($user), $feature);
+    }
+
+    /**
      * Standard shape for a user returned to the client.
      */
     protected function publicUser(array $user): array

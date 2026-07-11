@@ -68,7 +68,13 @@ $filters = ['' => 'All', 'paid' => 'Paid', 'created' => 'Pending', 'failed' => '
                                     <div class="small text-muted"><?= esc($r['customer_email'] ?? '') ?></div>
                                     <div class="small text-muted"><?= esc($r['order_id']) ?></div>
                                 </td>
-                                <td><?= esc($r['plan_name'] ?? '—') ?></td>
+                                <td>
+                                    <?= esc($r['plan_name'] ?? '—') ?>
+                                    <?php $gw = $r['gateway'] ?? 'cashfree'; ?>
+                                    <span class="badge rounded-pill text-bg-light border ms-1" title="Payment gateway">
+                                        <i class="bi <?= $gw === 'googleplay' ? 'bi-google-play' : 'bi-credit-card' ?> me-1"></i><?= $gw === 'googleplay' ? 'Play' : 'Cashfree' ?>
+                                    </span>
+                                </td>
                                 <td class="text-end">&#8377;<?= esc(number_format((float) $r['amount'], 2)) ?></td>
                                 <td><span class="badge text-bg-<?= esc($color) ?>"><?= esc($label) ?></span></td>
                                 <td><?= esc($r['invoice_no'] ?: '—') ?></td>
@@ -77,7 +83,8 @@ $filters = ['' => 'All', 'paid' => 'Paid', 'created' => 'Pending', 'failed' => '
                                         <a href="<?= site_url('subscription/receipt/' . $r['order_id']) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary" title="Tax receipt"><i class="bi bi-download"></i></a>
                                     <?php endif; ?>
                                     <?php if ($r['status'] === 'paid'): ?>
-                                        <form action="<?= site_url('admin/transactions/refund/' . $r['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Mark this transaction as refunded? Refund the money in the Cashfree dashboard separately.');">
+                                        <?php $refundWhere = ($r['gateway'] ?? 'cashfree') === 'googleplay' ? 'Google Play Console' : 'Cashfree dashboard'; ?>
+                                        <form action="<?= site_url('admin/transactions/refund/' . $r['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Mark this transaction as refunded? Refund the money in the <?= $refundWhere ?> separately.');">
                                             <?= csrf_field() ?>
                                             <button class="btn btn-sm btn-outline-warning" title="Mark refunded"><i class="bi bi-arrow-counterclockwise"></i></button>
                                         </form>

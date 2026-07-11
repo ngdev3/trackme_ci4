@@ -142,33 +142,38 @@ class DatabaseSeeder extends Seeder
         }
 
         // ---------------------------------------------------------------
-        // 6. Demo users
+        // 6. Initial super admin
         // ---------------------------------------------------------------
-        $users = [
-            ['name' => 'Super Administrator', 'email' => 'superadmin@erp.test', 'username' => 'superadmin', 'mobile' => '9000000001', 'type' => 'super_admin', 'role' => 'super_admin', 'pass' => 'Admin@123'],
-            ['name' => 'System Admin',        'email' => 'admin@erp.test',      'username' => 'admin',      'mobile' => '9000000002', 'type' => 'admin',       'role' => 'admin',       'pass' => 'Admin@123'],
-            ['name' => 'Mike Manager',        'email' => 'manager@erp.test',    'username' => 'manager',    'mobile' => '9000000003', 'type' => 'manager',     'role' => 'manager',     'pass' => 'Admin@123'],
-            ['name' => 'Sara Staff',          'email' => 'staff@erp.test',      'username' => 'staff',      'mobile' => '9000000004', 'type' => 'staff',       'role' => 'staff',       'pass' => 'Admin@123'],
-            ['name' => 'Victor Viewer',       'email' => 'viewer@erp.test',     'username' => 'viewer',     'mobile' => '9000000005', 'type' => 'viewer',      'role' => 'viewer',      'pass' => 'Admin@123'],
-        ];
-        foreach ($users as $u) {
-            $this->db->table('users')->insert([
-                'name'         => $u['name'],
-                'email'        => $u['email'],
-                'mobile'       => $u['mobile'],
-                'username'     => $u['username'],
-                'password'     => password_hash($u['pass'], PASSWORD_DEFAULT),
-                'user_type_id' => $typeIds[$u['type']],
-                'status'       => 1,
-                'created_at'   => $now,
-                'updated_at'   => $now,
-            ]);
-            $userId = $this->db->insertID();
-            $this->db->table('user_roles')->insert([
-                'user_id' => $userId,
-                'role_id' => $roleIds[$u['role']],
-            ]);
+        $adminPass = (string) env('seed.superAdmin.password', '');
+        if ($adminPass === '' && ENVIRONMENT === 'production') {
+            throw new \RuntimeException('Set seed.superAdmin.password before running DatabaseSeeder in production.');
         }
+
+        $admin = [
+            'name'     => (string) env('seed.superAdmin.name', 'Super Administrator'),
+            'email'    => (string) env('seed.superAdmin.email', 'superadmin@erp.test'),
+            'username' => (string) env('seed.superAdmin.username', 'superadmin'),
+            'mobile'   => (string) env('seed.superAdmin.mobile', '9000000001'),
+            'pass'     => $adminPass !== '' ? $adminPass : 'Admin@123',
+        ];
+
+        $this->db->table('users')->insert([
+            'name'         => $admin['name'],
+            'email'        => $admin['email'],
+            'mobile'       => $admin['mobile'],
+            'username'     => $admin['username'],
+            'password'     => password_hash($admin['pass'], PASSWORD_DEFAULT),
+            'user_type_id' => $typeIds['super_admin'],
+            'account_type' => 'super_admin',
+            'status'       => 1,
+            'created_at'   => $now,
+            'updated_at'   => $now,
+        ]);
+        $userId = $this->db->insertID();
+        $this->db->table('user_roles')->insert([
+            'user_id' => $userId,
+            'role_id' => $roleIds['super_admin'],
+        ]);
 
         // ---------------------------------------------------------------
         // 7. Web-app settings, the Settings module + control hierarchy

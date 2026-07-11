@@ -9,6 +9,12 @@ $routes->get('/', static function () {
     return redirect()->to(site_url('dashboard'));
 });
 
+// Public privacy policy — no auth. Used as the Google Play "Privacy policy" URL
+// and opened from the mobile app's Settings page.
+$routes->get('privacy', static function () {
+    return view('privacy');
+});
+
 // Browser Web-Push subscription (session-authenticated + CSRF).
 $routes->post('push/subscribe', 'PushController::subscribe', ['filter' => 'auth']);
 $routes->post('push/unsubscribe', 'PushController::unsubscribe', ['filter' => 'auth']);

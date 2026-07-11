@@ -95,20 +95,20 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
     );
 
     public static $prefixLengthsPsr4 = array (
-        'Z' => 
+        'Z' =>
         array (
             'ZipStream\\' => 10,
         ),
-        'T' => 
+        'T' =>
         array (
             'Tests\\Support\\' => 14,
         ),
-        'S' => 
+        'S' =>
         array (
             'Svg\\' => 4,
             'Sabberworm\\CSS\\' => 15,
         ),
-        'P' => 
+        'P' =>
         array (
             'Psr\\SimpleCache\\' => 16,
             'Psr\\Log\\' => 8,
@@ -116,137 +116,137 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
             'PhpParser\\' => 10,
             'PhpOffice\\PhpSpreadsheet\\' => 25,
         ),
-        'M' => 
+        'M' =>
         array (
             'Matrix\\' => 7,
             'Masterminds\\' => 12,
         ),
-        'L' => 
+        'L' =>
         array (
             'Laminas\\Escaper\\' => 16,
         ),
-        'H' => 
+        'H' =>
         array (
             'Hashids\\' => 8,
         ),
-        'F' => 
+        'F' =>
         array (
             'FontLib\\' => 8,
             'Faker\\' => 6,
         ),
-        'D' => 
+        'D' =>
         array (
             'Dompdf\\' => 7,
             'DeepCopy\\' => 9,
         ),
-        'C' => 
+        'C' =>
         array (
             'Config\\' => 7,
             'Composer\\Pcre\\' => 14,
             'Complex\\' => 8,
             'CodeIgniter\\' => 12,
         ),
-        'A' => 
+        'A' =>
         array (
             'App\\' => 4,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'ZipStream\\' => 
+        'ZipStream\\' =>
         array (
             0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
         ),
-        'Tests\\Support\\' => 
+        'Tests\\Support\\' =>
         array (
             0 => __DIR__ . '/../..' . '/tests/_support',
         ),
-        'Svg\\' => 
+        'Svg\\' =>
         array (
             0 => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg',
         ),
-        'Sabberworm\\CSS\\' => 
+        'Sabberworm\\CSS\\' =>
         array (
             0 => __DIR__ . '/..' . '/sabberworm/php-css-parser/src',
         ),
-        'Psr\\SimpleCache\\' => 
+        'Psr\\SimpleCache\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/simple-cache/src',
         ),
-        'Psr\\Log\\' => 
+        'Psr\\Log\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/log/src',
         ),
-        'Psr\\Container\\' => 
+        'Psr\\Container\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
         ),
-        'PhpParser\\' => 
+        'PhpParser\\' =>
         array (
             0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
         ),
-        'PhpOffice\\PhpSpreadsheet\\' => 
+        'PhpOffice\\PhpSpreadsheet\\' =>
         array (
             0 => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet',
         ),
-        'Matrix\\' => 
+        'Matrix\\' =>
         array (
             0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
         ),
-        'Masterminds\\' => 
+        'Masterminds\\' =>
         array (
             0 => __DIR__ . '/..' . '/masterminds/html5/src',
         ),
-        'Laminas\\Escaper\\' => 
+        'Laminas\\Escaper\\' =>
         array (
             0 => __DIR__ . '/..' . '/laminas/laminas-escaper/src',
         ),
-        'Hashids\\' => 
+        'Hashids\\' =>
         array (
             0 => __DIR__ . '/..' . '/hashids/hashids/src',
         ),
-        'FontLib\\' => 
+        'FontLib\\' =>
         array (
             0 => __DIR__ . '/..' . '/dompdf/php-font-lib/src/FontLib',
         ),
-        'Faker\\' => 
+        'Faker\\' =>
         array (
             0 => __DIR__ . '/..' . '/fakerphp/faker/src/Faker',
         ),
-        'Dompdf\\' => 
+        'Dompdf\\' =>
         array (
             0 => __DIR__ . '/..' . '/dompdf/dompdf/src',
         ),
-        'DeepCopy\\' => 
+        'DeepCopy\\' =>
         array (
             0 => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy',
         ),
-        'Config\\' => 
+        'Config\\' =>
         array (
             0 => __DIR__ . '/../..' . '/app/Config',
         ),
-        'Composer\\Pcre\\' => 
+        'Composer\\Pcre\\' =>
         array (
             0 => __DIR__ . '/..' . '/composer/pcre/src',
         ),
-        'Complex\\' => 
+        'Complex\\' =>
         array (
             0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
         ),
-        'CodeIgniter\\' => 
+        'CodeIgniter\\' =>
         array (
             0 => __DIR__ . '/..' . '/codeigniter4/framework/system',
         ),
-        'App\\' => 
+        'App\\' =>
         array (
             0 => __DIR__ . '/../..' . '/app',
         ),
     );
 
     public static $prefixesPsr0 = array (
-        'o' => 
+        'o' =>
         array (
-            'org\\bovigo\\vfs\\' => 
+            'org\\bovigo\\vfs\\' =>
             array (
                 0 => __DIR__ . '/..' . '/mikey179/vfsstream/src/main/php',
             ),
@@ -254,11 +254,14 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
     );
 
     public static $classMap = array (
+        'App\\Commands\\PrepareProductionData' => __DIR__ . '/../..' . '/app/Commands/PrepareProductionData.php',
+        'App\\Commands\\PurgeTestData' => __DIR__ . '/../..' . '/app/Commands/PurgeTestData.php',
         'App\\Commands\\RemindersNotify' => __DIR__ . '/../..' . '/app/Commands/RemindersNotify.php',
         'App\\Controllers\\BaseController' => __DIR__ . '/../..' . '/app/Controllers/BaseController.php',
         'App\\Controllers\\BaseCrudController' => __DIR__ . '/../..' . '/app/Controllers/BaseCrudController.php',
         'App\\Controllers\\Home' => __DIR__ . '/../..' . '/app/Controllers/Home.php',
         'App\\Controllers\\PushController' => __DIR__ . '/../..' . '/app/Controllers/PushController.php',
+        'App\\Controllers\\SubscriptionController' => __DIR__ . '/../..' . '/app/Controllers/SubscriptionController.php',
         'App\\Database\\Seeds\\AppSettingsSeeder' => __DIR__ . '/../..' . '/app/Database/Seeds/AppSettingsSeeder.php',
         'App\\Database\\Seeds\\CalculatorSeeder' => __DIR__ . '/../..' . '/app/Database/Seeds/CalculatorSeeder.php',
         'App\\Database\\Seeds\\DatabaseSeeder' => __DIR__ . '/../..' . '/app/Database/Seeds/DatabaseSeeder.php',
@@ -268,20 +271,29 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'App\\Database\\Seeds\\NotesReminderSeeder' => __DIR__ . '/../..' . '/app/Database/Seeds/NotesReminderSeeder.php',
         'App\\Database\\Seeds\\SubscriptionPlanSeeder' => __DIR__ . '/../..' . '/app/Database/Seeds/SubscriptionPlanSeeder.php',
         'App\\Database\\Seeds\\TransactionsSeeder' => __DIR__ . '/../..' . '/app/Database/Seeds/TransactionsSeeder.php',
+        'App\\Filters\\ApiFeature' => __DIR__ . '/../..' . '/app/Filters/ApiFeature.php',
         'App\\Filters\\AuthFilter' => __DIR__ . '/../..' . '/app/Filters/AuthFilter.php',
         'App\\Filters\\AutoSetup' => __DIR__ . '/../..' . '/app/Filters/AutoSetup.php',
+        'App\\Filters\\FeatureGate' => __DIR__ . '/../..' . '/app/Filters/FeatureGate.php',
         'App\\Filters\\FirmPermFilter' => __DIR__ . '/../..' . '/app/Filters/FirmPermFilter.php',
         'App\\Filters\\GuestFilter' => __DIR__ . '/../..' . '/app/Filters/GuestFilter.php',
         'App\\Filters\\MustChangePassword' => __DIR__ . '/../..' . '/app/Filters/MustChangePassword.php',
         'App\\Filters\\PermissionFilter' => __DIR__ . '/../..' . '/app/Filters/PermissionFilter.php',
+        'App\\Filters\\ProFeature' => __DIR__ . '/../..' . '/app/Filters/ProFeature.php',
         'App\\Filters\\RequireCompany' => __DIR__ . '/../..' . '/app/Filters/RequireCompany.php',
+        'App\\Filters\\SubscriptionLifecycle' => __DIR__ . '/../..' . '/app/Filters/SubscriptionLifecycle.php',
         'App\\Filters\\SuperAdminFilter' => __DIR__ . '/../..' . '/app/Filters/SuperAdminFilter.php',
         'App\\Filters\\UserActionLogFilter' => __DIR__ . '/../..' . '/app/Filters/UserActionLogFilter.php',
         'App\\Libraries\\Acl' => __DIR__ . '/../..' . '/app/Libraries/Acl.php',
         'App\\Libraries\\ActivityLogger' => __DIR__ . '/../..' . '/app/Libraries/ActivityLogger.php',
         'App\\Libraries\\Auth' => __DIR__ . '/../..' . '/app/Libraries/Auth.php',
+        'App\\Libraries\\Cashfree' => __DIR__ . '/../..' . '/app/Libraries/Cashfree.php',
         'App\\Libraries\\CompanyContext' => __DIR__ . '/../..' . '/app/Libraries/CompanyContext.php',
         'App\\Libraries\\CompanyProvisioner' => __DIR__ . '/../..' . '/app/Libraries/CompanyProvisioner.php',
+        'App\\Libraries\\Exporter' => __DIR__ . '/../..' . '/app/Libraries/Exporter.php',
+        'App\\Libraries\\GooglePlayVerifier' => __DIR__ . '/../..' . '/app/Libraries/GooglePlayVerifier.php',
+        'App\\Libraries\\InventoryReport' => __DIR__ . '/../..' . '/app/Libraries/InventoryReport.php',
+        'App\\Libraries\\InventoryService' => __DIR__ . '/../..' . '/app/Libraries/InventoryService.php',
         'App\\Libraries\\Notifier' => __DIR__ . '/../..' . '/app/Libraries/Notifier.php',
         'App\\Libraries\\OAuth\\AbstractProvider' => __DIR__ . '/../..' . '/app/Libraries/OAuth/AbstractProvider.php',
         'App\\Libraries\\OAuth\\GoogleProvider' => __DIR__ . '/../..' . '/app/Libraries/OAuth/GoogleProvider.php',
@@ -289,9 +301,13 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'App\\Libraries\\OAuth\\OAuthManager' => __DIR__ . '/../..' . '/app/Libraries/OAuth/OAuthManager.php',
         'App\\Libraries\\OAuth\\OAuthUserProfile' => __DIR__ . '/../..' . '/app/Libraries/OAuth/OAuthUserProfile.php',
         'App\\Libraries\\OAuth\\ProviderInterface' => __DIR__ . '/../..' . '/app/Libraries/OAuth/ProviderInterface.php',
+        'App\\Libraries\\OpeningBalance' => __DIR__ . '/../..' . '/app/Libraries/OpeningBalance.php',
+        'App\\Libraries\\PasswordVault' => __DIR__ . '/../..' . '/app/Libraries/PasswordVault.php',
         'App\\Libraries\\ReminderService' => __DIR__ . '/../..' . '/app/Libraries/ReminderService.php',
         'App\\Libraries\\ReportPeriod' => __DIR__ . '/../..' . '/app/Libraries/ReportPeriod.php',
         'App\\Libraries\\Settings' => __DIR__ . '/../..' . '/app/Libraries/Settings.php',
+        'App\\Libraries\\TaxInvoice' => __DIR__ . '/../..' . '/app/Libraries/TaxInvoice.php',
+        'App\\Libraries\\VoiceEntryParser' => __DIR__ . '/../..' . '/app/Libraries/VoiceEntryParser.php',
         'App\\Libraries\\WebPush' => __DIR__ . '/../..' . '/app/Libraries/WebPush.php',
         'App\\Models\\AccountingGroupModel' => __DIR__ . '/../..' . '/app/Models/AccountingGroupModel.php',
         'App\\Models\\ActivityLogModel' => __DIR__ . '/../..' . '/app/Models/ActivityLogModel.php',
@@ -302,6 +318,16 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'App\\Models\\CompanyUserModel' => __DIR__ . '/../..' . '/app/Models/CompanyUserModel.php',
         'App\\Models\\DashboardModel' => __DIR__ . '/../..' . '/app/Models/DashboardModel.php',
         'App\\Models\\FirmDashboardModel' => __DIR__ . '/../..' . '/app/Models/FirmDashboardModel.php',
+        'App\\Models\\GooglePlayPurchaseModel' => __DIR__ . '/../..' . '/app/Models/GooglePlayPurchaseModel.php',
+        'App\\Models\\InvAttachmentModel' => __DIR__ . '/../..' . '/app/Models/InvAttachmentModel.php',
+        'App\\Models\\InvCorrectionModel' => __DIR__ . '/../..' . '/app/Models/InvCorrectionModel.php',
+        'App\\Models\\InvDailyClosingModel' => __DIR__ . '/../..' . '/app/Models/InvDailyClosingModel.php',
+        'App\\Models\\InvLotModel' => __DIR__ . '/../..' . '/app/Models/InvLotModel.php',
+        'App\\Models\\InvMovementModel' => __DIR__ . '/../..' . '/app/Models/InvMovementModel.php',
+        'App\\Models\\InvPartyModel' => __DIR__ . '/../..' . '/app/Models/InvPartyModel.php',
+        'App\\Models\\InvProductModel' => __DIR__ . '/../..' . '/app/Models/InvProductModel.php',
+        'App\\Models\\InvStockModel' => __DIR__ . '/../..' . '/app/Models/InvStockModel.php',
+        'App\\Models\\InvWarehouseModel' => __DIR__ . '/../..' . '/app/Models/InvWarehouseModel.php',
         'App\\Models\\LedgerModel' => __DIR__ . '/../..' . '/app/Models/LedgerModel.php',
         'App\\Models\\LoginAttemptModel' => __DIR__ . '/../..' . '/app/Models/LoginAttemptModel.php',
         'App\\Models\\LoginLogModel' => __DIR__ . '/../..' . '/app/Models/LoginLogModel.php',
@@ -310,7 +336,9 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'App\\Models\\NoteHistoryModel' => __DIR__ . '/../..' . '/app/Models/NoteHistoryModel.php',
         'App\\Models\\NoteModel' => __DIR__ . '/../..' . '/app/Models/NoteModel.php',
         'App\\Models\\NotificationModel' => __DIR__ . '/../..' . '/app/Models/NotificationModel.php',
+        'App\\Models\\PasswordModel' => __DIR__ . '/../..' . '/app/Models/PasswordModel.php',
         'App\\Models\\PasswordResetModel' => __DIR__ . '/../..' . '/app/Models/PasswordResetModel.php',
+        'App\\Models\\PaymentOrderModel' => __DIR__ . '/../..' . '/app/Models/PaymentOrderModel.php',
         'App\\Models\\PermissionModel' => __DIR__ . '/../..' . '/app/Models/PermissionModel.php',
         'App\\Models\\PushSubscriptionModel' => __DIR__ . '/../..' . '/app/Models/PushSubscriptionModel.php',
         'App\\Models\\ReminderModel' => __DIR__ . '/../..' . '/app/Models/ReminderModel.php',
@@ -776,6 +804,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'Config\\Autoload' => __DIR__ . '/../..' . '/app/Config/Autoload.php',
         'Config\\CURLRequest' => __DIR__ . '/../..' . '/app/Config/CURLRequest.php',
         'Config\\Cache' => __DIR__ . '/../..' . '/app/Config/Cache.php',
+        'Config\\Cashfree' => __DIR__ . '/../..' . '/app/Config/Cashfree.php',
         'Config\\ContentSecurityPolicy' => __DIR__ . '/../..' . '/app/Config/ContentSecurityPolicy.php',
         'Config\\Cookie' => __DIR__ . '/../..' . '/app/Config/Cookie.php',
         'Config\\Cors' => __DIR__ . '/../..' . '/app/Config/Cors.php',
@@ -789,6 +818,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'Config\\ForeignCharacters' => __DIR__ . '/../..' . '/app/Config/ForeignCharacters.php',
         'Config\\Format' => __DIR__ . '/../..' . '/app/Config/Format.php',
         'Config\\Generators' => __DIR__ . '/../..' . '/app/Config/Generators.php',
+        'Config\\GooglePlay' => __DIR__ . '/../..' . '/app/Config/GooglePlay.php',
         'Config\\Honeypot' => __DIR__ . '/../..' . '/app/Config/Honeypot.php',
         'Config\\Hostnames' => __DIR__ . '/../..' . '/app/Config/Hostnames.php',
         'Config\\Images' => __DIR__ . '/../..' . '/app/Config/Images.php',
@@ -3040,6 +3070,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'PhpParser\\Lexer\\TokenEmulator\\AttributeEmulator' => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AttributeEmulator.php',
         'PhpParser\\Lexer\\TokenEmulator\\EnumTokenEmulator' => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/EnumTokenEmulator.php',
         'PhpParser\\Lexer\\TokenEmulator\\ExplicitOctalEmulator' => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ExplicitOctalEmulator.php',
+        'PhpParser\\Lexer\\TokenEmulator\\FnTokenEmulator' => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/FnTokenEmulator.php',
         'PhpParser\\Lexer\\TokenEmulator\\KeywordEmulator' => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/KeywordEmulator.php',
         'PhpParser\\Lexer\\TokenEmulator\\MatchTokenEmulator' => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/MatchTokenEmulator.php',
         'PhpParser\\Lexer\\TokenEmulator\\NullsafeTokenEmulator' => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/NullsafeTokenEmulator.php',
