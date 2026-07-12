@@ -136,6 +136,135 @@ class CompanyApiController extends BaseApiController
         ]);
     }
 
+    /** List the caller's active (non-deleted) companies. */
+    public function index()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $rows = (new CompanyModel())->forUser((int) $user['id']);
+        $out  = array_map(fn ($c) => [
+            'id'       => (int) $c['id'],
+            'name'     => $c['name'],
+            'state'    => $c['state'] ?? null,
+            'is_owner' => (int) $c['owner_id'] === (int) $user['id'],
+        ], $rows);
+
+        return $this->respond(['status' => 'ok', 'companies' => $out]);
+    }
+
+    /** Soft-delete (move to Trash) a company the caller owns. */
+    public function destroy($id = null)
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $companies = new CompanyModel();
+        $company   = $companies->find((int) $id);
+        if (! $this->owns($user, $company)) {
+            return $this->failForbidden('You can only delete a company you own.');
+        }
+        $companies->delete((int) $id); // soft delete (sets deleted_at)
+        if (function_exists('activity_log')) {
+            activity_log('Company', 'Delete', "Company #{$id} ({$company['name']}) moved to Trash (mobile)");
+        }
+
+        // Suggest the next active company for the client to switch to.
+        $remaining = array_map(fn ($c) => ['id' => (int) $c['id'], 'name' => $c['name']], $companies->forUser((int) $user['id']));
+
+        return $this->respond([
+            'status'        => 'ok',
+            'message'       => "Company \"{$company['name']}\" moved to Trash.",
+            'remaining'     => $remaining,
+            'next_active_id' => $remaining[0]['id'] ?? null,
+        ]);
+    }
+
+    /** Trash: the caller's soft-deleted companies. */
+    public function trash()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $rows = (new CompanyModel())->trashedForUser((int) $user['id']);
+        $out  = array_map(fn ($c) => [
+            'id'         => (int) $c['id'],
+            'name'       => $c['name'],
+            'deleted_at' => $c['deleted_at'] ?? null,
+            'is_owner'   => (int) $c['owner_id'] === (int) $user['id'],
+        ], $rows);
+
+        return $this->respond(['status' => 'ok', 'companies' => $out]);
+    }
+
+    /** Restore a soft-deleted company the caller owns. */
+    public function restore($id = null)
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $companies = new CompanyModel();
+        $company   = $companies->onlyDeleted()->find((int) $id);
+        if (! $this->owns($user, $company)) {
+            return $this->failForbidden('You can only restore a company you own.');
+        }
+        // deleted_at is not an allowed field — clear it via the builder directly.
+        $companies->builder()->where('id', (int) $id)->update(['deleted_at' => null]);
+        if (function_exists('activity_log')) {
+            activity_log('Company', 'Edit', "Company #{$id} ({$company['name']}) restored (mobile)");
+        }
+        return $this->respond(['status' => 'ok', 'message' => "Company \"{$company['name']}\" restored.", 'company_id' => (int) $id]);
+    }
+
+    /** Permanently delete a trashed company and ALL its data (owner only). Irreversible. */
+    public function purge($id = null)
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $companies = new CompanyModel();
+        $company   = $companies->onlyDeleted()->find((int) $id);
+        if (! $this->owns($user, $company)) {
+            return $this->failForbidden('You can only delete a company you own.');
+        }
+
+        $db = \Config\Database::connect();
+        $db->query('SET FOREIGN_KEY_CHECKS=0');
+        // Purge every table scoped by company_id, then memberships, then the row.
+        $tables = $db->query(
+            'SELECT DISTINCT TABLE_NAME AS t FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND COLUMN_NAME = "company_id"'
+        )->getResultArray();
+        foreach ($tables as $row) {
+            $db->table($row['t'])->where('company_id', (int) $id)->delete();
+        }
+        $db->table('company_users')->where('company_id', (int) $id)->delete();
+        $companies->delete((int) $id, true); // hard delete (purge)
+        $db->query('SET FOREIGN_KEY_CHECKS=1');
+
+        if (function_exists('activity_log')) {
+            activity_log('Company', 'Delete', "Company #{$id} ({$company['name']}) permanently deleted (mobile)");
+        }
+        return $this->respond(['status' => 'ok', 'message' => "Company \"{$company['name']}\" permanently deleted."]);
+    }
+
+    /** Owner-only management guard (owner of the company, or a super admin). */
+    private function owns(?array $user, ?array $company): bool
+    {
+        if (! $user || ! $company) {
+            return false;
+        }
+        if ((int) ($user['is_superadmin'] ?? 0) === 1) {
+            return true;
+        }
+        return (int) ($company['owner_id'] ?? 0) === (int) $user['id'];
+    }
+
     /** Return $value if it's a valid Y-m-d date, else $fallback. */
     private function validDate(string $value, string $fallback): string
     {

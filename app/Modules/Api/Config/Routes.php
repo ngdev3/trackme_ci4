@@ -21,9 +21,14 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->put('me', 'MeApiController::updateProfile');
     $routes->post('company/switch', 'MeApiController::switchCompany');
 
-    // Firm (company) creation — the onboarding step a new self-service sign-up
-    // completes to become owner of their first workspace (mirrors web store()).
+    // Firm (company) management for the mobile app. Create mirrors web store();
+    // delete is a soft-delete (Trash), with owner-only restore / permanent purge.
+    $routes->get('companies', 'CompanyApiController::index');
     $routes->post('companies', 'CompanyApiController::create');
+    $routes->get('companies/trash', 'CompanyApiController::trash');
+    $routes->post('companies/(:num)/restore', 'CompanyApiController::restore/$1');
+    $routes->delete('companies/(:num)/purge', 'CompanyApiController::purge/$1');
+    $routes->delete('companies/(:num)', 'CompanyApiController::destroy/$1');
 
     // Home dashboard aggregate: company + cash-book summaries + recent entries +
     // (feature-gated) inventory snapshot in one round-trip.
