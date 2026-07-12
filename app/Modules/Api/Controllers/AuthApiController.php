@@ -126,7 +126,9 @@ class AuthApiController extends BaseApiController
                 'expires_at' => date('Y-m-d H:i:s', time() + 3600),
                 'created_at' => date('Y-m-d H:i:s'),
             ]);
-            // In production this token is emailed; logged here for the build.
+            // Email the reset link (opens the web reset page). Logged as a fallback.
+            helper('reset_email');
+            send_password_reset_email($email, $token);
             log_message('info', 'API password reset for {email}: {token}', ['email' => $email, 'token' => $token]);
         }
 

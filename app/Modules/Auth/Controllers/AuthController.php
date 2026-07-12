@@ -125,10 +125,15 @@ class AuthController extends BaseController
                 'created_at' => date('Y-m-d H:i:s'),
             ]);
 
-            // In production, email this link. For this build we surface it directly.
+            // Email the reset link; also surface it in-session as a fallback for
+            // environments where SMTP isn't configured yet.
+            helper('reset_email');
+            $sent = send_password_reset_email($email, $token);
             $link = site_url('reset-password/' . $token);
             log_message('info', 'Password reset link for {email}: {link}', ['email' => $email, 'link' => $link]);
-            session()->setFlashdata('reset_link', $link);
+            if (! $sent) {
+                session()->setFlashdata('reset_link', $link);
+            }
         }
 
         return redirect()->to(site_url('forgot-password'))
