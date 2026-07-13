@@ -227,7 +227,16 @@ class Auth
             return ['error' => 'We could not create your account. Please try again or contact the administrator.'];
         }
 
-        return ['user' => $this->users->find($newId), 'is_new' => true];
+        $newUser = $this->users->find($newId);
+
+        // Welcome the new account (best-effort; a mail failure never blocks signup).
+        try {
+            service('mailer')->welcome((string) $newUser['email'], (string) ($newUser['name'] ?? ''));
+        } catch (\Throwable $e) {
+            log_message('error', '[OAuth] welcome email failed: ' . $e->getMessage());
+        }
+
+        return ['user' => $newUser, 'is_new' => true];
     }
 
     /**
@@ -250,6 +259,8 @@ class Auth
             'user_type_id'  => $this->defaultTypeId('admin') ?? $this->defaultTypeId('viewer'),
             'account_type'  => 'customer', // Gmail sign-ups are tenant customers
             'status'        => 1,
+            // The social provider already verified this email address.
+            'email_verified_at' => date('Y-m-d H:i:s'),
         ], true);
 
         if (! $id) {

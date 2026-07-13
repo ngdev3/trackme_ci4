@@ -107,6 +107,21 @@ class SubscriptionApiController extends BaseApiController
             activity_log('Subscription', 'Edit', "Switched to plan {$plan['name']} (mobile)");
         }
 
+        // Email a purchase confirmation for paid plans (the free/downgrade case
+        // isn't a "purchase", so it stays silent).
+        if ((float) $plan['price'] > 0) {
+            $owner = (new \App\Models\UserModel())->find($ownerId);
+            if ($owner && ! empty($owner['email'])) {
+                $sub = (new SubscriptionModel())->forCustomer($ownerId);
+                \Config\Services::mailer()->subscriptionPurchase((string) $owner['email'], (string) ($owner['name'] ?? ''), [
+                    'plan'       => $plan['name'],
+                    'amount'     => $plan['price'],
+                    'currency'   => '₹',
+                    'expires_at' => $sub['expires_at'] ?? '',
+                ]);
+            }
+        }
+
         return $this->respond([
             'status'  => 'ok',
             'message' => "Subscription updated to {$plan['name']}.",

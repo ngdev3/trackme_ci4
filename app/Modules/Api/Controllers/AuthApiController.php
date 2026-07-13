@@ -5,8 +5,10 @@ namespace Modules\Api\Controllers;
 use App\Libraries\OAuth\OAuthException;
 use App\Libraries\OAuth\OAuthManager;
 use App\Models\ApiTokenModel;
+use App\Models\EmailOtpModel;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
+use Config\Services;
 
 /**
  * Stateless auth API for the mobile app.
@@ -15,6 +17,8 @@ use App\Models\UserModel;
  *   POST /api/v1/auth/google           {id_token}
  *   POST /api/v1/auth/forgot-password  {email}
  *   POST /api/v1/auth/change-password  (Bearer) {current_password, new_password}
+ *   POST /api/v1/auth/request-email-otp {email}
+ *   POST /api/v1/auth/verify-email-otp  {email, code}
  *   POST /api/v1/auth/logout           (Bearer)
  */
 class AuthApiController extends BaseApiController
@@ -166,7 +170,84 @@ class AuthApiController extends BaseApiController
             'must_change_password' => 0,
         ]);
 
+        // Confirmation email (best-effort; never blocks the response).
+        Services::mailer()->passwordChanged((string) $user['email'], (string) ($user['name'] ?? ''));
+
         return $this->respond(['status' => 'success', 'message' => 'Password updated.']);
+    }
+
+    /**
+     * Send a 6-digit email-verification code. Used by the app's signup flow to
+     * confirm an email address. Throttled to one code per minute and always
+     * answers the same way to avoid revealing whether an email exists.
+     */
+    public function requestEmailOtp()
+    {
+        $email = strtolower(trim((string) $this->input('email', '')));
+        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->failValidationErrors('A valid email is required.');
+        }
+
+        $otps = new EmailOtpModel();
+        $since = $otps->secondsSinceLast($email);
+        if ($since !== null && $since < 60) {
+            return $this->fail('Please wait a moment before requesting another code.', 429);
+        }
+
+        $code = $otps->issue($email, 'email_verify', 10);
+        Services::mailer()->emailOtp($email, $code, 10);
+        log_message('info', 'Email OTP issued for {email}', ['email' => $email]);
+
+        return $this->respond([
+            'status'  => 'success',
+            'message' => 'A verification code has been sent to your email.',
+            'expires_in' => 600,
+        ]);
+    }
+
+    /**
+     * Verify a 6-digit email-verification code. On success the address is marked
+     * verified (and stamped on the user if an account exists).
+     */
+    public function verifyEmailOtp()
+    {
+        $email = strtolower(trim((string) $this->input('email', '')));
+        $code  = trim((string) $this->input('code', ''));
+
+        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->failValidationErrors('A valid email is required.');
+        }
+        if (! preg_match('/^\d{6}$/', $code)) {
+            return $this->failValidationErrors('Enter the 6-digit code from your email.');
+        }
+
+        $otps = new EmailOtpModel();
+        $row  = $otps->latestLive($email, 'email_verify');
+        if (! $row) {
+            return $this->failValidationErrors('The code is invalid or has expired. Please request a new one.');
+        }
+        if ((int) $row['attempts'] >= EmailOtpModel::MAX_ATTEMPTS) {
+            $otps->consume((int) $row['id']);
+            return $this->fail('Too many attempts. Please request a new code.', 429);
+        }
+        if (! hash_equals((string) $row['code_hash'], EmailOtpModel::hash($code))) {
+            $otps->bumpAttempts((int) $row['id'], (int) $row['attempts']);
+            return $this->failValidationErrors('That code is incorrect. Please try again.');
+        }
+
+        // Correct code — burn it and stamp the account (if any) as verified.
+        $otps->consume((int) $row['id']);
+        $users = new UserModel();
+        $user  = $users->where('email', $email)->first();
+        if ($user && empty($user['email_verified_at'])) {
+            $users->update((int) $user['id'], ['email_verified_at' => date('Y-m-d H:i:s')]);
+        }
+
+        return $this->respond([
+            'status'   => 'success',
+            'message'  => 'Email verified.',
+            'verified' => true,
+        ]);
     }
 
     /**

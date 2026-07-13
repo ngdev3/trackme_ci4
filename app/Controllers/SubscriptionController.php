@@ -8,6 +8,7 @@ use App\Models\PaymentOrderModel;
 use App\Models\SettingModel;
 use App\Models\SubscriptionModel;
 use App\Models\SubscriptionPlanModel;
+use App\Models\UserModel;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
@@ -243,11 +244,12 @@ class SubscriptionController extends BaseController
 
         (new SubscriptionModel())->activatePaid((int) $order['customer_id'], $plan);
 
+        $invoiceNo = $this->nextInvoiceNo();
         $orders->where('order_id', $order['order_id'])->set([
             'status'        => 'paid',
             'activated'     => 1,
             'cf_payment_id' => $cfPaymentId,
-            'invoice_no'    => $this->nextInvoiceNo(),
+            'invoice_no'    => $invoiceNo,
             'invoice_date'  => date('Y-m-d H:i:s'),
         ])->update();
 
@@ -255,6 +257,18 @@ class SubscriptionController extends BaseController
         $sub = (new SubscriptionModel())->where('customer_id', (int) $order['customer_id'])->orderBy('id', 'DESC')->first();
         if ($sub) {
             (new SubscriptionModel())->update($sub['id'], ['payment_id' => $order['order_id']]);
+        }
+
+        // Email the customer a purchase confirmation with the receipt details.
+        $customer = (new UserModel())->find((int) $order['customer_id']);
+        if ($customer && ! empty($customer['email'])) {
+            service('mailer')->subscriptionPurchase((string) $customer['email'], (string) ($customer['name'] ?? ''), [
+                'plan'       => $plan['name'],
+                'amount'     => $order['amount'],
+                'currency'   => '₹',
+                'invoice_no' => $invoiceNo,
+                'expires_at' => $sub['expires_at'] ?? '',
+            ]);
         }
 
         activity_log('Subscription', 'Add', "Cashfree payment {$order['order_id']} activated plan #{$order['plan_id']} for customer #{$order['customer_id']}");

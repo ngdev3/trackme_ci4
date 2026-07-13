@@ -6,6 +6,7 @@ use CodeIgniter\Config\BaseService;
 use App\Libraries\Acl;
 use App\Libraries\ActivityLogger;
 use App\Libraries\Auth;
+use App\Libraries\Mailer;
 use App\Libraries\Notifier;
 use App\Libraries\Settings;
 
@@ -81,5 +82,17 @@ class Services extends BaseService
             return static::getSharedInstance('settings');
         }
         return new Settings();
+    }
+
+    /**
+     * Transactional email (SendGrid). Used by both the website and the mobile
+     * API for signup, OTP, subscription, password reset and change confirmations.
+     */
+    public static function mailer(bool $getShared = true): Mailer
+    {
+        if ($getShared) {
+            return static::getSharedInstance('mailer');
+        }
+        return new Mailer();
     }
 }

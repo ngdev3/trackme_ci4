@@ -94,6 +94,8 @@ class AuthController extends BaseController
             'must_change_password' => 0,
         ]);
 
+        service('mailer')->passwordChanged((string) $user['email'], (string) ($user['name'] ?? ''));
+
         activity_log('Auth', 'Edit', 'Completed a required password change');
         return redirect()->to(site_url('dashboard'))->with('success', 'Your password has been updated.');
     }
@@ -177,6 +179,7 @@ class AuthController extends BaseController
                 'remember_token'       => null,
                 'must_change_password' => 0,
             ]);
+            service('mailer')->passwordChanged((string) $user['email'], (string) ($user['name'] ?? ''));
         }
 
         // Invalidate all tokens for this email.

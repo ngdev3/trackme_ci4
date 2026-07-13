@@ -18,6 +18,7 @@ class UserModel extends Model
         'profile_image', 'status', 'remember_token', 'last_login_at',
         'auth_provider', 'provider_id', 'avatar_url', 'account_type',
         'must_change_password', 'mobile_login_enabled', 'parent_id',
+        'email_verified_at',
     ];
 
     protected $validationRules = [

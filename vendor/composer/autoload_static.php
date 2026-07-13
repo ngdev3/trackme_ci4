@@ -90,25 +90,32 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         '0174385c3be07e86008907d06ee66531' => __DIR__ . '/..' . '/sabberworm/php-css-parser/src/Rule/Rule.php',
         '98aea6e41b9cb79b379b10f37ba1f0b7' => __DIR__ . '/..' . '/sabberworm/php-css-parser/src/RuleSet/RuleContainer.php',
         '6124b4c8570aa390c21fafd04a26c69f' => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy/deep_copy.php',
+        '79f66bc0a1900f77abe4a9a299057a0a' => __DIR__ . '/..' . '/starkbank/ecdsa/src/ellipticcurve.php',
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
     );
 
     public static $prefixLengthsPsr4 = array (
-        'Z' =>
+        'Z' => 
         array (
             'ZipStream\\' => 10,
         ),
-        'T' =>
+        'T' => 
         array (
             'Tests\\Support\\' => 14,
         ),
-        'S' =>
+        'S' => 
         array (
             'Svg\\' => 4,
+            'SendGrid\\Stats\\' => 15,
+            'SendGrid\\Mail\\' => 14,
+            'SendGrid\\Helper\\' => 16,
+            'SendGrid\\EventWebhook\\' => 22,
+            'SendGrid\\Contacts\\' => 18,
+            'SendGrid\\' => 9,
             'Sabberworm\\CSS\\' => 15,
         ),
-        'P' =>
+        'P' => 
         array (
             'Psr\\SimpleCache\\' => 16,
             'Psr\\Log\\' => 8,
@@ -116,137 +123,169 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
             'PhpParser\\' => 10,
             'PhpOffice\\PhpSpreadsheet\\' => 25,
         ),
-        'M' =>
+        'M' => 
         array (
             'Matrix\\' => 7,
             'Masterminds\\' => 12,
         ),
-        'L' =>
+        'L' => 
         array (
             'Laminas\\Escaper\\' => 16,
         ),
-        'H' =>
+        'H' => 
         array (
             'Hashids\\' => 8,
         ),
-        'F' =>
+        'F' => 
         array (
             'FontLib\\' => 8,
             'Faker\\' => 6,
         ),
-        'D' =>
+        'E' => 
+        array (
+            'EllipticCurve\\' => 14,
+        ),
+        'D' => 
         array (
             'Dompdf\\' => 7,
             'DeepCopy\\' => 9,
         ),
-        'C' =>
+        'C' => 
         array (
             'Config\\' => 7,
             'Composer\\Pcre\\' => 14,
             'Complex\\' => 8,
             'CodeIgniter\\' => 12,
         ),
-        'A' =>
+        'A' => 
         array (
             'App\\' => 4,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'ZipStream\\' =>
+        'ZipStream\\' => 
         array (
             0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
         ),
-        'Tests\\Support\\' =>
+        'Tests\\Support\\' => 
         array (
             0 => __DIR__ . '/../..' . '/tests/_support',
         ),
-        'Svg\\' =>
+        'Svg\\' => 
         array (
             0 => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg',
         ),
-        'Sabberworm\\CSS\\' =>
+        'SendGrid\\Stats\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/stats',
+        ),
+        'SendGrid\\Mail\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail',
+        ),
+        'SendGrid\\Helper\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/helper',
+        ),
+        'SendGrid\\EventWebhook\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/eventwebhook',
+        ),
+        'SendGrid\\Contacts\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/contacts',
+        ),
+        'SendGrid\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/sendgrid/php-http-client/lib',
+        ),
+        'Sabberworm\\CSS\\' => 
         array (
             0 => __DIR__ . '/..' . '/sabberworm/php-css-parser/src',
         ),
-        'Psr\\SimpleCache\\' =>
+        'Psr\\SimpleCache\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/simple-cache/src',
         ),
-        'Psr\\Log\\' =>
+        'Psr\\Log\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/log/src',
         ),
-        'Psr\\Container\\' =>
+        'Psr\\Container\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
         ),
-        'PhpParser\\' =>
+        'PhpParser\\' => 
         array (
             0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
         ),
-        'PhpOffice\\PhpSpreadsheet\\' =>
+        'PhpOffice\\PhpSpreadsheet\\' => 
         array (
             0 => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet',
         ),
-        'Matrix\\' =>
+        'Matrix\\' => 
         array (
             0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
         ),
-        'Masterminds\\' =>
+        'Masterminds\\' => 
         array (
             0 => __DIR__ . '/..' . '/masterminds/html5/src',
         ),
-        'Laminas\\Escaper\\' =>
+        'Laminas\\Escaper\\' => 
         array (
             0 => __DIR__ . '/..' . '/laminas/laminas-escaper/src',
         ),
-        'Hashids\\' =>
+        'Hashids\\' => 
         array (
             0 => __DIR__ . '/..' . '/hashids/hashids/src',
         ),
-        'FontLib\\' =>
+        'FontLib\\' => 
         array (
             0 => __DIR__ . '/..' . '/dompdf/php-font-lib/src/FontLib',
         ),
-        'Faker\\' =>
+        'Faker\\' => 
         array (
             0 => __DIR__ . '/..' . '/fakerphp/faker/src/Faker',
         ),
-        'Dompdf\\' =>
+        'EllipticCurve\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/starkbank/ecdsa/src',
+        ),
+        'Dompdf\\' => 
         array (
             0 => __DIR__ . '/..' . '/dompdf/dompdf/src',
         ),
-        'DeepCopy\\' =>
+        'DeepCopy\\' => 
         array (
             0 => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy',
         ),
-        'Config\\' =>
+        'Config\\' => 
         array (
             0 => __DIR__ . '/../..' . '/app/Config',
         ),
-        'Composer\\Pcre\\' =>
+        'Composer\\Pcre\\' => 
         array (
             0 => __DIR__ . '/..' . '/composer/pcre/src',
         ),
-        'Complex\\' =>
+        'Complex\\' => 
         array (
             0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
         ),
-        'CodeIgniter\\' =>
+        'CodeIgniter\\' => 
         array (
             0 => __DIR__ . '/..' . '/codeigniter4/framework/system',
         ),
-        'App\\' =>
+        'App\\' => 
         array (
             0 => __DIR__ . '/../..' . '/app',
         ),
     );
 
     public static $prefixesPsr0 = array (
-        'o' =>
+        'o' => 
         array (
-            'org\\bovigo\\vfs\\' =>
+            'org\\bovigo\\vfs\\' => 
             array (
                 0 => __DIR__ . '/..' . '/mikey179/vfsstream/src/main/php',
             ),
@@ -356,6 +395,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'App\\Models\\UserTypeModel' => __DIR__ . '/../..' . '/app/Models/UserTypeModel.php',
         'App\\Models\\VoucherEntryModel' => __DIR__ . '/../..' . '/app/Models/VoucherEntryModel.php',
         'App\\Models\\VoucherModel' => __DIR__ . '/../..' . '/app/Models/VoucherModel.php',
+        'BaseSendGridClientInterface' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/BaseSendGridClientInterface.php',
         'CodeIgniter\\API\\ApiException' => __DIR__ . '/..' . '/codeigniter4/framework/system/API/ApiException.php',
         'CodeIgniter\\API\\BaseTransformer' => __DIR__ . '/..' . '/codeigniter4/framework/system/API/BaseTransformer.php',
         'CodeIgniter\\API\\ResponseTrait' => __DIR__ . '/..' . '/codeigniter4/framework/system/API/ResponseTrait.php',
@@ -588,7 +628,6 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'CodeIgniter\\Files\\Exceptions\\FileNotFoundException' => __DIR__ . '/..' . '/codeigniter4/framework/system/Files/Exceptions/FileNotFoundException.php',
         'CodeIgniter\\Files\\File' => __DIR__ . '/..' . '/codeigniter4/framework/system/Files/File.php',
         'CodeIgniter\\Files\\FileCollection' => __DIR__ . '/..' . '/codeigniter4/framework/system/Files/FileCollection.php',
-        'CodeIgniter\\Files\\FileSizeUnit' => __DIR__ . '/..' . '/codeigniter4/framework/system/Files/FileSizeUnit.php',
         'CodeIgniter\\Filters\\CSRF' => __DIR__ . '/..' . '/codeigniter4/framework/system/Filters/CSRF.php',
         'CodeIgniter\\Filters\\Cors' => __DIR__ . '/..' . '/codeigniter4/framework/system/Filters/Cors.php',
         'CodeIgniter\\Filters\\DebugToolbar' => __DIR__ . '/..' . '/codeigniter4/framework/system/Filters/DebugToolbar.php',
@@ -947,6 +986,23 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'Dompdf\\Renderer\\TableRow' => __DIR__ . '/..' . '/dompdf/dompdf/src/Renderer/TableRow.php',
         'Dompdf\\Renderer\\TableRowGroup' => __DIR__ . '/..' . '/dompdf/dompdf/src/Renderer/TableRowGroup.php',
         'Dompdf\\Renderer\\Text' => __DIR__ . '/..' . '/dompdf/dompdf/src/Renderer/Text.php',
+        'EllipticCurve\\Curve' => __DIR__ . '/..' . '/starkbank/ecdsa/src/curve.php',
+        'EllipticCurve\\CurveFp' => __DIR__ . '/..' . '/starkbank/ecdsa/src/curve.php',
+        'EllipticCurve\\Ecdsa' => __DIR__ . '/..' . '/starkbank/ecdsa/src/ecdsa.php',
+        'EllipticCurve\\Math' => __DIR__ . '/..' . '/starkbank/ecdsa/src/math.php',
+        'EllipticCurve\\Point' => __DIR__ . '/..' . '/starkbank/ecdsa/src/point.php',
+        'EllipticCurve\\PrivateKey' => __DIR__ . '/..' . '/starkbank/ecdsa/src/privatekey.php',
+        'EllipticCurve\\PublicKey' => __DIR__ . '/..' . '/starkbank/ecdsa/src/publickey.php',
+        'EllipticCurve\\Signature' => __DIR__ . '/..' . '/starkbank/ecdsa/src/signature.php',
+        'EllipticCurve\\Utils\\Binary' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/binary.php',
+        'EllipticCurve\\Utils\\Der' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/der.php',
+        'EllipticCurve\\Utils\\DerFieldType' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/der.php',
+        'EllipticCurve\\Utils\\File' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/file.php',
+        'EllipticCurve\\Utils\\Integer' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/integer.php',
+        'EllipticCurve\\Utils\\Oid' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/oid.php',
+        'EllipticCurve\\Utils\\Parser' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/der.php',
+        'EllipticCurve\\Utils\\Pem' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/pem.php',
+        'EllipticCurve\\Utils\\TagCode' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/der.php',
         'Faker\\Calculator\\Ean' => __DIR__ . '/..' . '/fakerphp/faker/src/Faker/Calculator/Ean.php',
         'Faker\\Calculator\\Iban' => __DIR__ . '/..' . '/fakerphp/faker/src/Faker/Calculator/Iban.php',
         'Faker\\Calculator\\Inn' => __DIR__ . '/..' . '/fakerphp/faker/src/Faker/Calculator/Inn.php',
@@ -2761,7 +2817,6 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'PhpOffice\\PhpSpreadsheet\\Helper\\Sample' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Helper/Sample.php',
         'PhpOffice\\PhpSpreadsheet\\Helper\\Size' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Helper/Size.php',
         'PhpOffice\\PhpSpreadsheet\\Helper\\TextGrid' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Helper/TextGrid.php',
-        'PhpOffice\\PhpSpreadsheet\\Helper\\TextGridRightAlign' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Helper/TextGridRightAlign.php',
         'PhpOffice\\PhpSpreadsheet\\IComparable' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/IComparable.php',
         'PhpOffice\\PhpSpreadsheet\\IOFactory' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/IOFactory.php',
         'PhpOffice\\PhpSpreadsheet\\NamedFormula' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/NamedFormula.php',
@@ -2892,7 +2947,6 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\ConditionalFormatValueObject' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/ConditionalFormatValueObject.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\ConditionalFormattingRuleExtension' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/ConditionalFormattingRuleExtension.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\ConditionalIconSet' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/ConditionalIconSet.php',
-        'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\IconSetValues' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/IconSetValues.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\MergedCellStyle' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/MergedCellStyle.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\StyleMerger' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/StyleMerger.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\Wizard' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/Wizard.php',
@@ -2917,7 +2971,6 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\Accounting' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/Accounting.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\Currency' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/Currency.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\CurrencyBase' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/CurrencyBase.php',
-        'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\CurrencyNegative' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/CurrencyNegative.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\Date' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/Date.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\DateTime' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/DateTime.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\DateTimeWizard' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/DateTimeWizard.php',
@@ -3654,6 +3707,57 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'SebastianBergmann\\Type\\UnknownType' => __DIR__ . '/..' . '/sebastian/type/src/type/UnknownType.php',
         'SebastianBergmann\\Type\\VoidType' => __DIR__ . '/..' . '/sebastian/type/src/type/VoidType.php',
         'SebastianBergmann\\Version' => __DIR__ . '/..' . '/sebastian/version/src/Version.php',
+        'SendGrid' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/SendGrid.php',
+        'SendGrid\\Client' => __DIR__ . '/..' . '/sendgrid/php-http-client/lib/Client.php',
+        'SendGrid\\Contacts\\Recipient' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/contacts/Recipient.php',
+        'SendGrid\\Contacts\\RecipientForm' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/contacts/RecipientForm.php',
+        'SendGrid\\EventWebhook\\EventWebhook' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/eventwebhook/EventWebhook.php',
+        'SendGrid\\EventWebhook\\EventWebhookHeader' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/eventwebhook/EventWebhookHeader.php',
+        'SendGrid\\Exception\\InvalidRequest' => __DIR__ . '/..' . '/sendgrid/php-http-client/lib/Exception/InvalidRequest.php',
+        'SendGrid\\Helper\\Assert' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/helper/Assert.php',
+        'SendGrid\\Mail\\Asm' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Asm.php',
+        'SendGrid\\Mail\\Attachment' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Attachment.php',
+        'SendGrid\\Mail\\BatchId' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/BatchId.php',
+        'SendGrid\\Mail\\Bcc' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Bcc.php',
+        'SendGrid\\Mail\\BccSettings' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/BccSettings.php',
+        'SendGrid\\Mail\\BypassBounceManagement' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/BypassBounceManagement.php',
+        'SendGrid\\Mail\\BypassListManagement' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/BypassListManagement.php',
+        'SendGrid\\Mail\\BypassSpamManagement' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/BypassSpamManagement.php',
+        'SendGrid\\Mail\\BypassUnsubscribeManagement' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/BypassUnsubscribeManagement.php',
+        'SendGrid\\Mail\\Category' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Category.php',
+        'SendGrid\\Mail\\Cc' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Cc.php',
+        'SendGrid\\Mail\\ClickTracking' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/ClickTracking.php',
+        'SendGrid\\Mail\\Content' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Content.php',
+        'SendGrid\\Mail\\CustomArg' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/CustomArg.php',
+        'SendGrid\\Mail\\EmailAddress' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/EmailAddress.php',
+        'SendGrid\\Mail\\Footer' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Footer.php',
+        'SendGrid\\Mail\\From' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/From.php',
+        'SendGrid\\Mail\\Ganalytics' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Ganalytics.php',
+        'SendGrid\\Mail\\GroupId' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/GroupId.php',
+        'SendGrid\\Mail\\GroupsToDisplay' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/GroupsToDisplay.php',
+        'SendGrid\\Mail\\Header' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Header.php',
+        'SendGrid\\Mail\\HtmlContent' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/HtmlContent.php',
+        'SendGrid\\Mail\\IpPoolName' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/IpPoolName.php',
+        'SendGrid\\Mail\\Mail' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Mail.php',
+        'SendGrid\\Mail\\MailSettings' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/MailSettings.php',
+        'SendGrid\\Mail\\MimeType' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/MimeType.php',
+        'SendGrid\\Mail\\OpenTracking' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/OpenTracking.php',
+        'SendGrid\\Mail\\Personalization' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Personalization.php',
+        'SendGrid\\Mail\\PlainTextContent' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/PlainTextContent.php',
+        'SendGrid\\Mail\\ReplyTo' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/ReplyTo.php',
+        'SendGrid\\Mail\\SandBoxMode' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/SandBoxMode.php',
+        'SendGrid\\Mail\\Section' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Section.php',
+        'SendGrid\\Mail\\SendAt' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/SendAt.php',
+        'SendGrid\\Mail\\SpamCheck' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/SpamCheck.php',
+        'SendGrid\\Mail\\Subject' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Subject.php',
+        'SendGrid\\Mail\\SubscriptionTracking' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/SubscriptionTracking.php',
+        'SendGrid\\Mail\\Substitution' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/Substitution.php',
+        'SendGrid\\Mail\\TemplateId' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/TemplateId.php',
+        'SendGrid\\Mail\\To' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/To.php',
+        'SendGrid\\Mail\\TrackingSettings' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/TrackingSettings.php',
+        'SendGrid\\Mail\\TypeException' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail/TypeException.php',
+        'SendGrid\\Response' => __DIR__ . '/..' . '/sendgrid/php-http-client/lib/Response.php',
+        'SendGrid\\Stats\\Stats' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/stats/Stats.php',
         'Svg\\CssLength' => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg/CssLength.php',
         'Svg\\DefaultStyle' => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg/DefaultStyle.php',
         'Svg\\Document' => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg/Document.php',
@@ -3694,8 +3798,8 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'TheSeer\\Tokenizer\\TokenCollectionException' => __DIR__ . '/..' . '/theseer/tokenizer/src/TokenCollectionException.php',
         'TheSeer\\Tokenizer\\Tokenizer' => __DIR__ . '/..' . '/theseer/tokenizer/src/Tokenizer.php',
         'TheSeer\\Tokenizer\\XMLSerializer' => __DIR__ . '/..' . '/theseer/tokenizer/src/XMLSerializer.php',
+        'TwilioEmail' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/TwilioEmail.php',
         'ZipStream\\CentralDirectoryFileHeader' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/CentralDirectoryFileHeader.php',
-        'ZipStream\\CompressionMethod' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/CompressionMethod.php',
         'ZipStream\\DataDescriptor' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/DataDescriptor.php',
         'ZipStream\\EndOfCentralDirectory' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/EndOfCentralDirectory.php',
         'ZipStream\\Exception' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Exception.php',
@@ -3711,10 +3815,8 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'ZipStream\\File' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/File.php',
         'ZipStream\\GeneralPurposeBitFlag' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/GeneralPurposeBitFlag.php',
         'ZipStream\\LocalFileHeader' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/LocalFileHeader.php',
-        'ZipStream\\OperationMode' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/OperationMode.php',
         'ZipStream\\PackField' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/PackField.php',
         'ZipStream\\Time' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Time.php',
-        'ZipStream\\Version' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Version.php',
         'ZipStream\\Zip64\\DataDescriptor' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Zip64/DataDescriptor.php',
         'ZipStream\\Zip64\\EndOfCentralDirectory' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Zip64/EndOfCentralDirectory.php',
         'ZipStream\\Zip64\\EndOfCentralDirectoryLocator' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Zip64/EndOfCentralDirectoryLocator.php',

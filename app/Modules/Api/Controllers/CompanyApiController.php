@@ -154,6 +154,109 @@ class CompanyApiController extends BaseApiController
         return $this->respond(['status' => 'ok', 'companies' => $out]);
     }
 
+    /** GET api/v1/companies/{id} — full details for the edit form (owner only). */
+    public function show($id = null)
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $company = (new CompanyModel())->find((int) $id);
+        if (! $this->owns($user, $company)) {
+            return $this->failForbidden('You can only view a company you own.');
+        }
+
+        return $this->respond(['status' => 'ok', 'company' => [
+            'id'                    => (int) $company['id'],
+            'name'                  => $company['name'],
+            'financial_year_from'   => $company['financial_year_from'] ?? null,
+            'books_beginning_from'  => $company['books_beginning_from'] ?? null,
+            'state'                 => $company['state'] ?? null,
+            'country'               => $company['country'] ?? null,
+            'gst_registration_type' => $company['gst_registration_type'] ?? null,
+            'gst_number'            => $company['gst_number'] ?? null,
+            'business_type'         => $company['business_type'] ?? null,
+            'address'               => $company['address'] ?? null,
+            'mobile'                => $company['mobile'] ?? null,
+            'email'                 => $company['email'] ?? null,
+        ]]);
+    }
+
+    /**
+     * PUT api/v1/companies/{id} — update a company's details (owner only).
+     * Mirrors web CompanyController::update(): same validation, duplicate-name
+     * and GSTIN checks, and the same editable field set.
+     */
+    public function update($id = null)
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $companies = new CompanyModel();
+        $company   = $companies->find((int) $id);
+        if (! $this->owns($user, $company)) {
+            return $this->failForbidden('You can only edit a company you own.');
+        }
+
+        $uid  = (int) $company['owner_id'];
+        $name = trim((string) ($this->input('name') ?? ''));
+
+        // Fall back to the stored values so a partial payload doesn't wipe fields.
+        $financialYear = $this->validDate((string) ($this->input('financial_year_from') ?? ''), (string) ($company['financial_year_from'] ?? ''));
+        $booksFrom     = $this->validDate((string) ($this->input('books_beginning_from') ?? ''), (string) ($company['books_beginning_from'] ?? $financialYear));
+
+        $validation = \Config\Services::validation();
+        $ok = $validation->setRules([
+            'name'                  => 'required|min_length[2]|max_length[191]',
+            'financial_year_from'   => 'required|valid_date[Y-m-d]',
+            'books_beginning_from'  => 'required|valid_date[Y-m-d]',
+            'state'                 => 'required|max_length[100]',
+            'country'               => 'required|max_length[100]',
+            'gst_registration_type' => 'required|max_length[50]',
+        ])->run([
+            'name'                  => $name,
+            'financial_year_from'   => $financialYear,
+            'books_beginning_from'  => $booksFrom,
+            'state'                 => trim((string) ($this->input('state') ?? '')),
+            'country'               => trim((string) ($this->input('country') ?? 'India')) ?: 'India',
+            'gst_registration_type' => (string) ($this->input('gst_registration_type') ?? ''),
+        ]);
+        if (! $ok) {
+            return $this->failValidationErrors($validation->getErrors());
+        }
+
+        // No duplicate firm name for the same owner (excluding this company).
+        if ($companies->nameTakenByUser($name, $uid, (int) $id)) {
+            return $this->failValidationErrors(['name' => 'You already have another company with this name.']);
+        }
+
+        $gst = strtoupper(trim((string) ($this->input('gst_number') ?? '')));
+        if ($gst !== '' && ! preg_match(CompanyModel::GST_REGEX, $gst)) {
+            return $this->failValidationErrors(['gst_number' => 'Enter a valid 15-character GSTIN (e.g. 27ABCDE1234F1Z5).']);
+        }
+
+        $companies->update((int) $id, [
+            'name'                  => $name,
+            'financial_year_from'   => $financialYear,
+            'books_beginning_from'  => $booksFrom,
+            'state'                 => trim((string) ($this->input('state') ?? '')),
+            'country'               => trim((string) ($this->input('country') ?? 'India')) ?: 'India',
+            'gst_registration_type' => (string) ($this->input('gst_registration_type') ?? 'Unregistered') ?: 'Unregistered',
+            'gst_number'            => $gst !== '' ? $gst : null,
+            'address'               => trim((string) ($this->input('address') ?? '')) ?: null,
+            'mobile'                => trim((string) ($this->input('mobile') ?? '')) ?: null,
+            'email'                 => trim((string) ($this->input('email') ?? '')) ?: null,
+            'business_type'         => trim((string) ($this->input('business_type') ?? '')) ?: null,
+        ]);
+
+        if (function_exists('activity_log')) {
+            activity_log('Company', 'Edit', "Company #{$id} ({$name}) details updated (mobile)");
+        }
+
+        return $this->respond(['status' => 'ok', 'message' => 'Company details updated.', 'company_id' => (int) $id]);
+    }
+
     /** Soft-delete (move to Trash) a company the caller owns. */
     public function destroy($id = null)
     {

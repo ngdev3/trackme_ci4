@@ -97,6 +97,17 @@ class GooglePlayApiController extends BaseApiController
             if (function_exists('activity_log')) {
                 activity_log('Subscription', 'Edit', "Play Billing: activated {$plan['name']} (order {$parsed['order_id']})");
             }
+
+            // Email a purchase confirmation to the account that owns the plan.
+            $owner = (new \App\Models\UserModel())->find($ownerId);
+            if ($owner && ! empty($owner['email'])) {
+                \Config\Services::mailer()->subscriptionPurchase((string) $owner['email'], (string) ($owner['name'] ?? ''), [
+                    'plan'       => $plan['name'],
+                    'amount'     => $plan['price'],
+                    'currency'   => '₹',
+                    'expires_at' => (string) $parsed['expiry'],
+                ]);
+            }
         }
 
         return $this->respond([

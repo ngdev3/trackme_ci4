@@ -13,6 +13,9 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->post('auth/google', 'AuthApiController::google');
     $routes->post('auth/forgot-password', 'AuthApiController::forgotPassword');
     $routes->post('auth/change-password', 'AuthApiController::changePassword');
+    // Signup email verification: request a 6-digit code, then verify it.
+    $routes->post('auth/request-email-otp', 'AuthApiController::requestEmailOtp');
+    $routes->post('auth/verify-email-otp', 'AuthApiController::verifyEmailOtp');
     $routes->post('auth/logout', 'AuthApiController::logout');
 
     // Session context: user, companies, active company + role, package features,
@@ -26,6 +29,8 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->get('companies', 'CompanyApiController::index');
     $routes->post('companies', 'CompanyApiController::create');
     $routes->get('companies/trash', 'CompanyApiController::trash');
+    $routes->get('companies/(:num)', 'CompanyApiController::show/$1');
+    $routes->put('companies/(:num)', 'CompanyApiController::update/$1');
     $routes->post('companies/(:num)/restore', 'CompanyApiController::restore/$1');
     $routes->delete('companies/(:num)/purge', 'CompanyApiController::purge/$1');
     $routes->delete('companies/(:num)', 'CompanyApiController::destroy/$1');

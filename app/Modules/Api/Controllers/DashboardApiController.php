@@ -48,6 +48,21 @@ class DashboardApiController extends BaseApiController
         // Percent change of this month's net vs last month's (null when no base).
         $monthSum['net_delta'] = $this->percentDelta($monthSum['net'], $prevSum['net']);
 
+        // Redesigned-dashboard blocks (money-in framed as "sales", money-out as
+        // "expenses"; this is a cash book, so there is no separate purchase feed —
+        // the 4th card shows the running balance instead). Each metric carries a
+        // signed % delta vs last month so the UI can render the up/down chips.
+        $allTime = $this->shapeSummary($txn->summary($cid, []));
+        $metrics = [
+            'sales'    => ['value' => $monthSum['deposits'], 'delta' => $this->percentDelta($monthSum['deposits'], $prevSum['deposits'])],
+            'expenses' => ['value' => $monthSum['expenses'], 'delta' => $this->percentDelta($monthSum['expenses'], $prevSum['expenses'])],
+            'profit'   => ['value' => $monthSum['net'],      'delta' => $this->percentDelta($monthSum['net'],      $prevSum['net'])],
+            'balance'  => ['value' => $allTime['net'],       'delta' => null],
+        ];
+
+        // Last 6 months of money-in / money-out / net for the Sales Overview chart.
+        $series = $this->monthlySeries($txn, $cid, 6);
+
         $recent = array_map(static fn (array $r): array => [
             'id'           => (int) $r['id'],
             'txn_no'       => $r['txn_no'],
@@ -75,9 +90,36 @@ class DashboardApiController extends BaseApiController
                 'month'      => $monthSum,
                 'prev_month' => $prevSum,
             ],
+            'metrics'   => $metrics,
+            'series'    => $series,
             'recent'    => $recent,
             'inventory' => $this->inventorySnapshot($cid, $company, $user),
         ]);
+    }
+
+    /**
+     * Build a month-by-month money-in / money-out / net series for the last
+     * $months calendar months (oldest first), each labelled with its short
+     * month name for the chart axis.
+     *
+     * @return list<array{label:string, month:string, sales:float, expenses:float, net:float}>
+     */
+    private function monthlySeries(TransactionModel $txn, int $cid, int $months): array
+    {
+        $out = [];
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $start = date('Y-m-01', strtotime("first day of -{$i} month"));
+            $end   = date('Y-m-t', strtotime($start));
+            $s     = $this->shapeSummary($txn->summary($cid, ['from' => $start, 'to' => $end]));
+            $out[] = [
+                'label'    => date('M', strtotime($start)),
+                'month'    => date('Y-m', strtotime($start)),
+                'sales'    => $s['deposits'],
+                'expenses' => $s['expenses'],
+                'net'      => $s['net'],
+            ];
+        }
+        return $out;
     }
 
     /** Normalise a TransactionModel::summary() row to rounded, typed fields. */
