@@ -465,7 +465,10 @@ $curStatusLabel = isset($statusMeta[$curStat][0]) ? $statusMeta[$curStat][0] : u
     }
 
     input.addEventListener('input', debouncedFetch);
-    input.addEventListener('focus', function () { if (menu.hidden) { fetchList(); } });
+    // Do NOT pop the whole account list just because the field is focused —
+    // it opens only when the user types a search or presses the Down arrow.
+    // Re-open on focus only if a search term is already present.
+    input.addEventListener('focus', function () { if (menu.hidden && input.value.trim() !== '') { fetchList(); } });
     menu.addEventListener('mousedown', function (e) {
         var filterBtn = e.target.closest('[data-filter]');
         if (filterBtn) {
@@ -479,7 +482,12 @@ $curStatusLabel = isset($statusMeta[$curStat][0]) ? $statusMeta[$curStat][0] : u
         if (it) { e.preventDefault(); pick(+it.getAttribute('data-i')); }
     });
     input.addEventListener('keydown', function (e) {
-        if (menu.hidden || !shown.length) { return; }
+        // Down arrow opens the account list on demand (keyboard-friendly).
+        if (menu.hidden) {
+            if (e.key === 'ArrowDown') { e.preventDefault(); fetchList(); }
+            return;
+        }
+        if (!shown.length) { return; }
         if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, shown.length - 1); paint(); }
         else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); paint(); }
         else if (e.key === 'Enter' && active >= 0) { e.preventDefault(); pick(active); }
