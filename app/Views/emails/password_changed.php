@@ -4,6 +4,8 @@
 <?= $this->extend('emails/layout') ?>
 <?= $this->section('content') ?>
 
+<span style="display:inline-block;margin:0 0 14px;padding:5px 12px;background:#fdeaee;color:#be123c;font-size:11px;font-weight:bold;letter-spacing:.6px;text-transform:uppercase;border-radius:999px;">Security notice</span>
+
 <h2 style="margin:0 0 12px;color:#0f766e;font-size:22px;">Your password was changed</h2>
 
 <p style="margin:0 0 16px;">Hi <?= esc($name) ?>, this is a confirmation that the password for your <strong><?= esc($app) ?></strong> account was changed on <strong><?= esc($when) ?></strong>.</p>

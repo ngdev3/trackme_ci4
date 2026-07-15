@@ -4,6 +4,8 @@
 <?= $this->extend('emails/layout') ?>
 <?= $this->section('content') ?>
 
+<span style="display:inline-block;margin:0 0 14px;padding:5px 12px;background:#fdf1e3;color:#b45309;font-size:11px;font-weight:bold;letter-spacing:.6px;text-transform:uppercase;border-radius:999px;">Password reset</span>
+
 <h2 style="margin:0 0 12px;color:#0f766e;font-size:22px;">Reset your password</h2>
 
 <p style="margin:0 0 16px;">We received a request to reset the password for your <strong><?= esc($app) ?></strong> account. Tap the button below to choose a new one.</p>

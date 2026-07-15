@@ -61,7 +61,7 @@ $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
                 </div>
                 <a href="<?= site_url('admin/customers') ?>" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Customers</a>
                 <a href="<?= site_url('admin/impersonate/' . (int) $user['id']) ?>" class="btn btn-outline-primary"
-                   onclick="return confirm('Sign in as <?= esc($user['name'], 'attr') ?>?');"><i class="bi bi-box-arrow-in-right me-1"></i> Access</a>
+                   data-confirm="You can return to Super Admin anytime." data-confirm-title="Sign in as <?= esc($user['name'], 'attr') ?>?" data-confirm-btn="Sign in" data-confirm-icon="info"><i class="bi bi-box-arrow-in-right me-1"></i> Access</a>
             </div>
         </div>
     </div>
@@ -113,7 +113,7 @@ $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
                 <!-- Deactivate -->
                 <?php if ($sub !== null && $status !== 'cancelled' && $payStatus !== 'unpaid'): ?>
                     <form action="<?= site_url('admin/customers/subscription/' . (int) $user['id'] . '/deactivate') ?>" method="post"
-                          onsubmit="return confirm('Deactivate this subscription? The customer drops to Basic restrictions. Their data is preserved.');">
+                          data-no-validate data-confirm="The customer drops to Basic restrictions. Their data is preserved." data-confirm-title="Deactivate subscription?" data-confirm-btn="Yes, deactivate" data-confirm-icon="warning">
                         <?= csrf_field() ?>
                         <button class="btn btn-outline-danger w-100"><i class="bi bi-slash-circle me-1"></i> Deactivate subscription</button>
                     </form>

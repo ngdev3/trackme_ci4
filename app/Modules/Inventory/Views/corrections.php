@@ -44,12 +44,12 @@ $badge = ['pending' => ['warning', 'Pending'], 'approved' => ['success', 'Approv
                     <?php if ($c['status'] === 'pending' && ! empty($canApprove)): ?>
                         <div class="inv-corr-actions">
                             <form action="<?= site_url('inventory/corrections/approve/' . $c['id']) ?>" method="post"
-                                  onsubmit="return confirm('Approve this correction? An adjustment entry will be created and stock reconciled.');">
+                                  data-no-validate data-confirm="An adjustment entry will be created and stock reconciled." data-confirm-title="Approve correction?" data-confirm-btn="Yes, approve" data-confirm-icon="info">
                                 <?= csrf_field() ?>
                                 <button class="btn btn-success"><i class="bi bi-check2-circle me-1"></i>Approve</button>
                             </form>
                             <form action="<?= site_url('inventory/corrections/reject/' . $c['id']) ?>" method="post"
-                                  onsubmit="return confirm('Reject this correction? Stock stays unchanged.');">
+                                  data-no-validate data-confirm="Stock stays unchanged." data-confirm-title="Reject correction?" data-confirm-btn="Yes, reject">
                                 <?= csrf_field() ?>
                                 <button class="btn btn-outline-danger"><i class="bi bi-x-circle me-1"></i>Reject</button>
                             </form>

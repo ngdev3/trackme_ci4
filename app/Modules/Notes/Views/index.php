@@ -148,7 +148,7 @@
                                     <a href="<?= site_url('notes/edit/' . $n['id']) ?>" class="btn btn-sm btn-outline-primary py-0"><i class="bi bi-pencil"></i></a>
                                 <?php endif; ?>
                                 <?php if (can($moduleCode, 'delete')): ?>
-                                    <form action="<?= site_url('notes/delete/' . $n['id']) ?>" method="post" onsubmit="return confirm('Move this note to the recycle bin?');" class="d-inline">
+                                    <form action="<?= site_url('notes/delete/' . $n['id']) ?>" method="post" data-no-validate data-confirm="This note will be moved to the recycle bin." data-confirm-title="Move to recycle bin?" data-confirm-btn="Yes, move" data-confirm-icon="warning" class="d-inline">
                                         <?= csrf_field() ?>
                                         <button class="btn btn-sm btn-outline-danger py-0"><i class="bi bi-trash"></i></button>
                                     </form>
@@ -186,7 +186,7 @@
                             <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                 <span><span class="badge" style="background:<?= esc($c['color'] ?: '#6c757d', 'attr') ?>">&nbsp;</span> <?= esc($c['name']) ?></span>
                                 <form action="<?= site_url('notes/category/delete/' . $c['id']) ?>" method="post"
-                                      onsubmit="return confirm('Delete this category? Notes keep their content but lose this label.');">
+                                      data-no-validate data-confirm="Notes keep their content but lose this label." data-confirm-title="Delete category?" data-confirm-btn="Yes, delete">
                                     <?= csrf_field() ?>
                                     <button class="btn btn-sm btn-outline-danger py-0"><i class="bi bi-trash"></i></button>
                                 </form>

@@ -5,9 +5,8 @@
     'heroLede'  => 'Users, roles, permissions and daily operations — all revolving around a single secure command center.',
 ]) ?>
 
-                <div class="mobile-logo"><i class="bi bi-boxes"></i></div>
-                <h2>Welcome back 🚀</h2>
-                <p class="subtitle">Sign in to launch your admin dashboard.</p>
+                <h2>Welcome back 👋</h2>
+                <p class="subtitle">Sign in to your <?= esc(setting('app_name', 'HissabKitaab')) ?> dashboard.</p>
 
                 <?= flash_alerts() ?>
 

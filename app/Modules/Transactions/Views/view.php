@@ -109,7 +109,7 @@ $human = function ($b) { $b = (int) $b; if ($b < 1024) return $b . ' B'; if ($b 
                                         </label>
                                     <?php endif; ?>
                                     <?php if (can($moduleCode, 'delete')): ?>
-                                        <form action="<?= site_url('transactions/file/' . hid($a['id']) . '/delete') ?>" method="post" onsubmit="return confirm('Delete this attachment?');" class="d-inline">
+                                        <form action="<?= site_url('transactions/file/' . hid($a['id']) . '/delete') ?>" method="post" data-no-validate data-confirm="This attachment will be deleted." data-confirm-title="Delete attachment?" data-confirm-btn="Yes, delete" class="d-inline">
                                             <?= csrf_field() ?>
                                             <button class="tx-chip-icn tx-kind-pdf" title="Delete"><i class="bi bi-trash"></i></button>
                                         </form>

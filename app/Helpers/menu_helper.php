@@ -336,6 +336,7 @@ if (! function_exists('render_sidebar')) {
                 ['Customers', 'admin/customers', 'bi bi-people'],
                 ['Firms', 'admin/firms', 'bi bi-building'],
                 ['Transactions', 'admin/transactions', 'bi bi-receipt'],
+                ['Inquiries', 'admin/inquiries', 'bi bi-chat-left-text'],
                 ['Plans & Pricing', 'admin/plans', 'bi bi-card-checklist'],
             ];
             $bestIdx = -1;

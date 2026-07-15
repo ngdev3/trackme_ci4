@@ -31,7 +31,37 @@ $human = function ($b) { $b = (int) $b; if ($b < 1024) return $b . ' B'; if ($b 
         <tr><th>Status</th><td><span class="tx-status <?= $statusCls ?>"><?= esc(ucfirst($row['status'])) ?></span></td></tr>
         <tr><th>Source</th><td><?= $srcBadge ?></td></tr>
         <tr><th>Remarks</th><td><?= esc($row['notes'] ?: '—') ?></td></tr>
-        <tr><th>Created</th><td><?= esc(date('d M Y, H:i', strtotime($row['created_at']))) ?></td></tr>
+        <tr>
+            <th>Added by</th>
+            <td>
+                <span class="fw-semibold"><?= esc($author ?? 'Unknown') ?></span>
+                <?php if (! empty($row['created_at'])): ?>
+                    <span class="text-secondary">· <?= esc(date('d M Y, h:i A', strtotime($row['created_at']))) ?></span>
+                <?php endif; ?>
+            </td>
+        </tr>
+        <?php if (! empty($row['updated_at']) && ! empty($row['created_at']) && strtotime($row['updated_at']) - strtotime($row['created_at']) > 60): ?>
+            <tr><th>Last edited</th><td class="text-secondary"><?= esc(date('d M Y, h:i A', strtotime($row['updated_at']))) ?></td></tr>
+        <?php endif; ?>
+        <tr>
+            <th>Entry</th>
+            <td>
+                <?php if (! empty($row['restored_at'])): ?>
+                    <span class="rp-badge rp-badge-app"><i class="bi bi-arrow-counterclockwise"></i> Restored<?= (int) ($row['restore_count'] ?? 0) > 1 ? ' ' . (int) $row['restore_count'] . '×' : '' ?></span>
+                    <span class="text-secondary">· last on <?= esc(date('d M Y, h:i A', strtotime($row['restored_at']))) ?></span>
+                <?php else: ?>
+                    <span class="rp-badge rp-badge-web"><i class="bi bi-stars"></i> Fresh entry</span>
+                <?php endif; ?>
+            </td>
+        </tr>
+        <?php if (! empty($row['delete_reason'])): ?>
+            <tr>
+                <th>Delete reason</th>
+                <td><i class="bi bi-info-circle text-warning"></i> <span class="fst-italic"><?= esc($row['delete_reason']) ?></span>
+                    <div class="text-secondary" style="font-size:.75rem">Reason recorded the last time this entry was deleted.</div>
+                </td>
+            </tr>
+        <?php endif; ?>
     </table>
 
     <!-- Attachments -->

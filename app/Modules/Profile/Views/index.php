@@ -21,7 +21,7 @@
                         <button class="btn btn-primary btn-sm"><i class="bi bi-upload me-1"></i> Upload Photo</button>
                         <?php if (! empty($row['profile_image'])): ?>
                             <button type="submit" formaction="<?= site_url('profile/avatar/remove') ?>" class="btn btn-outline-danger btn-sm"
-                                    formnovalidate onclick="return confirm('Remove your profile photo?');">
+                                    formnovalidate data-confirm="Your profile photo will be removed." data-confirm-title="Remove photo?" data-confirm-btn="Yes, remove">
                                 <i class="bi bi-trash me-1"></i> Remove
                             </button>
                         <?php endif; ?>
@@ -156,7 +156,7 @@
                             <div>
                                 <?php if ($connected): ?>
                                     <form action="<?= site_url('account/unlink/' . $key) ?>" method="post" class="d-inline"
-                                          onsubmit="return confirm('Disconnect your <?= esc($label, 'attr') ?> account?');">
+                                          data-no-validate data-confirm="Your <?= esc($label, 'attr') ?> account will be disconnected." data-confirm-title="Disconnect account?" data-confirm-btn="Yes, disconnect" data-confirm-icon="warning">
                                         <?= csrf_field() ?>
                                         <button type="submit" class="btn btn-outline-danger btn-sm"
                                             <?= $hasPassword ? '' : 'disabled title="Set a password first to disconnect"' ?>>

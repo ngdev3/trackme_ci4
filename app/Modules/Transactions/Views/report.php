@@ -1,11 +1,24 @@
 <?php
 /** Rokad Parcha (cash book) report — period selector + cash-book table. In layout.php. */
+use App\Models\TransactionModel;
+
 $fmt = fn ($n) => number_format((float) $n, 2);
 $in  = $in;
 $p   = $period;
 $ts  = time();
 $curFy = (int) date('n', $ts) >= 4 ? (int) date('Y', $ts) : (int) date('Y', $ts) - 1;
 $qs  = fn (array $extra = []) => http_build_query(array_merge(array_filter($in), $extra));
+
+$authors   = $authors ?? [];
+$modeLabels = TransactionModel::MODE_LABELS;
+$statusCls  = ['paid' => 'tx-paid', 'pending' => 'tx-pending', 'overdue' => 'tx-overdue', 'cancelled' => 'tx-cancelled', 'draft' => 'tx-draft'];
+
+$srcBadge = static fn (?string $s): string => $s === 'app'
+    ? '<span class="rp-badge rp-badge-app"><i class="bi bi-phone"></i> App</span>'
+    : '<span class="rp-badge rp-badge-web"><i class="bi bi-display"></i> Web</span>';
+$typeBadge = static fn (string $t): string => $t === 'naam'
+    ? '<span class="tx-type tx-expense"><i class="bi bi-arrow-down-left"></i> Naam</span>'
+    : '<span class="tx-type tx-income"><i class="bi bi-arrow-up-right"></i> Jama</span>';
 ?>
 
 <!-- ===== Period selector ===== -->
@@ -96,24 +109,44 @@ $qs  = fn (array $extra = []) => http_build_query(array_merge(array_filter($in),
         <div class="table-responsive">
             <table class="table align-middle mb-0 tm-table">
                 <thead><tr>
-                    <th>#</th><th>Date</th><th>Txn No</th><th>Party</th><th>Mode</th>
+                    <th>#</th><th>Date</th><th>Txn No</th><th>Party</th><th>Party Type</th><th>Type</th>
+                    <th>Mode</th><th>Status</th><th>Source</th><th>Added By</th><th>Entry</th><th>Remarks</th>
                     <th class="text-end">Jama (In)</th><th class="text-end">Naam (Out)</th><th class="text-end">Balance</th>
                 </tr></thead>
                 <tbody>
                     <tr class="table-light fw-semibold">
-                        <td></td><td colspan="4">Opening Balance</td>
+                        <td></td><td colspan="11">Opening Balance</td>
                         <td class="text-end">—</td><td class="text-end">—</td>
                         <td class="text-end tx-bal">&#8377; <?= $fmt($opening) ?></td>
                     </tr>
                     <?php if (empty($rows)): ?>
-                        <tr><td colspan="8" class="text-center text-secondary py-4">No transactions in this period.</td></tr>
-                    <?php else: $i = 1; foreach ($rows as $r): ?>
+                        <tr><td colspan="15" class="text-center text-secondary py-4">No transactions in this period.</td></tr>
+                    <?php else: $i = 1; foreach ($rows as $r):
+                        $rc  = (int) ($r['restore_count'] ?? 0);
+                        $who = $authors[(int) ($r['user_id'] ?? 0)] ?? 'Unknown';
+                    ?>
                         <tr>
                             <td><?= $i++ ?></td>
                             <td class="text-nowrap"><?= esc(date('d M Y', strtotime($r['txn_date']))) ?></td>
                             <td><span class="tx-no"><?= esc($r['txn_no']) ?></span></td>
-                            <td><?= esc($r['name']) ?></td>
-                            <td class="text-capitalize small text-secondary"><?= esc($r['payment_mode']) ?></td>
+                            <td class="fw-semibold"><?= esc($r['name']) ?></td>
+                            <td><?= ! empty($r['party_type']) ? '<span class="rp-chip rp-chip-party">' . esc($r['party_type']) . '</span>' : '<span class="text-secondary">—</span>' ?></td>
+                            <td><?= $typeBadge($r['type']) ?></td>
+                            <td class="small"><?= esc($modeLabels[$r['payment_mode']] ?? ucfirst((string) $r['payment_mode'])) ?></td>
+                            <td><span class="tx-status <?= $statusCls[$r['status']] ?? 'tx-cancelled' ?>"><?= esc(ucfirst((string) $r['status'])) ?></span></td>
+                            <td><?= $srcBadge($r['source'] ?? 'web') ?></td>
+                            <td class="small text-nowrap">
+                                <div class="fw-semibold"><?= esc($who) ?></div>
+                                <?php if (! empty($r['created_at'])): ?><div class="text-secondary" style="font-size:.72rem"><?= esc(date('d M Y, h:i A', strtotime($r['created_at']))) ?></div><?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($rc > 0): ?>
+                                    <span class="rp-info-restored" title="Deleted &amp; restored <?= $rc ?> time<?= $rc === 1 ? '' : 's' ?><?= ! empty($r['restored_at']) ? ', last on ' . esc(date('d M Y, h:i A', strtotime($r['restored_at'])), 'attr') : '' ?>"><i class="bi bi-arrow-counterclockwise"></i> Restored <?= $rc ?>&times;</span>
+                                <?php else: ?>
+                                    <span class="rp-info-fresh"><i class="bi bi-stars"></i> Fresh</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="small text-secondary"><?= ! empty($r['notes']) ? esc(character_limiter($r['notes'], 40)) : '—' ?></td>
                             <td class="text-end tx-amt-jama"><?= $r['type'] === 'jama' ? '&#8377; ' . $fmt($r['amount']) : '' ?></td>
                             <td class="text-end tx-amt-naam"><?= $r['type'] === 'naam' ? '&#8377; ' . $fmt($r['amount']) : '' ?></td>
                             <td class="text-end fw-semibold tx-bal">&#8377; <?= $fmt($r['balance']) ?></td>
@@ -122,7 +155,7 @@ $qs  = fn (array $extra = []) => http_build_query(array_merge(array_filter($in),
                 </tbody>
                 <tfoot>
                     <tr class="table-light fw-bold">
-                        <td></td><td colspan="4">Closing Balance</td>
+                        <td></td><td colspan="11">Closing Balance</td>
                         <td class="text-end tx-amt-jama">&#8377; <?= $fmt($totalJama) ?></td>
                         <td class="text-end tx-amt-naam">&#8377; <?= $fmt($totalNaam) ?></td>
                         <td class="text-end tx-closing">&#8377; <?= $fmt($closing) ?></td>

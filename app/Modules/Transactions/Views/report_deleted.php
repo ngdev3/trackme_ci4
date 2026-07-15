@@ -7,7 +7,18 @@ $dmy = fn ($d) => date('d-m-Y', strtotime($d));
     <div class="card tm-table-card">
         <div class="tm-table-head">
             <h3 class="tm-table-title"><i class="bi bi-trash"></i> Deleted Entries — <?= esc($dmy($date)) ?></h3>
-            <a href="<?= site_url('transactions/report') . '?period=day&date=' . esc($date) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Rokadh Parcha</a>
+            <div class="d-flex flex-wrap gap-2">
+                <?php if (! empty($rows) && can($moduleCode, 'delete')): ?>
+                    <form action="<?= site_url('transactions/report/force-delete-all') ?>" method="post" class="d-inline"
+                          data-no-validate data-confirm="This will permanently erase all <?= count($rows) ?> deleted entr<?= count($rows) === 1 ? 'y' : 'ies' ?> for this date, including their attachments. This cannot be undone."
+                          data-confirm-title="Empty trash for this date?" data-confirm-btn="Yes, delete forever" data-confirm-icon="warning">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="date" value="<?= esc($date, 'attr') ?>">
+                        <button class="btn btn-sm btn-danger"><i class="bi bi-trash3"></i> Empty permanently</button>
+                    </form>
+                <?php endif; ?>
+                <a href="<?= site_url('transactions/report') . '?period=day&date=' . esc($date) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Rokadh Parcha</a>
+            </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -28,11 +39,19 @@ $dmy = fn ($d) => date('d-m-Y', strtotime($d));
                             <td class="text-end fw-semibold <?= $r['type'] === 'jama' ? 'tx-amt-jama' : 'tx-amt-naam' ?>">&#8377; <?= $fmt($r['amount']) ?></td>
                             <td class="small"><?= esc($r['delete_reason'] ?: '—') ?></td>
                             <td class="small text-secondary"><?= esc($r['deleted_at'] ? date('d M Y, H:i', strtotime($r['deleted_at'])) : '—') ?></td>
-                            <td class="text-end">
+                            <td class="text-end text-nowrap">
                                 <?php if (can($moduleCode, 'edit')): ?>
-                                    <form action="<?= site_url('transactions/report/restore/' . hid($r['id'])) ?>" method="post" class="d-inline" onsubmit="return confirm('Restore this entry?');">
+                                    <form action="<?= site_url('transactions/report/restore/' . hid($r['id'])) ?>" method="post" class="d-inline" data-no-validate data-confirm="This entry will be restored to the ledger." data-confirm-title="Restore entry?" data-confirm-btn="Yes, restore" data-confirm-icon="info">
                                         <?= csrf_field() ?>
                                         <button class="btn btn-sm btn-outline-success"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                                    </form>
+                                <?php endif; ?>
+                                <?php if (can($moduleCode, 'delete')): ?>
+                                    <form action="<?= site_url('transactions/report/force-delete/' . hid($r['id'])) ?>" method="post" class="d-inline"
+                                          data-no-validate data-confirm="Entry <?= esc($r['txn_no'], 'attr') ?> and its attachments will be permanently erased. This cannot be undone."
+                                          data-confirm-title="Delete permanently?" data-confirm-btn="Yes, delete forever" data-confirm-icon="warning">
+                                        <?= csrf_field() ?>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete permanently"><i class="bi bi-trash3"></i> Delete forever</button>
                                     </form>
                                 <?php endif; ?>
                             </td>

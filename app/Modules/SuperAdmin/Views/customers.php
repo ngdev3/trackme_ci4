@@ -45,10 +45,10 @@
                         <td class="text-end text-nowrap">
                             <a href="<?= site_url('admin/customers/subscription/' . $r['id']) ?>" class="btn btn-sm btn-outline-info" title="Manage subscription"><i class="bi bi-gem"></i></a>
                             <a href="<?= site_url('admin/impersonate/' . $r['id']) ?>" class="btn btn-sm btn-outline-primary" title="Access this account"
-                               onclick="return confirm('Sign in as <?= esc($r['name'], 'attr') ?>? You can return to Super Admin anytime.');">
+                               data-confirm="You can return to Super Admin anytime." data-confirm-title="Sign in as <?= esc($r['name'], 'attr') ?>?" data-confirm-btn="Sign in" data-confirm-icon="info">
                                 <i class="bi bi-box-arrow-in-right"></i>
                             </a>
-                            <form action="<?= site_url('admin/customers/reset/' . $r['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Force this customer to reset their password on next login?');">
+                            <form action="<?= site_url('admin/customers/reset/' . $r['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="This customer will be forced to reset their password on next login." data-confirm-title="Reset access?" data-confirm-btn="Yes, reset" data-confirm-icon="warning">
                                 <?= csrf_field() ?>
                                 <button class="btn btn-sm btn-outline-warning" title="Reset access"><i class="bi bi-key"></i></button>
                             </form>

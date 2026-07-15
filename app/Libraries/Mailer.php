@@ -49,9 +49,10 @@ class Mailer
     {
         $app  = $this->appName();
         $html = $this->render('welcome', [
-            'app'  => $app,
-            'name' => $name !== '' ? $name : 'there',
-            'url'  => site_url('dashboard'),
+            'app'       => $app,
+            'name'      => $name !== '' ? $name : 'there',
+            'url'       => site_url('dashboard'),
+            'preheader' => 'Your ' . $app . ' account is ready — add your first firm to get started.',
         ]);
         return $this->send($to, 'Welcome to ' . $app . ' 🎉', $html);
     }
@@ -60,9 +61,10 @@ class Mailer
     public function emailOtp(string $to, string $code, int $ttlMinutes = 10): bool
     {
         $html = $this->render('otp', [
-            'app'  => $this->appName(),
-            'code' => $code,
-            'ttl'  => $ttlMinutes,
+            'app'       => $this->appName(),
+            'code'      => $code,
+            'ttl'       => $ttlMinutes,
+            'preheader' => 'Your verification code is ' . $code . ' (valid ' . $ttlMinutes . ' minutes).',
         ]);
         return $this->send($to, $code . ' is your ' . $this->appName() . ' verification code', $html);
     }
@@ -80,6 +82,7 @@ class Mailer
             'invoiceNo' => (string) ($details['invoice_no'] ?? ''),
             'expiresAt' => (string) ($details['expires_at'] ?? ''),
             'url'       => site_url('subscription/transactions'),
+            'preheader' => 'Payment received — your ' . (string) ($details['plan'] ?? '') . ' plan is now active.',
         ]);
         return $this->send($to, 'Your ' . $app . ' subscription is active', $html);
     }
@@ -88,9 +91,10 @@ class Mailer
     public function passwordReset(string $to, string $link, int $ttlMinutes = 60): bool
     {
         $html = $this->render('reset', [
-            'app'  => $this->appName(),
-            'link' => $link,
-            'ttl'  => $ttlMinutes,
+            'app'       => $this->appName(),
+            'link'      => $link,
+            'ttl'       => $ttlMinutes,
+            'preheader' => 'Reset your password — this link expires in ' . $ttlMinutes . ' minutes.',
         ]);
         return $this->send($to, 'Reset your ' . $this->appName() . ' password', $html);
     }
@@ -100,10 +104,11 @@ class Mailer
     {
         $app  = $this->appName();
         $html = $this->render('password_changed', [
-            'app'  => $app,
-            'name' => $name !== '' ? $name : 'there',
-            'when' => date('d M Y, H:i'),
-            'url'  => site_url('forgot-password'),
+            'app'       => $app,
+            'name'      => $name !== '' ? $name : 'there',
+            'when'      => date('d M Y, H:i'),
+            'url'       => site_url('forgot-password'),
+            'preheader' => 'Security notice: your ' . $app . ' password was just changed.',
         ]);
         return $this->send($to, 'Your ' . $app . ' password was changed', $html);
     }

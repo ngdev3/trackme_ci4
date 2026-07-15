@@ -39,7 +39,7 @@ $qs = '?date=' . urlencode($date);
                         <span>Locked<?= ! empty($existing['closed_at']) ? ' on ' . esc(date('d M Y, H:i', strtotime($existing['closed_at']))) : '' ?>. Entries for this day cannot be edited.</span>
                     </div>
                     <?php if ($canApprove): ?>
-                        <form method="post" action="<?= site_url('inventory/closing/reopen') ?>" onsubmit="return confirm('Reopen this day so entries can be edited again?');">
+                        <form method="post" action="<?= site_url('inventory/closing/reopen') ?>" data-no-validate data-confirm="Entries for this day can be edited again once reopened." data-confirm-title="Reopen this day?" data-confirm-btn="Yes, reopen" data-confirm-icon="warning">
                             <?= csrf_field() ?>
                             <input type="hidden" name="date" value="<?= esc($date, 'attr') ?>">
                             <button class="btn btn-light border"><i class="bi bi-unlock me-1"></i>Reopen</button>
@@ -99,7 +99,7 @@ $qs = '?date=' . urlencode($date);
 
             <!-- Close action -->
             <?php if (! $closed && ! $isFuture && ! empty($canClose)): ?>
-                <form method="post" action="<?= site_url('inventory/closing/close') ?>" onsubmit="return confirm('Close inventory for <?= esc($date) ?>? Workers will not be able to add or edit entries for this day until it is reopened.');">
+                <form method="post" action="<?= site_url('inventory/closing/close') ?>" data-no-validate data-confirm="Workers will not be able to add or edit entries for <?= esc($date) ?> until it is reopened." data-confirm-title="Close inventory for the day?" data-confirm-btn="Yes, close" data-confirm-icon="warning">
                     <?= csrf_field() ?>
                     <input type="hidden" name="date" value="<?= esc($date, 'attr') ?>">
                     <input type="text" name="notes" class="form-control mb-2" placeholder="Closing note (optional)">

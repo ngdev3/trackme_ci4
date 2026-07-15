@@ -101,7 +101,7 @@ $updated = ! empty($row['updated_at']) ? date('d M Y, H:i', strtotime($row['upda
                         <a href="<?= site_url('passwords/edit/' . $token) ?>" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>Edit Password</a>
                     <?php endif; ?>
                     <?php if (! empty($canDelete)): ?>
-                        <form action="<?= site_url('passwords/delete/' . $token) ?>" method="post" onsubmit="return confirm('Delete this password entry? This cannot be undone.');">
+                        <form action="<?= site_url('passwords/delete/' . $token) ?>" method="post" data-no-validate data-confirm="This password entry will be deleted. This cannot be undone." data-confirm-title="Delete password?" data-confirm-btn="Yes, delete" data-confirm-icon="error">
                             <?= csrf_field() ?>
                             <button class="btn btn-outline-danger w-100"><i class="bi bi-trash me-1"></i>Delete</button>
                         </form>

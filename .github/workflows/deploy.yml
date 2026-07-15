@@ -3,8 +3,10 @@ name: Deploy to Hostinger
 # Runs on every push to main, and can be triggered by hand from the
 # Actions tab (Run workflow). Builds vendor/ on the SERVER's PHP version
 # (8.2) in the cloud runner — plenty of memory, correct platform — then
-# uploads the finished app to Hostinger over FTP. The server never runs
-# composer, so the OOM + PHP-version problems can't happen.
+# syncs the finished app to Hostinger over rsync/SSH. The server never runs
+# composer, so the OOM + PHP-version problems can't happen; rsync only
+# transfers changed files, so deploying vendor/ is fast and reliable
+# (unlike FTP, which chokes on tens of thousands of tiny vendor files).
 
 on:
   push:
@@ -34,26 +36,28 @@ jobs:
       - name: Install PHP dependencies (production)
         run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-      - name: Deploy to Hostinger over FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          # Folder on the server that maps to the site root (contains the
-          # root .htaccess + public/). For a domain-scoped FTP account this
-          # is usually "./"; for the main account it is "public_html/".
-          server-dir: ${{ secrets.FTP_SERVER_DIR }}
-          protocol: ftps
-          # Never touch server-only files: runtime secrets, uploads, logs,
-          # sessions, cache, local DB dumps, repo/CI metadata.
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/.github/**
-            **/node_modules/**
-            .env
-            env
-            deploy/**
-            writable/**
-            tests/**
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      # rsync the built app to the site root. -a preserves structure; we skip
+      # perms/owner (shared hosting sets its own). Excludes keep server-only
+      # files intact: runtime secrets, uploads, logs, sessions, cache, CI meta.
+      # NOTE: no --delete, matching the previous FTP behaviour (won't remove
+      # server files). Add --delete later if you want a strict mirror.
+      - name: Deploy over rsync/SSH
+        run: |
+          rsync -rlz --no-perms --no-owner --no-group --omit-dir-times \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='.env' \
+            --exclude='env' \
+            --exclude='deploy' \
+            --exclude='writable' \
+            --exclude='tests' \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }}" \
+            ./ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/"

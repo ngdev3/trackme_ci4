@@ -40,7 +40,7 @@
                         <td class="text-end">
                             <a href="<?= site_url('accounting/vouchers/view/' . $v['id']) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
                             <?php if ($canEdit): ?>
-                                <form action="<?= site_url('accounting/vouchers/delete/' . $v['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Delete this voucher?');">
+                                <form action="<?= site_url('accounting/vouchers/delete/' . $v['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="This voucher will be deleted." data-confirm-title="Delete voucher?" data-confirm-btn="Yes, delete">
                                     <?= csrf_field() ?>
                                     <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                                 </form>

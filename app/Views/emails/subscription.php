@@ -6,6 +6,8 @@
 <?= $this->extend('emails/layout') ?>
 <?= $this->section('content') ?>
 
+<span style="display:inline-block;margin:0 0 14px;padding:5px 12px;background:#e6f6ec;color:#15803d;font-size:11px;font-weight:bold;letter-spacing:.6px;text-transform:uppercase;border-radius:999px;">Payment confirmed</span>
+
 <h2 style="margin:0 0 12px;color:#0f766e;font-size:22px;">Payment received — you're all set ✅</h2>
 
 <p style="margin:0 0 16px;">Hi <?= esc($name) ?>, thank you for subscribing. Your <strong><?= esc($plan) ?></strong> plan on <strong><?= esc($app) ?></strong> is now active.</p>

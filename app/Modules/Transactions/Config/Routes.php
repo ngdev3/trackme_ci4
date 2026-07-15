@@ -50,6 +50,8 @@ $routes->group('transactions', ['namespace' => 'Modules\Transactions\Controllers
     $routes->get('report/breakdown/print', 'ReportController::breakdownPrint', ['filter' => 'permission:transactions,view']);
     $routes->get('report/breakdown/export/(csv|xlsx|pdf)', 'ExportController::breakdown/$1', ['filter' => 'permission:transactions,export']);
     $routes->post('report/restore/(:segment)', 'ReportController::restore/$1', ['filter' => 'permission:transactions,edit']);
+    $routes->post('report/force-delete/(:segment)', 'ReportController::forceDelete/$1', ['filter' => 'permission:transactions,delete']);
+    $routes->post('report/force-delete-all', 'ReportController::forceDeleteAll', ['filter' => 'permission:transactions,delete']);
 
     // Shri Rokad Nagad — per-financial-year opening cash
     $routes->get('opening', 'ReportController::opening', ['filter' => 'permission:transactions,view']);

@@ -303,6 +303,20 @@
         });
     });
 
+    // Buttons carrying data-confirm (incl. those with formaction/formnovalidate):
+    // confirm in-app, then submit their form using this button as the submitter.
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-confirm]');
+        if (!btn) { return; }
+        e.preventDefault();
+        askConfirm(btn, function () {
+            var form = btn.form;
+            if (!form) { return; }
+            if (typeof form.requestSubmit === 'function') { form.requestSubmit(btn); }
+            else { form.submit(); }
+        });
+    }, true);
+
     /* ---------------- Form input guard (app-wide) ----------------
      * Enforces each field's own HTML5 rules (required / min / max /
      * maxlength / pattern / type) consistently on every form, and clamps
@@ -338,6 +352,7 @@
         document.addEventListener('submit', function (e) {
             const form = e.target;
             if (!(form instanceof HTMLFormElement) || form.hasAttribute('data-no-validate')) { return; }
+            if (e.submitter && e.submitter.formNoValidate) { return; } // honour a formnovalidate button
             form.querySelectorAll('input[type="number"]').forEach(clampNumber);
             if (!form.checkValidity()) {
                 e.preventDefault();

@@ -5,9 +5,8 @@
     'heroLede'  => 'Enter your account email and we will send a secure link to reset your password and relaunch your console.',
 ]) ?>
 
-                <div class="mobile-logo"><i class="bi bi-key"></i></div>
                 <h2>Reset password 🔑</h2>
-                <p class="subtitle">Enter your email to receive a reset link.</p>
+                <p class="subtitle">Enter your email to receive a secure reset link.</p>
 
                 <?= flash_alerts() ?>
 

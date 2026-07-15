@@ -130,7 +130,7 @@ $totalRows = (int) ($stats['total'] ?? 0);
                                             <a href="<?= site_url('passwords/edit/' . $token) ?>" class="btn btn-sm btn-icon" title="Edit"><i class="bi bi-pencil"></i></a>
                                         <?php endif; ?>
                                         <?php if (! empty($canDelete)): ?>
-                                            <form action="<?= site_url('passwords/delete/' . $token) ?>" method="post" onsubmit="return confirm('Delete this password entry? This cannot be undone.');">
+                                            <form action="<?= site_url('passwords/delete/' . $token) ?>" method="post" data-no-validate data-confirm="This password entry will be deleted. This cannot be undone." data-confirm-title="Delete password?" data-confirm-btn="Yes, delete" data-confirm-icon="error">
                                                 <?= csrf_field() ?>
                                                 <button class="btn btn-sm btn-icon text-danger" title="Delete"><i class="bi bi-trash"></i></button>
                                             </form>

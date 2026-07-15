@@ -5,7 +5,7 @@
 $company    = 'CR Industries';
 $appName    = 'HissabKitaab';
 $package    = 'com.crind.hissabkitaab';
-$contact    = 'hissabkitaab2026@gmail.com';
+$contact    = 'support@hissabkitaab.com';
 $website    = 'https://hissabkitaab.com/';
 $privacyUrl = 'http://hissabkitaab.com/privacy';
 $updated    = '11 July 2026';

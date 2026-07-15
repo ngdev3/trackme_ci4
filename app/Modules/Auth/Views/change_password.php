@@ -5,7 +5,6 @@
     'heroLede'  => 'Set a strong password you have not used before to continue.',
 ]) ?>
 
-                <div class="mobile-logo"><i class="bi bi-shield-lock"></i></div>
                 <h2><?= $forced ? 'Update your password' : 'Change password' ?></h2>
                 <p class="subtitle">
                     <?= $forced

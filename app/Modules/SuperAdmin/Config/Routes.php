@@ -30,6 +30,10 @@ $routes->group('admin', ['namespace' => 'Modules\SuperAdmin\Controllers', 'filte
     $routes->post('plans/payment', 'SuperAdminController::savePayment');
     $routes->post('plans/invoice', 'SuperAdminController::saveInvoice');
 
+    // Public inquiry / contact-form submissions.
+    $routes->get('inquiries', 'SuperAdminController::inquiries');
+    $routes->post('inquiries/status/(:num)', 'SuperAdminController::inquiryStatus/$1');
+
     // Transactions / payments oversight.
     $routes->get('transactions', 'SuperAdminController::transactions');
     $routes->post('transactions/refund/(:num)', 'SuperAdminController::refundTransaction/$1');

@@ -116,6 +116,35 @@ class TransactionApiController extends BaseApiController
     }
 
     /**
+     * GET api/v1/transactions/parties?q= — type-ahead account (party) suggestions
+     * for the add/entry forms. Returns the caller's own previously-used party
+     * names (most active first) filtered by the query, so the same account can be
+     * picked again instead of retyped. Mirrors the web entry form's picker
+     * (TransactionModel::searchParties). Empty `q` returns the top recent parties.
+     */
+    public function parties()
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+
+        $q     = trim((string) ($this->request->getGet('q') ?? ''));
+        $limit = (int) ($this->request->getGet('limit') ?? 20);
+
+        $rows = (new TransactionModel())->searchParties($cid, $q, $limit);
+
+        $parties = array_map(static fn (array $r): array => [
+            'name'      => (string) $r['name'],
+            'count'     => (int) $r['count'],
+            'net'       => round((float) $r['net'], 2),
+            'last_date' => $r['last_date'] ?? null,
+        ], $rows);
+
+        return $this->respond(['status' => 'ok', 'parties' => $parties]);
+    }
+
+    /**
      * GET api/v1/transactions/entry/{id} — one entry, honouring company scope.
      */
     public function entry($id = null)

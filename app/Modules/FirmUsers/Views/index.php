@@ -23,7 +23,7 @@
                         <td><small class="text-muted"><?= $r['last_login_at'] ? esc(date('d M Y, H:i', strtotime($r['last_login_at']))) : 'Never' ?></small></td>
                         <td class="text-end">
                             <a href="<?= site_url('firm-users/edit/' . $r['user_id']) ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
-                            <form action="<?= site_url('firm-users/delete/' . $r['user_id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Remove this user from the firm?');">
+                            <form action="<?= site_url('firm-users/delete/' . $r['user_id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="This user will be removed from the firm." data-confirm-title="Remove user?" data-confirm-btn="Yes, remove">
                                 <?= csrf_field() ?>
                                 <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                             </form>

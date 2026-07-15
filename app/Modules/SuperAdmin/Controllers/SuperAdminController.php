@@ -480,6 +480,46 @@ class SuperAdminController extends BaseController
     // Transactions / payments management
     // ---------------------------------------------------------------
 
+    /** Public inquiry / contact-form submissions, newest first. */
+    public function inquiries()
+    {
+        $status = (string) $this->request->getGet('status');
+        $b = (new \App\Models\InquiryModel())->orderBy('id', 'DESC');
+        if (in_array($status, ['new', 'read', 'closed'], true)) {
+            $b->where('status', $status);
+        }
+
+        $db     = $this->db();
+        $counts = $db->table('inquiries')->select('status, COUNT(*) AS c')->groupBy('status')->get()->getResultArray();
+        $byStatus = ['new' => 0, 'read' => 0, 'closed' => 0];
+        foreach ($counts as $c) {
+            $byStatus[$c['status']] = (int) $c['c'];
+        }
+
+        return $this->render('inquiries', [
+            'title'      => 'Inquiries',
+            'breadcrumb' => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'Inquiries']],
+            'rows'       => $b->findAll(),
+            'counts'     => $byStatus,
+            'status'     => $status,
+        ]);
+    }
+
+    /** Update an inquiry's status (new / read / closed). */
+    public function inquiryStatus($id = null)
+    {
+        $status = (string) $this->request->getPost('status');
+        if (! in_array($status, ['new', 'read', 'closed'], true)) {
+            return redirect()->back()->with('error', 'Invalid status.');
+        }
+        $m = new \App\Models\InquiryModel();
+        if (! $m->find((int) $id)) {
+            return redirect()->back()->with('error', 'Inquiry not found.');
+        }
+        $m->update((int) $id, ['status' => $status]);
+        return redirect()->back()->with('success', 'Inquiry marked ' . $status . '.');
+    }
+
     /** All Cashfree payment orders with customer + plan, filterable by status. */
     public function transactions()
     {

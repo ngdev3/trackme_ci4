@@ -32,7 +32,7 @@ foreach ($rows as $r) {
                                     <a href="<?= site_url('accounting/ledgers/statement/' . $l['id']) ?>" class="btn btn-sm btn-outline-secondary" title="Statement"><i class="bi bi-file-text"></i></a>
                                     <?php if ($canEdit): ?>
                                         <a href="<?= site_url('accounting/ledgers/edit/' . $l['id']) ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
-                                        <form action="<?= site_url('accounting/ledgers/delete/' . $l['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Delete this ledger?');">
+                                        <form action="<?= site_url('accounting/ledgers/delete/' . $l['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="This ledger will be deleted." data-confirm-title="Delete ledger?" data-confirm-btn="Yes, delete">
                                             <?= csrf_field() ?>
                                             <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                                         </form>

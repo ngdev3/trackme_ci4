@@ -152,6 +152,19 @@ class ReportController extends BaseController
             'css'        => [base_url('assets/css/tm-table.css'), base_url('assets/css/transactions.css')],
         ];
 
+        // Author names for the period's rows (user_id → name), one query — used by
+        // both the daily register and the tabular report.
+        $ids = array_values(array_unique(array_filter(array_map(
+            static fn ($r) => (int) ($r['user_id'] ?? 0),
+            $data['rows'] ?? []
+        ))));
+        $authors = [];
+        if ($ids) {
+            foreach ((new \App\Models\UserModel())->select('id, name, email')->whereIn('id', $ids)->findAll() as $u) {
+                $authors[(int) $u['id']] = $u['name'] ?: $u['email'];
+            }
+        }
+
         // Daily view = the two-column Jama/Naam register; other periods = tabular.
         if ($data['period']->period === 'day') {
             $date = $data['period']->from;
@@ -160,10 +173,11 @@ class ReportController extends BaseController
                 'nextDate'   => date('Y-m-d', strtotime($date . ' +1 day')),
                 'parties'    => $this->txns->partyDirectory($this->scope()),
                 'partyTypes' => $this->txns->partyTypes($this->scope()),
+                'authors'    => $authors,
             ]);
         }
 
-        return $this->render('report', $data + $common);
+        return $this->render('report', $data + $common + ['authors' => $authors]);
     }
 
     // =================================================================
@@ -287,9 +301,90 @@ class ReportController extends BaseController
             return redirect()->to(site_url('transactions/report'))->with('error', 'Entry not found.');
         }
         // deleted_at isn't an allowed field, so clear it via the builder directly.
-        $this->txns->builder()->where('id', $id)->update(['deleted_at' => null]);
+        // Stamp restored_at + bump the restore counter so the register can show how
+        // many times this entry has been deleted and brought back.
+        $this->txns->builder()->where('id', $id)->update([
+            'deleted_at'    => null,
+            'restored_at'   => date('Y-m-d H:i:s'),
+            'restore_count' => (int) ($row['restore_count'] ?? 0) + 1,
+        ]);
         activity_log('Transactions', 'Edit', "Transaction {$row['txn_no']} restored");
         return redirect()->to(site_url('transactions/report/deleted') . '?date=' . $row['txn_date'])->with('success', 'Entry restored.');
+    }
+
+    /**
+     * Permanently remove attachment files + rows, reminders and the transaction
+     * for a set of (already soft-deleted) ids in the current scope. Returns the
+     * number of transactions purged.
+     */
+    private function purge(array $ids): int
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if ($ids === []) {
+            return 0;
+        }
+        $scope = $this->scope();
+
+        // Only trashed rows within scope may be purged.
+        $b = $this->txns->withDeleted()->whereIn('id', $ids)->where('deleted_at IS NOT NULL');
+        if ($scope !== null) {
+            $b->where('company_id', $scope);
+        }
+        $rows = $b->findAll();
+        if ($rows === []) {
+            return 0;
+        }
+        $realIds = array_map(static fn ($r) => (int) $r['id'], $rows);
+
+        // Delete attachment files, then their rows.
+        $files = new \App\Models\TransactionAttachmentModel();
+        foreach ($files->withDeleted()->whereIn('transaction_id', $realIds)->findAll() as $a) {
+            $path = WRITEPATH . 'uploads/transactions/' . (int) $a['user_id'] . '/' . $a['stored_name'];
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
+        $files->builder()->whereIn('transaction_id', $realIds)->delete();
+
+        // Remove any reminders linked to these entries.
+        (new \App\Models\ReminderModel())->builder()
+            ->where('attach_module', 'transactions')
+            ->whereIn('attach_ref', array_map('strval', $realIds))
+            ->delete();
+
+        // Hard-delete the transactions themselves (bypasses soft delete).
+        $this->txns->builder()->whereIn('id', $realIds)->delete();
+
+        foreach ($rows as $r) {
+            activity_log('Transactions', 'Delete', "Transaction {$r['txn_no']} permanently deleted");
+        }
+        return count($realIds);
+    }
+
+    /** Permanently delete one trashed entry. */
+    public function forceDelete($id = null)
+    {
+        $id  = unhid($id);
+        $row = $this->txns->withDeleted()->find($id);
+        $date = $row['txn_date'] ?? date('Y-m-d');
+        $n = $this->purge([$id]);
+        $msg = $n > 0
+            ? ['success', 'Entry permanently deleted. This cannot be undone.']
+            : ['error', 'Entry not found (only deleted entries can be purged).'];
+        return redirect()->to(site_url('transactions/report/deleted') . '?date=' . $date)->with($msg[0], $msg[1]);
+    }
+
+    /** Permanently delete every trashed entry for a date ("empty" the day's trash). */
+    public function forceDeleteAll()
+    {
+        $date = (string) $this->request->getPost('date');
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            $date = date('Y-m-d');
+        }
+        $ids = array_map(static fn ($r) => (int) $r['id'], $this->txns->deletedOnDate($this->scope(), $date));
+        $n = $this->purge($ids);
+        return redirect()->to(site_url('transactions/report/deleted') . '?date=' . $date)
+            ->with('success', $n . ' deleted ' . ($n === 1 ? 'entry' : 'entries') . ' permanently removed.');
     }
 
     public function printReport()

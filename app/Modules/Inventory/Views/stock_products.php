@@ -44,7 +44,7 @@ $err = static fn ($k) => isset($errors[$k]) ? '<div class="invalid-feedback d-bl
                         <li>
                             <span class="nm"><?= esc($p['name']) ?><small><?= esc($p['unit'] ?: 'quintal') ?><?= ! empty($p['rate']) && $p['rate'] > 0 ? ' · ₹' . esc(number_format((float) $p['rate'], 0)) : '' ?></small></span>
                             <?php if (! empty($canDelete)): ?>
-                                <form action="<?= site_url('inventory/products/delete/' . $p['id']) ?>" method="post" onsubmit="return confirm('Remove <?= esc($p['name'], 'attr') ?>?');">
+                                <form action="<?= site_url('inventory/products/delete/' . $p['id']) ?>" method="post" data-no-validate data-confirm="&ldquo;<?= esc($p['name'], 'attr') ?>&rdquo; will be removed." data-confirm-title="Remove product?" data-confirm-btn="Yes, remove">
                                     <?= csrf_field() ?>
                                     <button type="submit" class="sinv-del" title="Remove"><i class="bi bi-trash"></i></button>
                                 </form>

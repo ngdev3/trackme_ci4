@@ -42,7 +42,7 @@
                         <td><?= (int) ($ledgerCounts[$g['id']] ?? 0) ?></td>
                         <td class="text-end">
                             <?php if ($canEdit && ! (int) $g['is_default'] && (int) ($ledgerCounts[$g['id']] ?? 0) === 0): ?>
-                                <form action="<?= site_url('accounting/groups/delete/' . $g['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Delete this group?');">
+                                <form action="<?= site_url('accounting/groups/delete/' . $g['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="This group will be deleted." data-confirm-title="Delete group?" data-confirm-btn="Yes, delete">
                                     <?= csrf_field() ?>
                                     <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                                 </form>

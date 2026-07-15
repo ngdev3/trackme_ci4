@@ -84,12 +84,12 @@ $filters = ['' => 'All', 'paid' => 'Paid', 'created' => 'Pending', 'failed' => '
                                     <?php endif; ?>
                                     <?php if ($r['status'] === 'paid'): ?>
                                         <?php $refundWhere = ($r['gateway'] ?? 'cashfree') === 'googleplay' ? 'Google Play Console' : 'Cashfree dashboard'; ?>
-                                        <form action="<?= site_url('admin/transactions/refund/' . $r['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Mark this transaction as refunded? Refund the money in the <?= $refundWhere ?> separately.');">
+                                        <form action="<?= site_url('admin/transactions/refund/' . $r['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="Refund the money in the <?= $refundWhere ?> separately." data-confirm-title="Mark as refunded?" data-confirm-btn="Yes, mark refunded" data-confirm-icon="warning">
                                             <?= csrf_field() ?>
                                             <button class="btn btn-sm btn-outline-warning" title="Mark refunded"><i class="bi bi-arrow-counterclockwise"></i></button>
                                         </form>
                                     <?php endif; ?>
-                                    <form action="<?= site_url('admin/customers/cancel/' . $r['customer_id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Cancel this customer\'s subscription? They drop to Basic restrictions. Their data is preserved.');">
+                                    <form action="<?= site_url('admin/customers/cancel/' . $r['customer_id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="They drop to Basic restrictions. Their data is preserved." data-confirm-title="Cancel subscription?" data-confirm-btn="Yes, cancel" data-confirm-icon="warning">
                                         <?= csrf_field() ?>
                                         <button class="btn btn-sm btn-outline-danger" title="Cancel subscription"><i class="bi bi-slash-circle"></i></button>
                                     </form>

@@ -4,10 +4,17 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 
-// Root — send visitors to the dashboard (auth filter will bounce guests to login).
-$routes->get('/', static function () {
-    return redirect()->to(site_url('dashboard'));
-});
+// Root — public marketing landing page for guests; signed-in users are sent to
+// their dashboard by the controller.
+$routes->get('/', 'LandingController::index');
+$routes->get('home', 'LandingController::index');
+$routes->get('terms', 'LandingController::terms');
+$routes->get('refunds', 'LandingController::refunds');
+$routes->get('about', 'LandingController::about');
+$routes->get('careers', 'LandingController::careers');
+$routes->get('contact', 'LandingController::contact');
+// Public inquiry / contact form (AJAX). CSRF-protected by the global filter.
+$routes->post('inquiry', 'LandingController::submitInquiry');
 
 // Public privacy policy — no auth. Used as the Google Play "Privacy policy" URL
 // and opened from the mobile app's Settings page.

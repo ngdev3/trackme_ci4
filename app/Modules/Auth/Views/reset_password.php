@@ -5,7 +5,6 @@
     'heroLede'  => 'Pick a password you have not used before. Once updated you can sign straight back into your dashboard.',
 ]) ?>
 
-                <div class="mobile-logo"><i class="bi bi-shield-lock"></i></div>
                 <h2>New password 🔒</h2>
                 <p class="subtitle"><?= esc($email) ?></p>
 

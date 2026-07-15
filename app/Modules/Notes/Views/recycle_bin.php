@@ -26,7 +26,7 @@
                                 <button class="btn btn-sm btn-outline-success"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
                             </form>
                             <form action="<?= site_url('notes/force-delete/' . $n['id']) ?>" method="post" class="d-inline"
-                                  onsubmit="return confirm('Permanently delete this note? This cannot be undone.');">
+                                  data-no-validate data-confirm="This note will be permanently deleted. This cannot be undone." data-confirm-title="Delete forever?" data-confirm-btn="Delete permanently" data-confirm-icon="error">
                                 <?= csrf_field() ?>
                                 <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-circle"></i> Delete forever</button>
                             </form>

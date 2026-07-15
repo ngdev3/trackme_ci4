@@ -54,6 +54,52 @@ $rowChips  = static function (array $r) use ($modeIcons): string {
 
     return $out;
 };
+
+// Provenance line: who added the entry, when, and fresh vs restored (with count).
+$authors  = $authors ?? [];
+$rowInfo  = static function (array $r) use ($authors): string {
+    $who  = $authors[(int) ($r['user_id'] ?? 0)] ?? 'Unknown';
+    $when = ! empty($r['created_at']) ? date('d M Y, h:i A', strtotime($r['created_at'])) : '';
+    $rc   = (int) ($r['restore_count'] ?? 0);
+    $tag  = $rc > 0
+        ? '<span class="rp-info-restored" title="Deleted &amp; restored ' . $rc . ' time' . ($rc === 1 ? '' : 's')
+            . (! empty($r['restored_at']) ? ', last on ' . esc(date('d M Y, h:i A', strtotime($r['restored_at'])), 'attr') : '')
+            . (! empty($r['delete_reason']) ? ' — reason: ' . esc($r['delete_reason'], 'attr') : '')
+            . '"><i class="bi bi-arrow-counterclockwise"></i> Restored ' . $rc . '&times;</span>'
+        : '<span class="rp-info-fresh"><i class="bi bi-stars"></i> Fresh</span>';
+
+    return '<i class="bi bi-person-circle"></i> <b>' . esc($who) . '</b>'
+        . ($when ? ' &middot; ' . esc($when) : '')
+        . ' &middot; ' . $tag;
+};
+
+// Rich, styled hover tooltip content (HTML) shown by the custom tooltip engine.
+$viewTip = static function (array $r) use ($authors, $fmt): string {
+    $who    = $authors[(int) ($r['user_id'] ?? 0)] ?? 'Unknown';
+    $isJama = $r['type'] === 'jama';
+    $rc     = (int) ($r['restore_count'] ?? 0);
+
+    $h  = '<div class="t-top"><b>' . esc($r['name']) . '</b><span class="t-no">#' . esc($r['txn_no']) . '</span></div>';
+    $h .= '<div class="t-amt ' . ($isJama ? 't-jama' : 't-naam') . '">' . ($isJama ? '+' : '−') . ' &#8377; ' . $fmt($r['amount'])
+        . ' <span class="t-dir">' . ($isJama ? 'Jama · In' : 'Naam · Out') . '</span></div>';
+    $h .= '<div class="t-hr"></div>';
+
+    $chips = '<span class="t-chip">' . esc(\App\Models\TransactionModel::MODE_LABELS[$r['payment_mode']] ?? ucfirst((string) $r['payment_mode'])) . '</span>';
+    if (! empty($r['party_type'])) { $chips .= '<span class="t-chip">' . esc($r['party_type']) . '</span>'; }
+    $chips .= '<span class="t-chip">' . (($r['source'] ?? 'web') === 'app' ? 'App' : 'Web') . '</span>';
+    $h .= '<div class="t-chips">' . $chips . '</div>';
+
+    $h .= '<div class="t-row"><i class="bi bi-person-circle"></i> ' . esc($who)
+        . ' · ' . esc(date('d M Y', strtotime($r['txn_date'])))
+        . (! empty($r['created_at']) ? ', ' . esc(date('h:i A', strtotime($r['created_at']))) : '') . '</div>';
+    $h .= '<div class="t-row">' . ($rc > 0
+        ? '<span class="t-restored"><i class="bi bi-arrow-counterclockwise"></i> Restored ' . $rc . '× (was deleted)</span>'
+        : '<span class="t-fresh"><i class="bi bi-stars"></i> Fresh entry</span>') . '</div>';
+    if (! empty($r['notes'])) { $h .= '<div class="t-note">“' . esc(character_limiter((string) $r['notes'], 70)) . '”</div>'; }
+    $h .= '<div class="t-foot">Click the row to open full details</div>';
+
+    return $h;
+};
 ?>
 <div class="rp-wrap">
     <!-- Firm / company name -->
@@ -168,20 +214,29 @@ $rowChips  = static function (array $r) use ($modeIcons): string {
                     <div class="rp-entry rp-entry-open">
                         <div class="rp-amt"><?= $fmt($opening) ?></div>
                         <div class="rp-mid">
-                            <div class="rp-party"><?= esc($shriLabel) ?> <span class="rp-id">(opening b/d)</span></div>
+                            <div class="rp-party">
+                            <span class="rp-avatar rp-avatar-open"><i class="bi bi-cash-stack"></i></span>
+                            <span class="rp-party-name"><?= esc($shriLabel) ?></span>
+                            <span class="rp-id">opening b/d</span>
+                        </div>
                             <div class="rp-meta"><i class="bi bi-arrow-return-right"></i> carried into <?= esc($dmy($period->from)) ?></div>
                         </div>
                     </div>
 
                     <?php foreach ($jama as $r): ?>
-                        <div class="rp-entry rp-entry-open-view" data-tx-view data-id="<?= hid($r['id']) ?>" title="Click to view full details">
+                        <div class="rp-entry rp-entry-open-view" data-tx-view data-id="<?= hid($r['id']) ?>" data-rp-tip="<?= esc($viewTip($r), 'attr') ?>">
                             <div class="rp-amt"><?= $fmt($r['amount']) ?></div>
                             <div class="rp-mid">
-                                <div class="rp-party"><?= esc($r['name']) ?> <span class="rp-id">(ID-<?= hid($r['id']) ?>)</span></div>
+                                <div class="rp-party">
+                                    <span class="rp-avatar" style="--rp-hue: <?= crc32((string) $r['name']) % 360 ?>"><?= esc(mb_strtoupper(mb_substr(trim((string) $r['name']), 0, 1)) ?: '?') ?></span>
+                                    <span class="rp-party-name" title="<?= esc($r['name'], 'attr') ?>"><?= esc($r['name']) ?></span>
+                                    <span class="rp-id">ID-<?= hid($r['id']) ?></span>
+                                </div>
                                 <div class="rp-meta"><?= $srcBadge($r['source'] ?? 'web') ?><?= $rowChips($r) ?><?php if (! empty($r['notes'])): ?><span><?= esc(character_limiter($r['notes'], 30)) ?></span><?php endif; ?></div>
+                                <div class="rp-info"><?= $rowInfo($r) ?></div>
                             </div>
                             <div class="rp-acts">
-                                <button type="button" class="rp-act rp-view" title="View" data-tx-view data-id="<?= hid($r['id']) ?>"><i class="bi bi-eye"></i></button>
+                                <button type="button" class="rp-act rp-view" title="View details" data-tx-view data-id="<?= hid($r['id']) ?>"><i class="bi bi-eye"></i></button>
                                 <?php if (can($moduleCode, 'edit')): ?><a class="rp-act rp-edit" href="<?= site_url('transactions/edit/' . hid($r['id'])) ?>" title="Edit"><i class="bi bi-pencil"></i></a><?php endif; ?>
                                 <?php if (can($moduleCode, 'delete')): ?>
                                     <button type="button" class="rp-act rp-del" title="Delete" data-tx-delete data-action="<?= site_url('transactions/delete/' . hid($r['id'])) ?>" data-label="<?= esc($r['txn_no'], 'attr') ?>"><i class="bi bi-trash"></i></button>
@@ -203,14 +258,19 @@ $rowChips  = static function (array $r) use ($modeIcons): string {
 
                     <div class="rp-empty" data-naam-empty <?= empty($naam) ? '' : 'hidden' ?>><i class="bi bi-inbox d-block fs-3 opacity-50 mb-1"></i>No Naam entries</div>
                     <?php foreach ($naam as $r): ?>
-                        <div class="rp-entry rp-entry-open-view" data-tx-view data-id="<?= hid($r['id']) ?>" title="Click to view full details">
+                        <div class="rp-entry rp-entry-open-view" data-tx-view data-id="<?= hid($r['id']) ?>" data-rp-tip="<?= esc($viewTip($r), 'attr') ?>">
                             <div class="rp-amt"><?= $fmt($r['amount']) ?></div>
                             <div class="rp-mid">
-                                <div class="rp-party"><?= esc($r['name']) ?> <span class="rp-id">(ID-<?= hid($r['id']) ?>)</span></div>
+                                <div class="rp-party">
+                                    <span class="rp-avatar" style="--rp-hue: <?= crc32((string) $r['name']) % 360 ?>"><?= esc(mb_strtoupper(mb_substr(trim((string) $r['name']), 0, 1)) ?: '?') ?></span>
+                                    <span class="rp-party-name" title="<?= esc($r['name'], 'attr') ?>"><?= esc($r['name']) ?></span>
+                                    <span class="rp-id">ID-<?= hid($r['id']) ?></span>
+                                </div>
                                 <div class="rp-meta"><?= $srcBadge($r['source'] ?? 'web') ?><?= $rowChips($r) ?><?php if (! empty($r['notes'])): ?><span><?= esc(character_limiter($r['notes'], 30)) ?></span><?php endif; ?></div>
+                                <div class="rp-info"><?= $rowInfo($r) ?></div>
                             </div>
                             <div class="rp-acts">
-                                <button type="button" class="rp-act rp-view" title="View" data-tx-view data-id="<?= hid($r['id']) ?>"><i class="bi bi-eye"></i></button>
+                                <button type="button" class="rp-act rp-view" title="View details" data-tx-view data-id="<?= hid($r['id']) ?>"><i class="bi bi-eye"></i></button>
                                 <?php if (can($moduleCode, 'edit')): ?><a class="rp-act rp-edit" href="<?= site_url('transactions/edit/' . hid($r['id'])) ?>" title="Edit"><i class="bi bi-pencil"></i></a><?php endif; ?>
                                 <?php if (can($moduleCode, 'delete')): ?>
                                     <button type="button" class="rp-act rp-del" title="Delete" data-tx-delete data-action="<?= site_url('transactions/delete/' . hid($r['id'])) ?>" data-label="<?= esc($r['txn_no'], 'attr') ?>"><i class="bi bi-trash"></i></button>
@@ -429,16 +489,43 @@ $rowChips  = static function (array $r) use ($modeIcons): string {
         return html;
     }
 
+    // A stable hue from the name so a just-added row gets the same avatar colour on reload.
+    function hueOf(s) {
+        s = String(s || ''); var h = 0;
+        for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) % 360; }
+        return h;
+    }
+
+    function tipHtml(e) {
+        var jama = e.type === 'jama';
+        var chips = '<span class="t-chip">' + esc(e.modeLabel || e.mode || 'Cash') + '</span>';
+        if (e.partyType) { chips += '<span class="t-chip">' + esc(e.partyType) + '</span>'; }
+        chips += '<span class="t-chip">Web</span>';
+        return '<div class="t-top"><b>' + esc(e.name) + '</b><span class="t-no">#' + esc(e.txn_no) + '</span></div>'
+            + '<div class="t-amt ' + (jama ? 't-jama' : 't-naam') + '">' + (jama ? '+' : '−') + ' ₹ ' + esc(e.amount) + ' <span class="t-dir">' + (jama ? 'Jama · In' : 'Naam · Out') + '</span></div>'
+            + '<div class="t-hr"></div><div class="t-chips">' + chips + '</div>'
+            + '<div class="t-row"><i class="bi bi-person-circle"></i> ' + esc(e.addedBy || 'You') + ' · just now</div>'
+            + '<div class="t-row"><span class="t-fresh"><i class="bi bi-stars"></i> Fresh entry</span></div>'
+            + '<div class="t-foot">Click the row to open full details</div>';
+    }
+
     function entryHtml(e, perms) {
-        var acts = '<button type="button" class="rp-act rp-view" title="View" data-tx-view data-id="' + e.hid + '"><i class="bi bi-eye"></i></button>';
+        var acts = '<button type="button" class="rp-act rp-view" title="View details" data-tx-view data-id="' + e.hid + '"><i class="bi bi-eye"></i></button>';
         if (perms.edit)   { acts += '<a class="rp-act rp-edit" href="' + e.editUrl + '" title="Edit"><i class="bi bi-pencil"></i></a>'; }
         if (perms.delete) { acts += '<button type="button" class="rp-act rp-del" title="Delete" data-tx-delete data-action="' + e.delUrl + '" data-label="' + esc(e.txn_no) + '"><i class="bi bi-trash"></i></button>'; }
         var meta = '<span class="rp-badge rp-badge-web"><i class="bi bi-display"></i> Web</span>' + chipsHtml(e);
         if (e.notes) { meta += ' <span>' + esc(e.notes) + '</span>'; }
-        return '<div class="rp-entry rp-entry-new rp-entry-open-view" data-tx-view data-id="' + e.hid + '" title="Click to view full details">'
+        // A just-added entry is always fresh, by the current user, right now.
+        var info = '<i class="bi bi-person-circle"></i> <b>' + esc(e.addedBy || 'You') + '</b> · just now · '
+            + '<span class="rp-info-fresh"><i class="bi bi-stars"></i> Fresh</span>';
+        return '<div class="rp-entry rp-entry-new rp-entry-open-view" data-tx-view data-id="' + e.hid + '">'
             + '<div class="rp-amt">' + esc(e.amount) + '</div>'
-            + '<div class="rp-mid"><div class="rp-party">' + esc(e.name) + ' <span class="rp-id">(ID-' + e.hid + ')</span></div>'
-            + '<div class="rp-meta">' + meta + '</div></div>'
+            + '<div class="rp-mid"><div class="rp-party">'
+            + '<span class="rp-avatar" style="--rp-hue: ' + (e.hue != null ? e.hue : hueOf(e.name)) + '">' + esc((e.name || '?').trim().charAt(0).toUpperCase() || '?') + '</span>'
+            + '<span class="rp-party-name" title="' + esc(e.name) + '">' + esc(e.name) + '</span>'
+            + '<span class="rp-id">ID-' + e.hid + '</span></div>'
+            + '<div class="rp-meta">' + meta + '</div>'
+            + '<div class="rp-info">' + info + '</div></div>'
             + '<div class="rp-acts">' + acts + '</div></div>';
     }
 
@@ -457,7 +544,9 @@ $rowChips  = static function (array $r) use ($modeIcons): string {
 
     function applyTotals(t, side, entry, perms) {
         var col = document.querySelector('.rp-col-' + side);
-        col.insertBefore(el(entryHtml(entry, perms || { edit:false, delete:false })), col.querySelector('.rp-total'));
+        var node = el(entryHtml(entry, perms || { edit:false, delete:false }));
+        node.setAttribute('data-rp-tip', tipHtml(entry)); // hover tooltip, same as server rows
+        col.insertBefore(node, col.querySelector('.rp-total'));
         if (side === 'naam') { var em = document.querySelector('[data-naam-empty]'); if (em) { em.setAttribute('hidden', 'hidden'); } }
         var jt = document.querySelector('[data-jama-total]'); if (jt) { jt.textContent = t.jamaColTotal; }
         var nt = document.querySelector('[data-naam-total]'); if (nt) { nt.textContent = t.totalNaam; }
@@ -666,5 +755,39 @@ $rowChips  = static function (array $r) use ($modeIcons): string {
             })
             .catch(function () { buttons.forEach(function (b) { b.disabled = false; }); flash('Network error — please try again.', false); });
     });
+})();
+
+// ---- Hover tooltip engine: shows the styled detail card for any [data-rp-tip] ----
+(function () {
+    var tip = null, current = null;
+    function ensure() {
+        if (!tip) { tip = document.createElement('div'); tip.className = 'rp-tip'; document.body.appendChild(tip); }
+        return tip;
+    }
+    function place(el) {
+        var html = el.getAttribute('data-rp-tip');
+        if (!html) { return; }
+        var t = ensure();
+        t.innerHTML = html;
+        t.classList.add('show');
+        var r = el.getBoundingClientRect();
+        var tw = t.offsetWidth, th = t.offsetHeight, m = 8;
+        var left = Math.min(Math.max(m, r.left), window.innerWidth - tw - m);
+        var top = r.bottom + m;
+        if (top + th > window.innerHeight - m) { top = r.top - th - m; } // flip above when no room below
+        t.style.left = left + 'px';
+        t.style.top = Math.max(m, top) + 'px';
+    }
+    function hide() { current = null; if (tip) { tip.classList.remove('show'); } }
+    document.addEventListener('mouseover', function (e) {
+        var el = e.target.closest('[data-rp-tip]');
+        if (el && el !== current) { current = el; place(el); }
+    });
+    document.addEventListener('mouseout', function (e) {
+        var el = e.target.closest('[data-rp-tip]');
+        if (el && !el.contains(e.relatedTarget)) { hide(); }
+    });
+    window.addEventListener('scroll', hide, true);
+    window.addEventListener('resize', hide);
 })();
 </script>

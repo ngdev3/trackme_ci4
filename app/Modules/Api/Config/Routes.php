@@ -55,6 +55,7 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     // Jama / Naam cash-book (Hisaab Kitaab Vahi) for the mobile app.
     $routes->get('transactions/list', 'TransactionApiController::list');
     $routes->get('transactions/report', 'TransactionApiController::report');
+    $routes->get('transactions/parties', 'TransactionApiController::parties');
     $routes->get('transactions/entry/(:num)', 'TransactionApiController::entry/$1');
     $routes->post('transactions/store', 'TransactionApiController::store');
     $routes->post('transactions/update/(:num)', 'TransactionApiController::update/$1');

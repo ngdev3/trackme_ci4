@@ -24,6 +24,31 @@ $modeIcon = [
     'cash' => 'bi-cash-coin', 'bank' => 'bi-bank', 'upi' => 'bi-phone',
     'cheque' => 'bi-receipt', 'card' => 'bi-credit-card', 'other' => 'bi-three-dots',
 ];
+
+// Rich hover-tooltip content (same dark card as the Rokad Parcha register).
+$authors = $authors ?? [];
+$viewTip = static function (array $r) use ($authors, $fmt): string {
+    $who    = $authors[(int) ($r['user_id'] ?? 0)] ?? 'Unknown';
+    $isJama = $r['type'] === 'jama';
+    $rc     = (int) ($r['restore_count'] ?? 0);
+    $h  = '<div class="t-top"><b>' . esc($r['name']) . '</b><span class="t-no">#' . esc($r['txn_no']) . '</span></div>';
+    $h .= '<div class="t-amt ' . ($isJama ? 't-jama' : 't-naam') . '">' . ($isJama ? '+' : '−') . ' &#8377; ' . $fmt($r['amount'])
+        . ' <span class="t-dir">' . ($isJama ? 'Jama · In' : 'Naam · Out') . '</span></div>';
+    $h .= '<div class="t-hr"></div>';
+    $chips = '<span class="t-chip">' . esc(TransactionModel::MODE_LABELS[$r['payment_mode']] ?? ucfirst((string) $r['payment_mode'])) . '</span>';
+    if (! empty($r['party_type'])) { $chips .= '<span class="t-chip">' . esc($r['party_type']) . '</span>'; }
+    $chips .= '<span class="t-chip">' . (($r['source'] ?? 'web') === 'app' ? 'App' : 'Web') . '</span>';
+    $h .= '<div class="t-chips">' . $chips . '</div>';
+    $h .= '<div class="t-row"><i class="bi bi-person-circle"></i> ' . esc($who)
+        . ' · ' . esc(date('d M Y', strtotime($r['txn_date'])))
+        . (! empty($r['created_at']) ? ', ' . esc(date('h:i A', strtotime($r['created_at']))) : '') . '</div>';
+    $h .= '<div class="t-row">' . ($rc > 0
+        ? '<span class="t-restored"><i class="bi bi-arrow-counterclockwise"></i> Restored ' . $rc . '× (was deleted)</span>'
+        : '<span class="t-fresh"><i class="bi bi-stars"></i> Fresh entry</span>') . '</div>';
+    if (! empty($r['notes'])) { $h .= '<div class="t-note">“' . esc(character_limiter((string) $r['notes'], 70)) . '”</div>'; }
+    $h .= '<div class="t-foot">Click the row to open full details</div>';
+    return $h;
+};
 $f = $filters;
 $qs = array_filter(['q' => $f['q'], 'from' => $f['from'], 'to' => $f['to'], 'status' => $f['status'], 'type' => $f['type'], 'mode' => $f['mode'], 'per' => $per]);
 ?>
@@ -185,14 +210,24 @@ window.TX_CHARTS = {
                 <?php if (empty($rows)): ?>
                     <tr><td colspan="9" class="text-center text-secondary py-5"><i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>No transactions found.</td></tr>
                 <?php else: foreach ($rows as $r): $att = $counts[$r['id']] ?? 0; ?>
-                    <tr>
+                    <tr class="tx-row" data-tx-view data-id="<?= hid($r['id']) ?>" data-rp-tip="<?= esc($viewTip($r), 'attr') ?>">
                         <td class="text-nowrap"><span class="tx-no"><?= esc($r['txn_no'] ?: '—') ?></span></td>
                         <td class="text-nowrap"><?= esc(date('d M Y', strtotime($r['txn_date']))) ?></td>
                         <td>
-                            <div class="fw-semibold"><?= esc($r['name']) ?>
-                                <?php if ($att > 0): ?><span class="text-secondary ms-1" title="<?= $att ?> attachment(s)"><i class="bi bi-paperclip"></i><?= $att ?></span><?php endif; ?>
+                            <div class="tx-party">
+                                <span class="tx-ava" style="--tx-hue: <?= crc32((string) $r['name']) % 360 ?>"><?= esc(mb_strtoupper(mb_substr(trim((string) $r['name']), 0, 1)) ?: '?') ?></span>
+                                <div class="tx-party-main">
+                                    <div class="tx-party-name fw-semibold"><?= esc($r['name']) ?>
+                                        <span class="tx-id">ID-<?= hid($r['id']) ?></span>
+                                        <?php if ($att > 0): ?><span class="text-secondary ms-1" title="<?= $att ?> attachment(s)"><i class="bi bi-paperclip"></i><?= $att ?></span><?php endif; ?>
+                                    </div>
+                                    <div class="tx-subrow">
+                                        <?php if (! empty($r['party_type'])): ?><span class="tx-ptype"><i class="bi bi-person"></i><?= esc($r['party_type']) ?></span><?php endif; ?>
+                                        <span class="tx-src <?= ($r['source'] ?? 'web') === 'app' ? 'is-app' : '' ?>"><i class="bi <?= ($r['source'] ?? 'web') === 'app' ? 'bi-phone' : 'bi-display' ?>"></i><?= ($r['source'] ?? 'web') === 'app' ? 'App' : 'Web' ?></span>
+                                        <?php if (! empty($r['notes'])): ?><small class="text-muted"><?= esc(character_limiter($r['notes'], 32)) ?></small><?php endif; ?>
+                                    </div>
+                                </div>
                             </div>
-                            <?php if (! empty($r['notes'])): ?><small class="text-muted"><?= esc(character_limiter($r['notes'], 40)) ?></small><?php endif; ?>
                         </td>
                         <td><?= $typeBadge($r['type']) ?></td>
                         <td><span class="tx-mode"><i class="bi <?= $modeIcon[$r['payment_mode']] ?? 'bi-wallet' ?>"></i><?= esc(TransactionModel::MODE_LABELS[$r['payment_mode']] ?? ucfirst((string) $r['payment_mode'])) ?></span></td>
@@ -226,6 +261,40 @@ window.TX_CHARTS = {
     </div>
 </div>
 
+<style>
+    .tx-party { display:flex; align-items:center; gap:.55rem; min-width:0; }
+    .tx-ava { flex:0 0 auto; width:2rem; height:2rem; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; color:#fff; background:hsl(var(--tx-hue,210) 62% 46%); }
+    .tx-party-main { min-width:0; }
+    .tx-party-name { display:flex; align-items:center; gap:.35rem; flex-wrap:wrap; }
+    .tx-id { font-size:.68rem; font-weight:600; letter-spacing:.3px; color:var(--bs-secondary-color,#6c757d); background:var(--bs-secondary-bg,#eef0f3); border-radius:5px; padding:.05rem .35rem; }
+    .tx-subrow { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; margin-top:.15rem; }
+    .tx-ptype, .tx-src { display:inline-flex; align-items:center; gap:.25rem; font-size:.7rem; font-weight:600; border-radius:6px; padding:.08rem .4rem; }
+    .tx-ptype { color:var(--bs-warning-text-emphasis,#a35200); background:var(--bs-warning-bg-subtle,#fff3cd); }
+    .tx-src { color:var(--bs-primary-text-emphasis,#0a58ca); background:var(--bs-primary-bg-subtle,#cfe2ff); }
+    .tx-src.is-app { color:var(--bs-info-text-emphasis,#087990); background:var(--bs-info-bg-subtle,#cff4fc); }
+    .tx-row { cursor:pointer; }
+</style>
+<script>
+// Hover tooltip engine — shows the styled dark detail card for any [data-rp-tip].
+(function () {
+    var tip = null, current = null;
+    function ensure() { if (!tip) { tip = document.createElement('div'); tip.className = 'rp-tip'; document.body.appendChild(tip); } return tip; }
+    function place(el) {
+        var html = el.getAttribute('data-rp-tip'); if (!html) { return; }
+        var t = ensure(); t.innerHTML = html; t.classList.add('show');
+        var r = el.getBoundingClientRect(), tw = t.offsetWidth, th = t.offsetHeight, m = 8;
+        var left = Math.min(Math.max(m, r.left), window.innerWidth - tw - m);
+        var top = r.bottom + m;
+        if (top + th > window.innerHeight - m) { top = r.top - th - m; }
+        t.style.left = left + 'px'; t.style.top = Math.max(m, top) + 'px';
+    }
+    function hide() { current = null; if (tip) { tip.classList.remove('show'); } }
+    document.addEventListener('mouseover', function (e) { var el = e.target.closest('[data-rp-tip]'); if (el && el !== current) { current = el; place(el); } });
+    document.addEventListener('mouseout', function (e) { var el = e.target.closest('[data-rp-tip]'); if (el && !el.contains(e.relatedTarget)) { hide(); } });
+    window.addEventListener('scroll', hide, true);
+    window.addEventListener('resize', hide);
+})();
+</script>
 <script>
 // Charts render after Chart.js (loaded in the footer) — defer to DOMContentLoaded.
 document.addEventListener('DOMContentLoaded', function () {

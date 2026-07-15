@@ -108,6 +108,15 @@ class TransactionController extends BaseController
         $summary['opening'] = round($opening, 2);
         $summary['closing'] = round($opening + $summary['net'], 2);
 
+        // Author names (user_id → name) for the row hover tooltip, one query.
+        $authorIds = array_values(array_unique(array_filter(array_map(static fn ($r) => (int) ($r['user_id'] ?? 0), $rows))));
+        $authors   = [];
+        if ($authorIds) {
+            foreach ((new \App\Models\UserModel())->select('id, name, email')->whereIn('id', $authorIds)->findAll() as $u) {
+                $authors[(int) $u['id']] = $u['name'] ?: $u['email'];
+            }
+        }
+
         // Chart data: daily Jama/Naam trend over the active range (default 30d).
         $trendFrom = $f['from'] ?: date('Y-m-d', strtotime('-29 days'));
         $trendTo   = $f['to'] ?: date('Y-m-d');
@@ -117,6 +126,7 @@ class TransactionController extends BaseController
             'breadcrumb' => [['label' => 'Transactions']],
             'rows'       => $rows,
             'counts'     => $counts,
+            'authors'    => $authors,
             'pager'      => $this->txns->pager,
             'summary'    => $summary,
             'openLabel'  => $ob->label(),
@@ -415,6 +425,8 @@ class TransactionController extends BaseController
                 'mode'      => $data['payment_mode'],
                 'modeLabel' => TransactionModel::MODE_LABELS[$data['payment_mode']] ?? ucfirst($data['payment_mode']),
                 'partyType' => $data['party_type'],
+                'hue'       => crc32($data['name']) % 360,
+                'addedBy'   => (string) (session('user_name') ?: session('username') ?: 'You'),
                 'editUrl'   => site_url('transactions/edit/' . hid($newId)),
                 'delUrl'    => site_url('transactions/delete/' . hid($newId)),
             ],
@@ -526,8 +538,15 @@ class TransactionController extends BaseController
         if (! $row) {
             return $this->response->setStatusCode(404)->setBody('<div class="p-4 text-center text-secondary">Entry not found.</div>');
         }
+        $author = null;
+        if (! empty($row['user_id'])) {
+            $u = (new \App\Models\UserModel())->select('name, email')->find((int) $row['user_id']);
+            $author = $u['name'] ?? ($u['email'] ?? null);
+        }
+
         return view('Modules\Transactions\Views\entry_modal', [
             'row'         => $row,
+            'author'      => $author,
             'attachments' => $this->files->forTransaction((int) $row['id']),
             'reminder'    => $this->reminderFor((int) $row['id']),
             'moduleCode'  => $this->moduleCode,

@@ -4,6 +4,8 @@
 <?= $this->extend('emails/layout') ?>
 <?= $this->section('content') ?>
 
+<span style="display:inline-block;margin:0 0 14px;padding:5px 12px;background:#eef0ff;color:#4338ca;font-size:11px;font-weight:bold;letter-spacing:.6px;text-transform:uppercase;border-radius:999px;">Verify email</span>
+
 <h2 style="margin:0 0 12px;color:#0f766e;font-size:22px;">Verify your email</h2>
 
 <p style="margin:0 0 18px;">Use the one-time code below to confirm your email address for <strong><?= esc($app) ?></strong>.</p>

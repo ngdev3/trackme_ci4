@@ -205,7 +205,7 @@
                                                 'feat' => $planFlags,
                                             ]), 'attr') ?>'><i class="bi bi-pencil"></i></button>
                                     <a class="btn btn-sm btn-outline-secondary" href="<?= site_url('admin/plans/toggle/' . $p['id']) ?>" title="Toggle active"><i class="bi bi-toggle-<?= (int) $p['status'] === 1 ? 'on' : 'off' ?>"></i></a>
-                                    <form action="<?= site_url('admin/plans/delete/' . $p['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Delete this plan? Existing customer subscriptions are not affected.');">
+                                    <form action="<?= site_url('admin/plans/delete/' . $p['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="Existing customer subscriptions are not affected." data-confirm-title="Delete plan?" data-confirm-btn="Yes, delete">
                                         <?= csrf_field() ?>
                                         <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                                     </form>

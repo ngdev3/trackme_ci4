@@ -43,7 +43,7 @@ $fmtSize = static function ($b) {
 
                 <?php if ($canDelete): ?>
                     <form action="<?= site_url('inventory/attachment/' . $a['id'] . '/delete') ?>" method="post" class="inv-att-del"
-                          onsubmit="return confirm('Remove this proof file?');">
+                          data-no-validate data-confirm="This proof file will be removed." data-confirm-title="Remove file?" data-confirm-btn="Yes, remove">
                         <?= csrf_field() ?>
                         <button type="submit" title="Remove"><i class="bi bi-trash"></i></button>
                     </form>

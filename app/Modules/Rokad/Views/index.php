@@ -53,7 +53,7 @@ $fmt     = fn ($n) => number_format((float) $n, 2);
     <div class="card-header d-flex justify-content-between align-items-center">
         <h3 class="card-title mb-0"><i class="bi bi-journal-text me-1"></i> Rokad Parcha &mdash; <?= esc(date('d-m-Y', strtotime($date))) ?></h3>
         <?php if ($canEdit && ! $carried): ?>
-            <form action="<?= site_url('rokad/carry-forward') ?>" method="post" onsubmit="return confirm('Carry this day\'s closing balance forward to the next day?');">
+            <form action="<?= site_url('rokad/carry-forward') ?>" method="post" data-no-validate data-confirm="This day's closing balance will be carried forward to the next day." data-confirm-title="Carry forward?" data-confirm-btn="Yes, carry forward" data-confirm-icon="info">
                 <?= csrf_field() ?>
                 <input type="hidden" name="date" value="<?= esc($date) ?>">
                 <button class="btn btn-sm btn-primary"><i class="bi bi-arrow-right-circle"></i> Carry Forward</button>
@@ -91,7 +91,7 @@ $fmt     = fn ($n) => number_format((float) $n, 2);
                             <?php if ($canEdit): ?>
                                 <td class="text-end text-nowrap">
                                     <a href="<?= site_url('rokad?date=' . $date . '&edit=' . $e['id']) ?>" class="btn btn-sm btn-outline-primary py-0"><i class="bi bi-pencil"></i></a>
-                                    <form action="<?= site_url('rokad/delete/' . $e['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Delete this entry?');">
+                                    <form action="<?= site_url('rokad/delete/' . $e['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="This entry will be deleted." data-confirm-title="Delete entry?" data-confirm-btn="Yes, delete">
                                         <?= csrf_field() ?>
                                         <button class="btn btn-sm btn-outline-danger py-0"><i class="bi bi-trash"></i></button>
                                     </form>

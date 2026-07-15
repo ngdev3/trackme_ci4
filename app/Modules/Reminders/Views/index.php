@@ -96,7 +96,7 @@
                                     <a href="<?= site_url('reminders/edit/' . $r['id']) ?>" class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
                                 <?php endif; ?>
                                 <?php if (can($moduleCode, 'delete')): ?>
-                                    <form action="<?= site_url('reminders/delete/' . $r['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Delete this reminder?');">
+                                    <form action="<?= site_url('reminders/delete/' . $r['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="This reminder will be deleted." data-confirm-title="Delete reminder?" data-confirm-btn="Yes, delete">
                                         <?= csrf_field() ?>
                                         <button class="btn btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
                                     </form>

@@ -80,13 +80,13 @@ $actions = static function (array $r) use ($moduleCode, $baseRoute) {
     $html = '<div class="act-group">';
     if (session('is_superadmin') && $id !== (int) session('user_id')) {
         $html .= '<a href="' . site_url('admin/impersonate/' . $id) . '" class="act-btn act-access" data-tip="Access account"'
-            . ' onclick="return confirm(\'Sign in as ' . esc($r['name'], 'attr') . '? You can return to Super Admin anytime.\');"><i class="bi bi-box-arrow-in-right"></i></a>';
+            . ' data-confirm="You can return to Super Admin anytime." data-confirm-title="Sign in as ' . esc($r['name'], 'attr') . '?" data-confirm-btn="Sign in" data-confirm-icon="info"><i class="bi bi-box-arrow-in-right"></i></a>';
     }
     if (can($moduleCode, 'edit')) {
         $html .= '<a href="' . site_url($baseRoute . '/edit/' . $id) . '" class="act-btn act-edit" data-tip="Edit"><i class="bi bi-pencil"></i></a>';
     }
     if (can($moduleCode, 'delete')) {
-        $html .= '<form action="' . site_url($baseRoute . '/delete/' . $id) . '" method="post" class="d-inline" onsubmit="return confirm(\'Delete this user?\');">'
+        $html .= '<form action="' . site_url($baseRoute . '/delete/' . $id) . '" method="post" class="d-inline" data-no-validate data-confirm="This user will be deleted." data-confirm-title="Delete user?" data-confirm-btn="Yes, delete">'
             . csrf_field()
             . '<button type="submit" class="act-btn act-delete" data-tip="Delete"><i class="bi bi-trash"></i></button></form>';
     }

@@ -4,6 +4,8 @@
 <?= $this->extend('emails/layout') ?>
 <?= $this->section('content') ?>
 
+<span style="display:inline-block;margin:0 0 14px;padding:5px 12px;background:#e7f6f2;color:#0f766e;font-size:11px;font-weight:bold;letter-spacing:.6px;text-transform:uppercase;border-radius:999px;">Welcome</span>
+
 <h2 style="margin:0 0 12px;color:#0f766e;font-size:22px;">Welcome aboard, <?= esc($name) ?>! 🎉</h2>
 
 <p style="margin:0 0 14px;">Your <strong><?= esc($app) ?></strong> account is ready. Manage your firms, keep your Hisaab-Kitaab (jama/naam) in order, track inventory, and stay on top of your business — all from the web and the mobile app.</p>

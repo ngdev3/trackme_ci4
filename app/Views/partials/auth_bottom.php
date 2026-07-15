@@ -1,5 +1,5 @@
 <?php
-/** Shared cosmic auth chrome — bottom half. Closes the shell + loads scripts. */
+/** Shared auth chrome — bottom half. Closes the shell + loads scripts. */
 ?>
                 </div><!-- /.login-card -->
             </div><!-- /.login-panel -->
