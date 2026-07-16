@@ -15,6 +15,12 @@ use App\Models\TransactionModel;
  */
 class TransactionApiController extends BaseApiController
 {
+    /** Attachment policy — enforced server-side regardless of the client. */
+    private const ATTACH_MAX     = 2;
+    private const ATTACH_MAX_MB  = 10;
+    /** Extension allowlist. Blocks executables/scripts (php, exe, js, html, svg…). */
+    private const ATTACH_EXT     = ['csv', 'xls', 'xlsx', 'pdf'];
+
     /**
      * GET api/v1/transactions/list — recent cash-book entries (Rokadh Parcha)
      * for the caller's company, newest first, with jama/naam/net totals.
@@ -463,22 +469,40 @@ class TransactionApiController extends BaseApiController
             return $this->failNotFound('Entry not found.');
         }
 
+        $att   = new TransactionAttachmentModel();
+        $have  = count($att->forTransaction((int) $row['id']));
+        $slots = self::ATTACH_MAX - $have;
+        if ($slots <= 0) {
+            return $this->failValidationErrors('This entry already has the maximum of ' . self::ATTACH_MAX . ' attachments.');
+        }
+
         $ownerId = (int) ($row['user_id'] ?? $user['id']);
         $dir     = WRITEPATH . 'uploads/transactions/' . $ownerId . '/';
         if (! is_dir($dir)) {
             @mkdir($dir, 0775, true);
         }
 
-        $att    = new TransactionAttachmentModel();
-        $stored = 0;
+        $stored   = 0;
+        $rejected = [];
         foreach ((array) $this->request->getFileMultiple('attachments') as $file) {
-            if (! $file || ! $file->isValid() || $file->hasMoved() || $file->getSizeByUnit('mb') > 25) {
+            if ($stored >= $slots) {
+                break;
+            }
+            if (! $file || ! $file->isValid() || $file->hasMoved()) {
                 continue;
             }
-            $ext  = strtolower($file->getExtension() ?: pathinfo($file->getName(), PATHINFO_EXTENSION));
-            $name = $file->getRandomName();
+            // Gate on the real filename extension (client mime is untrusted and
+            // easily spoofed). Blocks .php/.exe/.js/.html/.svg/etc.
+            $ext = strtolower((string) $file->getClientExtension());
+            if (! in_array($ext, self::ATTACH_EXT, true) || $file->getSizeByUnit('mb') > self::ATTACH_MAX_MB) {
+                $rejected[] = $file->getClientName();
+                continue;
+            }
+            // Server-controlled random name with a known-safe extension — never
+            // trust the uploaded name for the stored file.
+            $name = bin2hex(random_bytes(16)) . '.' . $ext;
             try {
-                $file->move($dir, $name);
+                $file->move($dir, $name, false);
             } catch (\Throwable $e) {
                 continue;
             }
@@ -486,10 +510,10 @@ class TransactionApiController extends BaseApiController
                 'transaction_id' => (int) $row['id'],
                 'user_id'        => $ownerId,
                 'company_id'     => $cid,
-                'original_name'  => $file->getClientName(),
+                'original_name'  => mb_substr((string) $file->getClientName(), 0, 180),
                 'stored_name'    => $name,
                 'mime'           => $file->getClientMimeType(),
-                'kind'           => TransactionAttachmentModel::kindFor((string) $file->getClientMimeType(), (string) $ext),
+                'kind'           => TransactionAttachmentModel::kindFor((string) $file->getClientMimeType(), $ext),
                 'size'           => (int) filesize($dir . $name),
                 'created_by'     => (int) $user['id'],
             ]);
@@ -500,10 +524,16 @@ class TransactionApiController extends BaseApiController
             activity_log('Transactions', 'Edit', "{$stored} attachment(s) added to {$row['txn_no']} (mobile)");
         }
 
+        $message = "{$stored} file(s) attached.";
+        if ($rejected !== []) {
+            $message .= ' Rejected (CSV/Excel/PDF only, max ' . self::ATTACH_MAX_MB . ' MB): ' . implode(', ', $rejected) . '.';
+        }
+
         return $this->respond([
-            'status'      => $stored > 0 ? 'ok' : 'empty',
+            'status'      => $stored > 0 ? 'ok' : 'rejected',
             'stored'      => $stored,
-            'message'     => "{$stored} file(s) attached.",
+            'rejected'    => $rejected,
+            'message'     => $message,
             'attachments' => $this->attachmentList((int) $row['id']),
         ]);
     }
@@ -519,13 +549,30 @@ class TransactionApiController extends BaseApiController
         if (! $a || (int) $a['company_id'] !== (int) $cid) {
             return $this->failNotFound('Attachment not found.');
         }
-        $path = WRITEPATH . 'uploads/transactions/' . (int) $a['user_id'] . '/' . $a['stored_name'];
+        // basename() defends against any path-traversal in stored_name.
+        $path = WRITEPATH . 'uploads/transactions/' . (int) $a['user_id'] . '/' . basename((string) $a['stored_name']);
         if (! is_file($path)) {
             return $this->failNotFound('File missing.');
         }
+
+        // Content-Type is derived from the SERVER-controlled stored extension,
+        // not the client mime. Force a download + nosniff + a sanitised filename
+        // so the browser never inline-renders or sniffs the bytes as HTML/script
+        // and the header can't be injected via the original name.
+        $ext      = strtolower(pathinfo((string) $a['stored_name'], PATHINFO_EXTENSION));
+        $types    = [
+            'csv'  => 'text/csv',
+            'xls'  => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'pdf'  => 'application/pdf',
+        ];
+        $mime     = $types[$ext] ?? 'application/octet-stream';
+        $safeName = preg_replace('/[^A-Za-z0-9._-]+/', '_', (string) $a['original_name']) ?: 'attachment';
+
         return $this->response
-            ->setHeader('Content-Type', $a['mime'] ?: 'application/octet-stream')
-            ->setHeader('Content-Disposition', 'inline; filename="' . $a['original_name'] . '"')
+            ->setHeader('Content-Type', $mime)
+            ->setHeader('X-Content-Type-Options', 'nosniff')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $safeName . '"')
             ->setBody(file_get_contents($path));
     }
 
