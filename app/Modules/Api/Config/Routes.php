@@ -29,6 +29,7 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->get('companies', 'CompanyApiController::index');
     $routes->post('companies', 'CompanyApiController::create');
     $routes->get('companies/trash', 'CompanyApiController::trash');
+    $routes->get('companies/(:num)/summary', 'CompanyApiController::summary/$1');
     $routes->get('companies/(:num)', 'CompanyApiController::show/$1');
     $routes->put('companies/(:num)', 'CompanyApiController::update/$1');
     $routes->post('companies/(:num)/restore', 'CompanyApiController::restore/$1');
@@ -40,11 +41,18 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->get('dashboard', 'DashboardApiController::index');
 
     // Register a browser/device push subscription for the authenticated user.
+    // subscribe accepts either a Web-Push payload or an FCM device token.
     $routes->post('push/subscribe', 'PushApiController::subscribe');
     $routes->post('push/unsubscribe', 'PushApiController::unsubscribe');
 
+    // In-app notification feed (per user): list + mark read.
+    $routes->get('notifications', 'NotificationApiController::index');
+    $routes->post('notifications/read-all', 'NotificationApiController::markAllRead');
+    $routes->post('notifications/(:num)/read', 'NotificationApiController::markRead/$1');
+
     // Subscription / plan management for the mobile app.
     $routes->get('subscription', 'SubscriptionApiController::index');
+    $routes->get('subscription/payments', 'SubscriptionApiController::payments');
     $routes->post('subscription/subscribe', 'SubscriptionApiController::subscribe');
 
     // Google Play Billing: verify an Android purchase (Bearer) and receive
@@ -56,10 +64,18 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->get('transactions/list', 'TransactionApiController::list');
     $routes->get('transactions/report', 'TransactionApiController::report');
     $routes->get('transactions/parties', 'TransactionApiController::parties');
+    $routes->get('transactions/statement', 'TransactionApiController::statement');
+    $routes->get('transactions/opening', 'TransactionApiController::opening');
+    $routes->post('transactions/opening', 'TransactionApiController::saveOpening');
     $routes->get('transactions/entry/(:num)', 'TransactionApiController::entry/$1');
     $routes->post('transactions/store', 'TransactionApiController::store');
     $routes->post('transactions/update/(:num)', 'TransactionApiController::update/$1');
     $routes->post('transactions/delete/(:num)', 'TransactionApiController::delete/$1');
+    // Transaction attachments (photos / PDFs / audio on an entry).
+    $routes->get('transactions/entry/(:num)/attachments', 'TransactionApiController::entryAttachments/$1');
+    $routes->post('transactions/entry/(:num)/attach', 'TransactionApiController::attachToEntry/$1');
+    $routes->get('transactions/attachment/(:num)', 'TransactionApiController::attachment/$1');
+    $routes->delete('transactions/attachment/(:num)', 'TransactionApiController::deleteAttachment/$1');
 
     // Password Manager (feature-gated: password_manager). Company-scoped vault.
     $routes->get('passwords', 'PasswordsApiController::index');

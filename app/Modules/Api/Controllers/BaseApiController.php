@@ -33,9 +33,14 @@ abstract class BaseApiController extends Controller
      */
     protected function input(string $key, $default = null)
     {
-        $json = $this->request->getJSON(true);
-        if (is_array($json) && array_key_exists($key, $json)) {
-            return $json[$key];
+        // Only parse the body as JSON when it actually is JSON. A multipart /
+        // form-encoded request (e.g. a file upload) has no JSON body, and
+        // getJSON() would throw "Failed to parse JSON string" on it.
+        if (str_contains($this->request->getHeaderLine('Content-Type'), 'application/json')) {
+            $json = $this->request->getJSON(true);
+            if (is_array($json) && array_key_exists($key, $json)) {
+                return $json[$key];
+            }
         }
         $post = $this->request->getPost($key);
         return $post !== null ? $post : $default;

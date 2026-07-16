@@ -2,6 +2,9 @@
 
 namespace Modules\Api\Controllers;
 
+use App\Libraries\OpeningBalance;
+use App\Models\CompanySettingModel;
+use App\Models\TransactionAttachmentModel;
 use App\Models\TransactionModel;
 
 /**
@@ -31,8 +34,24 @@ class TransactionApiController extends BaseApiController
         $model = new TransactionModel();
         $f     = ['q' => trim((string) ($this->request->getGet('q') ?? ''))];
 
-        $rows    = $model->limitedFiltered($cid, $f, 100, 0);
+        // Optional single-day view (Rokad Parcha): scope entries + totals to one
+        // date, and report the running cash balance (jama − naam) up to that day.
+        $date = trim((string) ($this->request->getGet('date') ?? ''));
+        if ($date !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) && strtotime($date) !== false) {
+            $f['from'] = $date;
+            $f['to']   = $date;
+        } else {
+            $date = '';
+        }
+
+        $rows    = $model->limitedFiltered($cid, $f, $date !== '' ? 500 : 100, 0);
         $summary = $model->summary($cid, $f);
+
+        // Final balance = cumulative jama − naam through the selected day (or the
+        // whole set when no date is given).
+        $finalBalance = $date !== ''
+            ? (float) $model->summary($cid, ['q' => $f['q'], 'to' => $date])['net']
+            : (float) $summary['net'];
 
         $entries = array_map(static fn (array $r): array => [
             'id'           => (int) $r['id'],
@@ -48,8 +67,10 @@ class TransactionApiController extends BaseApiController
         ], $rows);
 
         return $this->respond([
-            'status'  => 'ok',
-            'entries' => $entries,
+            'status'        => 'ok',
+            'date'          => $date !== '' ? $date : null,
+            'entries'       => $entries,
+            'final_balance' => round($finalBalance, 2),
             'summary' => [
                 'jama'  => round((float) $summary['jama'], 2),
                 'naam'  => round((float) $summary['naam'], 2),
@@ -145,6 +166,158 @@ class TransactionApiController extends BaseApiController
     }
 
     /**
+     * GET api/v1/transactions/statement — per-account (party) ledger with a
+     * running balance seeded by the account's opening (net before `from`), plus
+     * jama/naam totals and closing. Mirrors TransactionController::statementData().
+     */
+    public function statement()
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+        $model = new TransactionModel();
+
+        $party = trim((string) ($this->request->getGet('party') ?? ''));
+        $from  = (string) ($this->request->getGet('from') ?? '');
+        $to    = (string) ($this->request->getGet('to') ?? '');
+        $from  = preg_match('/^\d{4}-\d{2}-\d{2}$/', $from) ? $from : '';
+        $to    = preg_match('/^\d{4}-\d{2}-\d{2}$/', $to) ? $to : '';
+        if ($from !== '' && $to !== '' && $to < $from) {
+            [$from, $to] = [$to, $from];
+        }
+
+        if ($party === '') {
+            return $this->respond([
+                'status'    => 'ok',
+                'has_party' => false,
+                'accounts'  => $model->partyDirectory($cid, 200),
+            ]);
+        }
+
+        $rows    = $model->partyRows($cid, $party, $from ?: null, $to ?: null);
+        $opening = $from !== '' ? round($model->partyNetBefore($cid, $party, $from), 2) : 0.0;
+
+        $running = $opening;
+        $out     = [];
+        foreach ($rows as $r) {
+            $running += ($r['type'] === 'jama' ? (float) $r['amount'] : -(float) $r['amount']);
+            $out[]    = [
+                'id'           => (int) $r['id'],
+                'txn_no'       => $r['txn_no'],
+                'date'         => $r['txn_date'],
+                'type'         => $r['type'],
+                'amount'       => (float) $r['amount'],
+                'payment_mode' => $r['payment_mode'],
+                'status'       => $r['status'],
+                'notes'        => $r['notes'],
+                'balance'      => round($running, 2),
+            ];
+        }
+
+        [$jama, $naam] = $model->partyTotals($cid, $party, $from ?: null, $to ?: null);
+
+        return $this->respond([
+            'status'     => 'ok',
+            'has_party'  => true,
+            'party'      => $party,
+            'from'       => $from,
+            'to'         => $to,
+            'opening'    => $opening,
+            'rows'       => $out,
+            'total_jama' => round((float) $jama, 2),
+            'total_naam' => round((float) $naam, 2),
+            'closing'    => round($opening + (float) $jama - (float) $naam, 2),
+            'count'      => count($out),
+        ]);
+    }
+
+    /**
+     * GET api/v1/transactions/opening — Shri Rokad Nagad (opening cash) per
+     * financial year, ±5 years around the current FY. Each carries its value
+     * (explicit or auto-rolled from the prior year's closing) and an `auto` flag.
+     */
+    public function opening()
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+
+        $ob     = new OpeningBalance($cid, $cid);
+        $thisFy = $ob->fyStartFor(date('Y-m-d'));
+        $window = 5;
+
+        $years = [];
+        for ($y = $thisFy + $window; $y >= $thisFy - $window; $y--) {
+            $years[] = [
+                'fy'         => $y,
+                'label'      => OpeningBalance::fyLabel($y),
+                'value'      => $ob->shriNagad($y),
+                'auto'       => ! $ob->isExplicit($y),
+                'is_current' => $y === $thisFy,
+            ];
+        }
+
+        return $this->respond([
+            'status'  => 'ok',
+            'label'   => $ob->label(),
+            'this_fy' => $thisFy,
+            'years'   => $years,
+        ]);
+    }
+
+    /**
+     * POST api/v1/transactions/opening — set the opening cash for a financial
+     * year ({fy, amount}) or rename the label ({label}). Mirrors saveOpening().
+     */
+    public function saveOpening()
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+        $settings = new CompanySettingModel();
+
+        // Rename the label.
+        $label = $this->input('label');
+        if ($label !== null) {
+            $clean = trim((string) $label);
+            if ($clean === '' || mb_strlen($clean) > 60) {
+                return $this->failValidationErrors('Please provide a name (max 60 characters).');
+            }
+            $settings->put($cid, 'transactions', 'shri_rokad_label', $clean);
+            return $this->respond(['status' => 'ok', 'message' => 'Name updated.', 'label' => $clean]);
+        }
+
+        // Set / update the amount for a chosen FY.
+        $fy = (int) $this->input('fy');
+        if ($fy < 2000 || $fy > 2100) {
+            return $this->failValidationErrors('Please choose a valid financial year.');
+        }
+        $amountRaw = $this->input('amount');
+        if ($amountRaw === null || $amountRaw === '' || ! is_numeric($amountRaw)) {
+            return $this->failValidationErrors('Please enter a valid opening cash amount.');
+        }
+        $amount = round((float) $amountRaw, 2);
+        if ($amount < -9999999999.99 || $amount > 9999999999.99) {
+            return $this->failValidationErrors('The amount is out of range.');
+        }
+
+        $settings->put($cid, 'transactions', 'shri_rokad_nagad_' . $fy, $amount);
+        if (function_exists('activity_log')) {
+            activity_log('Transactions', 'Edit', 'Opening cash set for FY ' . OpeningBalance::fyLabel($fy) . ' (mobile)');
+        }
+
+        return $this->respond([
+            'status'  => 'ok',
+            'message' => 'Opening cash saved for FY ' . OpeningBalance::fyLabel($fy) . '.',
+            'fy'      => $fy,
+            'value'   => $amount,
+        ]);
+    }
+
+    /**
      * GET api/v1/transactions/entry/{id} — one entry, honouring company scope.
      */
     public function entry($id = null)
@@ -159,7 +332,11 @@ class TransactionApiController extends BaseApiController
             return $this->failNotFound('Entry not found.');
         }
 
-        return $this->respond(['status' => 'ok', 'entry' => $this->shape($row)]);
+        return $this->respond([
+            'status'      => 'ok',
+            'entry'       => $this->shape($row),
+            'attachments' => $this->attachmentList((int) $row['id']),
+        ]);
     }
 
     /**
@@ -253,6 +430,133 @@ class TransactionApiController extends BaseApiController
             'message' => 'Entry deleted.',
             'txn_no'  => $row['txn_no'],
         ]);
+    }
+
+    // ===============================================================
+    // Attachments (photos / PDFs / audio on an entry) — mirrors the web
+    // TransactionController attach flow + transaction_attachments table.
+    // ===============================================================
+
+    /** GET api/v1/transactions/entry/{id}/attachments — files on an entry. */
+    public function entryAttachments($id = null)
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+        $row = (new TransactionModel())->findScoped((int) $id, $cid);
+        if (! $row) {
+            return $this->failNotFound('Entry not found.');
+        }
+        return $this->respond(['status' => 'ok', 'attachments' => $this->attachmentList((int) $row['id'])]);
+    }
+
+    /** POST api/v1/transactions/entry/{id}/attach — upload files (multipart `attachments[]`). */
+    public function attachToEntry($id = null)
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+        $row = (new TransactionModel())->findScoped((int) $id, $cid);
+        if (! $row) {
+            return $this->failNotFound('Entry not found.');
+        }
+
+        $ownerId = (int) ($row['user_id'] ?? $user['id']);
+        $dir     = WRITEPATH . 'uploads/transactions/' . $ownerId . '/';
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+
+        $att    = new TransactionAttachmentModel();
+        $stored = 0;
+        foreach ((array) $this->request->getFileMultiple('attachments') as $file) {
+            if (! $file || ! $file->isValid() || $file->hasMoved() || $file->getSizeByUnit('mb') > 25) {
+                continue;
+            }
+            $ext  = strtolower($file->getExtension() ?: pathinfo($file->getName(), PATHINFO_EXTENSION));
+            $name = $file->getRandomName();
+            try {
+                $file->move($dir, $name);
+            } catch (\Throwable $e) {
+                continue;
+            }
+            $att->insert([
+                'transaction_id' => (int) $row['id'],
+                'user_id'        => $ownerId,
+                'company_id'     => $cid,
+                'original_name'  => $file->getClientName(),
+                'stored_name'    => $name,
+                'mime'           => $file->getClientMimeType(),
+                'kind'           => TransactionAttachmentModel::kindFor((string) $file->getClientMimeType(), (string) $ext),
+                'size'           => (int) filesize($dir . $name),
+                'created_by'     => (int) $user['id'],
+            ]);
+            $stored++;
+        }
+
+        if ($stored > 0 && function_exists('activity_log')) {
+            activity_log('Transactions', 'Edit', "{$stored} attachment(s) added to {$row['txn_no']} (mobile)");
+        }
+
+        return $this->respond([
+            'status'      => $stored > 0 ? 'ok' : 'empty',
+            'stored'      => $stored,
+            'message'     => "{$stored} file(s) attached.",
+            'attachments' => $this->attachmentList((int) $row['id']),
+        ]);
+    }
+
+    /** GET api/v1/transactions/attachment/{id} — stream the file (bearer-auth). */
+    public function attachment($id = null)
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+        $a = (new TransactionAttachmentModel())->find((int) $id);
+        if (! $a || (int) $a['company_id'] !== (int) $cid) {
+            return $this->failNotFound('Attachment not found.');
+        }
+        $path = WRITEPATH . 'uploads/transactions/' . (int) $a['user_id'] . '/' . $a['stored_name'];
+        if (! is_file($path)) {
+            return $this->failNotFound('File missing.');
+        }
+        return $this->response
+            ->setHeader('Content-Type', $a['mime'] ?: 'application/octet-stream')
+            ->setHeader('Content-Disposition', 'inline; filename="' . $a['original_name'] . '"')
+            ->setBody(file_get_contents($path));
+    }
+
+    /** DELETE api/v1/transactions/attachment/{id} — soft-delete a file. */
+    public function deleteAttachment($id = null)
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+        $model = new TransactionAttachmentModel();
+        $a     = $model->find((int) $id);
+        if (! $a || (int) $a['company_id'] !== (int) $cid) {
+            return $this->failNotFound('Attachment not found.');
+        }
+        $model->delete((int) $id);
+        return $this->respond(['status' => 'ok', 'message' => 'Attachment removed.']);
+    }
+
+    /** Attachment rows for a transaction, shaped for the app (with a fetch URL). */
+    private function attachmentList(int $transactionId): array
+    {
+        $rows = (new TransactionAttachmentModel())->forTransaction($transactionId);
+        return array_map(static fn (array $r): array => [
+            'id'            => (int) $r['id'],
+            'original_name' => $r['original_name'],
+            'mime'          => $r['mime'],
+            'kind'          => $r['kind'],
+            'size'          => (int) $r['size'],
+            'url'           => site_url('api/v1/transactions/attachment/' . $r['id']),
+        ], $rows);
     }
 
     /** Standard row → API shape. */
