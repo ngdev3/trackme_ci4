@@ -17,11 +17,31 @@ class PushApiController extends BaseApiController
         if (! $user) {
             return $this->failUnauthorized('Invalid or missing token.');
         }
+        // Native (mobile) path: a single FCM/APNs device token. Stored in the same
+        // push_subscriptions table so one user↔email can map to many devices — the
+        // token goes in `endpoint`, with p256dh='fcm' marking it as a native token
+        // and `auth` carrying the platform (android/ios).
+        $token = (string) $this->input('token', '');
+        if ($token !== '') {
+            $platform = (string) ($this->input('platform', '') ?: 'android');
+            (new PushSubscriptionModel())->store(
+                (int) $user['id'],
+                (string) $user['email'],
+                $token,
+                'fcm',
+                $platform,
+                $this->request->getUserAgent() ? (string) $this->request->getUserAgent() : null
+            );
+
+            return $this->respond(['status' => 'success', 'message' => 'Device registered.']);
+        }
+
+        // Web-Push path: browser service-worker subscription.
         $endpoint = (string) $this->input('endpoint', '');
         $p256dh   = (string) $this->input('p256dh', '');
         $auth     = (string) $this->input('auth', '');
         if ($endpoint === '' || $p256dh === '' || $auth === '') {
-            return $this->failValidationErrors('endpoint, p256dh and auth are required.');
+            return $this->failValidationErrors('Provide an FCM `token` (native) or `endpoint`, `p256dh` and `auth` (web).');
         }
 
         (new PushSubscriptionModel())->store(

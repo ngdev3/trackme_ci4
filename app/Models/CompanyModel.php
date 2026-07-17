@@ -31,6 +31,23 @@ class CompanyModel extends Model
         return $b->countAllResults() > 0;
     }
 
+    /**
+     * Total companies OWNED by a customer, INCLUDING soft-deleted ones in Trash.
+     * This is the figure the subscription firm-limit is measured against: a
+     * company sitting in the Recycle Bin still occupies a slot until it is
+     * permanently removed.
+     */
+    public function totalOwned(int $ownerId): int
+    {
+        return $this->withDeleted()->where('owner_id', $ownerId)->countAllResults();
+    }
+
+    /** Active (non-trashed) companies owned by a customer. */
+    public function activeOwned(int $ownerId): int
+    {
+        return $this->where('owner_id', $ownerId)->countAllResults();
+    }
+
     /** Companies a user is a member of (any role), newest first. */
     public function forUser(int $userId): array
     {

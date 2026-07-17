@@ -281,14 +281,54 @@ if (! function_exists('plan_firm_limit')) {
 }
 
 if (! function_exists('firm_count_for_customer')) {
-    /** How many (non-trashed) firms the owning customer currently has. */
+    /**
+     * How many firms the owning customer currently has toward their plan cap —
+     * INCLUDING firms sitting in Trash (soft-deleted). A trashed firm keeps
+     * occupying a slot until it is permanently removed, so it must be counted.
+     */
     function firm_count_for_customer(): int
     {
         $cid = sub_customer_id();
         if (! $cid) {
             return 0;
         }
-        return (new \App\Models\CompanyModel())->where('owner_id', $cid)->countAllResults();
+        return (new \App\Models\CompanyModel())->totalOwned($cid);
+    }
+}
+
+if (! function_exists('company_limit_state')) {
+    /**
+     * The single source of truth for company-limit enforcement, shared by the
+     * web and the mobile API. Counts active + trashed firms against the
+     * customer's CURRENT plan cap (not the plan the firms were created under).
+     *
+     * @return array{limit:?int,total:int,active:int,trashed:int,can_create:bool,can_restore:bool,message:string}
+     */
+    function company_limit_state(int $customerId): array
+    {
+        $companies = new \App\Models\CompanyModel();
+        $total     = $companies->totalOwned($customerId);
+        $active    = $companies->activeOwned($customerId);
+
+        $lim   = customer_effective_plan($customerId)['max_firms'] ?? null;
+        $limit = ($lim === null || $lim === '') ? null : (int) $lim;
+
+        // Create adds a slot → block once total is at/over the cap.
+        // Restore does NOT add a slot (Trash already counted) → block only when
+        // the account is strictly OVER the cap (e.g. after a plan downgrade).
+        $canCreate  = $limit === null || $total < $limit;
+        $canRestore = $limit === null || $total <= $limit;
+
+        return [
+            'limit'       => $limit,
+            'total'       => $total,
+            'active'      => $active,
+            'trashed'     => $total - $active,
+            'can_create'  => $canCreate,
+            'can_restore' => $canRestore,
+            'message'     => 'You have reached your company limit for the current subscription plan. '
+                . 'Please upgrade your plan or permanently remove existing companies to create a new company.',
+        ];
     }
 }
 

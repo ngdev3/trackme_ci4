@@ -9,11 +9,15 @@ use App\Models\TransactionModel;
  * Home dashboard aggregate for the mobile app.
  *
  *   GET /api/v1/dashboard   (Bearer) [?company_id=]
+ *       [?period=month&month=YYYY-MM]          — a calendar month (default: this month)
+ *       [?period=range&from=YYYY-MM-DD&to=…]   — an arbitrary date range (date-wise)
+ *       [?period=fy&fy=YYYY]                   — an Indian financial year (Apr–Mar)
  *
  * One round-trip that assembles everything the dashboard screen renders:
  *   - the active company (name),
- *   - cash-book (Jama/Naam) summaries for today, this month and last month,
- *   - the most recent cash-book entries,
+ *   - the selected reporting period + its cash-book (Jama/Naam) summaries,
+ *   - cash-book summaries for today, the period and the previous period,
+ *   - the most recent cash-book entries within the period,
  *   - a compact, feature-gated inventory snapshot.
  *
  * It only reads — no business logic is added here; it reuses TransactionModel
@@ -35,34 +39,41 @@ class DashboardApiController extends BaseApiController
         }
 
         $txn = new TransactionModel();
+        $today = date('Y-m-d');
 
-        $today      = date('Y-m-d');
-        $monthStart = date('Y-m-01');
-        $prevStart  = date('Y-m-01', strtotime('first day of last month'));
-        $prevEnd    = date('Y-m-t', strtotime('last day of last month'));
+        // Selected reporting period (month / range / FY) + the comparable prior
+        // period used for the up/down deltas.
+        $p          = $this->resolvePeriod();
+        $periodFrom = $p['from'];
+        $periodTo   = $p['to'];
 
-        $todaySum = $this->shapeSummary($txn->summary($cid, ['from' => $today, 'to' => $today]));
-        $monthSum = $this->shapeSummary($txn->summary($cid, ['from' => $monthStart, 'to' => $today]));
-        $prevSum  = $this->shapeSummary($txn->summary($cid, ['from' => $prevStart, 'to' => $prevEnd]));
+        $todaySum  = $this->shapeSummary($txn->summary($cid, ['from' => $today, 'to' => $today]));
+        $periodSum = $this->shapeSummary($txn->summary($cid, ['from' => $periodFrom, 'to' => $periodTo]));
+        $prevSum   = $this->shapeSummary($txn->summary($cid, ['from' => $p['prevFrom'], 'to' => $p['prevTo']]));
 
-        // Percent change of this month's net vs last month's (null when no base).
-        $monthSum['net_delta'] = $this->percentDelta($monthSum['net'], $prevSum['net']);
+        // Percent change of the period's net vs the previous period (null = no base).
+        $periodSum['net_delta'] = $this->percentDelta($periodSum['net'], $prevSum['net']);
 
-        // Redesigned-dashboard blocks (money-in framed as "sales", money-out as
-        // "expenses"; this is a cash book, so there is no separate purchase feed —
-        // the 4th card shows the running balance instead). Each metric carries a
-        // signed % delta vs last month so the UI can render the up/down chips.
-        $allTime = $this->shapeSummary($txn->summary($cid, []));
+        // Running balance is cumulative to the period end (capped at today so a
+        // current/future period end doesn't imply future transactions).
+        $balanceTo = min($periodTo, $today);
+        $balance   = $this->shapeSummary($txn->summary($cid, ['to' => $balanceTo]));
+
+        // Headline cards (money-in framed as "sales", money-out as "expenses";
+        // this is a cash book, so the 4th card shows the running balance). Each
+        // metric carries a signed % delta vs the previous period for the chips.
         $metrics = [
-            'sales'    => ['value' => $monthSum['deposits'], 'delta' => $this->percentDelta($monthSum['deposits'], $prevSum['deposits'])],
-            'expenses' => ['value' => $monthSum['expenses'], 'delta' => $this->percentDelta($monthSum['expenses'], $prevSum['expenses'])],
-            'profit'   => ['value' => $monthSum['net'],      'delta' => $this->percentDelta($monthSum['net'],      $prevSum['net'])],
-            'balance'  => ['value' => $allTime['net'],       'delta' => null],
+            'sales'    => ['value' => $periodSum['deposits'], 'delta' => $this->percentDelta($periodSum['deposits'], $prevSum['deposits'])],
+            'expenses' => ['value' => $periodSum['expenses'], 'delta' => $this->percentDelta($periodSum['expenses'], $prevSum['expenses'])],
+            'profit'   => ['value' => $periodSum['net'],      'delta' => $this->percentDelta($periodSum['net'],      $prevSum['net'])],
+            'balance'  => ['value' => $balance['net'],        'delta' => null],
         ];
 
-        // Last 6 months of money-in / money-out / net for the Sales Overview chart.
-        $series = $this->monthlySeries($txn, $cid, 6);
+        // Money-in / money-out / net series for the chart: the FY's 12 months, or
+        // the 6 months ending at the period end for month/range.
+        $series = $this->monthlySeries($txn, $cid, $p['seriesMonths'], $p['seriesAnchor']);
 
+        // Recent entries within the selected period.
         $recent = array_map(static fn (array $r): array => [
             'id'           => (int) $r['id'],
             'txn_no'       => $r['txn_no'],
@@ -73,7 +84,7 @@ class DashboardApiController extends BaseApiController
             'amount'       => (float) $r['amount'],
             'payment_mode' => $r['payment_mode'],
             'status'       => $r['status'],
-        ], $txn->limitedFiltered($cid, [], 6, 0));
+        ], $txn->limitedFiltered($cid, ['from' => $periodFrom, 'to' => $periodTo], 6, 0));
 
         $company = (new CompanyModel())->find($cid);
 
@@ -85,9 +96,15 @@ class DashboardApiController extends BaseApiController
                 'business_type' => $company['business_type'] ?? null,
                 'state'         => $company['state'] ?? null,
             ],
+            'period'    => [
+                'type'  => $p['type'],
+                'from'  => $periodFrom,
+                'to'    => $periodTo,
+                'label' => $p['label'],
+            ],
             'cash'      => [
                 'today'      => $todaySum,
-                'month'      => $monthSum,
+                'month'      => $periodSum, // "month" key kept for back-compat; holds the selected period
                 'prev_month' => $prevSum,
             ],
             'metrics'   => $metrics,
@@ -98,17 +115,103 @@ class DashboardApiController extends BaseApiController
     }
 
     /**
-     * Build a month-by-month money-in / money-out / net series for the last
-     * $months calendar months (oldest first), each labelled with its short
-     * month name for the chart axis.
+     * Resolve the requested reporting period from the query string into concrete
+     * date bounds plus the comparable previous period and chart parameters.
+     *
+     * @return array{type:string, from:string, to:string, prevFrom:string, prevTo:string, label:string, seriesMonths:int, seriesAnchor:string}
+     */
+    private function resolvePeriod(): array
+    {
+        $type  = (string) ($this->request->getGet('period') ?: 'month');
+        $today = date('Y-m-d');
+
+        if ($type === 'fy') {
+            $startYear = (int) ($this->request->getGet('fy') ?: $this->currentFyStartYear());
+            $from      = sprintf('%04d-04-01', $startYear);
+            $to        = sprintf('%04d-03-31', $startYear + 1);
+
+            return [
+                'type'         => 'fy',
+                'from'         => $from,
+                'to'           => $to,
+                'prevFrom'     => sprintf('%04d-04-01', $startYear - 1),
+                'prevTo'       => sprintf('%04d-03-31', $startYear),
+                'label'        => sprintf('FY %d-%s', $startYear, substr((string) ($startYear + 1), -2)),
+                'seriesMonths' => 12,
+                'seriesAnchor' => $to,
+            ];
+        }
+
+        if ($type === 'range') {
+            $from = $this->validDate((string) $this->request->getGet('from'), date('Y-m-01'));
+            $to   = $this->validDate((string) $this->request->getGet('to'), $today);
+            if ($from > $to) {
+                [$from, $to] = [$to, $from];
+            }
+            $lenDays  = (int) (((int) strtotime($to) - (int) strtotime($from)) / 86400) + 1;
+            $prevTo   = date('Y-m-d', strtotime($from . ' -1 day'));
+            $prevFrom = date('Y-m-d', strtotime($prevTo . ' -' . ($lenDays - 1) . ' day'));
+
+            return [
+                'type'         => 'range',
+                'from'         => $from,
+                'to'           => $to,
+                'prevFrom'     => $prevFrom,
+                'prevTo'       => $prevTo,
+                'label'        => date('j M Y', strtotime($from)) . ' – ' . date('j M Y', strtotime($to)),
+                'seriesMonths' => 6,
+                'seriesAnchor' => $to,
+            ];
+        }
+
+        // Default: a calendar month.
+        $month = (string) ($this->request->getGet('month') ?: date('Y-m'));
+        if (! preg_match('/^\d{4}-\d{2}$/', $month)) {
+            $month = date('Y-m');
+        }
+        $from     = $month . '-01';
+        $to       = date('Y-m-t', strtotime($from));
+        $prevFrom = date('Y-m-01', strtotime($from . ' -1 month'));
+
+        return [
+            'type'         => 'month',
+            'from'         => $from,
+            'to'           => $to,
+            'prevFrom'     => $prevFrom,
+            'prevTo'       => date('Y-m-t', strtotime($prevFrom)),
+            'label'        => date('F Y', strtotime($from)),
+            'seriesMonths' => 6,
+            'seriesAnchor' => $to,
+        ];
+    }
+
+    /** Start year of the Indian financial year (Apr–Mar) containing today. */
+    private function currentFyStartYear(): int
+    {
+        $y = (int) date('Y');
+        return (int) date('n') >= 4 ? $y : $y - 1;
+    }
+
+    /** Return $value if it is a valid YYYY-MM-DD date, else $default. */
+    private function validDate(string $value, string $default): string
+    {
+        $d = \DateTime::createFromFormat('Y-m-d', $value);
+        return ($d && $d->format('Y-m-d') === $value) ? $value : $default;
+    }
+
+    /**
+     * Build a month-by-month money-in / money-out / net series ending at the
+     * month containing $anchor and spanning $months months (oldest first), each
+     * labelled with its short month name for the chart axis.
      *
      * @return list<array{label:string, month:string, sales:float, expenses:float, net:float}>
      */
-    private function monthlySeries(TransactionModel $txn, int $cid, int $months): array
+    private function monthlySeries(TransactionModel $txn, int $cid, int $months, string $anchor): array
     {
-        $out = [];
+        $base = (int) strtotime(date('Y-m-01', strtotime($anchor)));
+        $out  = [];
         for ($i = $months - 1; $i >= 0; $i--) {
-            $start = date('Y-m-01', strtotime("first day of -{$i} month"));
+            $start = date('Y-m-01', strtotime("-{$i} month", $base));
             $end   = date('Y-m-t', strtotime($start));
             $s     = $this->shapeSummary($txn->summary($cid, ['from' => $start, 'to' => $end]));
             $out[] = [

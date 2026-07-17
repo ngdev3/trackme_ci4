@@ -459,6 +459,14 @@ class CompanyController extends BaseController
         if (! $this->canManage($company)) {
             return redirect()->to(site_url('company/trash'))->with('error', 'You can only restore a company you own.');
         }
+        // A trashed firm already counts toward the plan cap, so if the account is
+        // OVER its current cap (e.g. after a downgrade), block restoring until the
+        // total is back within the limit.
+        helper('subscription');
+        $state = company_limit_state((int) $company['owner_id']);
+        if (! $state['can_restore']) {
+            return redirect()->to(site_url('company/trash'))->with('error', $state['message']);
+        }
         // deleted_at is not an allowed field, so clear it via the builder directly.
         $this->companies->builder()->where('id', $id)->update(['deleted_at' => null]);
         activity_log('Company', 'Edit', "Company #{$id} ({$company['name']}) restored from Trash");

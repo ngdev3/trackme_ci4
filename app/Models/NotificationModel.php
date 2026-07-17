@@ -58,6 +58,22 @@ class NotificationModel extends Model
         return $builder;
     }
 
+    /**
+     * Notifications visible to a specific user by id — for the token-authenticated
+     * mobile API (no session). Includes the user's own notifications plus global
+     * ones (no user and no role). A fresh builder each call so it can be reused.
+     */
+    public function visibleForUser(int $userId)
+    {
+        return $this->groupStart()
+            ->where('notifications.user_id', $userId)
+            ->orGroupStart()
+                ->where('notifications.user_id', null)
+                ->where('notifications.role_id', null)
+            ->groupEnd()
+        ->groupEnd();
+    }
+
     public function unreadCount(): int
     {
         return (int) $this->visibleForCurrentUser()

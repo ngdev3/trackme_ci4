@@ -54,13 +54,13 @@ class Notifier
             return null;
         }
 
-        // Best-effort browser push for user-targeted notifications. Never let a
-        // push failure affect the calling action.
+        // Best-effort push for user-targeted notifications (browser Web-Push +
+        // native FCM). Never let a push failure affect the calling action.
         if ($payload['user_id']) {
             try {
-                $this->webPush((int) $payload['user_id'], $payload['title'], $payload['message'], $payload['action_url']);
+                $this->push((int) $payload['user_id'], $payload['title'], $payload['message'], $payload['action_url']);
             } catch (\Throwable $e) {
-                log_message('error', 'Web push failed: ' . $e->getMessage());
+                log_message('error', 'Push delivery failed: ' . $e->getMessage());
             }
         }
 
@@ -68,14 +68,72 @@ class Notifier
     }
 
     /**
-     * Deliver a Web Push message to every browser a user has subscribed, subject
-     * to automatically managed VAPID keys.
-     * Prunes subscriptions the push service reports as gone (404/410).
+     * Deliver a push to every device a user has registered. Two transports share
+     * the push_subscriptions table:
+     *   - native app installs  → FCM device token (p256dh = 'fcm'), sent via FCM
+     *   - browsers             → Web-Push subscription, sent via VAPID Web-Push
+     * Dead subscriptions the services report as gone are pruned.
      */
-    protected function webPush(int $userId, string $title, string $message, ?string $url): void
+    protected function push(int $userId, string $title, string $message, ?string $url): void
     {
         $subs = new PushSubscriptionModel();
         $rows = $subs->forUser($userId);
+        if ($rows === []) {
+            return;
+        }
+
+        // Partition by transport.
+        $native = [];
+        $web    = [];
+        foreach ($rows as $row) {
+            if (($row['p256dh'] ?? '') === 'fcm') {
+                $native[] = $row;
+            } else {
+                $web[] = $row;
+            }
+        }
+
+        $this->fcmPush($subs, $native, $title, $message, $url);
+        $this->webPush($subs, $web, $title, $message, $url);
+    }
+
+    /**
+     * Send to native device tokens via FCM (no-op unless a Firebase service
+     * account is configured). Prunes tokens FCM reports as invalid/expired.
+     *
+     * @param list<array> $rows push_subscriptions rows with an FCM token in `endpoint`
+     */
+    protected function fcmPush(PushSubscriptionModel $subs, array $rows, string $title, string $message, ?string $url): void
+    {
+        if ($rows === []) {
+            return;
+        }
+        $fcm = new \App\Libraries\Fcm();
+        if (! $fcm->isConfigured()) {
+            return;
+        }
+
+        $byToken = [];
+        foreach ($rows as $row) {
+            $byToken[$row['endpoint']] = (int) $row['id'];
+        }
+
+        $invalid = $fcm->sendToTokens(array_keys($byToken), $title, $message, $url ?: site_url('notifications'));
+        foreach ($invalid as $token) {
+            if (isset($byToken[$token])) {
+                $subs->delete($byToken[$token]);
+            }
+        }
+    }
+
+    /**
+     * Deliver a Web Push message to browser subscriptions with app-managed VAPID
+     * keys. Prunes subscriptions the push service reports as gone (404/410).
+     *
+     * @param list<array> $rows browser Web-Push subscription rows
+     */
+    protected function webPush(PushSubscriptionModel $subs, array $rows, string $title, string $message, ?string $url): void
+    {
         if ($rows === []) {
             return;
         }

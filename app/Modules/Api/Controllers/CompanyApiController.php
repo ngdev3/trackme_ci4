@@ -41,18 +41,20 @@ class CompanyApiController extends BaseApiController
 
         $uid = (int) $user['id'];
 
-        // Firm-limit guard (mirrors firm_limit_reached). The very first firm is
-        // always allowed, so we skip the plan lookup for a brand-new owner — this
-        // also avoids pre-creating a subscription row before the provisioner seeds
-        // the free plan (which would otherwise leave the row plan-less). Only an
-        // owner who already has firms is measured against their plan's max_firms
-        // (NULL = unlimited).
-        $count = (new CompanyModel())->where('owner_id', $uid)->countAllResults();
-        if ($count > 0) {
-            $limit = customer_effective_plan($uid)['max_firms'] ?? null;
-            if ($limit !== null && $limit !== '' && $count >= (int) $limit) {
+        // Firm-limit guard. The count includes firms in Trash (soft-deleted) —
+        // a trashed firm keeps occupying a slot until permanently removed — and
+        // is always measured against the owner's CURRENT plan cap (max_firms;
+        // NULL = unlimited). The very first firm is always allowed, so we skip
+        // the plan lookup for a brand-new owner: this also avoids pre-creating a
+        // subscription row before the provisioner seeds the free plan.
+        $total = (new CompanyModel())->totalOwned($uid);
+        if ($total > 0) {
+            $lim   = customer_effective_plan($uid)['max_firms'] ?? null;
+            $limit = ($lim === null || $lim === '') ? null : (int) $lim;
+            if ($limit !== null && $total >= $limit) {
                 return $this->failForbidden(
-                    "You have reached the maximum limit of {$limit} firm(s). Upgrade your plan to create more."
+                    'You have reached your company limit for the current subscription plan. '
+                    . 'Please upgrade your plan or permanently remove existing companies to create a new company.'
                 );
             }
         }
@@ -145,13 +147,20 @@ class CompanyApiController extends BaseApiController
         }
         $rows = (new CompanyModel())->forUser((int) $user['id']);
         $out  = array_map(fn ($c) => [
-            'id'       => (int) $c['id'],
-            'name'     => $c['name'],
-            'state'    => $c['state'] ?? null,
-            'is_owner' => (int) $c['owner_id'] === (int) $user['id'],
+            'id'            => (int) $c['id'],
+            'name'          => $c['name'],
+            'state'         => $c['state'] ?? null,
+            'business_type' => $c['business_type'] ?? null,
+            'is_owner'      => (int) $c['owner_id'] === (int) $user['id'],
         ], $rows);
 
-        return $this->respond(['status' => 'ok', 'companies' => $out]);
+        return $this->respond([
+            'status'    => 'ok',
+            'companies' => $out,
+            // Firm-limit state so the client can disable/enable the Create button
+            // and show a clear message. Backend stays authoritative regardless.
+            'limit'     => company_limit_state((int) $user['id']),
+        ]);
     }
 
     /** GET api/v1/companies/{id} — full details for the edit form (owner only). */
@@ -179,6 +188,46 @@ class CompanyApiController extends BaseApiController
             'address'               => $company['address'] ?? null,
             'mobile'                => $company['mobile'] ?? null,
             'email'                 => $company['email'] ?? null,
+        ]]);
+    }
+
+    /**
+     * GET api/v1/companies/{id}/summary — details + entry stats for a company
+     * the caller owns, INCLUDING one sitting in Trash. Lets the user see exactly
+     * which company a trashed row is (name, place, GST, dates) and how many
+     * cash-book entries it holds before deciding to restore or purge it.
+     */
+    public function summary($id = null)
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $companies = new CompanyModel();
+        $company   = $companies->withDeleted()->find((int) $id);
+        if (! $this->owns($user, $company)) {
+            return $this->failForbidden('You can only view a company you own.');
+        }
+
+        $stats = (new \App\Models\TransactionModel())->summary((int) $id, []);
+
+        return $this->respond(['status' => 'ok', 'company' => [
+            'id'                    => (int) $company['id'],
+            'name'                  => $company['name'],
+            'state'                 => $company['state'] ?? null,
+            'business_type'         => $company['business_type'] ?? null,
+            'gst_number'            => $company['gst_number'] ?? null,
+            'gst_registration_type' => $company['gst_registration_type'] ?? null,
+            'financial_year_from'   => $company['financial_year_from'] ?? null,
+            'created_at'            => $company['created_at'] ?? null,
+            'deleted_at'            => $company['deleted_at'] ?? null,
+            'is_trashed'            => ! empty($company['deleted_at']),
+            'entries'               => [
+                'count'    => (int) $stats['count'],
+                'deposits' => (float) $stats['jama'],
+                'expenses' => (float) $stats['naam'],
+                'net'      => (float) $stats['net'],
+            ],
         ]]);
     }
 
@@ -294,10 +343,13 @@ class CompanyApiController extends BaseApiController
         }
         $rows = (new CompanyModel())->trashedForUser((int) $user['id']);
         $out  = array_map(fn ($c) => [
-            'id'         => (int) $c['id'],
-            'name'       => $c['name'],
-            'deleted_at' => $c['deleted_at'] ?? null,
-            'is_owner'   => (int) $c['owner_id'] === (int) $user['id'],
+            'id'            => (int) $c['id'],
+            'name'          => $c['name'],
+            'state'         => $c['state'] ?? null,
+            'business_type' => $c['business_type'] ?? null,
+            'gst_number'    => $c['gst_number'] ?? null,
+            'deleted_at'    => $c['deleted_at'] ?? null,
+            'is_owner'      => (int) $c['owner_id'] === (int) $user['id'],
         ], $rows);
 
         return $this->respond(['status' => 'ok', 'companies' => $out]);
@@ -315,6 +367,16 @@ class CompanyApiController extends BaseApiController
         if (! $this->owns($user, $company)) {
             return $this->failForbidden('You can only restore a company you own.');
         }
+
+        // A trashed firm already counts toward the plan cap, so restoring one
+        // does not add a slot — but if the account is OVER its current cap (e.g.
+        // after a downgrade), restoring would make an over-limit firm active
+        // again, so block it until the total is back within the cap.
+        $state = company_limit_state((int) $company['owner_id']);
+        if (! $state['can_restore']) {
+            return $this->failForbidden($state['message']);
+        }
+
         // deleted_at is not an allowed field — clear it via the builder directly.
         $companies->builder()->where('id', (int) $id)->update(['deleted_at' => null]);
         if (function_exists('activity_log')) {

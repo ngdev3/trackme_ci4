@@ -2,6 +2,7 @@
 
 namespace Modules\Api\Controllers;
 
+use App\Models\PaymentOrderModel;
 use App\Models\SubscriptionModel;
 use App\Models\SubscriptionPlanModel;
 
@@ -72,6 +73,36 @@ class SubscriptionApiController extends BaseApiController
             'effective' => ['name' => $effective['name'] ?? null, 'code' => $effective['code'] ?? null],
             'plans'     => $plans,
         ]);
+    }
+
+    /**
+     * GET api/v1/subscription/payments — the customer's payment history, newest
+     * first. Mirrors the web SubscriptionController::transactions.
+     */
+    public function payments()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $ownerId = $this->ownerId($user);
+
+        $orders = (new PaymentOrderModel())->forCustomer($ownerId);
+        $out    = array_map(static fn (array $o): array => [
+            'id'         => (int) $o['id'],
+            'order_id'   => $o['order_id'],
+            'invoice_no' => $o['invoice_no'] ?: null,
+            'plan'       => $o['plan_name'] ?? null,
+            'amount'     => (float) $o['amount'],
+            'currency'   => $o['currency'] ?: '₹',
+            'gateway'    => $o['gateway'],
+            'status'     => $o['status'],
+            'activated'  => (int) ($o['activated'] ?? 0) === 1,
+            'refunded'   => (int) ($o['refunded'] ?? 0) === 1,
+            'date'       => $o['invoice_date'] ?: $o['created_at'],
+        ], $orders);
+
+        return $this->respond(['status' => 'ok', 'payments' => $out]);
     }
 
     /** POST api/v1/subscription/subscribe — assign the chosen plan (no gateway). */
