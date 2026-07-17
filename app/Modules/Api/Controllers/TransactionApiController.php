@@ -438,6 +438,53 @@ class TransactionApiController extends BaseApiController
         ]);
     }
 
+    /** GET api/v1/transactions/deleted — soft-deleted entries for the company (Trash). */
+    public function deleted()
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+
+        $rows = (new TransactionModel())
+            ->withDeleted()
+            ->where('company_id', $cid)
+            ->where('deleted_at IS NOT NULL')
+            ->orderBy('deleted_at', 'DESC')
+            ->findAll(200);
+
+        $out = array_map(fn (array $r): array => $this->shape($r) + [
+            'delete_reason' => $r['delete_reason'] ?? null,
+            'deleted_at'    => $r['deleted_at'] ?? null,
+        ], $rows);
+
+        return $this->respond(['status' => 'ok', 'count' => count($out), 'entries' => $out]);
+    }
+
+    /** POST api/v1/transactions/restore/{id} — un-delete a soft-deleted entry. */
+    public function restore($id = null)
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+
+        $model = new TransactionModel();
+        $row   = $model->withDeleted()->find((int) $id);
+        if (! $row || (int) $row['company_id'] !== (int) $cid || empty($row['deleted_at'])) {
+            return $this->failNotFound('Deleted entry not found.');
+        }
+
+        // Restore via the builder so the soft-delete scope doesn't filter it out.
+        $model->builder()->where('id', (int) $id)->update(['deleted_at' => null, 'delete_reason' => null]);
+
+        if (function_exists('activity_log')) {
+            activity_log('Transactions', 'Edit', "Transaction {$row['txn_no']} restored (mobile)");
+        }
+
+        return $this->respond(['status' => 'ok', 'message' => 'Entry restored.', 'txn_no' => $row['txn_no']]);
+    }
+
     // ===============================================================
     // Attachments (photos / PDFs / audio on an entry) — mirrors the web
     // TransactionController attach flow + transaction_attachments table.

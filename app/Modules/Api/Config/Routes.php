@@ -71,6 +71,8 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->post('transactions/store', 'TransactionApiController::store');
     $routes->post('transactions/update/(:num)', 'TransactionApiController::update/$1');
     $routes->post('transactions/delete/(:num)', 'TransactionApiController::delete/$1');
+    $routes->get('transactions/deleted', 'TransactionApiController::deleted');
+    $routes->post('transactions/restore/(:num)', 'TransactionApiController::restore/$1');
     // Transaction attachments (photos / PDFs / audio on an entry).
     $routes->get('transactions/entry/(:num)/attachments', 'TransactionApiController::entryAttachments/$1');
     $routes->post('transactions/entry/(:num)/attach', 'TransactionApiController::attachToEntry/$1');
