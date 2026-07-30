@@ -140,24 +140,37 @@ class MeApiController extends BaseApiController
                 }
             }
         }
-        $active = $active ?? $this->activeCompany($user);
+        $active   = $active ?? $this->activeCompany($user);
+        $activeId = $active ? (int) $active['id'] : null;
+
+        // Stamp "last opened" for the company that is now the active one, so the
+        // app can show a per-company Last-active time (mobile settings / companies
+        // list) and sort by most-recently-used. Fires on both /me and switch.
+        if ($activeId) {
+            $members->touchActive($activeId, (int) $user['id']);
+        }
+
+        // Per-company last-active (read AFTER the touch above so the active
+        // company reflects "just now").
+        $lastActive = $members->lastActiveMap((int) $user['id']);
 
         // Company list with the caller's role in each.
         $companies = [];
         foreach ($allCompanies as $c) {
             $membership = $members->membership((int) $c['id'], (int) $user['id']);
             $companies[] = [
-                'id'            => (int) $c['id'],
-                'name'          => $c['name'],
-                'state'         => $c['state'] ?? null,
-                'gst_number'    => $c['gst_number'] ?? null,
-                'business_type' => $c['business_type'] ?? null,
-                'role'          => $membership['role'] ?? ((int) $c['owner_id'] === (int) $user['id'] ? 'owner' : 'staff'),
-                'is_owner'      => (int) $c['owner_id'] === (int) $user['id'],
+                'id'             => (int) $c['id'],
+                'name'           => $c['name'],
+                'state'          => $c['state'] ?? null,
+                'gst_number'     => $c['gst_number'] ?? null,
+                'business_type'  => $c['business_type'] ?? null,
+                'role'           => $membership['role'] ?? ((int) $c['owner_id'] === (int) $user['id'] ? 'owner' : 'staff'),
+                'is_owner'       => (int) $c['owner_id'] === (int) $user['id'],
+                'created_at'     => $c['created_at'] ?? null,
+                'last_active_at' => $lastActive[(int) $c['id']] ?? null,
             ];
         }
 
-        $activeId   = $active ? (int) $active['id'] : null;
         $activeRole = null;
         if ($active) {
             $m          = $members->membership($activeId, (int) $user['id']);

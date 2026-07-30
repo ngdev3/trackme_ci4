@@ -84,6 +84,30 @@ class TransactionModel extends Model
         return $b;
     }
 
+    /**
+     * Count of non-deleted entries per company, for the given company ids.
+     *
+     * @param  list<int> $companyIds
+     * @return array<int, int> company_id → entry count
+     */
+    public function countsByCompany(array $companyIds): array
+    {
+        if ($companyIds === []) {
+            return [];
+        }
+        $rows = $this->builder()
+            ->select('company_id, COUNT(*) AS cnt')
+            ->where('deleted_at', null)
+            ->whereIn('company_id', $companyIds)
+            ->groupBy('company_id')
+            ->get()->getResultArray();
+        $out = [];
+        foreach ($rows as $r) {
+            $out[(int) $r['company_id']] = (int) $r['cnt'];
+        }
+        return $out;
+    }
+
     /** Find one row, honouring the company scope (null = any company). */
     public function findScoped(int $id, ?int $companyId): ?array
     {

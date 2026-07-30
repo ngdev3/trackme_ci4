@@ -40,6 +40,10 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     // (feature-gated) inventory snapshot in one round-trip.
     $routes->get('dashboard', 'DashboardApiController::index');
 
+    // Activity & Audit Monitor overview (SUPER ADMIN ONLY): aggregates every
+    // user's activity/logins/IPs. Recording is app-wide; viewing is gated.
+    $routes->get('monitor/overview', 'MonitorApiController::overview');
+
     // Register a browser/device push subscription for the authenticated user.
     // subscribe accepts either a Web-Push payload or an FCM device token.
     $routes->post('push/subscribe', 'PushApiController::subscribe');
@@ -79,6 +83,14 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->get('transactions/attachment/(:num)', 'TransactionApiController::attachment/$1');
     $routes->delete('transactions/attachment/(:num)', 'TransactionApiController::deleteAttachment/$1');
 
+    // Account logs: the caller's own login history (read-only).
+    $routes->get('logs/logins', 'LogsApiController::logins');
+
+    // Calculator saved history (feature: calculator). Per-user.
+    $routes->get('calculator', 'CalculatorApiController::index');
+    $routes->post('calculator', 'CalculatorApiController::save');
+    $routes->delete('calculator/(:num)', 'CalculatorApiController::delete/$1');
+
     // Password Manager (feature-gated: password_manager). Company-scoped vault.
     $routes->get('passwords', 'PasswordsApiController::index');
     $routes->get('passwords/(:num)/reveal', 'PasswordsApiController::reveal/$1');
@@ -88,9 +100,16 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
 
     // Notes (feature-gated: notes). Company-scoped, shared across members.
     $routes->get('notes', 'NotesApiController::index');
+    $routes->get('notes/trash', 'NotesApiController::trash');
+    $routes->get('notes/categories', 'NotesApiController::categories');
+    $routes->post('notes/categories', 'NotesApiController::createCategory');
+    $routes->delete('notes/categories/(:num)', 'NotesApiController::deleteCategory/$1');
     $routes->post('notes', 'NotesApiController::create');
     $routes->put('notes/(:num)', 'NotesApiController::update/$1');
     $routes->post('notes/(:num)/pin', 'NotesApiController::togglePin/$1');
+    $routes->post('notes/(:num)/important', 'NotesApiController::toggleImportant/$1');
+    $routes->post('notes/(:num)/restore', 'NotesApiController::restore/$1');
+    $routes->delete('notes/(:num)/purge', 'NotesApiController::purge/$1');
     $routes->delete('notes/(:num)', 'NotesApiController::delete/$1');
 
     // Reminders (feature-gated: reminder). Company-scoped.

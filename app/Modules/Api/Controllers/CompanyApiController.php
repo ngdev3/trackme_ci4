@@ -5,6 +5,7 @@ namespace Modules\Api\Controllers;
 use App\Libraries\CompanyProvisioner;
 use App\Models\CompanyModel;
 use App\Models\CompanySettingModel;
+use App\Models\CompanyUserModel;
 
 /**
  * Firm (company) creation for the mobile app — the onboarding step a new
@@ -146,12 +147,22 @@ class CompanyApiController extends BaseApiController
             return $this->failUnauthorized('Invalid or missing token.');
         }
         $rows = (new CompanyModel())->forUser((int) $user['id']);
-        $out  = array_map(fn ($c) => [
-            'id'            => (int) $c['id'],
-            'name'          => $c['name'],
-            'state'         => $c['state'] ?? null,
-            'business_type' => $c['business_type'] ?? null,
-            'is_owner'      => (int) $c['owner_id'] === (int) $user['id'],
+
+        // Per-company extras for the list UI: how many cash-book entries each
+        // firm holds, and when this user last opened it (from the membership).
+        $ids        = array_map(fn ($c) => (int) $c['id'], $rows);
+        $counts     = (new \App\Models\TransactionModel())->countsByCompany($ids);
+        $lastActive = (new CompanyUserModel())->lastActiveMap((int) $user['id']);
+
+        $out = array_map(fn ($c) => [
+            'id'             => (int) $c['id'],
+            'name'           => $c['name'],
+            'state'          => $c['state'] ?? null,
+            'business_type'  => $c['business_type'] ?? null,
+            'is_owner'       => (int) $c['owner_id'] === (int) $user['id'],
+            'created_at'     => $c['created_at'] ?? null,
+            'last_active_at' => $lastActive[(int) $c['id']] ?? null,
+            'entry_count'    => $counts[(int) $c['id']] ?? 0,
         ], $rows);
 
         return $this->respond([

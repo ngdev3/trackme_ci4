@@ -11,7 +11,7 @@ class CompanyUserModel extends Model
     protected $returnType    = 'array';
     protected $useTimestamps = true;
 
-    protected $allowedFields = ['company_id', 'customer_id', 'user_id', 'role', 'permissions', 'status'];
+    protected $allowedFields = ['company_id', 'customer_id', 'user_id', 'role', 'permissions', 'status', 'last_active_at'];
 
     /** owner = the customer; the rest are assignable firm-user roles. */
     public const ROLES = ['owner', 'admin', 'accountant', 'sales', 'purchase', 'inventory', 'viewer'];
@@ -37,5 +37,29 @@ class CompanyUserModel extends Model
     public function isMember(int $companyId, int $userId): bool
     {
         return $this->where('company_id', $companyId)->where('user_id', $userId)->where('status', 1)->countAllResults() > 0;
+    }
+
+    /** Stamp "now" as the last time the user opened/used this company. */
+    public function touchActive(int $companyId, int $userId): void
+    {
+        $this->builder()
+            ->where('company_id', $companyId)
+            ->where('user_id', $userId)
+            ->update(['last_active_at' => date('Y-m-d H:i:s')]);
+    }
+
+    /**
+     * Map of company_id → last_active_at for a user's memberships.
+     *
+     * @return array<int, string|null>
+     */
+    public function lastActiveMap(int $userId): array
+    {
+        $rows = $this->select('company_id, last_active_at')->where('user_id', $userId)->findAll();
+        $out  = [];
+        foreach ($rows as $r) {
+            $out[(int) $r['company_id']] = $r['last_active_at'] ?? null;
+        }
+        return $out;
     }
 }
