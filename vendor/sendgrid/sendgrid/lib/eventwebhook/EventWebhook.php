@@ -5,7 +5,6 @@ namespace SendGrid\EventWebhook;
 use EllipticCurve\Ecdsa;
 use EllipticCurve\PublicKey;
 use EllipticCurve\Signature;
-use EllipticCurve\Utils\Binary;
 
 /**
  * This class allows you to use the Event Webhook feature. Read the docs for
@@ -23,7 +22,7 @@ class EventWebhook
      */
     public function convertPublicKeyToECDSA($publicKey)
     {
-        return PublicKey::fromDer(Binary::byteStringFromBase64($publicKey));
+        return PublicKey::fromString($publicKey);
     }
 
     /**

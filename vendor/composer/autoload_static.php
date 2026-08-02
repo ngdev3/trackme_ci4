@@ -96,15 +96,15 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
     );
 
     public static $prefixLengthsPsr4 = array (
-        'Z' => 
+        'Z' =>
         array (
             'ZipStream\\' => 10,
         ),
-        'T' => 
+        'T' =>
         array (
             'Tests\\Support\\' => 14,
         ),
-        'S' => 
+        'S' =>
         array (
             'Svg\\' => 4,
             'SendGrid\\Stats\\' => 15,
@@ -115,7 +115,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
             'SendGrid\\' => 9,
             'Sabberworm\\CSS\\' => 15,
         ),
-        'P' => 
+        'P' =>
         array (
             'Psr\\SimpleCache\\' => 16,
             'Psr\\Log\\' => 8,
@@ -123,169 +123,161 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
             'PhpParser\\' => 10,
             'PhpOffice\\PhpSpreadsheet\\' => 25,
         ),
-        'M' => 
+        'M' =>
         array (
             'Matrix\\' => 7,
             'Masterminds\\' => 12,
         ),
-        'L' => 
+        'L' =>
         array (
             'Laminas\\Escaper\\' => 16,
         ),
-        'H' => 
+        'H' =>
         array (
             'Hashids\\' => 8,
         ),
-        'F' => 
+        'F' =>
         array (
             'FontLib\\' => 8,
             'Faker\\' => 6,
         ),
-        'E' => 
-        array (
-            'EllipticCurve\\' => 14,
-        ),
-        'D' => 
+        'D' =>
         array (
             'Dompdf\\' => 7,
             'DeepCopy\\' => 9,
         ),
-        'C' => 
+        'C' =>
         array (
             'Config\\' => 7,
             'Composer\\Pcre\\' => 14,
             'Complex\\' => 8,
             'CodeIgniter\\' => 12,
         ),
-        'A' => 
+        'A' =>
         array (
             'App\\' => 4,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'ZipStream\\' => 
+        'ZipStream\\' =>
         array (
             0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
         ),
-        'Tests\\Support\\' => 
+        'Tests\\Support\\' =>
         array (
             0 => __DIR__ . '/../..' . '/tests/_support',
         ),
-        'Svg\\' => 
+        'Svg\\' =>
         array (
             0 => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg',
         ),
-        'SendGrid\\Stats\\' => 
+        'SendGrid\\Stats\\' =>
         array (
             0 => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/stats',
         ),
-        'SendGrid\\Mail\\' => 
+        'SendGrid\\Mail\\' =>
         array (
             0 => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/mail',
         ),
-        'SendGrid\\Helper\\' => 
+        'SendGrid\\Helper\\' =>
         array (
             0 => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/helper',
         ),
-        'SendGrid\\EventWebhook\\' => 
+        'SendGrid\\EventWebhook\\' =>
         array (
             0 => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/eventwebhook',
         ),
-        'SendGrid\\Contacts\\' => 
+        'SendGrid\\Contacts\\' =>
         array (
             0 => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/contacts',
         ),
-        'SendGrid\\' => 
+        'SendGrid\\' =>
         array (
             0 => __DIR__ . '/..' . '/sendgrid/php-http-client/lib',
         ),
-        'Sabberworm\\CSS\\' => 
+        'Sabberworm\\CSS\\' =>
         array (
             0 => __DIR__ . '/..' . '/sabberworm/php-css-parser/src',
         ),
-        'Psr\\SimpleCache\\' => 
+        'Psr\\SimpleCache\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/simple-cache/src',
         ),
-        'Psr\\Log\\' => 
+        'Psr\\Log\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/log/src',
         ),
-        'Psr\\Container\\' => 
+        'Psr\\Container\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
         ),
-        'PhpParser\\' => 
+        'PhpParser\\' =>
         array (
             0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
         ),
-        'PhpOffice\\PhpSpreadsheet\\' => 
+        'PhpOffice\\PhpSpreadsheet\\' =>
         array (
             0 => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet',
         ),
-        'Matrix\\' => 
+        'Matrix\\' =>
         array (
             0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
         ),
-        'Masterminds\\' => 
+        'Masterminds\\' =>
         array (
             0 => __DIR__ . '/..' . '/masterminds/html5/src',
         ),
-        'Laminas\\Escaper\\' => 
+        'Laminas\\Escaper\\' =>
         array (
             0 => __DIR__ . '/..' . '/laminas/laminas-escaper/src',
         ),
-        'Hashids\\' => 
+        'Hashids\\' =>
         array (
             0 => __DIR__ . '/..' . '/hashids/hashids/src',
         ),
-        'FontLib\\' => 
+        'FontLib\\' =>
         array (
             0 => __DIR__ . '/..' . '/dompdf/php-font-lib/src/FontLib',
         ),
-        'Faker\\' => 
+        'Faker\\' =>
         array (
             0 => __DIR__ . '/..' . '/fakerphp/faker/src/Faker',
         ),
-        'EllipticCurve\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/starkbank/ecdsa/src',
-        ),
-        'Dompdf\\' => 
+        'Dompdf\\' =>
         array (
             0 => __DIR__ . '/..' . '/dompdf/dompdf/src',
         ),
-        'DeepCopy\\' => 
+        'DeepCopy\\' =>
         array (
             0 => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy',
         ),
-        'Config\\' => 
+        'Config\\' =>
         array (
             0 => __DIR__ . '/../..' . '/app/Config',
         ),
-        'Composer\\Pcre\\' => 
+        'Composer\\Pcre\\' =>
         array (
             0 => __DIR__ . '/..' . '/composer/pcre/src',
         ),
-        'Complex\\' => 
+        'Complex\\' =>
         array (
             0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
         ),
-        'CodeIgniter\\' => 
+        'CodeIgniter\\' =>
         array (
             0 => __DIR__ . '/..' . '/codeigniter4/framework/system',
         ),
-        'App\\' => 
+        'App\\' =>
         array (
             0 => __DIR__ . '/../..' . '/app',
         ),
     );
 
     public static $prefixesPsr0 = array (
-        'o' => 
+        'o' =>
         array (
-            'org\\bovigo\\vfs\\' => 
+            'org\\bovigo\\vfs\\' =>
             array (
                 0 => __DIR__ . '/..' . '/mikey179/vfsstream/src/main/php',
             ),
@@ -293,12 +285,14 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
     );
 
     public static $classMap = array (
+        'App\\Commands\\EmailTest' => __DIR__ . '/../..' . '/app/Commands/EmailTest.php',
         'App\\Commands\\PrepareProductionData' => __DIR__ . '/../..' . '/app/Commands/PrepareProductionData.php',
         'App\\Commands\\PurgeTestData' => __DIR__ . '/../..' . '/app/Commands/PurgeTestData.php',
         'App\\Commands\\RemindersNotify' => __DIR__ . '/../..' . '/app/Commands/RemindersNotify.php',
         'App\\Controllers\\BaseController' => __DIR__ . '/../..' . '/app/Controllers/BaseController.php',
         'App\\Controllers\\BaseCrudController' => __DIR__ . '/../..' . '/app/Controllers/BaseCrudController.php',
         'App\\Controllers\\Home' => __DIR__ . '/../..' . '/app/Controllers/Home.php',
+        'App\\Controllers\\LandingController' => __DIR__ . '/../..' . '/app/Controllers/LandingController.php',
         'App\\Controllers\\PushController' => __DIR__ . '/../..' . '/app/Controllers/PushController.php',
         'App\\Controllers\\SubscriptionController' => __DIR__ . '/../..' . '/app/Controllers/SubscriptionController.php',
         'App\\Database\\Seeds\\AppSettingsSeeder' => __DIR__ . '/../..' . '/app/Database/Seeds/AppSettingsSeeder.php',
@@ -330,9 +324,11 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'App\\Libraries\\CompanyContext' => __DIR__ . '/../..' . '/app/Libraries/CompanyContext.php',
         'App\\Libraries\\CompanyProvisioner' => __DIR__ . '/../..' . '/app/Libraries/CompanyProvisioner.php',
         'App\\Libraries\\Exporter' => __DIR__ . '/../..' . '/app/Libraries/Exporter.php',
+        'App\\Libraries\\Fcm' => __DIR__ . '/../..' . '/app/Libraries/Fcm.php',
         'App\\Libraries\\GooglePlayVerifier' => __DIR__ . '/../..' . '/app/Libraries/GooglePlayVerifier.php',
         'App\\Libraries\\InventoryReport' => __DIR__ . '/../..' . '/app/Libraries/InventoryReport.php',
         'App\\Libraries\\InventoryService' => __DIR__ . '/../..' . '/app/Libraries/InventoryService.php',
+        'App\\Libraries\\Mailer' => __DIR__ . '/../..' . '/app/Libraries/Mailer.php',
         'App\\Libraries\\Notifier' => __DIR__ . '/../..' . '/app/Libraries/Notifier.php',
         'App\\Libraries\\OAuth\\AbstractProvider' => __DIR__ . '/../..' . '/app/Libraries/OAuth/AbstractProvider.php',
         'App\\Libraries\\OAuth\\GoogleProvider' => __DIR__ . '/../..' . '/app/Libraries/OAuth/GoogleProvider.php',
@@ -346,6 +342,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'App\\Libraries\\ReportPeriod' => __DIR__ . '/../..' . '/app/Libraries/ReportPeriod.php',
         'App\\Libraries\\Settings' => __DIR__ . '/../..' . '/app/Libraries/Settings.php',
         'App\\Libraries\\TaxInvoice' => __DIR__ . '/../..' . '/app/Libraries/TaxInvoice.php',
+        'App\\Libraries\\TruecallerVerifier' => __DIR__ . '/../..' . '/app/Libraries/TruecallerVerifier.php',
         'App\\Libraries\\VoiceEntryParser' => __DIR__ . '/../..' . '/app/Libraries/VoiceEntryParser.php',
         'App\\Libraries\\WebPush' => __DIR__ . '/../..' . '/app/Libraries/WebPush.php',
         'App\\Models\\AccountingGroupModel' => __DIR__ . '/../..' . '/app/Models/AccountingGroupModel.php',
@@ -356,8 +353,10 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'App\\Models\\CompanySettingModel' => __DIR__ . '/../..' . '/app/Models/CompanySettingModel.php',
         'App\\Models\\CompanyUserModel' => __DIR__ . '/../..' . '/app/Models/CompanyUserModel.php',
         'App\\Models\\DashboardModel' => __DIR__ . '/../..' . '/app/Models/DashboardModel.php',
+        'App\\Models\\EmailOtpModel' => __DIR__ . '/../..' . '/app/Models/EmailOtpModel.php',
         'App\\Models\\FirmDashboardModel' => __DIR__ . '/../..' . '/app/Models/FirmDashboardModel.php',
         'App\\Models\\GooglePlayPurchaseModel' => __DIR__ . '/../..' . '/app/Models/GooglePlayPurchaseModel.php',
+        'App\\Models\\InquiryModel' => __DIR__ . '/../..' . '/app/Models/InquiryModel.php',
         'App\\Models\\InvAttachmentModel' => __DIR__ . '/../..' . '/app/Models/InvAttachmentModel.php',
         'App\\Models\\InvCorrectionModel' => __DIR__ . '/../..' . '/app/Models/InvCorrectionModel.php',
         'App\\Models\\InvDailyClosingModel' => __DIR__ . '/../..' . '/app/Models/InvDailyClosingModel.php',
@@ -371,6 +370,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'App\\Models\\LoginAttemptModel' => __DIR__ . '/../..' . '/app/Models/LoginAttemptModel.php',
         'App\\Models\\LoginLogModel' => __DIR__ . '/../..' . '/app/Models/LoginLogModel.php',
         'App\\Models\\ModuleModel' => __DIR__ . '/../..' . '/app/Models/ModuleModel.php',
+        'App\\Models\\MonitorModel' => __DIR__ . '/../..' . '/app/Models/MonitorModel.php',
         'App\\Models\\NoteCategoryModel' => __DIR__ . '/../..' . '/app/Models/NoteCategoryModel.php',
         'App\\Models\\NoteHistoryModel' => __DIR__ . '/../..' . '/app/Models/NoteHistoryModel.php',
         'App\\Models\\NoteModel' => __DIR__ . '/../..' . '/app/Models/NoteModel.php',
@@ -628,6 +628,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'CodeIgniter\\Files\\Exceptions\\FileNotFoundException' => __DIR__ . '/..' . '/codeigniter4/framework/system/Files/Exceptions/FileNotFoundException.php',
         'CodeIgniter\\Files\\File' => __DIR__ . '/..' . '/codeigniter4/framework/system/Files/File.php',
         'CodeIgniter\\Files\\FileCollection' => __DIR__ . '/..' . '/codeigniter4/framework/system/Files/FileCollection.php',
+        'CodeIgniter\\Files\\FileSizeUnit' => __DIR__ . '/..' . '/codeigniter4/framework/system/Files/FileSizeUnit.php',
         'CodeIgniter\\Filters\\CSRF' => __DIR__ . '/..' . '/codeigniter4/framework/system/Filters/CSRF.php',
         'CodeIgniter\\Filters\\Cors' => __DIR__ . '/..' . '/codeigniter4/framework/system/Filters/Cors.php',
         'CodeIgniter\\Filters\\DebugToolbar' => __DIR__ . '/..' . '/codeigniter4/framework/system/Filters/DebugToolbar.php',
@@ -876,6 +877,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'Config\\Services' => __DIR__ . '/../..' . '/app/Config/Services.php',
         'Config\\Session' => __DIR__ . '/../..' . '/app/Config/Session.php',
         'Config\\Toolbar' => __DIR__ . '/../..' . '/app/Config/Toolbar.php',
+        'Config\\Truecaller' => __DIR__ . '/../..' . '/app/Config/Truecaller.php',
         'Config\\UserAgents' => __DIR__ . '/../..' . '/app/Config/UserAgents.php',
         'Config\\Validation' => __DIR__ . '/../..' . '/app/Config/Validation.php',
         'Config\\View' => __DIR__ . '/../..' . '/app/Config/View.php',
@@ -986,23 +988,6 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'Dompdf\\Renderer\\TableRow' => __DIR__ . '/..' . '/dompdf/dompdf/src/Renderer/TableRow.php',
         'Dompdf\\Renderer\\TableRowGroup' => __DIR__ . '/..' . '/dompdf/dompdf/src/Renderer/TableRowGroup.php',
         'Dompdf\\Renderer\\Text' => __DIR__ . '/..' . '/dompdf/dompdf/src/Renderer/Text.php',
-        'EllipticCurve\\Curve' => __DIR__ . '/..' . '/starkbank/ecdsa/src/curve.php',
-        'EllipticCurve\\CurveFp' => __DIR__ . '/..' . '/starkbank/ecdsa/src/curve.php',
-        'EllipticCurve\\Ecdsa' => __DIR__ . '/..' . '/starkbank/ecdsa/src/ecdsa.php',
-        'EllipticCurve\\Math' => __DIR__ . '/..' . '/starkbank/ecdsa/src/math.php',
-        'EllipticCurve\\Point' => __DIR__ . '/..' . '/starkbank/ecdsa/src/point.php',
-        'EllipticCurve\\PrivateKey' => __DIR__ . '/..' . '/starkbank/ecdsa/src/privatekey.php',
-        'EllipticCurve\\PublicKey' => __DIR__ . '/..' . '/starkbank/ecdsa/src/publickey.php',
-        'EllipticCurve\\Signature' => __DIR__ . '/..' . '/starkbank/ecdsa/src/signature.php',
-        'EllipticCurve\\Utils\\Binary' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/binary.php',
-        'EllipticCurve\\Utils\\Der' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/der.php',
-        'EllipticCurve\\Utils\\DerFieldType' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/der.php',
-        'EllipticCurve\\Utils\\File' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/file.php',
-        'EllipticCurve\\Utils\\Integer' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/integer.php',
-        'EllipticCurve\\Utils\\Oid' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/oid.php',
-        'EllipticCurve\\Utils\\Parser' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/der.php',
-        'EllipticCurve\\Utils\\Pem' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/pem.php',
-        'EllipticCurve\\Utils\\TagCode' => __DIR__ . '/..' . '/starkbank/ecdsa/src/utils/der.php',
         'Faker\\Calculator\\Ean' => __DIR__ . '/..' . '/fakerphp/faker/src/Faker/Calculator/Ean.php',
         'Faker\\Calculator\\Iban' => __DIR__ . '/..' . '/fakerphp/faker/src/Faker/Calculator/Iban.php',
         'Faker\\Calculator\\Inn' => __DIR__ . '/..' . '/fakerphp/faker/src/Faker/Calculator/Inn.php',
@@ -2817,6 +2802,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'PhpOffice\\PhpSpreadsheet\\Helper\\Sample' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Helper/Sample.php',
         'PhpOffice\\PhpSpreadsheet\\Helper\\Size' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Helper/Size.php',
         'PhpOffice\\PhpSpreadsheet\\Helper\\TextGrid' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Helper/TextGrid.php',
+        'PhpOffice\\PhpSpreadsheet\\Helper\\TextGridRightAlign' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Helper/TextGridRightAlign.php',
         'PhpOffice\\PhpSpreadsheet\\IComparable' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/IComparable.php',
         'PhpOffice\\PhpSpreadsheet\\IOFactory' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/IOFactory.php',
         'PhpOffice\\PhpSpreadsheet\\NamedFormula' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/NamedFormula.php',
@@ -2947,6 +2933,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\ConditionalFormatValueObject' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/ConditionalFormatValueObject.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\ConditionalFormattingRuleExtension' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/ConditionalFormattingRuleExtension.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\ConditionalIconSet' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/ConditionalIconSet.php',
+        'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\IconSetValues' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/IconSetValues.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\MergedCellStyle' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/MergedCellStyle.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\StyleMerger' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/StyleMerger.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\ConditionalFormatting\\Wizard' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/ConditionalFormatting/Wizard.php',
@@ -2971,6 +2958,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\Accounting' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/Accounting.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\Currency' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/Currency.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\CurrencyBase' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/CurrencyBase.php',
+        'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\CurrencyNegative' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/CurrencyNegative.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\Date' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/Date.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\DateTime' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/DateTime.php',
         'PhpOffice\\PhpSpreadsheet\\Style\\NumberFormat\\Wizard\\DateTimeWizard' => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/DateTimeWizard.php',
@@ -3800,6 +3788,7 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'TheSeer\\Tokenizer\\XMLSerializer' => __DIR__ . '/..' . '/theseer/tokenizer/src/XMLSerializer.php',
         'TwilioEmail' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/TwilioEmail.php',
         'ZipStream\\CentralDirectoryFileHeader' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/CentralDirectoryFileHeader.php',
+        'ZipStream\\CompressionMethod' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/CompressionMethod.php',
         'ZipStream\\DataDescriptor' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/DataDescriptor.php',
         'ZipStream\\EndOfCentralDirectory' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/EndOfCentralDirectory.php',
         'ZipStream\\Exception' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Exception.php',
@@ -3815,8 +3804,10 @@ class ComposerStaticInit71e940656b45e8f890505e3f11522dcb
         'ZipStream\\File' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/File.php',
         'ZipStream\\GeneralPurposeBitFlag' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/GeneralPurposeBitFlag.php',
         'ZipStream\\LocalFileHeader' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/LocalFileHeader.php',
+        'ZipStream\\OperationMode' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/OperationMode.php',
         'ZipStream\\PackField' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/PackField.php',
         'ZipStream\\Time' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Time.php',
+        'ZipStream\\Version' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Version.php',
         'ZipStream\\Zip64\\DataDescriptor' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Zip64/DataDescriptor.php',
         'ZipStream\\Zip64\\EndOfCentralDirectory' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Zip64/EndOfCentralDirectory.php',
         'ZipStream\\Zip64\\EndOfCentralDirectoryLocator' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Zip64/EndOfCentralDirectoryLocator.php',

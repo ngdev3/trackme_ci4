@@ -1051,27 +1051,26 @@
         },
         {
             "name": "sendgrid/sendgrid",
-            "version": "8.1.11",
+            "version": "8.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sendgrid/sendgrid-php.git",
-                "reference": "1ed29bffffaec0216dc1330bb437d3b305428a11"
+                "reference": "6700d2cf50df38915fa2d9a03affbca58c48599f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sendgrid/sendgrid-php/zipball/1ed29bffffaec0216dc1330bb437d3b305428a11",
-                "reference": "1ed29bffffaec0216dc1330bb437d3b305428a11",
+                "url": "https://api.github.com/repos/sendgrid/sendgrid-php/zipball/6700d2cf50df38915fa2d9a03affbca58c48599f",
+                "reference": "6700d2cf50df38915fa2d9a03affbca58c48599f",
                 "shasum": ""
             },
             "require": {
                 "ext-curl": "*",
-                "ext-gmp": "*",
                 "ext-json": "*",
                 "ext-mbstring": "*",
                 "ext-openssl": "*",
                 "php": ">=7.3",
                 "sendgrid/php-http-client": "~4.1",
-                "starkbank/ecdsa": "^2.1.0"
+                "starkbank/ecdsa": "0.*"
             },
             "replace": {
                 "sendgrid/sendgrid-php": "*"
@@ -1111,39 +1110,31 @@
                 "twilio sendgrid"
             ],
             "support": {
-                "issues": "https://github.com/sendgrid/sendgrid-php/issues",
-                "source": "https://github.com/sendgrid/sendgrid-php/tree/8.1.11"
+                "source": "https://github.com/sendgrid/sendgrid-php/tree/8.1.2"
             },
-            "time": "2025-02-22T09:34:11+00:00"
+            "time": "2024-04-18T11:09:09+00:00"
         },
         {
             "name": "starkbank/ecdsa",
-            "version": "2.2.1",
+            "version": "0.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/starkbank/ecdsa-php.git",
-                "reference": "82acd46a8e0c3b04b1eb0976e7108f7b43483220"
+                "reference": "484bedac47bac4012dc73df91da221f0a66845cb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/starkbank/ecdsa-php/zipball/82acd46a8e0c3b04b1eb0976e7108f7b43483220",
-                "reference": "82acd46a8e0c3b04b1eb0976e7108f7b43483220",
+                "url": "https://api.github.com/repos/starkbank/ecdsa-php/zipball/484bedac47bac4012dc73df91da221f0a66845cb",
+                "reference": "484bedac47bac4012dc73df91da221f0a66845cb",
                 "shasum": ""
             },
             "require": {
-                "ext-gmp": "*",
-                "php": ">=7.0"
+                "php": ">=5.5"
             },
             "type": "library",
             "autoload": {
                 "files": [
                     "src/ellipticcurve.php"
-                ],
-                "psr-4": {
-                    "EllipticCurve\\": "src/"
-                },
-                "classmap": [
-                    "src/"
                 ]
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -1162,9 +1153,9 @@
             "homepage": "https://github.com/starkbank/ecdsa-php",
             "support": {
                 "issues": "https://github.com/starkbank/ecdsa-php/issues",
-                "source": "https://github.com/starkbank/ecdsa-php/tree/v2.2.1"
+                "source": "https://github.com/starkbank/ecdsa-php/tree/v0.0.5"
             },
-            "time": "2026-05-05T21:56:28+00:00"
+            "time": "2021-06-06T22:24:49+00:00"
         },
         {
             "name": "thecodingmachine/safe",
@@ -3205,15 +3196,15 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.2.30"
     },
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.9.0"
 }
