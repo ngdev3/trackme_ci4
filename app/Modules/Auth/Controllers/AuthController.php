@@ -21,11 +21,11 @@ class AuthController extends BaseController
     public function attemptLogin()
     {
         $rules = [
-            'login'    => 'required',
+            'login'    => 'required|valid_email',
             'password' => 'required',
         ];
         if (! $this->validate($rules)) {
-            return redirect()->back()->withInput()->with('error', 'Please fill in all fields.');
+            return redirect()->back()->withInput()->with('error', 'Please enter your email address and password.');
         }
 
         $login    = (string) $this->request->getPost('login');

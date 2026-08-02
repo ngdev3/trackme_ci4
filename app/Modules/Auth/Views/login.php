@@ -14,11 +14,11 @@
                     <?= csrf_field() ?>
 
                     <div class="auth-field">
-                        <label class="auth-label" for="login">Username or Email</label>
+                        <label class="auth-label" for="login">Email address</label>
                         <div class="input-wrap">
-                            <span class="input-icon"><i class="bi bi-person"></i></span>
-                            <input id="login" class="auth-control" type="text" name="login"
-                                   value="<?= esc(old('login')) ?>" placeholder="superadmin" required autofocus>
+                            <span class="input-icon"><i class="bi bi-envelope"></i></span>
+                            <input id="login" class="auth-control" type="email" name="login" inputmode="email"
+                                   value="<?= esc(old('login')) ?>" placeholder="you@company.com" required autofocus>
                         </div>
                     </div>
 

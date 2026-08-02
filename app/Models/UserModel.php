@@ -49,11 +49,18 @@ class UserModel extends Model
 
     public function findByLogin(string $login): ?array
     {
-        return $this->groupStart()
+        // Matches by username, email OR mobile number. The mobile is matched both
+        // as typed and digits-only, so "+91 98765 43210" finds "9876543210".
+        $digits = preg_replace('/\D+/', '', $login);
+
+        $b = $this->groupStart()
             ->where('username', $login)
             ->orWhere('email', $login)
-            ->groupEnd()
-            ->first();
+            ->orWhere('mobile', $login);
+        if ($digits !== '' && $digits !== $login) {
+            $b->orWhere('mobile', $digits);
+        }
+        return $b->groupEnd()->first();
     }
 
     /**

@@ -182,6 +182,77 @@ class Auth
     }
 
     /**
+     * Sign a user in by a verified phone number (from the mobile OTP flow). Matches
+     * an existing account by mobile; if none exists, creates a passwordless
+     * customer account for that number. Returns [success(bool), message].
+     */
+    public function loginByPhone(string $phone, string $name = ''): array
+    {
+        $phone = preg_replace('/\D+/', '', $phone);
+        if ($phone === '') {
+            return [false, 'No phone number was provided.'];
+        }
+
+        $user  = $this->users->where('mobile', $phone)->first();
+        $isNew = false;
+
+        if ($user) {
+            if ((int) $user['status'] !== 1) {
+                $this->logLogin((int) $user['id'], $phone, 'failed', 'Account inactive');
+                return [false, 'Your account is inactive. Contact the administrator.'];
+            }
+        } else {
+            $newId = $this->createPhoneUser($phone, $name);
+            if (! $newId) {
+                return [false, 'We could not create your account. Please try again.'];
+            }
+            $user  = $this->users->find($newId);
+            $isNew = true;
+        }
+
+        $this->session->set('oauth_is_new_user', $isNew);
+        $this->establishSession($user);
+        $this->users->update($user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
+
+        $logId = $this->logLogin((int) $user['id'], $phone, 'success', 'Login via mobile OTP');
+        if ($logId) {
+            $this->session->set('login_log_id', $logId);
+        }
+
+        return [true, $isNew
+            ? 'Welcome, ' . $user['name'] . '! Let\'s set up your company.'
+            : 'Welcome back, ' . $user['name'] . '!'];
+    }
+
+    /** Create a passwordless customer account for a phone sign-in (mirrors createOAuthUser). */
+    protected function createPhoneUser(string $phone, string $name): ?int
+    {
+        $name = trim($name) !== '' ? trim($name) : 'User ' . substr($phone, -4);
+        $id = $this->users->insert([
+            'name'                 => $name,
+            'email'                => 'tc_' . $phone . '@phone.local', // placeholder — email column is NOT NULL/unique
+            'mobile'               => $phone,
+            'username'             => $this->users->generateUniqueUsername($name !== '' ? $name : $phone),
+            'password'             => null,
+            'auth_provider'        => 'otp',
+            'provider_id'          => $phone,
+            'user_type_id'         => $this->defaultTypeId('admin') ?? $this->defaultTypeId('viewer'),
+            'account_type'         => 'customer',
+            'mobile_login_enabled' => 1,
+            'status'               => 1,
+        ], true);
+
+        if (! $id) {
+            log_message('error', '[OTP] user create failed: ' . implode(' ', $this->users->errors() ?: []));
+            return null;
+        }
+        if ($roleId = ($this->defaultRoleId('admin') ?? $this->defaultRoleId('viewer'))) {
+            $this->users->syncRoles((int) $id, [$roleId]);
+        }
+        return (int) $id;
+    }
+
+    /**
      * Find or create the local account behind a verified OAuth profile WITHOUT
      * touching the web session. This is the stateless counterpart of
      * loginWithOAuth(), used by the mobile API which issues its own bearer token.
@@ -273,6 +344,60 @@ class Auth
             $this->users->syncRoles((int) $id, [$roleId]);
         }
         return (int) $id;
+    }
+
+    /**
+     * Resolve (or create) a customer account for a Truecaller-verified phone
+     * number. Matches an existing account by mobile, or by the shared email when
+     * present; otherwise creates a fresh customer with the same defaults + Admin
+     * RBAC role as an OAuth sign-up. The phone is trusted only because the caller
+     * has already verified it against Truecaller.
+     *
+     * @return array{user?:array, is_new?:bool, error?:string}
+     */
+    public function findOrCreatePhoneUser(string $phone, ?string $name, ?string $email): array
+    {
+        $phone = preg_replace('/\D+/', '', $phone);
+        if (strlen($phone) < 10) {
+            return ['error' => 'A valid phone number is required.'];
+        }
+        $phone = substr($phone, -10);
+        $email = $email !== null && trim($email) !== '' ? strtolower(trim($email)) : null;
+
+        // 1) Existing account with this mobile.
+        if ($user = $this->users->where('mobile', $phone)->first()) {
+            return ['user' => $user, 'is_new' => false];
+        }
+        // 2) Existing account with the shared email → link the mobile to it.
+        if ($email && ($byEmail = $this->users->where('email', $email)->first())) {
+            if (empty($byEmail['mobile'])) {
+                $this->users->update($byEmail['id'], ['mobile' => $phone]);
+                $byEmail['mobile'] = $phone;
+            }
+            return ['user' => $byEmail, 'is_new' => false];
+        }
+
+        // 3) Create a new customer keyed by the verified phone.
+        $id = $this->users->insert([
+            'name'                 => $name !== null && trim($name) !== '' ? trim($name) : 'Truecaller User',
+            'email'                => $email,
+            'mobile'               => $phone,
+            'username'             => $this->users->generateUniqueUsername($name ?: ('user' . $phone)),
+            'password'             => null,
+            'auth_provider'        => 'truecaller',
+            'user_type_id'         => $this->defaultTypeId('admin') ?? $this->defaultTypeId('viewer'),
+            'account_type'         => 'customer',
+            'status'               => 1,
+            'mobile_login_enabled' => 1,
+        ], true);
+        if (! $id) {
+            log_message('error', '[Truecaller] user create failed: ' . implode(' ', $this->users->errors() ?: []));
+            return ['error' => 'Could not create your account. Please try again.'];
+        }
+        if ($roleId = ($this->defaultRoleId('admin') ?? $this->defaultRoleId('viewer'))) {
+            $this->users->syncRoles((int) $id, [$roleId]);
+        }
+        return ['user' => $this->users->find($id), 'is_new' => true];
     }
 
     protected function defaultTypeId(string $code): ?int

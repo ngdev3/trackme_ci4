@@ -111,6 +111,63 @@ class AuthApiController extends BaseApiController
     }
 
     /**
+     * Sign in with Truecaller. The app obtains an OAuth authorization code via
+     * the Truecaller SDK (PKCE); we exchange it server-side for the verified
+     * phone number, then map it to a customer account (created on first use).
+     * Config-gated by Config\Truecaller — returns 503 until a client id is set.
+     *
+     *   POST /api/v1/auth/truecaller  {authorization_code, code_verifier}
+     */
+    public function truecaller()
+    {
+        $code     = trim((string) $this->input('authorization_code', ''));
+        $verifier = trim((string) $this->input('code_verifier', ''));
+        if ($code === '' || $verifier === '') {
+            return $this->failValidationErrors('authorization_code and code_verifier are required.');
+        }
+
+        $verifierLib = new \App\Libraries\TruecallerVerifier();
+        if (! $verifierLib->isConfigured()) {
+            return $this->fail('Truecaller sign-in is not configured on the server yet.', 503);
+        }
+
+        $res = $verifierLib->verify($code, $verifier);
+        if (! $res['ok']) {
+            $msg = $res['error'] === 'invalid_code'
+                ? 'Truecaller verification failed or expired. Please try again.'
+                : ($res['error'] === 'no_phone'
+                    ? 'Truecaller did not share a phone number.'
+                    : 'Could not verify Truecaller. Please try again.');
+            return $this->failUnauthorized($msg);
+        }
+
+        $result = auth()->findOrCreatePhoneUser($res['phone'], $res['name'] ?? null, $res['email'] ?? null);
+        if (isset($result['error'])) {
+            return $this->failForbidden($result['error']);
+        }
+        $user = $result['user'];
+
+        if ((int) $user['status'] !== 1) {
+            return $this->failForbidden('Your account is inactive.');
+        }
+        if ((int) ($user['mobile_login_enabled'] ?? 1) !== 1) {
+            return $this->failForbidden('Mobile app access is disabled for this account.');
+        }
+
+        $token = (new ApiTokenModel())->issue((int) $user['id'], 'mobile');
+        (new UserModel())->update((int) $user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
+
+        return $this->respond([
+            'status'               => 'success',
+            'token'                => $token,
+            'token_type'           => 'Bearer',
+            'must_change_password' => false,
+            'is_new_user'          => (bool) ($result['is_new'] ?? false),
+            'user'                 => $this->publicUser($user),
+        ]);
+    }
+
+    /**
      * Generate a password-reset token. Always responds the same way to avoid
      * account enumeration.
      */

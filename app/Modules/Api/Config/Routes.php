@@ -11,6 +11,7 @@ use CodeIgniter\Router\RouteCollection;
 $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static function (RouteCollection $routes) {
     $routes->post('auth/login', 'AuthApiController::login');
     $routes->post('auth/google', 'AuthApiController::google');
+    $routes->post('auth/truecaller', 'AuthApiController::truecaller');
     $routes->post('auth/forgot-password', 'AuthApiController::forgotPassword');
     $routes->post('auth/change-password', 'AuthApiController::changePassword');
     // Signup email verification: request a 6-digit code, then verify it.
