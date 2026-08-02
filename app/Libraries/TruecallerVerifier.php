@@ -42,6 +42,19 @@ class TruecallerVerifier
         $base = $this->cfg->oauthBase();
         $curl = Services::curlrequest(['timeout' => 15, 'http_errors' => false]);
 
+        // --- TEMP DIAGNOSTICS (remove once Truecaller sign-in is verified) ---
+        $recomputedChallenge = rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
+        log_message('error', '[Truecaller][diag] base={base} client=…{cid} codeLen={cl} codeHead={ch} verLen={vl} verHead={vh} recomputedChallenge={rc}', [
+            'base' => $base,
+            'cid'  => substr($this->cfg->clientId, -6),
+            'cl'   => strlen($authorizationCode),
+            'ch'   => substr($authorizationCode, 0, 12),
+            'vl'   => strlen($codeVerifier),
+            'vh'   => substr($codeVerifier, 0, 12),
+            'rc'   => $recomputedChallenge,
+        ]);
+        // --- END TEMP DIAGNOSTICS ---
+
         // 1) Authorization code → access token (PKCE, no client secret).
         try {
             $tokenRes = $curl->post($base . '/v1/token', [
