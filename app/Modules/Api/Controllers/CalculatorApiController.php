@@ -60,6 +60,20 @@ class CalculatorApiController extends BaseApiController
             return $this->failValidationErrors('The calculation is too long to save.');
         }
 
+        // Idempotency guard: a double-tap on Save (or a retry) shouldn't store the
+        // same calculation twice. If an identical, non-deleted entry (same
+        // expression + result) was saved within the last 120s, return it instead.
+        $existing = (new CalculatorHistoryModel())
+            ->where('user_id', (int) $g['user']['id'])
+            ->where('expression', $expression)
+            ->where('result', $result)
+            ->where('created_at >=', date('Y-m-d H:i:s', time() - 120))
+            ->orderBy('id', 'DESC')
+            ->first();
+        if ($existing) {
+            return $this->respond(['status' => 'ok', 'duplicate' => true, 'entry' => $this->shape($existing)]);
+        }
+
         $model = new CalculatorHistoryModel();
         $id    = $model->insert([
             'user_id'    => (int) $g['user']['id'],

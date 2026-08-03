@@ -42,23 +42,7 @@ class CompanyApiController extends BaseApiController
 
         $uid = (int) $user['id'];
 
-        // Firm-limit guard. The count includes firms in Trash (soft-deleted) —
-        // a trashed firm keeps occupying a slot until permanently removed — and
-        // is always measured against the owner's CURRENT plan cap (max_firms;
-        // NULL = unlimited). The very first firm is always allowed, so we skip
-        // the plan lookup for a brand-new owner: this also avoids pre-creating a
-        // subscription row before the provisioner seeds the free plan.
-        $total = (new CompanyModel())->totalOwned($uid);
-        if ($total > 0) {
-            $lim   = customer_effective_plan($uid)['max_firms'] ?? null;
-            $limit = ($lim === null || $lim === '') ? null : (int) $lim;
-            if ($limit !== null && $total >= $limit) {
-                return $this->failForbidden(
-                    'You have reached your company limit for the current subscription plan. '
-                    . 'Please upgrade your plan or permanently remove existing companies to create a new company.'
-                );
-            }
-        }
+        // Company limit removed — users can create unlimited companies on any plan.
 
         $name = trim((string) ($this->input('name') ?? ''));
 
@@ -159,6 +143,12 @@ class CompanyApiController extends BaseApiController
             'name'           => $c['name'],
             'state'          => $c['state'] ?? null,
             'business_type'  => $c['business_type'] ?? null,
+            // Extra profile fields so the client can show a completeness score
+            // nudging the user to finish filling in their company details.
+            'mobile'         => $c['mobile'] ?? null,
+            'email'          => $c['email'] ?? null,
+            'address'        => $c['address'] ?? null,
+            'gst_number'     => $c['gst_number'] ?? null,
             'is_owner'       => (int) $c['owner_id'] === (int) $user['id'],
             'created_at'     => $c['created_at'] ?? null,
             'last_active_at' => $lastActive[(int) $c['id']] ?? null,

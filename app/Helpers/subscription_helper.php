@@ -220,6 +220,10 @@ if (! function_exists('hasFeature')) {
         if (function_exists('is_super_admin_account') && is_super_admin_account()) {
             return true;
         }
+        // Calculator and Trash are available on every plan (plan gate removed).
+        if (in_array($feature, ['calculator', 'trash'], true)) {
+            return true;
+        }
         if (! array_key_exists($feature, feature_catalog())) {
             return true; // baseline feature, every package has it
         }
@@ -272,11 +276,8 @@ if (! function_exists('plan_firm_limit')) {
     /** Active package's firm cap, or null for unlimited. */
     function plan_firm_limit(): ?int
     {
-        if (function_exists('is_super_admin_account') && is_super_admin_account()) {
-            return null;
-        }
-        $lim = effective_plan()['max_firms'] ?? null;
-        return ($lim === null || $lim === '') ? null : (int) $lim;
+        // Company limit removed — always unlimited.
+        return null;
     }
 }
 
@@ -310,8 +311,8 @@ if (! function_exists('company_limit_state')) {
         $total     = $companies->totalOwned($customerId);
         $active    = $companies->activeOwned($customerId);
 
-        $lim   = customer_effective_plan($customerId)['max_firms'] ?? null;
-        $limit = ($lim === null || $lim === '') ? null : (int) $lim;
+        // Company limit removed — companies are unlimited on every plan.
+        $limit = null;
 
         // Create adds a slot → block once total is at/over the cap.
         // Restore does NOT add a slot (Trash already counted) → block only when
@@ -480,6 +481,10 @@ if (! function_exists('customer_has_feature')) {
     /** hasFeature() for a specific customer id (API / background context). */
     function customer_has_feature(int $customerId, string $feature): bool
     {
+        // Calculator and Trash are available on every plan (plan gate removed).
+        if (in_array($feature, ['calculator', 'trash'], true)) {
+            return true;
+        }
         if (! array_key_exists($feature, feature_catalog())) {
             return true; // baseline feature
         }

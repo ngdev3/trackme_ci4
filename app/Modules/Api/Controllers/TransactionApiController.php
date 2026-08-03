@@ -252,7 +252,8 @@ class TransactionApiController extends BaseApiController
 
         $ob     = new OpeningBalance($cid, $cid);
         $thisFy = $ob->fyStartFor(date('Y-m-d'));
-        $window = 5;
+        // Show the current financial year plus 3 years back and 3 ahead (7 total).
+        $window = 3;
 
         $years = [];
         for ($y = $thisFy + $window; $y >= $thisFy - $window; $y--) {
@@ -311,6 +312,29 @@ class TransactionApiController extends BaseApiController
         }
 
         $settings->put($cid, 'transactions', 'shri_rokad_nagad_' . $fy, $amount);
+
+        // Forward cascade: an opening set for FY N flows into every later year
+        // automatically (each year's closing carries into the next — see
+        // OpeningBalance::shriNagad). Clear any explicit openings for years AFTER
+        // N so a stale later value (e.g. a 0) can't block that roll-forward.
+        $prefix = 'shri_rokad_nagad_';
+        $rows   = $settings->builder()
+            ->select('id, `key`')
+            ->where('company_id', $cid)
+            ->where('scope', 'transactions')
+            ->like('key', $prefix, 'after')
+            ->get()->getResultArray();
+        $staleIds = [];
+        foreach ($rows as $r) {
+            $year = (int) substr((string) $r['key'], strlen($prefix));
+            if ($year > $fy) {
+                $staleIds[] = (int) $r['id'];
+            }
+        }
+        if ($staleIds !== []) {
+            $settings->builder()->whereIn('id', $staleIds)->delete();
+        }
+
         if (function_exists('activity_log')) {
             activity_log('Transactions', 'Edit', 'Opening cash set for FY ' . OpeningBalance::fyLabel($fy) . ' (mobile)');
         }
@@ -719,19 +743,50 @@ class TransactionApiController extends BaseApiController
             $status = 'paid';
         }
 
+        $txnDateNorm = date('Y-m-d', $ts);
+        $notesNorm   = $notes !== '' ? $notes : null;
+
+        // Idempotency guard: a double-tap on Save, a slow-network retry, or a
+        // resubmit can POST the same entry twice. If an identical, non-deleted
+        // entry was created within the last 120s (same core fields), return it
+        // instead of inserting a duplicate — so "the same record can't be added
+        // twice" by accident. A repeat entered deliberately later still saves.
+        $dup = new TransactionModel();
+        $dup->where('company_id', $cid)
+            ->where('type', $type)
+            ->where('amount', $amount)
+            ->where('name', $name)
+            ->where('txn_date', $txnDateNorm)
+            ->where('payment_mode', $mode)
+            ->where('status', $status)
+            ->where('created_at >=', date('Y-m-d H:i:s', time() - 120));
+        $notesNorm === null ? $dup->where('notes', null) : $dup->where('notes', $notesNorm);
+        $existing = $dup->orderBy('id', 'DESC')->first();
+        if ($existing) {
+            return $this->respond([
+                'status'    => 'ok',
+                'duplicate' => true,
+                'message'   => 'This entry was just saved — not added again.',
+                'id'        => (int) $existing['id'],
+                'txn_no'    => $existing['txn_no'],
+                'type'      => $existing['type'],
+                'amount'    => (float) $existing['amount'],
+            ]);
+        }
+
         $model = new TransactionModel();
         $data  = [
             'user_id'      => (int) $user['id'],
             'company_id'   => $cid,
             'txn_no'       => $model->nextTxnNo($cid),
-            'txn_date'     => date('Y-m-d', $ts),
+            'txn_date'     => $txnDateNorm,
             'name'         => $name,
             'party_type'   => $partyType !== '' ? mb_substr($partyType, 0, 32) : null,
             'type'         => $type,
             'amount'       => $amount,
             'payment_mode' => $mode,
             'status'       => $status,
-            'notes'        => $notes !== '' ? $notes : null,
+            'notes'        => $notesNorm,
             'source'       => 'mobile',
         ];
 
