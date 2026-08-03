@@ -12,6 +12,8 @@ $routes->group('', ['namespace' => 'Modules\Auth\Controllers'], static function 
     $routes->post('forgot-password', 'AuthController::sendResetLink', ['filter' => 'guest']);
     $routes->get('reset-password/(:segment)', 'AuthController::resetPassword/$1', ['filter' => 'guest']);
     $routes->post('reset-password', 'AuthController::updatePassword', ['filter' => 'guest']);
+    // One-click account activation from the signup email link.
+    $routes->get('activate/(:segment)', 'AuthController::activate/$1', ['filter' => 'guest']);
 
     // Social sign-in (OAuth 2.0) — {provider} = google, and future apple/github/…
     // Callback serves BOTH the guest login flow and the authenticated link flow;

@@ -42,6 +42,17 @@ class AuthApiController extends BaseApiController
             return $this->failUnauthorized('Invalid credentials.');
         }
         if ((int) $user['status'] !== 1) {
+            // A self-service signup that hasn't confirmed its email yet: the
+            // credentials are right, the account just needs activation. Tell the
+            // app so it can show the "enter code" screen (and offer a resend).
+            if (empty($user['email_verified_at']) && ! empty($user['password'])) {
+                return $this->respond([
+                    'status'           => 'error',
+                    'needs_activation' => true,
+                    'email'            => $user['email'],
+                    'message'          => 'Please activate your account with the code we emailed you.',
+                ], 403);
+            }
             return $this->failForbidden('Your account is inactive.');
         }
         if ((int) ($user['mobile_login_enabled'] ?? 1) !== 1) {
@@ -234,9 +245,54 @@ class AuthApiController extends BaseApiController
     }
 
     /**
-     * Send a 6-digit email-verification code. Used by the app's signup flow to
-     * confirm an email address. Throttled to one code per minute and always
-     * answers the same way to avoid revealing whether an email exists.
+     * Self-service signup: create a PENDING email/password account and email a
+     * 6-digit activation code. The account stays inactive until the code is
+     * confirmed via verifyEmailOtp (which then activates it and logs the user in).
+     *
+     *   POST /api/v1/auth/register  {name, email, password}
+     */
+    public function register()
+    {
+        $name     = trim((string) $this->input('name', ''));
+        $email    = strtolower(trim((string) $this->input('email', '')));
+        $password = (string) $this->input('password', '');
+
+        if ($name === '' || mb_strlen($name) < 2) {
+            return $this->failValidationErrors(['name' => 'Please enter your name.']);
+        }
+        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->failValidationErrors(['email' => 'A valid email is required.']);
+        }
+        if (strlen($password) < 8) {
+            return $this->failValidationErrors(['password' => 'Password must be at least 8 characters.']);
+        }
+
+        $result = auth()->createEmailUser($name, $email, $password);
+        if (isset($result['error'])) {
+            return $this->failValidationErrors(['email' => $result['error']]);
+        }
+
+        // Send ONE activation email containing a one-click "Activate" button
+        // (48h link) AND a 6-digit code fallback for the in-app entry screen.
+        $code  = (new EmailOtpModel())->issue($email, 'email_verify', 10);
+        $token = (new \App\Models\AccountActivationModel())->issue($email, 48);
+        helper('activation_email');
+        send_activation_email($email, $token, $code);
+        log_message('info', 'Activation email sent for {email}', ['email' => $email]);
+
+        return $this->respondCreated([
+            'status'     => 'success',
+            'message'    => 'Account created. Check your email and tap the activation link, or enter the 6-digit code.',
+            'email'      => $email,
+            'expires_in' => 600,
+        ]);
+    }
+
+    /**
+     * Resend the activation email — a one-click "Activate" link (48h) plus a
+     * 6-digit code fallback. Used by the app's "Resend" action on the activation
+     * screen. Throttled to one send per minute; answers the same way regardless
+     * of whether the email exists (no account enumeration).
      */
     public function requestEmailOtp()
     {
@@ -251,13 +307,20 @@ class AuthApiController extends BaseApiController
             return $this->fail('Please wait a moment before requesting another code.', 429);
         }
 
-        $code = $otps->issue($email, 'email_verify', 10);
-        Services::mailer()->emailOtp($email, $code, 10);
-        log_message('info', 'Email OTP issued for {email}', ['email' => $email]);
+        // Only mail a live activation link when a pending account actually exists
+        // for this email; otherwise respond the same way but send nothing.
+        $user = (new UserModel())->where('email', $email)->first();
+        if ($user) {
+            $code  = $otps->issue($email, 'email_verify', 10);
+            $token = (new \App\Models\AccountActivationModel())->issue($email, 48);
+            helper('activation_email');
+            send_activation_email($email, $token, $code);
+            log_message('info', 'Activation email resent for {email}', ['email' => $email]);
+        }
 
         return $this->respond([
             'status'  => 'success',
-            'message' => 'A verification code has been sent to your email.',
+            'message' => 'If that account exists, an activation email has been sent.',
             'expires_in' => 600,
         ]);
     }
@@ -292,12 +355,48 @@ class AuthApiController extends BaseApiController
             return $this->failValidationErrors('That code is incorrect. Please try again.');
         }
 
-        // Correct code — burn it and stamp the account (if any) as verified.
+        // Correct code — burn it and activate the account (if any).
         $otps->consume((int) $row['id']);
         $users = new UserModel();
         $user  = $users->where('email', $email)->first();
-        if ($user && empty($user['email_verified_at'])) {
-            $users->update((int) $user['id'], ['email_verified_at' => date('Y-m-d H:i:s')]);
+
+        if ($user) {
+            // Activation: mark the email verified AND flip the account active, so
+            // a pending self-service signup becomes usable in one step.
+            $patch = [];
+            if (empty($user['email_verified_at'])) {
+                $patch['email_verified_at'] = date('Y-m-d H:i:s');
+            }
+            if ((int) $user['status'] !== 1) {
+                $patch['status'] = 1;
+            }
+            if ($patch !== []) {
+                $users->update((int) $user['id'], $patch);
+                $user = array_merge($user, $patch);
+            }
+
+            // Log the (now-activated) user in — the correct emailed code proves
+            // they control the address, so we issue a bearer token like login().
+            if ((int) $user['status'] === 1 && (int) ($user['mobile_login_enabled'] ?? 1) === 1) {
+                $token = (new ApiTokenModel())->issue((int) $user['id'], 'mobile');
+                $users->update((int) $user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
+                try {
+                    Services::mailer()->welcome((string) $user['email'], (string) ($user['name'] ?? ''));
+                } catch (\Throwable $e) {
+                    log_message('error', '[Register] welcome email failed: ' . $e->getMessage());
+                }
+
+                return $this->respond([
+                    'status'               => 'success',
+                    'message'              => 'Email verified — welcome aboard!',
+                    'verified'             => true,
+                    'token'                => $token,
+                    'token_type'           => 'Bearer',
+                    'must_change_password' => false,
+                    'is_new_user'          => true,
+                    'user'                 => $this->publicUser($user),
+                ]);
+            }
         }
 
         return $this->respond([

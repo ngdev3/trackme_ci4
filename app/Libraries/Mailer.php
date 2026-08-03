@@ -99,6 +99,23 @@ class Mailer
         return $this->send($to, 'Reset your ' . $this->appName() . ' password', $html);
     }
 
+    /**
+     * One-click account-activation email for a new email/password signup. The
+     * link activates the account in the browser; the optional 6-digit code lets
+     * the user activate from inside the app instead.
+     */
+    public function accountActivation(string $to, string $link, string $code = '', int $ttlHours = 48): bool
+    {
+        $html = $this->render('activate', [
+            'app'       => $this->appName(),
+            'link'      => $link,
+            'code'      => $code,
+            'ttl'       => $ttlHours,
+            'preheader' => 'Activate your ' . $this->appName() . ' account.',
+        ]);
+        return $this->send($to, 'Activate your ' . $this->appName() . ' account', $html);
+    }
+
     /** Confirm that the account password was just changed. */
     public function passwordChanged(string $to, string $name): bool
     {

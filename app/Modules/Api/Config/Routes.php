@@ -14,6 +14,8 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->post('auth/truecaller', 'AuthApiController::truecaller');
     $routes->post('auth/forgot-password', 'AuthApiController::forgotPassword');
     $routes->post('auth/change-password', 'AuthApiController::changePassword');
+    // Self-service signup: create a pending account (emails an activation code).
+    $routes->post('auth/register', 'AuthApiController::register');
     // Signup email verification: request a 6-digit code, then verify it.
     $routes->post('auth/request-email-otp', 'AuthApiController::requestEmailOtp');
     $routes->post('auth/verify-email-otp', 'AuthApiController::verifyEmailOtp');

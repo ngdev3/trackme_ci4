@@ -15,8 +15,12 @@ class ApiTokenModel extends Model
 
     /**
      * Issue a fresh opaque bearer token for a user. Returns the plaintext token.
+     *
+     * Mobile sessions are meant to stay signed in until the user explicitly logs
+     * out (which deletes the token server-side), so the default TTL is very long
+     * (10 years) rather than a short expiry that would silently sign them out.
      */
-    public function issue(int $userId, string $name = 'mobile', int $ttlDays = 30): string
+    public function issue(int $userId, string $name = 'mobile', int $ttlDays = 3650): string
     {
         $token = bin2hex(random_bytes(32));
         $this->insert([

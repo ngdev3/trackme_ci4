@@ -347,6 +347,51 @@ class Auth
     }
 
     /**
+     * Create a self-service email/password customer account that is PENDING
+     * email activation. The account is inactive (status 0, email_verified_at
+     * null) until the user confirms the 6-digit code emailed to them — see the
+     * mobile AuthApiController::register / verifyEmailOtp flow. Mirrors the OAuth
+     * signup defaults (customer account_type + Admin RBAC role) so that, once
+     * activated, the account behaves exactly like a Google sign-up.
+     *
+     * @return array{user?:array, id?:int, error?:string}
+     */
+    public function createEmailUser(string $name, string $email, string $password): array
+    {
+        $email = strtolower(trim($email));
+        if ($name === '' || $email === '' || $password === '') {
+            return ['error' => 'Name, email and password are required.'];
+        }
+        if ($this->users->where('email', $email)->first()) {
+            return ['error' => 'This email is already registered.'];
+        }
+
+        $id = $this->users->insert([
+            'name'              => $name,
+            'email'             => $email,
+            'username'          => $this->users->generateUniqueUsername($email ?: $name),
+            'password'          => password_hash($password, PASSWORD_DEFAULT),
+            'auth_provider'     => null,
+            'provider_id'       => null,
+            'user_type_id'      => $this->defaultTypeId('admin') ?? $this->defaultTypeId('viewer'),
+            'account_type'      => 'customer',
+            'status'            => 0,    // inactive until email is activated
+            'email_verified_at' => null, // set when the OTP is confirmed
+        ], true);
+
+        if (! $id) {
+            log_message('error', '[Register] user create failed: ' . implode(' ', $this->users->errors() ?: []));
+            return ['error' => 'We could not create your account. Please try again.'];
+        }
+
+        if ($roleId = ($this->defaultRoleId('admin') ?? $this->defaultRoleId('viewer'))) {
+            $this->users->syncRoles((int) $id, [$roleId]);
+        }
+
+        return ['user' => $this->users->find($id), 'id' => (int) $id];
+    }
+
+    /**
      * Resolve (or create) a customer account for a Truecaller-verified phone
      * number. Matches an existing account by mobile, or by the shared email when
      * present; otherwise creates a fresh customer with the same defaults + Admin

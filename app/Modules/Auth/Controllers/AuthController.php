@@ -154,6 +154,45 @@ class AuthController extends BaseController
         return view($this->moduleView . 'reset_password', ['token' => $token, 'email' => $row['email']]);
     }
 
+    /**
+     * One-click account activation from the emailed link (/activate/{token}).
+     * Validates the token, flips the pending signup account active + email-
+     * verified, and shows a success page telling the user to sign in on the app.
+     */
+    public function activate(string $token)
+    {
+        $activations = new \App\Models\AccountActivationModel();
+        $row         = $activations->findLive($token);
+
+        $users = new UserModel();
+        $user  = $row ? $users->where('email', $row['email'])->first() : null;
+
+        if (! $row || ! $user) {
+            return view($this->moduleView . 'activated', [
+                'ok'      => false,
+                'appName' => service('mailer')->appName(),
+            ]);
+        }
+
+        $patch = [];
+        if ((int) $user['status'] !== 1) {
+            $patch['status'] = 1;
+        }
+        if (empty($user['email_verified_at'])) {
+            $patch['email_verified_at'] = date('Y-m-d H:i:s');
+        }
+        if ($patch !== []) {
+            $users->update((int) $user['id'], $patch);
+        }
+        $activations->clearFor($row['email']);
+
+        return view($this->moduleView . 'activated', [
+            'ok'      => true,
+            'appName' => service('mailer')->appName(),
+            'email'   => $user['email'],
+        ]);
+    }
+
     public function updatePassword()
     {
         $rules = [
