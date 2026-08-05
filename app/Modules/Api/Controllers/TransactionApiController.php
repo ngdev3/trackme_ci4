@@ -16,10 +16,22 @@ use App\Models\TransactionModel;
 class TransactionApiController extends BaseApiController
 {
     /** Attachment policy — enforced server-side regardless of the client. */
-    private const ATTACH_MAX     = 2;
+    private const ATTACH_MAX     = 5;
     private const ATTACH_MAX_MB  = 10;
-    /** Extension allowlist. Blocks executables/scripts (php, exe, js, html, svg…). */
-    private const ATTACH_EXT     = ['csv', 'xls', 'xlsx', 'pdf'];
+    /**
+     * Extension allowlist. Covers the app's Camera/Gallery photos, voice notes,
+     * and document uploads. Deliberately excludes executables/scripts AND svg
+     * (SVG can carry inline script — never serve it inline). Keep in sync with
+     * the streaming Content-Type map in attachment().
+     */
+    private const ATTACH_EXT     = [
+        // documents
+        'pdf', 'csv', 'xls', 'xlsx',
+        // images (photos)
+        'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic',
+        // audio (voice notes)
+        'm4a', 'mp3', 'aac', 'ogg', 'wav', 'webm',
+    ];
 
     /**
      * GET api/v1/transactions/list — recent cash-book entries (Rokadh Parcha)
@@ -597,7 +609,7 @@ class TransactionApiController extends BaseApiController
 
         $message = "{$stored} file(s) attached.";
         if ($rejected !== []) {
-            $message .= ' Rejected (CSV/Excel/PDF only, max ' . self::ATTACH_MAX_MB . ' MB): ' . implode(', ', $rejected) . '.';
+            $message .= ' Rejected (images, PDF, audio or CSV/Excel only, max ' . self::ATTACH_MAX_MB . ' MB): ' . implode(', ', $rejected) . '.';
         }
 
         return $this->respond([
@@ -627,23 +639,29 @@ class TransactionApiController extends BaseApiController
         }
 
         // Content-Type is derived from the SERVER-controlled stored extension,
-        // not the client mime. Force a download + nosniff + a sanitised filename
-        // so the browser never inline-renders or sniffs the bytes as HTML/script
-        // and the header can't be injected via the original name.
+        // not the client mime, and paired with nosniff so the browser never
+        // sniffs the bytes as HTML/script. Images, PDFs and audio are served
+        // INLINE so the app (and a browser) can render them; everything else is
+        // a forced download. SVG is not in the allowlist, so inline is safe.
         $ext      = strtolower(pathinfo((string) $a['stored_name'], PATHINFO_EXTENSION));
         $types    = [
             'csv'  => 'text/csv',
             'xls'  => 'application/vnd.ms-excel',
             'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'pdf'  => 'application/pdf',
+            'jpg'  => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png',
+            'gif'  => 'image/gif', 'webp' => 'image/webp', 'bmp' => 'image/bmp', 'heic' => 'image/heic',
+            'm4a'  => 'audio/mp4', 'mp3' => 'audio/mpeg', 'aac' => 'audio/aac',
+            'ogg'  => 'audio/ogg', 'wav' => 'audio/wav', 'webm' => 'audio/webm',
         ];
         $mime     = $types[$ext] ?? 'application/octet-stream';
+        $inline   = str_starts_with($mime, 'image/') || str_starts_with($mime, 'audio/') || $mime === 'application/pdf';
         $safeName = preg_replace('/[^A-Za-z0-9._-]+/', '_', (string) $a['original_name']) ?: 'attachment';
 
         return $this->response
             ->setHeader('Content-Type', $mime)
             ->setHeader('X-Content-Type-Options', 'nosniff')
-            ->setHeader('Content-Disposition', 'attachment; filename="' . $safeName . '"')
+            ->setHeader('Content-Disposition', ($inline ? 'inline' : 'attachment') . '; filename="' . $safeName . '"')
             ->setBody(file_get_contents($path));
     }
 

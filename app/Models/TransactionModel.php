@@ -29,7 +29,7 @@ class TransactionModel extends Model
         'name'       => 'required|min_length[1]|max_length[191]',
         'type'       => 'in_list[jama,naam]',
         'amount'     => 'required|numeric|greater_than[0]|less_than_equal_to[9999999999.99]',
-        'status'     => 'in_list[paid,pending,overdue,cancelled,draft]',
+        'status'     => 'in_list[paid,received,pending,overdue,cancelled,draft]',
         'party_type' => 'permit_empty|max_length[32]',
     ];
 
@@ -44,7 +44,7 @@ class TransactionModel extends Model
     public const MAX_AMOUNT = 9999999999.99;
 
     public const TYPES    = ['jama', 'naam'];
-    public const STATUSES = ['paid', 'pending', 'overdue', 'cancelled', 'draft'];
+    public const STATUSES = ['paid', 'received', 'pending', 'overdue', 'cancelled', 'draft'];
     public const MODES    = ['cash', 'bank', 'upi', 'cheque', 'card', 'other'];
 
     /** Starting suggestions for "who is this?" — the field is free text, so a company can add its own. */
