@@ -895,6 +895,7 @@ class TransactionApiController extends BaseApiController
     {
         return [
             'id'           => (int) $r['id'],
+            'client_uuid'  => $r['client_uuid'] ?? null,
             'txn_no'       => $r['txn_no'],
             'txn_date'     => $r['txn_date'],
             'name'         => $r['name'],
@@ -963,14 +964,48 @@ class TransactionApiController extends BaseApiController
             if ($norm === null) {
                 continue;
             }
+            // C2 — idempotent create. A push retried after the server already
+            // committed (app killed / response lost) re-sends the same
+            // client_uuid; link the existing row instead of inserting a duplicate.
+            $uuid = isset($c['client_uuid']) ? trim((string) $c['client_uuid']) : '';
+            if ($uuid !== '') {
+                $existing = $model->withDeleted()
+                    ->where('company_id', $cid)
+                    ->where('client_uuid', $uuid)
+                    ->first();
+                if ($existing) {
+                    $mapped[] = [
+                        'local_id'   => isset($c['local_id']) ? (int) $c['local_id'] : null,
+                        'server_id'  => (int) $existing['id'],
+                        'txn_no'     => $existing['txn_no'],
+                        'updated_at' => $existing['updated_at'] ?? date('Y-m-d H:i:s'),
+                    ];
+                    continue;
+                }
+            }
             $data = array_merge($norm, [
-                'user_id'    => (int) $user['id'],
-                'company_id' => $cid,
-                'txn_no'     => $model->nextTxnNo($cid),
-                'source'     => $c['source'] ?? 'mobile',
+                'user_id'     => (int) $user['id'],
+                'company_id'  => $cid,
+                'client_uuid' => $uuid !== '' ? $uuid : null,
+                'txn_no'      => $model->nextTxnNo($cid),
+                'source'      => $c['source'] ?? 'mobile',
             ]);
             $id = $model->insert($data);
             if ($id === false) {
+                // A concurrent push may have inserted the same uuid a moment ago
+                // (unique index rejected this one) — link that row instead of
+                // dropping the job so it doesn't retry forever.
+                if ($uuid !== '') {
+                    $dup = $model->withDeleted()->where('company_id', $cid)->where('client_uuid', $uuid)->first();
+                    if ($dup) {
+                        $mapped[] = [
+                            'local_id'   => isset($c['local_id']) ? (int) $c['local_id'] : null,
+                            'server_id'  => (int) $dup['id'],
+                            'txn_no'     => $dup['txn_no'],
+                            'updated_at' => $dup['updated_at'] ?? date('Y-m-d H:i:s'),
+                        ];
+                    }
+                }
                 continue;
             }
             // Honour a create that was already soft-deleted offline.

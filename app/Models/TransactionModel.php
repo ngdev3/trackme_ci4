@@ -22,7 +22,7 @@ class TransactionModel extends Model
     protected $useSoftDeletes = true;
     protected $useTimestamps  = true;
 
-    protected $allowedFields = ['user_id', 'company_id', 'txn_no', 'txn_date', 'name', 'party_type', 'type', 'amount', 'payment_mode', 'source', 'status', 'notes', 'delete_reason'];
+    protected $allowedFields = ['user_id', 'company_id', 'client_uuid', 'txn_no', 'txn_date', 'name', 'party_type', 'type', 'amount', 'payment_mode', 'source', 'status', 'notes', 'delete_reason'];
 
     protected $validationRules = [
         'txn_date'   => 'required|valid_date[Y-m-d]',
