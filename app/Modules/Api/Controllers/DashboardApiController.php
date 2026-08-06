@@ -2,6 +2,7 @@
 
 namespace Modules\Api\Controllers;
 
+use App\Libraries\OpeningBalance;
 use App\Models\CompanyModel;
 use App\Models\TransactionModel;
 
@@ -57,7 +58,15 @@ class DashboardApiController extends BaseApiController
         // Running balance is cumulative to the period end (capped at today so a
         // current/future period end doesn't imply future transactions).
         $balanceTo = min($periodTo, $today);
-        $balance   = $this->shapeSummary($txn->summary($cid, ['to' => $balanceTo]));
+
+        // Opening cash carried into the selected period (Shri Rokad Nagad opening
+        // + net of entries from the FY start up to, but excluding, the period
+        // start). The closing balance is then Opening + this period's Jama − Naam,
+        // so the 4th card reflects true cash-in-hand, not just transaction net.
+        $ob        = new OpeningBalance($cid, $cid);
+        $opening   = round($ob->carryInto($periodFrom), 2);
+        $periodNet = $this->shapeSummary($txn->summary($cid, ['from' => $periodFrom, 'to' => $balanceTo]))['net'];
+        $closing   = round($opening + $periodNet, 2);
 
         // Headline cards (money-in framed as "sales", money-out as "expenses";
         // this is a cash book, so the 4th card shows the running balance). Each
@@ -66,7 +75,8 @@ class DashboardApiController extends BaseApiController
             'sales'    => ['value' => $periodSum['deposits'], 'delta' => $this->percentDelta($periodSum['deposits'], $prevSum['deposits'])],
             'expenses' => ['value' => $periodSum['expenses'], 'delta' => $this->percentDelta($periodSum['expenses'], $prevSum['expenses'])],
             'profit'   => ['value' => $periodSum['net'],      'delta' => $this->percentDelta($periodSum['net'],      $prevSum['net'])],
-            'balance'  => ['value' => $balance['net'],        'delta' => null],
+            'opening'  => ['value' => $opening,               'delta' => null],
+            'balance'  => ['value' => $closing,               'delta' => null],
         ];
 
         // Money-in / money-out / net series for the chart: the FY's 12 months, or

@@ -65,11 +65,21 @@ class TransactionApiController extends BaseApiController
         $rows    = $model->limitedFiltered($cid, $f, $date !== '' ? 500 : 100, 0);
         $summary = $model->summary($cid, $f);
 
-        // Final balance = cumulative jama − naam through the selected day (or the
-        // whole set when no date is given).
-        $finalBalance = $date !== ''
-            ? (float) $model->summary($cid, ['q' => $f['q'], 'to' => $date])['net']
-            : (float) $summary['net'];
+        // Final balance = true cash-in-hand through the selected day (or today when
+        // no date is given): the Shri Rokad Nagad opening carried in, plus the net
+        // Jama − Naam up to and including that day. carryInto() is the exclusive
+        // opening, so we anchor at the day AFTER to make it inclusive. When a
+        // search filter is active we fall back to the plain filtered net, since an
+        // opening balance can't be meaningfully filtered by a query.
+        if ($f['q'] !== '') {
+            $finalBalance = $date !== ''
+                ? (float) $model->summary($cid, ['q' => $f['q'], 'to' => $date])['net']
+                : (float) $summary['net'];
+        } else {
+            $anchor       = $date !== '' ? $date : date('Y-m-d');
+            $nextDay      = date('Y-m-d', strtotime($anchor . ' +1 day'));
+            $finalBalance = (new OpeningBalance($cid, $cid))->carryInto($nextDay);
+        }
 
         $entries = array_map(static fn (array $r): array => [
             'id'           => (int) $r['id'],
@@ -123,6 +133,11 @@ class TransactionApiController extends BaseApiController
 
         $summary = $model->summary($cid, $f);
 
+        // Opening cash carried into the range, and the closing after this range's
+        // net — so the report reflects true cash-in-hand, not just the period net.
+        $opening = round((new OpeningBalance($cid, $cid))->carryInto($from), 2);
+        $closing = round($opening + (float) $summary['net'], 2);
+
         $byMode = [];
         foreach ($model->byMode($cid, $f) as $mode => $v) {
             $byMode[] = [
@@ -144,10 +159,12 @@ class TransactionApiController extends BaseApiController
             'status'        => 'ok',
             'range'         => ['from' => $from, 'to' => $to],
             'summary'       => [
-                'jama'  => round((float) $summary['jama'], 2),
-                'naam'  => round((float) $summary['naam'], 2),
-                'net'   => round((float) $summary['net'], 2),
-                'count' => (int) $summary['count'],
+                'jama'    => round((float) $summary['jama'], 2),
+                'naam'    => round((float) $summary['naam'], 2),
+                'net'     => round((float) $summary['net'], 2),
+                'count'   => (int) $summary['count'],
+                'opening' => $opening,
+                'closing' => $closing,
             ],
             'by_mode'       => $byMode,
             'by_party_type' => $byParty,
@@ -521,6 +538,42 @@ class TransactionApiController extends BaseApiController
         return $this->respond(['status' => 'ok', 'message' => 'Entry restored.', 'txn_no' => $row['txn_no']]);
     }
 
+    /**
+     * POST api/v1/transactions/purge/{id} — permanently delete a soft-deleted
+     * entry (from Trash) plus its attachment files/rows. Irreversible.
+     */
+    public function purge($id = null)
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+
+        $model = new TransactionModel();
+        $row   = $model->withDeleted()->find((int) $id);
+        if (! $row || (int) $row['company_id'] !== (int) $cid || empty($row['deleted_at'])) {
+            return $this->failNotFound('Deleted entry not found.');
+        }
+
+        // Remove attachment files from disk, then their rows, then the entry.
+        $att   = new TransactionAttachmentModel();
+        $files = $att->where('transaction_id', (int) $id)->findAll();
+        foreach ($files as $a) {
+            $path = WRITEPATH . 'uploads/transactions/' . (int) $a['user_id'] . '/' . basename((string) $a['stored_name']);
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
+        $att->where('transaction_id', (int) $id)->delete();
+        $model->delete((int) $id, true); // hard delete (purge)
+
+        if (function_exists('activity_log')) {
+            activity_log('Transactions', 'Delete', "Transaction {$row['txn_no']} permanently deleted (mobile)");
+        }
+
+        return $this->respond(['status' => 'ok', 'message' => 'Entry permanently deleted.', 'txn_no' => $row['txn_no']]);
+    }
+
     // ===============================================================
     // Attachments (photos / PDFs / audio on an entry) — mirrors the web
     // TransactionController attach flow + transaction_attachments table.
@@ -709,6 +762,9 @@ class TransactionApiController extends BaseApiController
             'payment_mode' => $r['payment_mode'],
             'status'       => $r['status'],
             'notes'        => $r['notes'],
+            'source'       => $r['source'] ?? null,
+            'created_at'   => $r['created_at'] ?? null,
+            'updated_at'   => $r['updated_at'] ?? null,
         ];
     }
 
@@ -826,5 +882,169 @@ class TransactionApiController extends BaseApiController
             'type'    => $type,
             'amount'  => $amount,
         ]);
+    }
+
+    // =====================================================================
+    //  Offline-first sync (mobile). Pull = changes since a cursor; Push =
+    //  batch apply the mobile outbox. Timestamps are the server clock so the
+    //  cursor is monotonic regardless of device time.
+    // =====================================================================
+
+    /** Row → sync feed shape (includes tombstones + soft-delete flags). */
+    private function syncShape(array $r): array
+    {
+        return [
+            'id'           => (int) $r['id'],
+            'txn_no'       => $r['txn_no'],
+            'txn_date'     => $r['txn_date'],
+            'name'         => $r['name'],
+            'party_type'   => $r['party_type'],
+            'type'         => $r['type'],
+            'amount'       => (float) $r['amount'],
+            'payment_mode' => $r['payment_mode'],
+            'status'       => $r['status'],
+            'notes'        => $r['notes'],
+            'source'       => $r['source'] ?? null,
+            'is_deleted'   => empty($r['deleted_at']) ? 0 : 1,
+            'delete_reason' => $r['delete_reason'] ?? null,
+            'created_at'   => $r['created_at'] ?? null,
+            'updated_at'   => $r['updated_at'] ?? null,
+            'deleted_at'   => $r['deleted_at'] ?? null,
+        ];
+    }
+
+    /**
+     * GET api/v1/transactions/changes?since=<Y-m-d H:i:s>
+     * Incremental pull: every row (incl. soft-deleted tombstones) changed on or
+     * after `since`. Omit `since` for the initial full download.
+     */
+    public function changes()
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+        $since = trim((string) ($this->request->getGet('since') ?? ''));
+
+        $b = (new TransactionModel())->builder()->where('company_id', $cid);
+        if ($since !== '') {
+            $b->where('updated_at >=', $since);
+        }
+        $rows = $b->orderBy('updated_at', 'ASC')->get()->getResultArray();
+
+        return $this->respond([
+            'status'      => 'ok',
+            'server_time' => date('Y-m-d H:i:s'),
+            'changes'     => array_map(fn (array $r): array => $this->syncShape($r), $rows),
+        ]);
+    }
+
+    /**
+     * POST api/v1/transactions/sync
+     * Batch push of the mobile outbox: { creates:[], updates:[], deletes:[] }.
+     * Returns id-mappings for creates so the client can link local rows, plus
+     * the server clock as the next pull cursor.
+     */
+    public function sync()
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+
+        $creates = (array) ($this->input('creates') ?? []);
+        $updates = (array) ($this->input('updates') ?? []);
+        $deletes = (array) ($this->input('deletes') ?? []);
+        $model   = new TransactionModel();
+        $mapped  = [];
+
+        foreach ($creates as $c) {
+            $norm = $this->normalizeSync($c);
+            if ($norm === null) {
+                continue;
+            }
+            $data = array_merge($norm, [
+                'user_id'    => (int) $user['id'],
+                'company_id' => $cid,
+                'txn_no'     => $model->nextTxnNo($cid),
+                'source'     => $c['source'] ?? 'mobile',
+            ]);
+            $id = $model->insert($data);
+            if ($id === false) {
+                continue;
+            }
+            // Honour a create that was already soft-deleted offline.
+            if (! empty($c['is_deleted'])) {
+                $model->builder()->where('id', (int) $id)->update([
+                    'deleted_at'    => $c['deleted_at'] ?? date('Y-m-d H:i:s'),
+                    'delete_reason' => $c['delete_reason'] ?? null,
+                ]);
+            }
+            $fresh = $model->find((int) $id);
+            $mapped[] = [
+                'local_id'   => isset($c['local_id']) ? (int) $c['local_id'] : null,
+                'server_id'  => (int) $id,
+                'txn_no'     => $data['txn_no'],
+                'updated_at' => $fresh['updated_at'] ?? date('Y-m-d H:i:s'),
+            ];
+        }
+
+        foreach ($updates as $u) {
+            $sid = (int) ($u['server_id'] ?? 0);
+            if ($sid <= 0) {
+                continue;
+            }
+            $row = $model->withDeleted()->find($sid);
+            if (! $row || (int) $row['company_id'] !== (int) $cid) {
+                continue;
+            }
+            $norm = $this->normalizeSync($u);
+            if ($norm === null) {
+                continue;
+            }
+            $norm['deleted_at']    = ! empty($u['is_deleted']) ? ($u['deleted_at'] ?? date('Y-m-d H:i:s')) : null;
+            $norm['delete_reason'] = ! empty($u['is_deleted']) ? ($u['delete_reason'] ?? null) : null;
+            $norm['updated_at']    = date('Y-m-d H:i:s');
+            $model->builder()->where('id', $sid)->update($norm);
+            $mapped[] = ['local_id' => isset($u['local_id']) ? (int) $u['local_id'] : null, 'server_id' => $sid, 'updated_at' => $norm['updated_at']];
+        }
+
+        foreach ($deletes as $d) {
+            $sid = (int) ($d['server_id'] ?? 0);
+            if ($sid <= 0) {
+                continue;
+            }
+            $row = $model->withDeleted()->find($sid);
+            if ($row && (int) $row['company_id'] === (int) $cid) {
+                $model->builder()->where('id', $sid)->delete();
+            }
+        }
+
+        return $this->respond([
+            'status'      => 'ok',
+            'server_time' => date('Y-m-d H:i:s'),
+            'mapped'      => $mapped,
+        ]);
+    }
+
+    /** Validate/normalise a synced entry's core fields (shared by creates/updates). */
+    private function normalizeSync(array $r): ?array
+    {
+        $ts = strtotime((string) ($r['txn_date'] ?? ''));
+        if ($ts === false) {
+            return null;
+        }
+        $mode   = (string) ($r['payment_mode'] ?? 'cash');
+        $status = (string) ($r['status'] ?? 'paid');
+        return [
+            'txn_date'     => date('Y-m-d', $ts),
+            'name'         => trim((string) ($r['name'] ?? '')),
+            'party_type'   => ($p = trim((string) ($r['party_type'] ?? ''))) !== '' ? mb_substr($p, 0, 32) : null,
+            'type'         => ($r['type'] ?? 'jama') === 'naam' ? 'naam' : 'jama',
+            'amount'       => round((float) ($r['amount'] ?? 0), 2),
+            'payment_mode' => in_array($mode, TransactionModel::MODES, true) ? $mode : 'cash',
+            'status'       => in_array($status, TransactionModel::STATUSES, true) ? $status : 'paid',
+            'notes'        => ($n = trim((string) ($r['notes'] ?? ''))) !== '' ? $n : null,
+        ];
     }
 }

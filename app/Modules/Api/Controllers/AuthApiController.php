@@ -6,6 +6,7 @@ use App\Libraries\OAuth\OAuthException;
 use App\Libraries\OAuth\OAuthManager;
 use App\Models\ApiTokenModel;
 use App\Models\EmailOtpModel;
+use App\Models\LoginLogModel;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
 use Config\Services;
@@ -61,6 +62,7 @@ class AuthApiController extends BaseApiController
 
         $token = (new ApiTokenModel())->issue((int) $user['id'], 'mobile');
         (new UserModel())->update((int) $user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
+        $this->recordLoginLog($user, 'Password');
 
         return $this->respond([
             'status'                => 'success',
@@ -110,6 +112,7 @@ class AuthApiController extends BaseApiController
 
         $token = (new ApiTokenModel())->issue((int) $user['id'], 'mobile');
         (new UserModel())->update((int) $user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
+        $this->recordLoginLog($user, 'Google');
 
         return $this->respond([
             'status'               => 'success',
@@ -167,6 +170,7 @@ class AuthApiController extends BaseApiController
 
         $token = (new ApiTokenModel())->issue((int) $user['id'], 'mobile');
         (new UserModel())->update((int) $user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
+        $this->recordLoginLog($user, 'Truecaller');
 
         return $this->respond([
             'status'               => 'success',
@@ -380,6 +384,7 @@ class AuthApiController extends BaseApiController
             if ((int) $user['status'] === 1 && (int) ($user['mobile_login_enabled'] ?? 1) === 1) {
                 $token = (new ApiTokenModel())->issue((int) $user['id'], 'mobile');
                 $users->update((int) $user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
+                $this->recordLoginLog($user, 'Email verify');
                 try {
                     Services::mailer()->welcome((string) $user['email'], (string) ($user['name'] ?? ''));
                 } catch (\Throwable $e) {
@@ -404,6 +409,39 @@ class AuthApiController extends BaseApiController
             'message'  => 'Email verified.',
             'verified' => true,
         ]);
+    }
+
+    /**
+     * Record a successful sign-in in login_logs so it shows up in the app's
+     * Login History (mirrors the web Auth library, which the API bypasses).
+     * Best-effort: never let a logging failure break the sign-in response.
+     */
+    private function recordLoginLog(array $user, string $method): void
+    {
+        try {
+            $ua      = $this->request->getUserAgent();
+            $now     = date('Y-m-d H:i:s');
+            $browser = $ua->getBrowser() ?: 'App';
+            $os      = $ua->getPlatform() ?: null;
+            $device  = $ua->isMobile() ? 'Mobile' : ($ua->isTablet() ? 'Tablet' : 'Mobile');
+
+            (new LoginLogModel())->insert([
+                'user_id'          => (int) $user['id'],
+                'username'         => $user['username'] ?? $user['email'] ?? $user['mobile'] ?? null,
+                'ip_address'       => $this->request->getIPAddress(),
+                'user_agent'       => mb_substr((string) $ua->getAgentString(), 0, 255),
+                'browser'          => $browser,
+                'operating_system' => $os,
+                'device_type'      => $device,
+                'status'           => 'success',
+                'message'          => 'Mobile app · ' . $method,
+                'login_at'         => $now,
+                'last_activity_at' => $now,
+                'created_at'       => $now,
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', '[Api] login-log insert failed: ' . $e->getMessage());
+        }
     }
 
     /**

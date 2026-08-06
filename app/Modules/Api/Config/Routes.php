@@ -21,6 +21,10 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->post('auth/verify-email-otp', 'AuthApiController::verifyEmailOtp');
     $routes->post('auth/logout', 'AuthApiController::logout');
 
+    // App metadata — latest-release info for the in-app "App Update" screen.
+    // Public (no token) so it works pre-login and on cold start.
+    $routes->get('app/version', 'AppApiController::version');
+
     // Session context: user, companies, active company + role, package features,
     // and the module→actions permission map. Powers the app's menu/route gating.
     $routes->get('me', 'MeApiController::me');
@@ -68,6 +72,9 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->post('google-play/rtdn/(:segment)', 'GooglePlayApiController::rtdn/$1');
 
     // Jama / Naam cash-book (Hisaab Kitaab Vahi) for the mobile app.
+    // Offline-first sync: incremental pull + batch push (mobile SyncManager).
+    $routes->get('transactions/changes', 'TransactionApiController::changes');
+    $routes->post('transactions/sync', 'TransactionApiController::sync');
     $routes->get('transactions/list', 'TransactionApiController::list');
     $routes->get('transactions/report', 'TransactionApiController::report');
     $routes->get('transactions/parties', 'TransactionApiController::parties');
@@ -80,6 +87,7 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->post('transactions/delete/(:num)', 'TransactionApiController::delete/$1');
     $routes->get('transactions/deleted', 'TransactionApiController::deleted');
     $routes->post('transactions/restore/(:num)', 'TransactionApiController::restore/$1');
+    $routes->post('transactions/purge/(:num)', 'TransactionApiController::purge/$1');
     // Transaction attachments (photos / PDFs / audio on an entry).
     $routes->get('transactions/entry/(:num)/attachments', 'TransactionApiController::entryAttachments/$1');
     $routes->post('transactions/entry/(:num)/attach', 'TransactionApiController::attachToEntry/$1');
