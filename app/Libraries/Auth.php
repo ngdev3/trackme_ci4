@@ -715,6 +715,20 @@ class Auth
             ]);
         }
 
+        // Best-effort coarse location from the IP so the super-admin login-logs
+        // view shows where a sign-in came from. Never blocks/breaks the login.
+        if ($id && $status === 'success') {
+            helper('geo');
+            if (($geo = ip_geolocate($ip)) !== null) {
+                $this->loginLogs->update((int) $id, [
+                    'latitude'        => $geo['latitude'],
+                    'longitude'       => $geo['longitude'],
+                    'location_source' => 'ip',
+                    'location_label'  => $geo['label'],
+                ]);
+            }
+        }
+
         return $id ? (int) $id : null;
     }
 

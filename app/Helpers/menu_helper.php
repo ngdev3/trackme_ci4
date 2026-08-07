@@ -25,6 +25,7 @@ if (! function_exists('sidebar_modules')) {
             'roles' => true,
             'user_types' => true,
             'permissions' => true,
+            'push_notifications' => true,
             'api_monitor' => true, // Mobile API Monitor — Super Admin only
         ];
 
@@ -336,6 +337,7 @@ if (! function_exists('render_sidebar')) {
                 ['Activate Plan', 'admin/activate', 'bi bi-gem'],
                 ['Customers', 'admin/customers', 'bi bi-people'],
                 ['Firms', 'admin/firms', 'bi bi-building'],
+                ['Mobile User Locations', 'admin/locations', 'bi bi-geo-alt'],
                 ['Transactions', 'admin/transactions', 'bi bi-receipt'],
                 ['Inquiries', 'admin/inquiries', 'bi bi-chat-left-text'],
                 ['Plans & Pricing', 'admin/plans', 'bi bi-card-checklist'],

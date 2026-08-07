@@ -51,6 +51,67 @@ class Fcm
         return $this->account !== null;
     }
 
+    /** The Firebase project id sends are targeted at (from the service account). */
+    public function projectId(): ?string
+    {
+        return $this->account['project_id'] ?? null;
+    }
+
+    /** The service-account identity (for diagnostics). */
+    public function clientEmail(): ?string
+    {
+        return $this->account['client_email'] ?? null;
+    }
+
+    /**
+     * End-to-end configuration probe used by `php spark fcm:doctor`. Mints a real
+     * OAuth token and attempts one send (to a dummy token unless a real device
+     * token is given), returning the raw outcome so a human can diagnose it.
+     *
+     * @return array{configured:bool,project_id:?string,client_email:?string,token_minted:bool,send_status:?int,send_body:?string,error:?string}
+     */
+    public function probe(string $token = 'DUMMY_DIAGNOSTIC_TOKEN'): array
+    {
+        $out = [
+            'configured'   => $this->isConfigured(),
+            'project_id'   => $this->projectId(),
+            'client_email' => $this->clientEmail(),
+            'token_minted' => false,
+            'send_status'  => null,
+            'send_body'    => null,
+            'error'        => null,
+        ];
+        if (! $this->isConfigured()) {
+            $out['error'] = 'fcm.serviceAccount is not set or the JSON is invalid.';
+            return $out;
+        }
+
+        try {
+            $accessToken       = $this->accessToken();
+            $out['token_minted'] = true;
+        } catch (\Throwable $e) {
+            $out['error'] = 'Could not mint OAuth token: ' . $e->getMessage();
+            return $out;
+        }
+
+        try {
+            $client = Services::curlrequest(['timeout' => 15, 'http_errors' => false]);
+            $res    = $client->post(sprintf(self::SEND_URL, $this->account['project_id']), [
+                'headers' => ['Authorization' => 'Bearer ' . $accessToken, 'Content-Type' => 'application/json'],
+                'body'    => json_encode(['message' => [
+                    'token'        => $token,
+                    'notification' => ['title' => 'FCM doctor', 'body' => 'Configuration probe'],
+                ]]),
+            ]);
+            $out['send_status'] = $res->getStatusCode();
+            $out['send_body']   = substr((string) $res->getBody(), 0, 500);
+        } catch (\Throwable $e) {
+            $out['error'] = 'Send request failed: ' . $e->getMessage();
+        }
+
+        return $out;
+    }
+
     /**
      * Send one notification to many device tokens. Returns the list of tokens
      * the FCM service reported as permanently invalid (caller should prune them).
@@ -96,11 +157,23 @@ class Fcm
                 ]);
                 $status = $res->getStatusCode();
 
-                // 404 (NOT_FOUND) / 403 (SenderId mismatch) / 400 (invalid token)
-                // mean the token is dead — mark it for pruning.
-                if (in_array($status, [400, 403, 404], true)) {
+                // 400 (invalid token) / 404 (unregistered token) mean the token
+                // is dead. 403 is usually a sender/project mismatch; keep those
+                // tokens so a corrected Firebase service account can use them.
+                if (in_array($status, [400, 404], true)) {
                     $invalid[] = $token;
                     log_message('warning', '[FCM] token rejected ({s}): {b}', ['s' => $status, 'b' => substr((string) $res->getBody(), 0, 300)]);
+                } elseif ($status === 403) {
+                    // Sender/project mismatch: the service account is not authorised
+                    // to send on project "{project_id}". Almost always means
+                    // fcm.serviceAccount points at the wrong Firebase project — it
+                    // must be a key generated FROM the same project as the app's
+                    // google-services.json. Keep the token so a corrected key works.
+                    log_message('error', '[FCM] 403 permission denied on project "{p}" — fcm.serviceAccount ({e}) is not authorised for this Firebase project. Run `php spark fcm:doctor`. Body: {b}', [
+                        'p' => $this->account['project_id'] ?? '?',
+                        'e' => $this->account['client_email'] ?? '?',
+                        'b' => substr((string) $res->getBody(), 0, 300),
+                    ]);
                 } elseif ($status < 200 || $status >= 300) {
                     log_message('error', '[FCM] send failed ({s}): {b}', ['s' => $status, 'b' => substr((string) $res->getBody(), 0, 300)]);
                 }

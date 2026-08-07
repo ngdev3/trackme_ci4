@@ -16,6 +16,7 @@ class LoginLogModel extends Model
         'operating_system', 'device_type', 'status', 'failure_reason',
         'is_suspicious', 'suspicious_reason', 'message', 'login_at',
         'logout_at', 'last_activity_at', 'session_duration', 'created_at',
+        'latitude', 'longitude', 'location_accuracy', 'location_source', 'location_label',
     ];
 
     public function recent(int $limit = 10): array

@@ -85,6 +85,7 @@ class LogController extends BaseController
                 ->orLike('login_logs.ip_address', $filters['q'])
                 ->orLike('login_logs.browser', $filters['q'])
                 ->orLike('login_logs.operating_system', $filters['q'])
+                ->orLike('login_logs.location_label', $filters['q'])
                 ->orLike('login_logs.status', $filters['q'])
                 ->groupEnd();
         }
@@ -157,6 +158,10 @@ class LogController extends BaseController
             'browser' => 'Browser',
             'operating_system' => 'Operating System',
             'device_type' => 'Device',
+            'location_label' => 'Location',
+            'location_source' => 'Location Source',
+            'latitude' => 'Latitude',
+            'longitude' => 'Longitude',
             'login_at' => 'Login At',
             'logout_at' => 'Logout At',
             'last_activity_at' => 'Last Activity',

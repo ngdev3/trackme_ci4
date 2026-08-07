@@ -6,6 +6,7 @@
         ['Firms', $stats['firms'], 'bi-building', 'success', site_url('admin/firms')],
         ['Firm Users', $stats['firm_users'], 'bi-person-badge', 'info', null],
         ['Active Plans', $stats['plans'], 'bi-card-checklist', 'warning', site_url('admin/plans')],
+        ['Mobile User Locations', $stats['located_logins'] ?? 0, 'bi-geo-alt', 'danger', site_url('admin/locations')],
     ];
     foreach ($cards as [$label, $value, $icon, $color, $link]): ?>
         <div class="col-6 col-lg-3">

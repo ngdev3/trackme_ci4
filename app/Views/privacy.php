@@ -8,7 +8,7 @@ $package    = 'com.crind.hissabkitaab';
 $contact    = 'support@hissabkitaab.com';
 $website    = 'https://hissabkitaab.com/';
 $privacyUrl = 'http://hissabkitaab.com/privacy';
-$updated    = '11 July 2026';
+$updated    = '7 August 2026';
 
 $dataCards = [
     ['title' => 'Account Identity', 'body' => 'Name, username, email, mobile number, profile photo, role, company or firm membership, permissions, sign-in status, and password-reset records.'],
@@ -17,6 +17,7 @@ $dataCards = [
     ['title' => 'Billing Records', 'body' => 'Subscription plan, invoice, order id, payment status, billing gateway, expiry, renewal state, and entitlement history.'],
     ['title' => 'Google Play Data', 'body' => 'Product id, base plan id, purchase token, linked purchase token, Google Play order id, acknowledgement status, expiry, and latest verification response.'],
     ['title' => 'Security Signals', 'body' => 'IP address, browser, operating system, device type, failed login attempts, suspicious-login flags, activity logs, API tokens, and diagnostics.'],
+    ['title' => 'Location', 'body' => 'An approximate location (city / region) derived from your IP address at sign-in, and — only if you grant location access on your device — a precise (GPS) location attached to that sign-in. Location is used to help you and your administrators recognise and secure account activity. You can decline precise location and still use the app; you can revoke it anytime in your device settings.'],
 ];
 ?>
 <!DOCTYPE html>

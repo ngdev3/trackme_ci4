@@ -87,12 +87,12 @@ $duration = static function ($seconds): string {
             <table class="table table-hover table-sm align-middle mb-0">
                 <thead>
                 <tr>
-                    <th>#</th><th>User</th><th>Username</th><th>Status</th><th>IP</th><th>Browser</th><th>OS</th><th>Device</th><th>Login</th><th>Logout</th><th>Duration</th><th>Risk</th>
+                    <th>#</th><th>User</th><th>Username</th><th>Status</th><th>IP</th><th>Location</th><th>Browser</th><th>OS</th><th>Device</th><th>Login</th><th>Logout</th><th>Duration</th><th>Risk</th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php if (empty($rows)): ?>
-                    <tr><td colspan="12" class="text-center text-secondary py-4">No login history.</td></tr>
+                    <tr><td colspan="13" class="text-center text-secondary py-4">No login history.</td></tr>
                 <?php else: foreach ($rows as $r): ?>
                     <tr class="<?= ! empty($r['is_suspicious']) ? 'table-danger' : '' ?>">
                         <td><?= esc($r['id']) ?></td>
@@ -109,6 +109,30 @@ $duration = static function ($seconds): string {
                             <?php endif; ?>
                         </td>
                         <td><small><?= esc($r['ip_address']) ?></small></td>
+                        <td>
+                            <?php
+                                $hasCoords = isset($r['latitude'], $r['longitude'])
+                                    && $r['latitude'] !== null && $r['longitude'] !== null && $r['latitude'] !== '';
+                                $locLabel  = trim((string) ($r['location_label'] ?? ''));
+                                $locSource = $r['location_source'] ?? '';
+                            ?>
+                            <?php if ($hasCoords || $locLabel !== ''): ?>
+                                <?php if ($hasCoords): ?>
+                                    <a class="text-decoration-none" target="_blank" rel="noopener"
+                                       href="https://www.google.com/maps?q=<?= esc($r['latitude']) ?>,<?= esc($r['longitude']) ?>"
+                                       title="Open in Google Maps">
+                                        <i class="bi bi-geo-alt-fill me-1"></i><small><?= $locLabel !== '' ? esc($locLabel) : esc(round((float) $r['latitude'], 4) . ', ' . round((float) $r['longitude'], 4)) ?></small>
+                                    </a>
+                                <?php else: ?>
+                                    <small><i class="bi bi-geo-alt me-1"></i><?= esc($locLabel) ?></small>
+                                <?php endif; ?>
+                                <?php if ($locSource !== ''): ?>
+                                    <span class="badge <?= $locSource === 'gps' ? 'text-bg-primary' : 'text-bg-light border' ?>" title="<?= $locSource === 'gps' ? 'Precise device GPS' : 'Approximate, from IP' ?>"><?= $locSource === 'gps' ? 'GPS' : 'IP' ?></span>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <small class="text-secondary">-</small>
+                            <?php endif; ?>
+                        </td>
                         <td><small title="<?= esc($r['user_agent'] ?? '') ?>"><?= esc($r['browser'] ?: 'Unknown') ?></small></td>
                         <td><small><?= esc($r['operating_system'] ?: 'Unknown') ?></small></td>
                         <td><span class="badge text-bg-light border"><?= esc($r['device_type'] ?: 'Unknown') ?></span></td>

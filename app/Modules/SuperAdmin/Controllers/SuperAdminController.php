@@ -38,6 +38,13 @@ class SuperAdminController extends BaseController
         $activeFirms = (clone $firms)->where('status', 1)->countAllResults();
 
         $totalFirmUsers = $db->table('users')->where('account_type', 'firm_user')->where('deleted_at', null)->countAllResults();
+        $locatedLogins = $db->fieldExists('latitude', 'login_logs')
+            ? $db->table('login_logs')
+                ->where('status', 'success')
+                ->where('latitude IS NOT NULL', null, false)
+                ->where('longitude IS NOT NULL', null, false)
+                ->countAllResults()
+            : 0;
 
         // Subscription / payment summary.
         $subs = $db->table('subscriptions')->select('payment_status, COUNT(*) AS c')->groupBy('payment_status')->get()->getResultArray();
@@ -63,10 +70,136 @@ class SuperAdminController extends BaseController
                 'firms_inactive'   => $totalFirms - $activeFirms,
                 'firm_users'       => $totalFirmUsers,
                 'plans'            => $db->table('subscription_plans')->where('status', 1)->countAllResults(),
+                'located_logins'   => $locatedLogins,
             ],
             'payments'   => $payments,
             'recent'     => $recentActivity,
         ]);
+    }
+
+    // ---------------------------------------------------------------
+    public function locations()
+    {
+        $db = $this->db();
+
+        if (! $db->fieldExists('latitude', 'login_logs') || ! $db->fieldExists('longitude', 'login_logs')) {
+            return $this->render('locations', [
+                'title'      => 'Mobile User Locations',
+                'breadcrumb' => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'Mobile User Locations']],
+                'ready'      => false,
+                'filters'    => ['days' => 30, 'source' => '', 'q' => ''],
+            ]);
+        }
+
+        $days = (int) ($this->request->getGet('days') ?: 30);
+        $days = max(1, min(365, $days));
+        $source = trim((string) $this->request->getGet('source'));
+        if (! in_array($source, ['gps', 'ip'], true)) {
+            $source = '';
+        }
+        $q = trim((string) $this->request->getGet('q'));
+        $from = date('Y-m-d 00:00:00', strtotime('-' . ($days - 1) . ' days'));
+
+        $base = $this->locationLogBuilder($from, $source, $q);
+
+        $total = (clone $base)->countAllResults();
+        $gps = (clone $base)->where('login_logs.location_source', 'gps')->countAllResults();
+        $ip = (clone $base)->where('login_logs.location_source', 'ip')->countAllResults();
+        $suspicious = (clone $base)->where('login_logs.is_suspicious', 1)->countAllResults();
+        $mobile = (clone $base)->where('login_logs.device_type', 'Mobile')->countAllResults();
+        $usersRow = (clone $base)->select('COUNT(DISTINCT login_logs.user_id) AS c', false)->get()->getRowArray();
+        $avgRow = (clone $base)
+            ->where('login_logs.location_source', 'gps')
+            ->where('login_logs.location_accuracy IS NOT NULL', null, false)
+            ->select('AVG(login_logs.location_accuracy) AS c', false)
+            ->get()->getRowArray();
+
+        $bySource = (clone $base)
+            ->select('COALESCE(login_logs.location_source, "unknown") AS source, COUNT(*) AS total', false)
+            ->groupBy('login_logs.location_source')
+            ->orderBy('total', 'DESC')
+            ->get()->getResultArray();
+
+        $byDay = (clone $base)
+            ->select('DATE(COALESCE(login_logs.login_at, login_logs.created_at)) AS day, COUNT(*) AS total', false)
+            ->groupBy('DATE(COALESCE(login_logs.login_at, login_logs.created_at))', false)
+            ->orderBy('day', 'ASC')
+            ->get()->getResultArray();
+
+        $topLocations = (clone $base)
+            ->select('COALESCE(NULLIF(login_logs.location_label, ""), CONCAT(ROUND(login_logs.latitude, 3), ", ", ROUND(login_logs.longitude, 3))) AS label, login_logs.location_source, COUNT(*) AS total, COUNT(DISTINCT login_logs.user_id) AS users', false)
+            ->groupBy('label, login_logs.location_source', false)
+            ->orderBy('total', 'DESC')
+            ->limit(10)
+            ->get()->getResultArray();
+
+        $recent = (clone $base)
+            ->select('login_logs.*, users.name AS user_name, users.email AS user_email, users.mobile AS user_mobile, users.account_type')
+            ->orderBy('login_logs.id', 'DESC')
+            ->limit(30)
+            ->get()->getResultArray();
+
+        $points = [];
+        foreach ($recent as $row) {
+            if ($row['latitude'] === null || $row['longitude'] === null || $row['latitude'] === '' || $row['longitude'] === '') {
+                continue;
+            }
+            $points[] = [
+                'lat'    => (float) $row['latitude'],
+                'lng'    => (float) $row['longitude'],
+                'label'  => trim((string) ($row['location_label'] ?? '')) ?: ((float) $row['latitude'] . ', ' . (float) $row['longitude']),
+                'user'   => $row['user_name'] ?: ($row['username'] ?? 'Unknown user'),
+                'source' => $row['location_source'] ?: 'unknown',
+                'when'   => $row['login_at'] ?: $row['created_at'],
+            ];
+        }
+
+        return $this->render('locations', [
+            'title'      => 'Mobile User Locations',
+            'breadcrumb' => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'Mobile User Locations']],
+            'ready'      => true,
+            'filters'    => ['days' => $days, 'source' => $source, 'q' => $q],
+            'stats'      => [
+                'total'        => $total,
+                'gps'          => $gps,
+                'ip'           => $ip,
+                'users'        => (int) ($usersRow['c'] ?? 0),
+                'suspicious'   => $suspicious,
+                'mobile'       => $mobile,
+                'avg_accuracy' => $avgRow && $avgRow['c'] !== null ? (int) round((float) $avgRow['c']) : null,
+            ],
+            'bySource'     => $bySource,
+            'byDay'        => $byDay,
+            'topLocations' => $topLocations,
+            'recent'       => $recent,
+            'points'       => $points,
+        ]);
+    }
+
+    private function locationLogBuilder(string $from, string $source = '', string $q = '')
+    {
+        $builder = $this->db()->table('login_logs')
+            ->join('users', 'users.id = login_logs.user_id', 'left')
+            ->where('login_logs.status', 'success')
+            ->where('login_logs.latitude IS NOT NULL', null, false)
+            ->where('login_logs.longitude IS NOT NULL', null, false)
+            ->where('COALESCE(login_logs.login_at, login_logs.created_at) >=', $from);
+
+        if ($source !== '') {
+            $builder->where('login_logs.location_source', $source);
+        }
+        if ($q !== '') {
+            $builder->groupStart()
+                ->like('users.name', $q)
+                ->orLike('users.email', $q)
+                ->orLike('users.mobile', $q)
+                ->orLike('login_logs.username', $q)
+                ->orLike('login_logs.ip_address', $q)
+                ->orLike('login_logs.location_label', $q)
+                ->groupEnd();
+        }
+
+        return $builder;
     }
 
     // ---------------------------------------------------------------

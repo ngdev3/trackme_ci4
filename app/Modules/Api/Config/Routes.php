@@ -31,6 +31,11 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->put('me', 'MeApiController::updateProfile');
     $routes->post('company/switch', 'MeApiController::switchCompany');
 
+    // Attach the device's precise GPS location to the current session's login
+    // record (sent by the app after the user grants location access). Optional —
+    // a coarse IP location is stored at login regardless.
+    $routes->post('location', 'LocationApiController::update');
+
     // Firm (company) management for the mobile app. Create mirrors web store();
     // delete is a soft-delete (Trash), with owner-only restore / permanent purge.
     $routes->get('companies', 'CompanyApiController::index');

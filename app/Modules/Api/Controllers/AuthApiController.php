@@ -425,10 +425,11 @@ class AuthApiController extends BaseApiController
             $os      = $ua->getPlatform() ?: null;
             $device  = $ua->isMobile() ? 'Mobile' : ($ua->isTablet() ? 'Tablet' : 'Mobile');
 
-            (new LoginLogModel())->insert([
+            $ip     = $this->request->getIPAddress();
+            $logId  = (new LoginLogModel())->insert([
                 'user_id'          => (int) $user['id'],
                 'username'         => $user['username'] ?? $user['email'] ?? $user['mobile'] ?? null,
-                'ip_address'       => $this->request->getIPAddress(),
+                'ip_address'       => $ip,
                 'user_agent'       => mb_substr((string) $ua->getAgentString(), 0, 255),
                 'browser'          => $browser,
                 'operating_system' => $os,
@@ -439,6 +440,18 @@ class AuthApiController extends BaseApiController
                 'last_activity_at' => $now,
                 'created_at'       => $now,
             ]);
+
+            // Coarse IP-based location as a fallback; precise device GPS (if the
+            // user grants it) overwrites this via POST /api/v1/location.
+            helper('geo');
+            if ($logId && ($geo = ip_geolocate($ip)) !== null) {
+                (new LoginLogModel())->update((int) $logId, [
+                    'latitude'        => $geo['latitude'],
+                    'longitude'       => $geo['longitude'],
+                    'location_source' => 'ip',
+                    'location_label'  => $geo['label'],
+                ]);
+            }
         } catch (\Throwable $e) {
             log_message('error', '[Api] login-log insert failed: ' . $e->getMessage());
         }
