@@ -57,6 +57,7 @@ class Filters extends BaseFilters
         'feature'       => \App\Filters\FeatureGate::class,
         'apifeature'    => \App\Filters\ApiFeature::class,
         'sublifecycle'  => \App\Filters\SubscriptionLifecycle::class,
+        'apitoggle'     => \App\Filters\ApiToggle::class,
     ];
 
     /**
@@ -149,6 +150,13 @@ class Filters extends BaseFilters
         // API package gate (bearer-token aware). Inventory is Premium-only.
         'apifeature' => ['before' => [
             'api/v1/inventory', 'api/v1/inventory/*',
+        ]],
+
+        // Super-Admin "kill switch": if an endpoint has been toggled inactive in
+        // the API Monitor, the live app receives a 503 instead of the handler.
+        // Fails open (never blocks on a registry error).
+        'apitoggle' => ['before' => [
+            'api/v1', 'api/v1/*',
         ]],
 
         // NOTE: the former 'pro' URI gate is intentionally removed. Under the

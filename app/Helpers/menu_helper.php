@@ -25,6 +25,7 @@ if (! function_exists('sidebar_modules')) {
             'roles' => true,
             'user_types' => true,
             'permissions' => true,
+            'api_monitor' => true, // Mobile API Monitor — Super Admin only
         ];
 
         $isVisible = static function (array $m) use ($acl, $viewable, $superOnly): bool {
