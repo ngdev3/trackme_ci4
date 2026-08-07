@@ -34,7 +34,7 @@ class Fcm
 
     public function __construct()
     {
-        $path = (string) env('fcm.serviceAccount', '');
+        $path = $this->resolvePath((string) env('fcm.serviceAccount', ''));
         if ($path !== '' && is_file($path)) {
             $json = json_decode((string) file_get_contents($path), true);
             if (is_array($json) && ! empty($json['client_email']) && ! empty($json['private_key']) && ! empty($json['project_id'])) {
@@ -49,6 +49,23 @@ class Fcm
     public function isConfigured(): bool
     {
         return $this->account !== null;
+    }
+
+    /**
+     * Resolve the configured path. An absolute path (Windows drive or POSIX
+     * root) is used as-is; anything else is treated as relative to the project
+     * root (ROOTPATH), so `writable/keys/fcm-service-account.json` works the
+     * same on local and the server without hardcoding an absolute path.
+     */
+    private function resolvePath(string $path): string
+    {
+        if ($path === '') {
+            return '';
+        }
+        if (! preg_match('#^([a-zA-Z]:[\\\\/]|/)#', $path)) {
+            $path = rtrim(ROOTPATH, '/\\') . DIRECTORY_SEPARATOR . $path;
+        }
+        return $path;
     }
 
     /** The Firebase project id sends are targeted at (from the service account). */
