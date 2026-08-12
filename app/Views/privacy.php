@@ -171,7 +171,7 @@ $dataCards = [
     <section class="hero">
         <div class="hero-grid">
             <div>
-                <p class="eyebrow">Privacy Policy for Google Play and Web okok</p>
+                <p class="eyebrow">Privacy Policy for Google Play and Web</p>
                 <h1>Your business data stays your business.</h1>
                 <p class="lede">This page explains what <?= esc($appName) ?> collects, why it is needed,
                 how Google Play Billing is handled, and how users can contact us for data access,
