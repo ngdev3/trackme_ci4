@@ -91,6 +91,7 @@ class ApiMonitorController extends BaseController
         }
         $next = (int) $row['is_active'] === 1 ? 0 : 1;
         $this->model->update($row['id'], ['is_active' => $next]);
+        $this->model->clearDisabledCache(); // instant effect (the filter caches for 60s)
         activity_log('ApiMonitor', 'Edit', ($next ? 'Enabled' : 'Disabled') . " API {$row['http_method']} {$row['path']}");
         return $this->json(200, ['status' => 'success', 'is_active' => $next]);
     }
