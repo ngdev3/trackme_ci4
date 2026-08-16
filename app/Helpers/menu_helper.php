@@ -361,6 +361,27 @@ if (! function_exists('render_sidebar')) {
                 . '<a href="#" class="nav-link' . ($open ? ' active' : '') . '">'
                 . '<i class="nav-icon bi bi-gem"></i><p>Subscription<i class="nav-arrow bi bi-chevron-right"></i></p></a>'
                 . '<ul class="nav nav-treeview">' . $inner . '</ul></li>';
+
+            // Developer / performance tools (Super Admin only).
+            $devChildren = [
+                ['Load Test Console', 'loadtest', 'bi bi-speedometer'],
+                ['Health Check', 'health', 'bi bi-heart-pulse'],
+            ];
+            $devBest = -1; $devBestLen = -1;
+            foreach ($devChildren as $i => $c) {
+                $len = menu_match_len($c[1]);
+                if ($len > $devBestLen) { $devBestLen = $len; $devBest = $i; }
+            }
+            $devOpen  = $devBestLen >= 0;
+            $devInner = '';
+            foreach ($devChildren as $i => $c) {
+                $devInner .= '<li class="nav-item"><a href="' . site_url($c[1]) . '" class="nav-link' . ($i === $devBest ? ' active' : '') . '">'
+                    . '<i class="nav-icon ' . esc($c[2]) . '"></i><p>' . esc($c[0]) . '</p></a></li>';
+            }
+            $html .= '<li class="nav-item' . ($devOpen ? ' menu-open' : '') . '">'
+                . '<a href="#" class="nav-link' . ($devOpen ? ' active' : '') . '">'
+                . '<i class="nav-icon bi bi-tools"></i><p>Developer Tools<i class="nav-arrow bi bi-chevron-right"></i></p></a>'
+                . '<ul class="nav nav-treeview">' . $devInner . '</ul></li>';
         }
 
         return $html;

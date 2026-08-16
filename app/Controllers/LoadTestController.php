@@ -19,10 +19,15 @@ class LoadTestController extends Controller
 {
     public function index()
     {
-        $secret = (string) (env('health.key') ?? '');
-        $given  = (string) ($this->request->getGet('key') ?? '');
-        if ($secret === '' || ! hash_equals($secret, $given)) {
-            return $this->response->setStatusCode(403)->setJSON(['status' => 'forbidden', 'hint' => 'append ?key=<health.key>']);
+        // Access: a logged-in Super Admin (via the sidebar menu link), OR anyone
+        // with the ?key=<health.key> secret (for CLI / no-session use).
+        helper('auth');
+        $isSuper = function_exists('is_super_admin_account') && is_super_admin_account();
+        $secret  = (string) (env('health.key') ?? '');
+        $given   = (string) ($this->request->getGet('key') ?? '');
+        $keyOk   = $secret !== '' && hash_equals($secret, $given);
+        if (! $isSuper && ! $keyOk) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => 'forbidden', 'hint' => 'log in as Super Admin, or append ?key=<health.key>']);
         }
 
         // Default API base = same origin + /api/v1 (so calls are same-origin).

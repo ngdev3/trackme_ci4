@@ -34,10 +34,12 @@ class HealthController extends Controller
             'time'    => date('c'),
         ];
 
-        // Gate the detailed report behind ?key= matching env('health.key').
-        $secret = (string) (env('health.key') ?? '');
-        $given  = (string) ($this->request->getGet('key') ?? '');
-        if ($secret === '' || ! hash_equals($secret, $given)) {
+        // Detailed report: a logged-in Super Admin (sidebar link) OR the secret.
+        helper('auth');
+        $isSuper = function_exists('is_super_admin_account') && is_super_admin_account();
+        $secret  = (string) (env('health.key') ?? '');
+        $given   = (string) ($this->request->getGet('key') ?? '');
+        if (! $isSuper && ! ($secret !== '' && hash_equals($secret, $given))) {
             return $this->response->setJSON($public);
         }
 
