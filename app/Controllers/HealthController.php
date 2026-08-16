@@ -82,6 +82,32 @@ class HealthController extends Controller
             $db = null;
         }
 
+        // ---- DB connection limits (confirms the "500s = connection cap" theory)
+        if ($db) {
+            $lim = [];
+            $one = static function ($db, string $sql, string $col = 'Value') {
+                try { $r = $db->query($sql)->getRowArray(); return $r[$col] ?? ($r['Value'] ?? null); }
+                catch (\Throwable $e) { return null; }
+            };
+            $lim['max_connections']      = $one($db, "SHOW VARIABLES LIKE 'max_connections'");
+            $lim['max_user_connections'] = $one($db, "SHOW VARIABLES LIKE 'max_user_connections'");
+            $lim['threads_connected']    = $one($db, "SHOW STATUS LIKE 'Threads_connected'");
+            $lim['max_used_connections'] = $one($db, "SHOW STATUS LIKE 'Max_used_connections'");
+            try {
+                $grants = $db->query('SHOW GRANTS FOR CURRENT_USER')->getResultArray();
+                foreach ($grants as $g) {
+                    $line = implode(' ', $g);
+                    if (preg_match('/MAX_USER_CONNECTIONS\s+(\d+)/i', $line, $m)) { $lim['grant_max_user_connections'] = (int) $m[1]; }
+                }
+            } catch (\Throwable $e) { /* no privilege — fine */ }
+            // Flag if peak usage is close to a known cap.
+            $cap = (int) ($lim['grant_max_user_connections'] ?? $lim['max_user_connections'] ?? 0);
+            $peak = (int) ($lim['max_used_connections'] ?? 0);
+            $tight = $cap > 0 && $peak >= $cap - 1;
+            $checks['db_limits'] = ['ok' => ! $tight, 'detail' => $lim + ['note' => $tight ? 'peak usage HIT the per-user cap — this is your 500 ceiling' : 'headroom ok']];
+            if ($tight && $overall !== 'fail') { $overall = 'fail'; }
+        }
+
         // ---- Migrations: applied vs available ----------------------------
         try {
             $files = glob(APPPATH . 'Database/Migrations/*.php') ?: [];
