@@ -394,6 +394,15 @@ if (! function_exists('customer_effective_plan')) {
      */
     function customer_effective_plan(int $customerId): array
     {
+        // Per-request memo. The effective plan cannot change within a single HTTP
+        // request, and this helper is called many times per request (e.g. /me
+        // resolves ~39 feature flags, each via customer_has_feature()). Without
+        // this, that fanned out to ~120 subscription/plan queries per /me call.
+        static $memo = [];
+        if (isset($memo[$customerId])) {
+            return $memo[$customerId];
+        }
+
         $subs = new SubscriptionModel();
         $sub  = $subs->forCustomer($customerId);
         if (! $sub) {
@@ -407,15 +416,15 @@ if (! function_exists('customer_effective_plan')) {
         if ($reason === 'paid' && ! empty($sub['plan_id'])) {
             $row = $plans->find((int) $sub['plan_id']);
             if ($row) {
-                return $row;
+                return $memo[$customerId] = $row;
             }
         } elseif ($reason === 'trial') {
             $row = $plans->where('code', 'yearly_599')->first();
             if ($row) {
-                return $row;
+                return $memo[$customerId] = $row;
             }
         }
-        return $plans->where('code', 'yearly_299')->first() ?: _sub_full_plan();
+        return $memo[$customerId] = ($plans->where('code', 'yearly_299')->first() ?: _sub_full_plan());
     }
 }
 

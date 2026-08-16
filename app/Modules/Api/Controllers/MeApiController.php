@@ -154,18 +154,20 @@ class MeApiController extends BaseApiController
         // company reflects "just now").
         $lastActive = $members->lastActiveMap((int) $user['id']);
 
-        // Company list with the caller's role in each.
+        // Company list with the caller's role in each. forUser() already joins
+        // company_users.role AS membership_role, so read it from the row instead
+        // of a per-company membership() query (was an N+1 over the company list).
         $companies = [];
         foreach ($allCompanies as $c) {
-            $membership = $members->membership((int) $c['id'], (int) $user['id']);
+            $isOwner = (int) $c['owner_id'] === (int) $user['id'];
             $companies[] = [
                 'id'             => (int) $c['id'],
                 'name'           => $c['name'],
                 'state'          => $c['state'] ?? null,
                 'gst_number'     => $c['gst_number'] ?? null,
                 'business_type'  => $c['business_type'] ?? null,
-                'role'           => $membership['role'] ?? ((int) $c['owner_id'] === (int) $user['id'] ? 'owner' : 'staff'),
-                'is_owner'       => (int) $c['owner_id'] === (int) $user['id'],
+                'role'           => $c['membership_role'] ?? ($isOwner ? 'owner' : 'staff'),
+                'is_owner'       => $isOwner,
                 'created_at'     => $c['created_at'] ?? null,
                 'last_active_at' => $lastActive[(int) $c['id']] ?? null,
             ];
@@ -173,8 +175,7 @@ class MeApiController extends BaseApiController
 
         $activeRole = null;
         if ($active) {
-            $m          = $members->membership($activeId, (int) $user['id']);
-            $activeRole = $m['role'] ?? ((int) $active['owner_id'] === (int) $user['id'] ? 'owner' : 'staff');
+            $activeRole = $active['membership_role'] ?? ((int) $active['owner_id'] === (int) $user['id'] ? 'owner' : 'staff');
         }
 
         // Package features for the active company's owning customer.
@@ -216,15 +217,22 @@ class MeApiController extends BaseApiController
         $allActions = ['view', 'add', 'edit', 'delete', 'print', 'export', 'approve'];
         $codes      = $modules->where('status', 1)->where('url IS NOT NULL')->findColumn('code') ?? [];
 
+        if ($isSuper) {
+            $map = [];
+            foreach ($codes as $code) {
+                $map[$code] = $allActions;
+            }
+            return $map;
+        }
+
+        // Batched: two queries total (role grants + user grants) for ALL modules,
+        // instead of the previous per-module N+1 (2 * moduleCount queries).
+        $roleMap = $rolePerms->actionsForModules($roleIds, $codes);
+        $userMap = $userPerms->actionsForModules($userId, $codes);
+
         $map = [];
         foreach ($codes as $code) {
-            if ($isSuper) {
-                $map[$code] = $allActions;
-                continue;
-            }
-            $roleActions = $rolePerms->actionsFor($roleIds, $code);
-            $userActions = $userPerms->actionsFor($userId, $code);
-            $merged      = array_values(array_unique(array_merge($roleActions, $userActions)));
+            $merged = array_values(array_unique(array_merge($roleMap[$code] ?? [], $userMap[$code] ?? [])));
             if ($merged !== []) {
                 $map[$code] = $merged;
             }

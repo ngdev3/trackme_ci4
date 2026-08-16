@@ -8,6 +8,8 @@ use CodeIgniter\Router\RouteCollection;
 // their dashboard by the controller.
 $routes->get('/', 'LandingController::index');
 $routes->get('home', 'LandingController::index');
+// Deployment self-test. GET /health = public status; ?key=<health.key> = full report.
+$routes->get('health', 'HealthController::index');
 $routes->get('terms', 'LandingController::terms');
 $routes->get('refunds', 'LandingController::refunds');
 $routes->get('about', 'LandingController::about');

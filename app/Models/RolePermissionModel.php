@@ -71,6 +71,33 @@ class RolePermissionModel extends Model
     }
 
     /**
+     * Batched version of actionsFor() for MANY modules in ONE query.
+     * Returns module_code => [action codes]. Avoids the per-module N+1 in /me.
+     *
+     * @param  list<int>    $roleIds
+     * @param  list<string> $moduleCodes
+     * @return array<string, list<string>>
+     */
+    public function actionsForModules(array $roleIds, array $moduleCodes): array
+    {
+        if ($roleIds === [] || $moduleCodes === []) {
+            return [];
+        }
+        $rows = $this->select('DISTINCT modules.code AS mcode, permissions.code AS code', false)
+            ->join('permissions', 'permissions.id = role_permissions.permission_id')
+            ->join('modules', 'modules.id = role_permissions.module_id')
+            ->whereIn('role_permissions.role_id', $roleIds)
+            ->whereIn('modules.code', $moduleCodes)
+            ->get()->getResultArray();
+
+        $out = [];
+        foreach ($rows as $r) {
+            $out[$r['mcode']][] = $r['code'];
+        }
+        return $out;
+    }
+
+    /**
      * Module codes (that have a URL) any of the given roles can at least "view".
      *
      * @param list<int> $roleIds

@@ -72,6 +72,32 @@ class UserPermissionModel extends Model
     }
 
     /**
+     * Batched version of actionsFor() for MANY modules in ONE query.
+     * Returns module_code => [action codes]. Avoids the per-module N+1 in /me.
+     *
+     * @param  list<string> $moduleCodes
+     * @return array<string, list<string>>
+     */
+    public function actionsForModules(int $userId, array $moduleCodes): array
+    {
+        if ($moduleCodes === []) {
+            return [];
+        }
+        $rows = $this->select('DISTINCT modules.code AS mcode, permissions.code AS code', false)
+            ->join('permissions', 'permissions.id = user_permissions.permission_id')
+            ->join('modules', 'modules.id = user_permissions.module_id')
+            ->where('user_permissions.user_id', $userId)
+            ->whereIn('modules.code', $moduleCodes)
+            ->get()->getResultArray();
+
+        $out = [];
+        foreach ($rows as $r) {
+            $out[$r['mcode']][] = $r['code'];
+        }
+        return $out;
+    }
+
+    /**
      * Module codes (that have a URL) a user can at least "view" directly.
      *
      * @return list<string>
