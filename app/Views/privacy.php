@@ -1,9 +1,9 @@
 <?php
 /**
- * Public privacy policy for Google Play and the HissabKitaab website/app.
+ * Public privacy policy for Google Play and the Hissab-Kitaab website/app.
  */
 $company    = 'CR Industries';
-$appName    = 'HissabKitaab';
+$appName    = brand_name();
 $package    = 'com.crind.hissabkitaab';
 $contact    = 'support@hissabkitaab.com';
 $website    = 'https://hissabkitaab.com/';
@@ -293,7 +293,7 @@ $dataCards = [
         <div>
             <h2>Contact Us</h2>
             <p>For privacy questions, data requests, account deletion, or Google Play policy support,
-            contact the HissabKitaab team.</p>
+            contact the <?= esc($appName) ?> team.</p>
         </div>
         <div class="contact-card">
             <div><strong>Email</strong><br><a href="mailto:<?= esc($contact, 'attr') ?>"><?= esc($contact) ?></a></div>

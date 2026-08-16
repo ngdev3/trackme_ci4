@@ -118,7 +118,7 @@ $viewTip = static function (array $r) use ($authors, $fmt): string {
             <div class="flex-grow-1">
                 <strong>Set your Opening Balance.</strong>
                 You haven't set an opening cash balance for FY <?= esc($fyLabel) ?> yet. You can set it anytime from
-                <a href="<?= site_url('transactions/opening') ?>" class="alert-link">HissabKitaab Vahi &rsaquo; Opening Balance</a> in the menu.
+                <a href="<?= site_url('transactions/opening') ?>" class="alert-link"><?= esc(brand_name()) ?> Vahi &rsaquo; Opening Balance</a> in the menu.
             </div>
             <button type="button" class="btn-close" data-openbal-dismiss aria-label="Dismiss"></button>
         </div>

@@ -6,7 +6,7 @@ use App\Models\InquiryModel;
 use App\Models\SubscriptionPlanModel;
 
 /**
- * Public marketing landing page for HissabKitaab. Shown to guests at the site
+ * Public marketing landing page for Hissab-Kitaab. Shown to guests at the site
  * root; signed-in users are sent straight to their dashboard. Pricing is pulled
  * live from the active subscription plans so the page never drifts from what the
  * app actually sells.
@@ -53,11 +53,11 @@ class LandingController extends BaseController
         }
 
         return view('landing', [
-            'appName'      => (string) setting('app_name', 'HissabKitaab'),
-            'tagline'      => (string) setting('app_tagline', 'plan smarter, grow faster'),
+            'appName'      => brand_name(),
+            'tagline'      => brand_tagline(),
             'supportWa'    => preg_replace('/\D+/', '', (string) setting('support_whatsapp', '916393505070')),
             'supportWaShown' => (string) setting('support_whatsapp_display', '+91 63935 05070'),
-            'supportEmail' => (string) setting('support_email', 'admin@HissabKitaab.com'),
+            'supportEmail' => brand_support_email(),
             'plans'        => $plans,
             'planFeatures' => $planFeatures,
             'trialDays'    => function_exists('sub_trial_days') ? sub_trial_days() : 30,
@@ -67,7 +67,7 @@ class LandingController extends BaseController
     /** Public Terms & Conditions page (linked from the footer). */
     public function terms()
     {
-        $app = (string) setting('app_name', 'HissabKitaab');
+        $app = brand_name();
         return view('legal', [
             'appName'     => $app,
             'legalTitle'  => 'Terms & Conditions',
@@ -89,7 +89,7 @@ class LandingController extends BaseController
     /** Public Refund & Cancellation policy (linked from the footer). */
     public function refunds()
     {
-        $app = (string) setting('app_name', 'HissabKitaab');
+        $app = brand_name();
         return view('legal', [
             'appName'     => $app,
             'legalTitle'  => 'Refund & Cancellation Policy',
@@ -109,7 +109,7 @@ class LandingController extends BaseController
     /** Public About Us page (linked from the footer). */
     public function about()
     {
-        $app = (string) setting('app_name', 'HissabKitaab');
+        $app = brand_name();
         return view('legal', [
             'appName'     => $app,
             'legalTitle'  => 'About Us',
@@ -128,7 +128,7 @@ class LandingController extends BaseController
     /** Public Careers page (linked from the footer). */
     public function careers()
     {
-        $app = (string) setting('app_name', 'HissabKitaab');
+        $app = brand_name();
         return view('legal', [
             'appName'     => $app,
             'legalTitle'  => 'Careers',
@@ -146,7 +146,7 @@ class LandingController extends BaseController
     /** Public Contact & Support page (linked from the footer). */
     public function contact()
     {
-        $app     = (string) setting('app_name', 'HissabKitaab');
+        $app     = brand_name();
         $waShown = (string) setting('support_whatsapp_display', '+91 63935 05070');
         return view('legal', [
             'appName'     => $app,

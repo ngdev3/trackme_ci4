@@ -4,7 +4,7 @@
  * Expects: $legalTitle, $legalUpdated, $legalIntro, $legalSections (list of
  * ['h' => heading, 'p' => paragraph|list of paragraphs]).
  */
-$appName       = $appName       ?? 'HissabKitaab';
+$appName       = $appName       ?? brand_name();
 $company       = $company       ?? 'CR Industries';
 $contactEmail  = $contactEmail  ?? 'support@hissabkitaab.com';
 $legalTitle    = $legalTitle    ?? 'Legal';
@@ -51,7 +51,7 @@ a:hover{text-decoration:underline}
 <body>
 <div class="wrap">
   <div class="top">
-    <a href="<?= site_url('/') ?>" class="wm">Hissab<span class="a">किताब</span></a>
+    <a href="<?= site_url('/') ?>" class="wm">Hissab-<span class="a">Kitaab</span></a>
     <a href="<?= site_url('/') ?>" class="back"><i class="bi bi-arrow-left"></i> Back to home</a>
   </div>
 

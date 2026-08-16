@@ -65,7 +65,7 @@ $filters = ['' => 'All', 'new' => 'New', 'read' => 'Read', 'closed' => 'Closed']
                                 <td style="max-width:360px"><div class="small" style="white-space:pre-wrap"><?= esc($r['message']) ?></div></td>
                                 <td><span class="badge text-bg-<?= esc($stColor) ?>"><?= esc($stLabel) ?></span></td>
                                 <td class="text-end text-nowrap">
-                                    <a href="mailto:<?= esc($r['email'], 'attr') ?>?subject=<?= rawurlencode('Re: your inquiry to HissabKitaab') ?>" class="btn btn-sm btn-outline-primary" title="Reply"><i class="bi bi-reply"></i></a>
+                                    <a href="mailto:<?= esc($r['email'], 'attr') ?>?subject=<?= rawurlencode('Re: your inquiry to ' . brand_name()) ?>" class="btn btn-sm btn-outline-primary" title="Reply"><i class="bi bi-reply"></i></a>
                                     <?php foreach ([['read', 'Mark read', 'bi-envelope-open', 'outline-secondary'], ['closed', 'Close', 'bi-check2', 'outline-success']] as [$st, $t, $ic, $cls]): ?>
                                         <?php if ($r['status'] !== $st): ?>
                                             <form action="<?= site_url('admin/inquiries/status/' . $r['id']) ?>" method="post" class="d-inline">

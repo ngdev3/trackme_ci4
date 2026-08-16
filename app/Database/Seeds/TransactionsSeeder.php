@@ -22,7 +22,7 @@ class TransactionsSeeder extends Seeder
         $parent = $this->db->table('modules')->where('code', 'transactions')->get()->getRowArray();
         if (! $parent) {
             $this->db->table('modules')->insert([
-                'name' => 'HissabKitaab Vahi', 'code' => 'transactions', 'url' => null,
+                'name' => 'Hissab-Kitaab Vahi', 'code' => 'transactions', 'url' => null,
                 'icon' => 'bi bi-cash-stack', 'parent_id' => null, 'sort_order' => 75,
                 'is_menu' => 1, 'status' => 1, 'created_at' => $now, 'updated_at' => $now,
             ]);
@@ -31,7 +31,7 @@ class TransactionsSeeder extends Seeder
             $parentId = (int) $parent['id'];
             // Convert the old single link into a group header.
             $this->db->table('modules')->where('id', $parentId)->update([
-                'name' => 'HissabKitaab Vahi', 'url' => null, 'icon' => 'bi bi-cash-stack', 'updated_at' => $now,
+                'name' => 'Hissab-Kitaab Vahi', 'url' => null, 'icon' => 'bi bi-cash-stack', 'updated_at' => $now,
             ]);
         }
 

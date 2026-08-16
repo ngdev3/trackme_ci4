@@ -16,8 +16,8 @@ class HelpController extends BaseController
 
     public function index()
     {
-        $appName  = (string) setting('app_name', 'HissabKitaab');
-        $email    = (string) setting('support_email', 'admin@HissabKitaab.com');
+        $appName  = brand_name();
+        $email    = brand_support_email();
         $waNumber = preg_replace('/\D+/', '', (string) setting('support_whatsapp', '916393505070'));
         $waShown  = (string) setting('support_whatsapp_display', '+91 63935 05070');
         $waMsg    = rawurlencode('Hello ' . $appName . ' support, I need help with my account.');
@@ -26,7 +26,7 @@ class HelpController extends BaseController
             'title'      => 'Help & Support',
             'breadcrumb' => [['label' => 'Help & Support']],
             'appName'    => $appName,
-            'appUrl'     => (string) setting('app_url', 'HissabKitaab.com'),
+            'appUrl'     => brand_domain(),
             'email'      => $email,
             'waNumber'   => $waNumber,
             'waShown'    => $waShown,

@@ -129,7 +129,7 @@ $priorityOptions = \App\Models\NotificationModel::PRIORITIES;
                         <div class="push-preview">
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <span class="badge text-bg-success">HK</span>
-                                <strong>HissabKitaab</strong>
+                                <strong><?= esc(brand_name()) ?></strong>
                                 <small class="text-secondary ms-auto">now</small>
                             </div>
                             <div class="fw-bold" id="previewTitle">Notification title</div>

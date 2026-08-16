@@ -6,7 +6,7 @@
 ]) ?>
 
                 <h2>Welcome back 👋</h2>
-                <p class="subtitle">Sign in to your <?= esc(setting('app_name', 'HissabKitaab')) ?> dashboard.</p>
+                <p class="subtitle">Sign in to your <?= esc(brand_name()) ?> dashboard.</p>
 
                 <?= flash_alerts() ?>
 

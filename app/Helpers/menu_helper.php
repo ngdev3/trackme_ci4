@@ -131,7 +131,7 @@ if (! function_exists('render_firm_sidebar')) {
         // [module-code, label, icon, url, children[]]
         // Mirrors the canonical module tree (see `modules` table) minus the
         // super-admin-only sections, so a firm owner/admin sees the same core
-        // app menu — with "HissabKitaab Vahi" (transactions) right after the
+        // app menu — with "Hissab-Kitaab Vahi" (transactions) right after the
         // dashboard, exactly like the admin sidebar.
         // Accounting and Firm Users are intentionally NOT here — they are
         // reserved for the Super Admin only (see request). "Opening Balance"
@@ -139,7 +139,7 @@ if (! function_exists('render_firm_sidebar')) {
         // companies and is owner/admin-only (via firm_can).
         $menu = [
             ['dashboard', 'Dashboard', 'bi bi-speedometer2', 'dashboard', []],
-            ['rokad', 'HissabKitaab Vahi', 'bi bi-journal-text', null, [
+            ['rokad', brand_name() . ' Vahi', 'bi bi-journal-text', null, [
                 ['Rokadh Parcha', 'transactions'],
                 ['Add Deposit (Jama)', 'transactions/add/jama'],
                 ['Add Expense (Naam)', 'transactions/add/naam'],

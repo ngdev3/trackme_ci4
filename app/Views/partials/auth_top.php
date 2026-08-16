@@ -1,6 +1,6 @@
 <?php
 /**
- * Shared auth chrome — top half. Matches the public landing site (Hissabकिताब
+ * Shared auth chrome — top half. Matches the public landing site (Hissab-Kitaab
  * brand, teal→blue→violet gradient, Sora/Inter). Renders <head>, the brand hero
  * panel and opens the form card; the including view supplies the form, then
  * includes partials/auth_bottom.
@@ -21,7 +21,7 @@ $heroPoints = $heroPoints ?? [
     'Live reports, statements &amp; exports',
     'Bank-grade security for your data',
 ];
-$appName = (string) setting('app_name', 'HissabKitaab');
+$appName = brand_name();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -188,8 +188,8 @@ a{text-decoration:none}
                 <div class="hero-brand">
                     <span class="mark"><i class="bi bi-journal-text"></i></span>
                     <div>
-                        <span class="wm">Hissab<span class="a">किताब</span></span>
-                        <small><?= esc(setting('app_tagline', 'plan smarter, grow faster')) ?></small>
+                        <span class="wm">Hissab-<span class="a">Kitaab</span></span>
+                        <small><?= esc(brand_tagline()) ?></small>
                     </div>
                 </div>
 
@@ -215,5 +215,5 @@ a{text-decoration:none}
                 <div class="login-card">
                     <div class="mobile-logo">
                         <span class="mark"><i class="bi bi-journal-text"></i></span>
-                        <span class="wm">Hissab<span class="a">किताब</span></span>
+                        <span class="wm">Hissab-<span class="a">Kitaab</span></span>
                     </div>

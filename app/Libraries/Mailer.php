@@ -13,7 +13,7 @@ use SendGrid\Mail\Mail;
  *
  *   sendgrid.apiKey = SG.xxxxxxxx...        (required to actually send)
  *   email.fromEmail = no-reply@yourdomain    (a SendGrid-verified sender)
- *   email.fromName  = HissabKitaab
+ *   email.fromName  = Hissab-Kitaab
  *
  * Every public method returns true when SendGrid accepted the message for
  * delivery and false otherwise. Nothing here ever throws: a mail misconfig must
@@ -31,13 +31,13 @@ class Mailer
     {
         $this->apiKey    = (string) env('sendgrid.apiKey', '');
         $this->fromEmail = (string) env('email.fromEmail', '');
-        $this->fromName  = (string) env('email.fromName', 'HissabKitaab');
+        $this->fromName  = (string) env('email.fromName', brand_name());
     }
 
     /** The app/brand name used inside every template and subject line. */
     public function appName(): string
     {
-        return $this->fromName !== '' ? $this->fromName : 'HissabKitaab';
+        return $this->fromName !== '' ? $this->fromName : brand_name();
     }
 
     // -----------------------------------------------------------------

@@ -109,7 +109,7 @@ class PushNotificationController extends BaseController
                 'name'       => 'Subscription Expiry Reminder',
                 'type'       => 'warning',
                 'priority'   => 'high',
-                'title'      => 'Your HissabKitaab plan needs attention',
+                'title'      => 'Your ' . brand_name() . ' plan needs attention',
                 'message'    => 'Your subscription is close to expiry. Renew now to keep premium features active.',
                 'action_url' => site_url('subscription'),
             ],
@@ -126,7 +126,7 @@ class PushNotificationController extends BaseController
                 'type'       => 'system_update',
                 'priority'   => 'high',
                 'title'      => 'Scheduled maintenance notice',
-                'message'    => 'HissabKitaab may be briefly unavailable during scheduled maintenance. Please save your work.',
+                'message'    => brand_name() . ' may be briefly unavailable during scheduled maintenance. Please save your work.',
                 'action_url' => site_url('notifications'),
             ],
             'security' => [
@@ -134,7 +134,7 @@ class PushNotificationController extends BaseController
                 'type'       => 'warning',
                 'priority'   => 'critical',
                 'title'      => 'Please review your recent account activity',
-                'message'    => 'We noticed important account activity. Open HissabKitaab and review your login history.',
+                'message'    => 'We noticed important account activity. Open ' . brand_name() . ' and review your login history.',
                 'action_url' => site_url('my-login-history'),
             ],
             'custom' => [

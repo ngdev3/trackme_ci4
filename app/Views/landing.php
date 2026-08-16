@@ -1,13 +1,13 @@
 <?php
 /**
- * HissabKitaab public marketing landing page (standalone, self-contained).
+ * Hissab-Kitaab public marketing landing page (standalone, self-contained).
  * Rendered by LandingController for guests. Pricing is live from the DB.
  */
-$appName       = $appName       ?? 'HissabKitaab';
-$tagline       = $tagline       ?? 'plan smarter, grow faster';
+$appName       = $appName       ?? brand_name();
+$tagline       = $tagline       ?? brand_tagline();
 $supportWa     = $supportWa     ?? '916393505070';
 $supportWaShown= $supportWaShown?? '+91 63935 05070';
-$supportEmail  = $supportEmail  ?? 'admin@HissabKitaab.com';
+$supportEmail  = $supportEmail  ?? brand_support_email();
 $plans         = $plans         ?? [];
 $planFeatures  = $planFeatures  ?? [];
 $trialDays     = (int) ($trialDays ?? 30);
@@ -304,7 +304,7 @@ textarea.control{resize:vertical;min-height:118px}
 <header class="nav" id="nav">
   <div class="container">
     <div class="bar">
-      <a href="#top" class="wm">Hissab<span class="a">किताब</span></a>
+      <a href="#top" class="wm">Hissab-<span class="a">Kitaab</span></a>
       <nav class="nav-links">
         <a href="#features">Features</a>
         <a href="#how">How it works</a>
@@ -345,7 +345,7 @@ textarea.control{resize:vertical;min-height:118px}
       <div class="badge-float bf1"><span class="ic"><i class="bi bi-arrow-down-left"></i></span><div>Payment received<small>+₹45,000 today</small></div></div>
       <div class="badge-float bf2"><span class="ic"><i class="bi bi-gem"></i></span><div>Premium active<small>All features unlocked</small></div></div>
       <div class="mock-card">
-        <div class="mock-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><b>HissabKitaab · Dashboard</b></div>
+        <div class="mock-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><b><?= esc($appName) ?> · Dashboard</b></div>
         <div class="mock-tiles">
           <div class="mtile"><div class="mtile-lbl">Cash in hand</div><div class="mtile-val">₹5,90,036</div><div class="up"><i class="bi bi-arrow-up"></i> 12.5% this week</div></div>
           <div class="mtile"><div class="mtile-lbl">Net profit</div><div class="mtile-val">₹7,20,000</div><div class="up"><i class="bi bi-arrow-up"></i> 15.8% MoM</div></div>
@@ -396,7 +396,7 @@ textarea.control{resize:vertical;min-height:118px}
     <div class="feat-grid">
       <?php
       $features = [
-        ['bi-journal-text','#2563eb','HissabKitaab Vahi','Record Jama &amp; Naam in seconds. Live Rokad balance, daily Rokadh Parcha and a searchable ledger.'],
+        ['bi-journal-text','#2563eb',$appName . ' Vahi','Record Jama &amp; Naam in seconds. Live Rokad balance, daily Rokadh Parcha and a searchable ledger.'],
         ['bi-box-seam','#0f766e','Inventory','Track items, stock levels and value with low-stock and out-of-stock alerts built in.'],
         ['bi-bar-chart-line','#7c3aed','Reports &amp; Exports','Beautiful breakdowns, account statements and one-tap PDF / Excel / print exports.'],
         ['bi-alarm','#f59e0b','Smart Reminders','Never miss a payment or follow-up with reminders and browser push notifications.'],
@@ -701,7 +701,7 @@ textarea.control{resize:vertical;min-height:118px}
   <div class="container">
     <div class="foot-grid">
       <div class="foot-brand">
-        <a href="#top" class="wm">Hissab<span class="a">किताब</span></a>
+        <a href="#top" class="wm">Hissab-<span class="a">Kitaab</span></a>
         <p class="foot-tag"><?= esc($appName) ?> is India's simplest cash book, inventory &amp; reports platform for growing businesses.</p>
         <span class="trust-badge"><i class="bi bi-shield-lock-fill"></i> Bank-grade security · 256-bit encryption</span>
         <p class="foot-legal-note">
