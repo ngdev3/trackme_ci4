@@ -456,9 +456,18 @@ class SuperAdminController extends BaseController
         // so the access is accountable here but leaves no trace in the user's account.
         activity_log('SuperAdmin', 'Access', 'Accessed user account #' . (int) $id);
 
+        // Remember the admin page this was launched from so "Return to Super Admin"
+        // lands back exactly there (e.g. the customer's subscription page), not on a
+        // fixed dashboard. Captured before the session switch.
+        $return = (string) ($this->request->getServer('HTTP_REFERER') ?? '');
+
         [$ok, $msg] = auth()->impersonate((int) $id);
         if (! $ok) {
             return redirect()->back()->with('error', $msg);
+        }
+        // Only same-site admin URLs are stored (guards against an open redirect on return).
+        if ($return !== '' && str_starts_with($return, base_url()) && strpos($return, '/admin') !== false) {
+            session()->set('impersonator_return', $return);
         }
         return redirect()->to(site_url('dashboard'))->with('success', $msg);
     }
@@ -551,6 +560,45 @@ class SuperAdminController extends BaseController
 
         return redirect()->to(site_url('admin/customers/subscription/' . $id))
             ->with('success', 'Subscription deactivated. The customer is now on Basic restrictions (their data is preserved).');
+    }
+
+    /**
+     * Correct a subscription's expiry date. Fixes an accidental over-extension —
+     * e.g. tapping "Activate" several times stacks a billing cycle each press
+     * (activatePaid extends from the current expiry), so 4 taps on a yearly plan
+     * adds 4 years. This lets the admin set the intended expiry back by hand.
+     */
+    public function setExpiry($id = null)
+    {
+        $id   = (int) $id;
+        $user = (new UserModel())->where('account_type', 'customer')->find($id);
+        if (! $user) {
+            return redirect()->to(site_url('admin/customers'))->with('error', 'Customer not found.');
+        }
+
+        $sub = new SubscriptionModel();
+        $row = $sub->where('customer_id', $id)->orderBy('id', 'DESC')->first();
+        if (! $row) {
+            return redirect()->back()->with('error', 'This customer has no subscription to correct.');
+        }
+
+        $date = trim((string) $this->request->getPost('expires_at')); // yyyy-mm-dd from the date input
+        $ts   = $date !== '' ? strtotime($date) : false;
+        if ($ts === false) {
+            return redirect()->back()->with('error', 'Enter a valid expiry date.');
+        }
+
+        // Store end-of-day so the customer keeps access through the whole day.
+        $newExpiry = date('Y-m-d 23:59:59', $ts);
+        $old       = (string) ($row['expires_at'] ?? '—');
+        $sub->update($row['id'], [
+            'expires_at'         => $newExpiry,
+            'expiry_notified_at' => null, // let expiry reminders fire again for the corrected date
+        ]);
+        activity_log('SuperAdmin', 'Edit', "Corrected subscription expiry for customer #{$id} from {$old} to {$newExpiry}");
+
+        return redirect()->to(site_url('admin/customers/subscription/' . $id))
+            ->with('success', 'Expiry date corrected to ' . date('d M Y', $ts) . '.');
     }
 
     /**

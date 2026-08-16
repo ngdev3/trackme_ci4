@@ -90,8 +90,11 @@ $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
                     </dd>
                 </dl>
 
-                <!-- Activate / change plan -->
-                <form action="<?= site_url('admin/customers/subscription/' . (int) $user['id'] . '/activate') ?>" method="post" class="mb-2">
+                <!-- Activate / change plan. Guard against accidental double/quadruple
+                     clicks: each activation extends the expiry by one billing cycle,
+                     so the submit button disables itself on the first press. -->
+                <form action="<?= site_url('admin/customers/subscription/' . (int) $user['id'] . '/activate') ?>" method="post" class="mb-2"
+                      onsubmit="var b=this.querySelector('button[type=submit]'); if(b){setTimeout(function(){b.disabled=true;b.innerHTML='<span class=&quot;spinner-border spinner-border-sm me-1&quot;></span>Activating…';},0);}">
                     <?= csrf_field() ?>
                     <label class="form-label small fw-semibold mb-1">Activate / change plan</label>
                     <div class="input-group">
@@ -103,12 +106,30 @@ $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <button class="btn btn-success"><i class="bi bi-check-circle me-1"></i> Activate</button>
+                        <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i> Activate</button>
                     </div>
+                    <div class="form-text"><i class="bi bi-info-circle me-1"></i>Each activation adds one billing cycle to the expiry. Clicked it too many times? Use “Correct expiry” below.</div>
                     <?php if (empty($plans)): ?>
                         <div class="form-text text-warning">No active paid plans. Create one on <a href="<?= site_url('admin/plans') ?>">Plans</a>.</div>
                     <?php endif; ?>
                 </form>
+
+                <!-- Correct expiry — fix an accidental over-extension (e.g. Activate
+                     tapped several times stacked extra billing cycles). -->
+                <?php if ($sub !== null): ?>
+                    <form action="<?= site_url('admin/customers/subscription/' . (int) $user['id'] . '/set-expiry') ?>" method="post" class="mb-2"
+                          data-no-validate data-confirm="Set this subscription's expiry to the chosen date? Use this to undo accidental repeat activations." data-confirm-title="Correct expiry date?" data-confirm-btn="Set date" data-confirm-icon="warning">
+                        <?= csrf_field() ?>
+                        <label class="form-label small fw-semibold mb-1">Correct expiry date</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                            <input type="date" name="expires_at" class="form-control" required
+                                   value="<?= esc($expTs ? date('Y-m-d', $expTs) : date('Y-m-d')) ?>">
+                            <button type="submit" class="btn btn-outline-warning"><i class="bi bi-pencil-square me-1"></i> Set</button>
+                        </div>
+                        <div class="form-text">Current expiry: <strong><?= esc($expTs ? date('d M Y', $expTs) : '—') ?></strong>. Setting a date won't add a cycle — it replaces the expiry exactly.</div>
+                    </form>
+                <?php endif; ?>
 
                 <!-- Deactivate -->
                 <?php if ($sub !== null && $status !== 'cancelled' && $payStatus !== 'unpaid'): ?>

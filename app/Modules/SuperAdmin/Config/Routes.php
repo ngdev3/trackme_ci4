@@ -21,6 +21,7 @@ $routes->group('admin', ['namespace' => 'Modules\SuperAdmin\Controllers', 'filte
     $routes->get('customers/subscription/(:num)', 'SuperAdminController::customerSubscription/$1');
     $routes->post('customers/subscription/(:num)/activate', 'SuperAdminController::customerActivate/$1');
     $routes->post('customers/subscription/(:num)/deactivate', 'SuperAdminController::customerDeactivate/$1');
+    $routes->post('customers/subscription/(:num)/set-expiry', 'SuperAdminController::setExpiry/$1');
     $routes->get('firms', 'SuperAdminController::firms');
     $routes->get('firms/toggle/(:num)', 'SuperAdminController::toggleFirm/$1');
     $routes->get('locations', 'SuperAdminController::locations');

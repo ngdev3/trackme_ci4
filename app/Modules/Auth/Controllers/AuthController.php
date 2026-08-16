@@ -50,11 +50,20 @@ class AuthController extends BaseController
         return redirect()->to(site_url('login'))->with('success', 'You have been logged out.');
     }
 
-    /** Return from Super Admin impersonation to the original account's dashboard. */
+    /** Return from Super Admin impersonation to the admin page it was launched from. */
     public function stopImpersonating()
     {
+        // Captured when impersonation started (SuperAdminController::impersonate).
+        $return = (string) (session('impersonator_return') ?? '');
+        session()->remove('impersonator_return');
+
         [$ok, $msg] = auth()->stopImpersonating();
-        return redirect()->to(site_url($ok ? 'dashboard' : 'login'))->with($ok ? 'success' : 'error', $msg);
+
+        // Land back exactly where the admin came from, when it's a safe same-site URL.
+        if ($ok && $return !== '' && str_starts_with($return, base_url())) {
+            return redirect()->to($return)->with('success', $msg);
+        }
+        return redirect()->to(site_url($ok ? 'admin' : 'login'))->with($ok ? 'success' : 'error', $msg);
     }
 
     // ---------------------------------------------------------------

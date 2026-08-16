@@ -598,7 +598,7 @@ class Auth
         $this->loginLogs->closeSession($logId ? (int) $logId : null);
         // Expire remember cookie.
         service('response')->deleteCookie('erp_remember');
-        $this->session->remove(['user_id', 'user_name', 'user_email', 'username', 'role_ids', 'is_superadmin', 'login_log_id', 'account_type', 'company_id', 'company_name', 'company_role', 'company_permissions', 'impersonator_id', 'impersonator_name']);
+        $this->session->remove(['user_id', 'user_name', 'user_email', 'username', 'role_ids', 'is_superadmin', 'login_log_id', 'account_type', 'company_id', 'company_name', 'company_role', 'company_permissions', 'impersonator_id', 'impersonator_name', 'impersonator_return']);
         $this->session->destroy();
     }
 
