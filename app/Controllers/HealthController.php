@@ -43,6 +43,25 @@ class HealthController extends Controller
             return $this->response->setJSON($public);
         }
 
+        // ?logs=1 -> tail the newest CI4 error log so a 500's real exception can be
+        // read via URL (no SSH). Authorized only (we're already past the gate).
+        if ($this->request->getGet('logs')) {
+            $n     = min(200, max(10, (int) $this->request->getGet('logs') ?: 60));
+            $files = glob(WRITEPATH . 'logs/log-*') ?: [];
+            rsort($files);
+            $tail = [];
+            if ($files) {
+                $lines = @file($files[0], FILE_IGNORE_NEW_LINES) ?: [];
+                $tail  = array_slice($lines, -$n);
+            }
+            return $this->response->setJSON([
+                'status'  => 'ok',
+                'logfile' => $files[0] ?? null,
+                'lines'   => count($tail),
+                'tail'    => $tail,
+            ]);
+        }
+
         $checks  = [];
         $overall = 'ok';
         $fail = static function (string $name, bool $ok, $detail = null) use (&$checks, &$overall) {

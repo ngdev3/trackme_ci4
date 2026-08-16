@@ -423,7 +423,9 @@ class AuthApiController extends BaseApiController
             $now     = date('Y-m-d H:i:s');
             $browser = $ua->getBrowser() ?: 'App';
             $os      = $ua->getPlatform() ?: null;
-            $device  = $ua->isMobile() ? 'Mobile' : ($ua->isTablet() ? 'Tablet' : 'Mobile');
+            // CI4's UserAgent has no isTablet(); detect tablet from the UA string.
+            $agent   = strtolower((string) $ua->getAgentString());
+            $device  = (strpos($agent, 'tablet') !== false || strpos($agent, 'ipad') !== false) ? 'Tablet' : 'Mobile';
 
             $ip     = $this->request->getIPAddress();
             $logId  = (new LoginLogModel())->insert([
