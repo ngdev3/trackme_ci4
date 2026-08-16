@@ -52,18 +52,21 @@ class HealthController extends Controller
             $tail = [];
             if ($files) {
                 $lines = @file($files[0], FILE_IGNORE_NEW_LINES) ?: [];
-                $tail  = array_slice($lines, -$n);
+                $tail  = array_map([$this, 'scrubLogLine'], array_slice($lines, -$n));
             }
             return $this->response->setJSON([
                 'status'  => 'ok',
                 'logfile' => $files[0] ?? null,
                 'lines'   => count($tail),
+                'note'    => 'secrets (tokens/keys/passwords) are masked',
                 'tail'    => $tail,
             ]);
         }
 
         $checks  = [];
         $overall = 'ok';
+
+        // (scrubLogLine is defined below and used by the ?logs= tail above.)
         $fail = static function (string $name, bool $ok, $detail = null) use (&$checks, &$overall) {
             $checks[$name] = ['ok' => $ok, 'detail' => $detail];
             if (! $ok && $overall !== 'fail') {
@@ -166,5 +169,25 @@ class HealthController extends Controller
             'took_ms'      => round((microtime(true) - $t0) * 1000, 1),
             'checks'       => $checks,
         ]);
+    }
+
+    /**
+     * Mask anything secret-looking before a log line is served over HTTP, so the
+     * ?logs= tail can never leak a token / key / password even if one was logged.
+     * Defence-in-depth: the app is fixed not to log secrets in the first place.
+     */
+    private function scrubLogLine(string $line): string
+    {
+        // key: value / key=value where the key names a secret.
+        $line = preg_replace(
+            '/((?:token|secret|password|passwd|pwd|api[_-]?key|authorization|bearer|otp|code)\s*[:=]\s*)\S+/i',
+            '$1***',
+            $line
+        );
+        // Long hex blobs (>=32) — bearer/reset tokens, hashes.
+        $line = preg_replace('/\b[a-f0-9]{32,}\b/i', '***', $line);
+        // Long base64-ish blobs (>=40) — encrypted payloads, JWT-ish segments.
+        $line = preg_replace('/\b[A-Za-z0-9+\/=_-]{40,}\b/', '***', $line);
+        return $line;
     }
 }

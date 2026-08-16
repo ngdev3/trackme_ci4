@@ -141,7 +141,8 @@ class AuthController extends BaseController
             helper('reset_email');
             $sent = send_password_reset_email($email, $token);
             $link = site_url('reset-password/' . $token);
-            log_message('info', 'Password reset link for {email}: {link}', ['email' => $email, 'link' => $link]);
+            // NEVER log the link/token (it grants a reset). Log the event only.
+            log_message('info', 'Password reset requested for {email} (mailed: {sent})', ['email' => $email, 'sent' => $sent ? 'yes' : 'no']);
             if (! $sent) {
                 session()->setFlashdata('reset_link', $link);
             }

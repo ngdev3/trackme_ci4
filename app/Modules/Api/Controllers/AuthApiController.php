@@ -38,6 +38,14 @@ class AuthApiController extends BaseApiController
             return $this->failValidationErrors('login and password are required.');
         }
 
+        // Brute-force guard: cap attempts per IP AND per targeted account, so a
+        // slow/distributed attack (which slips under a per-IP host firewall) is
+        // still bounded. 10 tries/min per IP, 8 tries / 5 min per login handle.
+        if ($this->tooManyAttempts('login-ip-' . $this->clientIpKey(), 10, MINUTE)
+            || $this->tooManyAttempts('login-acct-' . md5(strtolower($login)), 8, 5 * MINUTE)) {
+            return $this->fail('Too many login attempts. Please wait a minute and try again.', 429);
+        }
+
         $user = (new UserModel())->findByLogin($login);
         if (! $user || ! $user['password'] || ! password_verify($password, $user['password'])) {
             return $this->failUnauthorized('Invalid credentials.');
@@ -193,6 +201,16 @@ class AuthApiController extends BaseApiController
             return $this->failValidationErrors('A valid email is required.');
         }
 
+        // Throttle reset requests so this can't be used to spam a victim's inbox
+        // or farm reset tokens. Same generic response either way (no enumeration).
+        if ($this->tooManyAttempts('forgot-ip-' . $this->clientIpKey(), 5, 10 * MINUTE)
+            || $this->tooManyAttempts('forgot-acct-' . md5(strtolower($email)), 3, 15 * MINUTE)) {
+            return $this->respond([
+                'status'  => 'success',
+                'message' => 'If that email exists, a password reset link has been sent.',
+            ]);
+        }
+
         $user = (new UserModel())->where('email', $email)->first();
         if ($user) {
             $token = bin2hex(random_bytes(32));
@@ -202,10 +220,11 @@ class AuthApiController extends BaseApiController
                 'expires_at' => date('Y-m-d H:i:s', time() + 3600),
                 'created_at' => date('Y-m-d H:i:s'),
             ]);
-            // Email the reset link (opens the web reset page). Logged as a fallback.
+            // Email the reset link (opens the web reset page).
             helper('reset_email');
             send_password_reset_email($email, $token);
-            log_message('info', 'API password reset for {email}: {token}', ['email' => $email, 'token' => $token]);
+            // NEVER log the raw token — it grants password reset. Log the event only.
+            log_message('info', 'API password reset requested for {email}', ['email' => $email]);
         }
 
         return $this->respond([
@@ -227,6 +246,11 @@ class AuthApiController extends BaseApiController
         $current = (string) $this->input('current_password', '');
         $new     = (string) $this->input('new_password', '');
 
+        // A stolen token must NOT become an unlimited "guess the password" oracle.
+        if ($this->tooManyAttempts('changepw-' . (int) $user['id'], 6, 10 * MINUTE)) {
+            return $this->fail('Too many attempts. Please wait a few minutes and try again.', 429);
+        }
+
         if (strlen($new) < 8) {
             return $this->failValidationErrors('New password must be at least 8 characters.');
         }
@@ -241,6 +265,13 @@ class AuthApiController extends BaseApiController
             'password'             => password_hash($new, PASSWORD_DEFAULT),
             'must_change_password' => 0,
         ]);
+
+        // Changing the password boots every OTHER device (a stolen/old token is
+        // now dead), while keeping THIS session alive so the app stays signed in.
+        $header = (string) $this->request->getHeaderLine('Authorization');
+        if (preg_match('/Bearer\s+([a-f0-9]{64})/i', $header, $m)) {
+            (new ApiTokenModel())->revokeAllForUserExcept((int) $user['id'], $m[1]);
+        }
 
         // Confirmation email (best-effort; never blocks the response).
         Services::mailer()->passwordChanged((string) $user['email'], (string) ($user['name'] ?? ''));
@@ -470,7 +501,7 @@ class AuthApiController extends BaseApiController
         }
         $header = (string) $this->request->getHeaderLine('Authorization');
         if (preg_match('/Bearer\s+([a-f0-9]{64})/i', $header, $m)) {
-            (new ApiTokenModel())->where('token', $m[1])->delete();
+            (new ApiTokenModel())->revoke($m[1]);
         }
         return $this->respond(['status' => 'success', 'message' => 'Logged out.']);
     }

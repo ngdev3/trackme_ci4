@@ -29,6 +29,31 @@ abstract class BaseApiController extends Controller
     }
 
     /**
+     * Rate-limit a sensitive action. Returns true when the caller has exceeded
+     * `$capacity` attempts within `$seconds` (a leaky bucket, per key). Callers
+     * should respond 429 when this is true. Backed by CI4's Throttler (cache),
+     * so it works without a WAF and survives distributed/slow brute-force that
+     * a per-IP host firewall misses. Never throws — a throttler/cache error
+     * fails OPEN (allows the request) so auth can't be locked out by cache loss.
+     */
+    protected function tooManyAttempts(string $key, int $capacity, int $seconds): bool
+    {
+        try {
+            $throttler = \Config\Services::throttler();
+            return $throttler->check($key, $capacity, $seconds) === false;
+        } catch (\Throwable $e) {
+            log_message('error', '[Api] throttler failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /** A stable, low-cardinality throttle key component for the caller's IP. */
+    protected function clientIpKey(): string
+    {
+        return preg_replace('/[^a-z0-9]+/i', '-', (string) $this->request->getIPAddress());
+    }
+
+    /**
      * Read an input value from the JSON body first, then form/POST.
      */
     protected function input(string $key, $default = null)
