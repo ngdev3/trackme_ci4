@@ -302,6 +302,120 @@ class SuperAdminController extends BaseController
         return redirect()->back()->with('success', 'Access reset — the customer must set a new password on next login.');
     }
 
+    /**
+     * Set a new login password for a customer (support flow: the customer emailed
+     * asking for help getting back in). We NEVER show an existing password — they
+     * are stored as one-way bcrypt hashes and are unrecoverable by design. Instead
+     * the admin sets a brand-new one (typed, or auto-generated) which is shown ONCE
+     * here to relay, optionally emailed, and flagged must-change so the customer
+     * picks their own on next login.
+     */
+    public function setPassword($id = null)
+    {
+        $users = new UserModel();
+        $user  = $users->where('account_type', 'customer')->find((int) $id);
+        if (! $user) {
+            return redirect()->back()->with('error', 'Customer not found.');
+        }
+
+        $new    = trim((string) $this->request->getPost('new_password'));
+        $notify = (string) $this->request->getPost('email_customer') === '1';
+
+        // Blank field = "just generate one for me" (the email-me-a-password case).
+        if ($new === '') {
+            $new = $this->generatePassword();
+        } elseif (strlen($new) < 8) {
+            return redirect()->back()->with('error', 'Password must be at least 8 characters.');
+        }
+
+        // Store only the bcrypt hash; force a change on next login; drop any
+        // remembered sessions so the old device tokens can't keep the account open.
+        $users->update((int) $id, [
+            'password'             => password_hash($new, PASSWORD_DEFAULT),
+            'must_change_password' => 1,
+            'remember_token'       => null,
+        ]);
+        activity_log('SuperAdmin', 'Edit', "Set a new password for customer #{$id}");
+
+        $emailed = false;
+        if ($notify && filter_var($user['email'] ?? '', FILTER_VALIDATE_EMAIL)) {
+            $emailed = (new \App\Libraries\Mailer())->temporaryPassword($user['email'], (string) ($user['name'] ?? ''), $new);
+        }
+
+        // Reveal the new password to the admin ONCE (flashdata — not persisted) so
+        // they can relay it; include whether the email went out.
+        return redirect()->back()
+            ->with('new_password', $new)
+            ->with('new_password_for', (string) ($user['name'] ?? $user['email'] ?? ('#' . $id)))
+            ->with('new_password_emailed', $emailed ? '1' : '0')
+            ->with('success', 'New password set. The customer must change it on next login.');
+    }
+
+    /**
+     * Email the customer a one-click password-reset link (support flow — the
+     * customer resets it themselves, so no password is ever set or seen by the
+     * admin). Reuses the exact same token machinery as the self-service
+     * forgot-password page, so the link + expiry behave identically.
+     */
+    public function sendResetLink($id = null)
+    {
+        $users = new UserModel();
+        $user  = $users->where('account_type', 'customer')->find((int) $id);
+        if (! $user) {
+            return redirect()->back()->with('error', 'Customer not found.');
+        }
+        $email = (string) ($user['email'] ?? '');
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return redirect()->back()->with('error', 'This customer has no valid email on file.');
+        }
+
+        $token = bin2hex(random_bytes(32));
+        (new \App\Models\PasswordResetModel())->insert([
+            'email'      => $email,
+            'token'      => hash('sha256', $token),
+            'expires_at' => date('Y-m-d H:i:s', time() + 3600),
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        helper('reset_email');
+        $sent = send_password_reset_email($email, $token);
+        activity_log('SuperAdmin', 'Edit', "Sent a password-reset link to customer #{$id}");
+
+        if (! $sent) {
+            // SMTP/SendGrid not configured — surface the link so the admin can relay it.
+            return redirect()->back()
+                ->with('reset_link', site_url('reset-password/' . $token))
+                ->with('reset_link_for', (string) ($user['name'] ?? $email))
+                ->with('warning', 'Email not configured — copy the reset link below and share it privately.');
+        }
+        return redirect()->back()->with('success', 'A password-reset link was emailed to ' . esc($email) . '.');
+    }
+
+    /**
+     * Generate a strong, human-relayable password: 12 chars from an unambiguous
+     * alphabet (no 0/O/1/l/I), guaranteed to include lower/upper/digit/symbol.
+     */
+    private function generatePassword(): string
+    {
+        $lower  = 'abcdefghijkmnpqrstuvwxyz';
+        $upper  = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $digits = '23456789';
+        $sym    = '@#%&*!?';
+        $all    = $lower . $upper . $digits . $sym;
+
+        $pick = static fn (string $set): string => $set[random_int(0, strlen($set) - 1)];
+        $chars = [$pick($lower), $pick($upper), $pick($digits), $pick($sym)];
+        for ($i = strlen(implode('', $chars)); $i < 12; $i++) {
+            $chars[] = $pick($all);
+        }
+        // Shuffle so the guaranteed-class chars aren't always in the first slots.
+        for ($i = count($chars) - 1; $i > 0; $i--) {
+            $j = random_int(0, $i);
+            [$chars[$i], $chars[$j]] = [$chars[$j], $chars[$i]];
+        }
+        return implode('', $chars);
+    }
+
     public function updatePayment($id = null)
     {
         $status = (string) $this->request->getPost('payment_status');

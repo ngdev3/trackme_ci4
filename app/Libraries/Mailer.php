@@ -130,6 +130,23 @@ class Mailer
         return $this->send($to, 'Your ' . $app . ' password was changed', $html);
     }
 
+    /**
+     * Send a new temporary password an admin set for the user (support flow).
+     * The user is expected to change it on next login.
+     */
+    public function temporaryPassword(string $to, string $name, string $password): bool
+    {
+        $app  = $this->appName();
+        $html = $this->render('temp_password', [
+            'app'       => $app,
+            'name'      => $name !== '' ? $name : 'there',
+            'password'  => $password,
+            'url'       => site_url('login'),
+            'preheader' => 'A new temporary password was set for your ' . $app . ' account.',
+        ]);
+        return $this->send($to, 'Your new ' . $app . ' password', $html);
+    }
+
     // -----------------------------------------------------------------
     // Internals
     // -----------------------------------------------------------------

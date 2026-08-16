@@ -11,6 +11,8 @@ $routes->group('admin', ['namespace' => 'Modules\SuperAdmin\Controllers', 'filte
     $routes->post('activate', 'SuperAdminController::activateSave');
     $routes->get('customers/toggle/(:num)', 'SuperAdminController::toggleCustomer/$1');
     $routes->post('customers/reset/(:num)', 'SuperAdminController::resetAccess/$1');
+    $routes->post('customers/set-password/(:num)', 'SuperAdminController::setPassword/$1');
+    $routes->post('customers/send-reset/(:num)', 'SuperAdminController::sendResetLink/$1');
     $routes->post('customers/payment/(:num)', 'SuperAdminController::updatePayment/$1');
     $routes->get('impersonate/(:num)', 'SuperAdminController::impersonate/$1');
 
