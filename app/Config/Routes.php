@@ -10,6 +10,8 @@ $routes->get('/', 'LandingController::index');
 $routes->get('home', 'LandingController::index');
 // Deployment self-test. GET /health = public status; ?key=<health.key> = full report.
 $routes->get('health', 'HealthController::index');
+// Visual load-testing dashboard (gated). GET /loadtest?key=<health.key>
+$routes->get('loadtest', 'LoadTestController::index');
 $routes->get('terms', 'LandingController::terms');
 $routes->get('refunds', 'LandingController::refunds');
 $routes->get('about', 'LandingController::about');
