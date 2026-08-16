@@ -208,8 +208,10 @@ function finalize(){
   $('grade').textContent=gr;$('grade').style.background=col+'22';$('grade').style.color=col;
   const pass=sc>=75&&s.errPct<1;
   $('verdict').innerHTML=(pass?'<span class="ok">PASS</span>':'<span class="bad">NEEDS WORK</span>')+' — grade '+gr+' · '+sc+'/100'+(s.p95>=1000?' <span class="mid">(P95 &gt; 1s)</span>':'');
-  $('verdictNote').textContent=`P95 ${fmt(s.p95)}ms · error ${fmt(s.errPct,1)}% · throughput ${fmt(s.rps,1)} req/s · ${s.n} requests over ${fmt(wall,1)}s`;
-  state.summary={wall,overall:s,byName:Object.fromEntries(Object.entries(byName).map(([k,v])=>[k,stat(v,wall)])),score:sc,grade:gr};
+  const codeStr=Object.entries(state.codes).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`${c===('0')?'network':c}×${n}`).join('  ');
+  const errStr=state.errSamples.length?('  ·  sample 5xx: '+state.errSamples[0].body.replace(/\s+/g,' ').slice(0,120)):'';
+  $('verdictNote').innerHTML=`P95 ${fmt(s.p95)}ms · error ${fmt(s.errPct,1)}% · throughput ${fmt(s.rps,1)} req/s · ${s.n} reqs over ${fmt(wall,1)}s<br><span class="mono" style="color:var(--dim)">status: ${codeStr}${errStr}</span>`;
+  state.summary={wall,overall:s,byName:Object.fromEntries(Object.entries(byName).map(([k,v])=>[k,stat(v,wall)])),statusCodes:state.codes,errorSamples:state.errSamples,score:sc,grade:gr};
 }
 
 async function run(){
@@ -220,7 +222,7 @@ async function run(){
   $('startBtn').disabled=true;$('stopBtn').disabled=false;$('phase').textContent='authenticating…';
   let token;try{token=await login(base);}catch(e){$('phase').textContent='';$('startBtn').disabled=false;$('stopBtn').disabled=true;alert(e.message);return;}
   const scn=steps();
-  state={samples:[],inflight:0,stop:false,t0:performance.now(),config:{base,vus,dur,toMs,scenario:$('scenario').value}};
+  state={samples:[],inflight:0,stop:false,t0:performance.now(),config:{base,vus,dur,toMs,scenario:$('scenario').value},codes:{},errSamples:[]};
   $('phase').textContent=`running ${vus} VUs for ${dur}s…`;
   const deadline=performance.now()+dur*1000;
   const timer=setInterval(updateUI,500);
@@ -229,7 +231,9 @@ async function run(){
     const opt={method,signal:ac.signal,headers:{}};
     if(method==='POST'&&path==='/auth/login'){opt.headers['Content-Type']='application/json';opt.body=JSON.stringify({login:$('user').value,password:$('pass').value});}
     else if(token)opt.headers['Authorization']='Bearer '+token;
-    try{const res=await fetch(base+path,opt);await res.arrayBuffer();state.samples.push({t:performance.now(),ms:performance.now()-st,status:res.status,ok:res.ok,timeout:false,name:method+' '+path});}
+    try{const res=await fetch(base+path,opt);const body=await res.text();state.samples.push({t:performance.now(),ms:performance.now()-st,status:res.status,ok:res.ok,timeout:false,name:method+' '+path});
+      state.codes[res.status]=(state.codes[res.status]||0)+1;
+      if(!res.ok&&state.errSamples.length<4)state.errSamples.push({status:res.status,path:method+' '+path,body:(body||'').slice(0,240)});}
     catch(e){state.samples.push({t:performance.now(),ms:performance.now()-st,status:0,ok:false,timeout:e.name==='AbortError',name:method+' '+path});}
     finally{clearTimeout(t);state.inflight--;}
   }
