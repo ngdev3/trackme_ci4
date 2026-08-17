@@ -3,7 +3,9 @@
 namespace App\Controllers;
 
 use App\Libraries\Cashfree;
+use App\Libraries\Coupon;
 use App\Libraries\TaxInvoice;
+use App\Models\CouponModel;
 use App\Models\PaymentOrderModel;
 use App\Models\SettingModel;
 use App\Models\SubscriptionModel;
@@ -94,19 +96,49 @@ class SubscriptionController extends BaseController
         $user    = current_user() ?: [];
         $orderId = 'SUB' . $customerId . 'P' . (int) $plan['id'] . 'T' . time() . random_int(100, 999);
 
+        // Optional discount coupon — validated server-side against the plan price
+        // (never trust a client-supplied amount). A code that fails silently falls
+        // back to the full price rather than blocking the purchase.
+        $price     = round((float) $plan['price'], 2);
+        $discount  = 0.0;
+        $couponId  = null;
+        $couponRow = null;
+        $code      = trim((string) $this->request->getPost('coupon'));
+        if ($code !== '') {
+            $prev = (new Coupon())->preview($code, $customerId, (int) $plan['id'], $price);
+            if ($prev['ok']) {
+                $discount  = (float) $prev['discount'];
+                $couponRow = (new CouponModel())->findByCode($code);
+                $couponId  = $couponRow ? (int) $couponRow['id'] : null;
+            } else {
+                return $this->response->setStatusCode(422)->setJSON(['ok' => false, 'message' => $prev['message']]);
+            }
+        }
+        $final = round(max(0.0, $price - $discount), 2);
+
         $orders = new PaymentOrderModel();
         $orders->insert([
             'order_id'    => $orderId,
             'customer_id' => $customerId,
             'plan_id'     => (int) $plan['id'],
-            'amount'      => round((float) $plan['price'], 2),
+            'amount'      => $final,
+            'discount'    => round($discount, 2),
+            'coupon_id'   => $couponId,
             'currency'    => 'INR',
             'status'      => 'created',
         ]);
 
+        // A coupon that clears the whole price (or drops it below the gateway's ₹1
+        // minimum) can't go through Cashfree — activate it directly, like a free
+        // plan, and record the redemption.
+        if ($final < 1) {
+            $this->activateOrder($orders->findByOrderId($orderId), 'COUPON');
+            return $this->response->setJSON(['ok' => true, 'activated' => true, 'order_id' => $orderId]);
+        }
+
         $res = $cf->createOrder(
             $orderId,
-            (float) $plan['price'],
+            $final,
             [
                 'id'    => 'cust_' . $customerId,
                 'email' => (string) ($user['email'] ?? ''),
@@ -134,6 +166,46 @@ class SubscriptionController extends BaseController
             'session'     => $res['session'],
             'mode'        => $cf->jsMode(),
         ]);
+    }
+
+    /**
+     * AJAX: preview a discount coupon against a plan before checkout. Returns the
+     * discounted price so the button can show what the customer will actually pay.
+     * No state change — the redemption is only recorded on successful activation.
+     */
+    public function applyCoupon()
+    {
+        $customerId = (int) (sub_customer_id() ?? user_id());
+        if (! $customerId) {
+            return $this->response->setStatusCode(401)->setJSON(['ok' => false, 'message' => 'Please sign in again.']);
+        }
+        $planId = (int) $this->request->getGet('plan_id');
+        $plan   = (new SubscriptionPlanModel())->where('id', $planId)->where('status', 1)->where('price >', 0)->first();
+        if (! $plan) {
+            return $this->response->setStatusCode(404)->setJSON(['ok' => false, 'message' => 'Plan not found.']);
+        }
+        $code = trim((string) $this->request->getGet('coupon'));
+        $res  = (new Coupon())->preview($code, $customerId, $planId, round((float) $plan['price'], 2));
+        return $this->response->setJSON($res);
+    }
+
+    /**
+     * Redeem a free-time code: grants the mapped plan's days directly (no gateway),
+     * so it works the same on web and in the mobile app.
+     */
+    public function redeem()
+    {
+        $customerId = (int) (sub_customer_id() ?? user_id());
+        if (! $customerId) {
+            return redirect()->to(site_url('subscription'))->with('error', 'Please sign in again.');
+        }
+        $code = trim((string) $this->request->getPost('coupon'));
+        $res  = (new Coupon())->redeem($code, $customerId);
+        if ($res['ok']) {
+            $this->notifySubscription($customerId, 'success', 'Code redeemed', $res['message'], site_url('subscription'));
+            return redirect()->to(site_url('subscription'))->with('success', $res['message']);
+        }
+        return redirect()->to(site_url('subscription'))->with('error', $res['message']);
     }
 
     /**
@@ -235,14 +307,31 @@ class SubscriptionController extends BaseController
         $orders = new PaymentOrderModel();
 
         $plan = (new SubscriptionPlanModel())->find((int) $order['plan_id']);
-        // Guard against tampering: the charged amount must match the plan price.
-        if (! $plan || round((float) $plan['price'], 2) !== round((float) $order['amount'], 2)) {
+        // Guard against tampering: the charged amount must match the plan price
+        // minus any coupon discount recorded on the order at creation time.
+        $expected = round((float) ($plan['price'] ?? -1) - (float) ($order['discount'] ?? 0), 2);
+        if (! $plan || $expected !== round((float) $order['amount'], 2)) {
             $orders->where('order_id', $order['order_id'])->set(['status' => 'failed'])->update();
             log_message('error', 'Cashfree activation blocked: amount/plan mismatch for order ' . $order['order_id']);
             return;
         }
 
         (new SubscriptionModel())->activatePaid((int) $order['customer_id'], $plan);
+
+        // Record the coupon redemption (idempotent per order) now that the paid
+        // window is live, so per-user / global caps count only real activations.
+        if (! empty($order['coupon_id'])) {
+            $couponRow = (new CouponModel())->find((int) $order['coupon_id']);
+            if ($couponRow) {
+                (new Coupon())->recordDiscount(
+                    $couponRow,
+                    (int) $order['customer_id'],
+                    (string) $order['order_id'],
+                    (int) $order['plan_id'],
+                    (float) ($order['discount'] ?? 0)
+                );
+            }
+        }
 
         $invoiceNo = $this->nextInvoiceNo();
         $orders->where('order_id', $order['order_id'])->set([

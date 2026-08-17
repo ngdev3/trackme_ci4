@@ -2,6 +2,7 @@
 
 namespace Modules\Api\Controllers;
 
+use App\Libraries\Coupon;
 use App\Models\PaymentOrderModel;
 use App\Models\SubscriptionModel;
 use App\Models\SubscriptionPlanModel;
@@ -157,6 +158,92 @@ class SubscriptionApiController extends BaseApiController
             'status'  => 'ok',
             'message' => "Subscription updated to {$plan['name']}.",
             'plan'    => $plan['name'],
+        ]);
+    }
+
+    /**
+     * POST api/v1/subscription/coupon — validate a code and preview its effect.
+     * A 'redeem' code returns the free days + plan it grants; a 'discount' code
+     * (given a plan_id) returns the discounted price. No state change.
+     */
+    public function validateCoupon()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $ownerId = $this->ownerId($user);
+        $code    = trim((string) $this->input('code', ''));
+        $planId  = (int) $this->input('plan_id') ?: null;
+
+        $coupon = new Coupon();
+        $res    = $coupon->validate($code, $ownerId, $planId);
+        if (! $res['ok']) {
+            return $this->respond(['ok' => false, 'message' => $res['message']]);
+        }
+        $c = $res['coupon'];
+
+        if ($c['kind'] === 'redeem') {
+            $plan = $c['plan_id'] ? (new SubscriptionPlanModel())->find((int) $c['plan_id']) : null;
+            return $this->respond([
+                'ok'        => true,
+                'kind'      => 'redeem',
+                'free_days' => (int) $c['free_days'],
+                'plan'      => $plan['name'] ?? null,
+                'message'   => 'Redeem code — grants ' . (int) $c['free_days'] . ' days'
+                    . (isset($plan['name']) ? ' of ' . $plan['name'] : '') . '.',
+            ]);
+        }
+
+        // Discount code: preview against the plan price when a plan is supplied.
+        if ($planId) {
+            $plan = (new SubscriptionPlanModel())->where('id', $planId)->where('status', 1)->where('price >', 0)->first();
+            if ($plan) {
+                $prev = $coupon->preview($code, $ownerId, $planId, round((float) $plan['price'], 2));
+                return $this->respond(['kind' => 'discount'] + $prev);
+            }
+        }
+        return $this->respond(['ok' => true, 'kind' => 'discount', 'message' => 'Discount code — apply it on a paid plan at checkout.']);
+    }
+
+    /**
+     * POST api/v1/subscription/redeem — redeem a free-time code. Grants the mapped
+     * plan's days directly (no gateway) so it works the same as on the web.
+     */
+    public function redeem()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $ownerId = $this->ownerId($user);
+        $code    = trim((string) $this->input('code', ''));
+
+        $res = (new Coupon())->redeem($code, $ownerId);
+        if (! $res['ok']) {
+            return $this->respond(['ok' => false, 'message' => $res['message']]);
+        }
+
+        // Best-effort in-app notification, mirroring the web redeem path.
+        try {
+            service('notifier')->user((int) $ownerId, 'Code redeemed', $res['message'], [
+                'type'       => 'success',
+                'module'     => null,
+                'priority'   => 'high',
+                'action_url' => site_url('subscription'),
+                'created_by' => (int) $ownerId,
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'Coupon redeem notification failed: ' . $e->getMessage());
+        }
+
+        return $this->respond([
+            'ok'         => true,
+            'status'     => 'ok',
+            'message'    => $res['message'],
+            'plan'       => $res['plan'] ?? null,
+            'days'       => $res['days'] ?? 0,
+            'expires_at' => $res['expires_at'] ?? null,
         ]);
     }
 }

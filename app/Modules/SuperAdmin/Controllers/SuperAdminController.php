@@ -4,6 +4,7 @@ namespace Modules\SuperAdmin\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\CompanyModel;
+use App\Models\CouponModel;
 use App\Models\PaymentOrderModel;
 use App\Models\SubscriptionModel;
 use App\Models\SubscriptionPlanModel;
@@ -769,6 +770,116 @@ class SuperAdminController extends BaseController
         (new \App\Models\SettingModel())->put('subscription_trial_days', (string) $days, 0);
         activity_log('SuperAdmin', 'Edit', "Free-trial length set to {$days} days");
         return redirect()->to(site_url('admin/plans'))->with('success', 'Free-trial length saved.');
+    }
+
+    // ---------------------------------------------------------------
+    // Coupons (discount + redeem codes)
+    // ---------------------------------------------------------------
+
+    /** List all coupons + the form (plans feed the plan-scope / grant dropdown). */
+    public function coupons()
+    {
+        return $this->render('coupons', [
+            'title'      => 'Coupons',
+            'breadcrumb' => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'Coupons']],
+            'rows'       => (new CouponModel())->listAll(),
+            'plans'      => (new SubscriptionPlanModel())->where('status', 1)->orderBy('price', 'ASC')->findAll(),
+        ]);
+    }
+
+    /** Create or update a coupon. Validates by kind (discount vs redeem). */
+    public function couponSave($id = null)
+    {
+        $req  = $this->request;
+        $code = CouponModel::normalize((string) $req->getPost('code'));
+        $kind = in_array($req->getPost('kind'), ['discount', 'redeem'], true) ? (string) $req->getPost('kind') : 'discount';
+
+        if ($code === '' || ! preg_match('/^[A-Z0-9_-]{3,40}$/', $code)) {
+            return redirect()->back()->withInput()->with('error', 'Code must be 3–40 chars: letters, numbers, - or _.');
+        }
+
+        $coupons = new CouponModel();
+        // Unique code (ignoring the row being edited).
+        $dupe = $coupons->where('code', $code);
+        if ($id) {
+            $dupe->where('id !=', (int) $id);
+        }
+        if ($dupe->countAllResults() > 0) {
+            return redirect()->back()->withInput()->with('error', 'That code already exists.');
+        }
+
+        $planId = $req->getPost('plan_id') !== '' ? (int) $req->getPost('plan_id') : null;
+
+        $data = [
+            'code'            => $code,
+            'description'     => trim((string) $req->getPost('description')) ?: null,
+            'kind'            => $kind,
+            'plan_id'         => $planId,
+            'min_amount'      => round((float) $req->getPost('min_amount'), 2),
+            'max_redemptions' => $req->getPost('max_redemptions') !== '' ? (int) $req->getPost('max_redemptions') : null,
+            'per_user_limit'  => $req->getPost('per_user_limit') !== '' ? max(0, (int) $req->getPost('per_user_limit')) : 1,
+            'starts_at'       => $req->getPost('starts_at') ?: null,
+            'expires_at'      => $req->getPost('expires_at') ?: null,
+            'status'          => $req->getPost('status') ? 1 : 0,
+        ];
+
+        if ($kind === 'discount') {
+            $type  = in_array($req->getPost('discount_type'), ['percent', 'fixed'], true) ? (string) $req->getPost('discount_type') : 'percent';
+            $value = round((float) $req->getPost('discount_value'), 2);
+            if ($value <= 0 || ($type === 'percent' && $value > 100)) {
+                return redirect()->back()->withInput()->with('error', 'Enter a valid discount value (percent 1–100, or a fixed ₹ amount).');
+            }
+            $data['discount_type']  = $type;
+            $data['discount_value'] = $value;
+            $data['max_discount']   = $req->getPost('max_discount') !== '' ? round((float) $req->getPost('max_discount'), 2) : null;
+            $data['free_days']      = null;
+        } else {
+            // redeem
+            $days = (int) $req->getPost('free_days');
+            if ($days <= 0) {
+                return redirect()->back()->withInput()->with('error', 'A redeem code needs a free period (days) greater than 0.');
+            }
+            if (! $planId) {
+                return redirect()->back()->withInput()->with('error', 'A redeem code must grant a specific plan — choose one.');
+            }
+            $data['free_days']      = $days;
+            $data['discount_type']  = null;
+            $data['discount_value'] = 0;
+            $data['max_discount']   = null;
+        }
+
+        if ($id) {
+            $coupons->update((int) $id, $data);
+            activity_log('SuperAdmin', 'Edit', "Coupon {$code} updated");
+            $msg = 'Coupon updated.';
+        } else {
+            $data['created_by'] = (int) (function_exists('user_id') ? user_id() : 0) ?: null;
+            $coupons->insert($data);
+            activity_log('SuperAdmin', 'Add', "Coupon {$code} created");
+            $msg = 'Coupon created.';
+        }
+        return redirect()->to(site_url('admin/coupons'))->with('success', $msg);
+    }
+
+    /** Toggle a coupon active/inactive. */
+    public function couponToggle($id = null)
+    {
+        $coupons = new CouponModel();
+        $c = $coupons->find((int) $id);
+        if (! $c) {
+            return redirect()->back()->with('error', 'Coupon not found.');
+        }
+        $coupons->update((int) $id, ['status' => (int) $c['status'] === 1 ? 0 : 1]);
+        activity_log('SuperAdmin', 'Edit', "Coupon #{$id} status toggled");
+        return redirect()->back()->with('success', 'Coupon status updated.');
+    }
+
+    /** Soft-delete a coupon (its past redemptions stay for the audit trail). */
+    public function couponDelete($id = null)
+    {
+        (new CouponModel())->delete((int) $id);
+        activity_log('SuperAdmin', 'Delete', "Coupon #{$id} deleted");
+        return redirect()->to(site_url('admin/coupons'))->with('success', 'Coupon deleted.');
     }
 
     // ---------------------------------------------------------------

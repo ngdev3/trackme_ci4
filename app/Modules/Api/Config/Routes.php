@@ -70,6 +70,10 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->get('subscription', 'SubscriptionApiController::index');
     $routes->get('subscription/payments', 'SubscriptionApiController::payments');
     $routes->post('subscription/subscribe', 'SubscriptionApiController::subscribe');
+    // Coupons: validate/preview a code, and redeem a free-time code (works on
+    // Android where Google Play controls pricing and discounts cannot apply).
+    $routes->post('subscription/coupon', 'SubscriptionApiController::validateCoupon');
+    $routes->post('subscription/redeem', 'SubscriptionApiController::redeem');
 
     // Google Play Billing: verify an Android purchase (Bearer) and receive
     // Real-time Developer Notifications (public Pub/Sub push, gated by a secret).

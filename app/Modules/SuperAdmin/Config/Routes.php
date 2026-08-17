@@ -31,6 +31,13 @@ $routes->group('admin', ['namespace' => 'Modules\SuperAdmin\Controllers', 'filte
     $routes->get('plans/toggle/(:num)', 'SuperAdminController::planToggle/$1');
     $routes->post('plans/delete/(:num)', 'SuperAdminController::planDelete/$1');
     $routes->post('plans/trial', 'SuperAdminController::saveTrial');
+
+    // Coupons (discount + redeem codes).
+    $routes->get('coupons', 'SuperAdminController::coupons');
+    $routes->post('coupons/save', 'SuperAdminController::couponSave');
+    $routes->post('coupons/save/(:num)', 'SuperAdminController::couponSave/$1');
+    $routes->get('coupons/toggle/(:num)', 'SuperAdminController::couponToggle/$1');
+    $routes->post('coupons/delete/(:num)', 'SuperAdminController::couponDelete/$1');
     $routes->post('plans/payment', 'SuperAdminController::savePayment');
     $routes->post('plans/invoice', 'SuperAdminController::saveInvoice');
 

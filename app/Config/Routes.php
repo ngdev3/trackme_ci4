@@ -34,6 +34,10 @@ $routes->post('push/unsubscribe', 'PushController::unsubscribe', ['filter' => 'a
 $routes->get('subscription', 'SubscriptionController::index', ['filter' => 'auth']);
 // Cashfree online payment: create order (AJAX) + gateway return URL.
 $routes->post('subscription/pay/(:num)', 'SubscriptionController::pay/$1', ['filter' => 'auth']);
+// Discount coupons: preview a code against a plan (AJAX GET, read-only so it does
+// not rotate the CSRF token before the pay POST) + redeem a free-time code.
+$routes->get('subscription/coupon', 'SubscriptionController::applyCoupon', ['filter' => 'auth']);
+$routes->post('subscription/redeem', 'SubscriptionController::redeem', ['filter' => 'auth']);
 $routes->get('subscription/callback', 'SubscriptionController::callback', ['filter' => 'auth']);
 // Cashfree server-to-server webhook — no auth/CSRF; guarded by HMAC signature.
 $routes->post('subscription/webhook', 'SubscriptionController::webhook');

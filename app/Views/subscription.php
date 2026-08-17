@@ -154,6 +154,21 @@ foreach ($plans as $p) {
         </section>
     </div>
 
+    <section class="sub-panel sub-redeem">
+        <div class="sub-panel-head">
+            <span><i class="bi bi-gift"></i></span>
+            <div>
+                <h2>Have a code?</h2>
+                <p>Redeem a gift or promo code to add free plan time to your account instantly.</p>
+            </div>
+        </div>
+        <form method="post" action="<?= site_url('subscription/redeem') ?>" class="sub-redeem-form">
+            <?= csrf_field() ?>
+            <input type="text" name="coupon" class="form-control" placeholder="Enter code (e.g. WELCOME30)" autocomplete="off" required maxlength="40" style="text-transform:uppercase;">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-unlock"></i> Redeem</button>
+        </form>
+    </section>
+
     <?php if (! $isPro && ! empty($locked)): ?>
         <section class="sub-panel sub-locked">
             <div class="sub-panel-head">
@@ -259,6 +274,14 @@ foreach ($plans as $p) {
                         <div><span>Billing</span><strong data-pay-cycle>Plan cycle</strong></div>
                         <div><span>Send proof to</span><strong><?= esc($waShown) ?></strong></div>
                     </div>
+                    <div class="sub-coupon">
+                        <label class="sub-coupon-label"><i class="bi bi-ticket-perforated"></i> Discount coupon</label>
+                        <div class="sub-coupon-row">
+                            <input type="text" class="form-control" data-coupon-input placeholder="Coupon code" autocomplete="off" maxlength="40" style="text-transform:uppercase;">
+                            <button type="button" class="btn btn-outline-primary" data-coupon-apply>Apply</button>
+                        </div>
+                        <div class="sub-coupon-msg small" data-coupon-msg hidden></div>
+                    </div>
                     <ol class="sub-pay-steps">
                         <li><strong>Scan</strong><span>Open PhonePe, GPay, Paytm or any UPI app and scan the QR.</span></li>
                         <li><strong>Pay</strong><span>Send the exact amount displayed on the pass.</span></li>
@@ -350,6 +373,19 @@ foreach ($plans as $p) {
 .sub-path-card i { display: block; margin: 12px 0 8px; color: #0f766e; font-size: 1.35rem; }
 .sub-path-card strong { display: block; color: var(--erp-ink, #1f2a3d); font-weight: 900; }
 .sub-path-card small { display: block; color: var(--erp-muted, #66748c); line-height: 1.25; }
+.sub-redeem { margin-bottom: 16px; }
+.sub-redeem-form { display: flex; gap: 9px; flex-wrap: wrap; }
+.sub-redeem-form input { max-width: 320px; }
+.sub-coupon { margin: 4px 0 14px; padding: 12px; border: 1px dashed rgba(37,99,235,.30); border-radius: 8px; background: rgba(255,255,255,.6); }
+.sub-coupon-label { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 850; text-transform: uppercase; color: #1d4ed8; margin-bottom: 7px; }
+.sub-coupon-row { display: flex; gap: 8px; }
+.sub-coupon-row input { max-width: 220px; }
+.sub-coupon-msg { margin-top: 7px; font-weight: 700; }
+.sub-coupon-msg.is-ok { color: #157347; }
+.sub-coupon-msg.is-err { color: #dc2626; }
+@media (max-width: 575.98px) {
+    .sub-redeem-form input, .sub-coupon-row input { max-width: none; flex: 1 1 auto; }
+}
 .sub-locked { margin-bottom: 16px; }
 .sub-lock-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
 .sub-lock-card { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 8px; background: rgba(245, 158, 11, .10); color: #92400e; font-weight: 750; }
@@ -464,6 +500,8 @@ foreach ($plans as $p) {
     if (!panel) { return; }
 
     var selectedPlanId = null;
+    var selectedAmount = 0;
+    var appliedCoupon = null;
     var upiId = panel.getAttribute('data-upi-id') || '';
     var upiName = panel.getAttribute('data-upi-name') || 'HisaabKitaab';
     var waNumber = panel.getAttribute('data-wa-number') || '';
@@ -507,6 +545,8 @@ foreach ($plans as $p) {
             var amount = btn.getAttribute('data-amount') || '0';
             var cycle = btn.getAttribute('data-cycle') || 'plan cycle';
             selectedPlanId = btn.getAttribute('data-plan-id') || null;
+            selectedAmount = parseFloat(amount || 0) || 0;
+            resetCoupon();
             document.querySelectorAll('.sub-plan').forEach(function (card) { card.classList.remove('is-selected'); });
             var card = btn.closest('.sub-plan');
             if (card) { card.classList.add('is-selected'); }
@@ -528,6 +568,52 @@ foreach ($plans as $p) {
             if (navigator.clipboard) { navigator.clipboard.writeText(upiId); }
             copy.innerHTML = '<i class="bi bi-check2"></i> Copied';
             setTimeout(function () { copy.innerHTML = '<i class="bi bi-clipboard"></i> Copy UPI ID'; }, 1400);
+        });
+    }
+
+    /* ---------------- Discount coupon preview (read-only GET) ---------------- */
+    var couponInput = panel.querySelector('[data-coupon-input]');
+    var couponApply = panel.querySelector('[data-coupon-apply]');
+    var couponMsg = panel.querySelector('[data-coupon-msg]');
+
+    function showCoupon(msg, ok) {
+        if (!couponMsg) { return; }
+        couponMsg.textContent = msg;
+        couponMsg.hidden = false;
+        couponMsg.classList.toggle('is-ok', !!ok);
+        couponMsg.classList.toggle('is-err', !ok);
+    }
+    function resetCoupon() {
+        appliedCoupon = null;
+        if (couponInput) { couponInput.value = ''; }
+        if (couponMsg) { couponMsg.hidden = true; couponMsg.classList.remove('is-ok', 'is-err'); }
+        setText('[data-pay-amount]', money(selectedAmount));
+        setText('[data-pay-amount-inline]', money(selectedAmount));
+    }
+    if (couponApply && couponInput) {
+        couponApply.addEventListener('click', function () {
+            var code = (couponInput.value || '').trim();
+            if (!code) { showCoupon('Enter a coupon code.', false); return; }
+            if (!selectedPlanId) { showCoupon('Select a plan first.', false); return; }
+            couponApply.disabled = true;
+            var url = '<?= site_url('subscription/coupon') ?>?plan_id=' + encodeURIComponent(selectedPlanId) + '&coupon=' + encodeURIComponent(code);
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); })
+                .then(function (j) {
+                    couponApply.disabled = false;
+                    if (j && j.ok) {
+                        appliedCoupon = j.code || code;
+                        setText('[data-pay-amount]', money(j.final));
+                        setText('[data-pay-amount-inline]', money(j.final));
+                        showCoupon(j.message || 'Coupon applied.', true);
+                    } else {
+                        resetCoupon();
+                        showCoupon((j && j.message) || 'Invalid coupon.', false);
+                    }
+                }).catch(function () {
+                    couponApply.disabled = false;
+                    showCoupon('Network error. Try again.', false);
+                });
         });
     }
 
@@ -556,6 +642,7 @@ foreach ($plans as $p) {
 
             var body = new URLSearchParams();
             if (meta) { body.set(meta.getAttribute('data-name'), meta.getAttribute('content')); }
+            if (appliedCoupon) { body.set('coupon', appliedCoupon); }
 
             fetch('<?= site_url('subscription/pay') ?>/' + encodeURIComponent(selectedPlanId), {
                 method: 'POST',
@@ -563,6 +650,11 @@ foreach ($plans as $p) {
                 body: body
             }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
               .then(function (res) {
+                // A coupon that clears the full price activates server-side — just reload.
+                if (res.ok && res.j && res.j.ok && res.j.activated) {
+                    window.location.reload();
+                    return;
+                }
                 if (!res.ok || !res.j || !res.j.ok || !res.j.session) {
                     showErr((res.j && res.j.message) || 'Could not start payment. Please try again.');
                     resetBtn(original);

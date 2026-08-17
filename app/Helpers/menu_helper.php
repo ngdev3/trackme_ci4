@@ -341,6 +341,7 @@ if (! function_exists('render_sidebar')) {
                 ['Transactions', 'admin/transactions', 'bi bi-receipt'],
                 ['Inquiries', 'admin/inquiries', 'bi bi-chat-left-text'],
                 ['Plans & Pricing', 'admin/plans', 'bi bi-card-checklist'],
+                ['Coupons', 'admin/coupons', 'bi bi-ticket-perforated'],
             ];
             $bestIdx = -1;
             $bestLen = -1;
