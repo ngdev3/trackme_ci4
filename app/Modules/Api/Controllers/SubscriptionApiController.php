@@ -95,6 +95,8 @@ class SubscriptionApiController extends BaseApiController
             'invoice_no' => $o['invoice_no'] ?: null,
             'plan'       => $o['plan_name'] ?? null,
             'amount'     => (float) $o['amount'],
+            'discount'   => (float) ($o['discount'] ?? 0),
+            'coupon'     => $o['coupon_code'] ?? null,
             'currency'   => $o['currency'] ?: '₹',
             'gateway'    => $o['gateway'],
             'status'     => $o['status'],

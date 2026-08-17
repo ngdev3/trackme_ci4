@@ -107,7 +107,10 @@ $money = static fn ($n) => '₹' . number_format((float) $n, 2);
     <!-- Existing coupons -->
     <div class="col-lg-7">
         <div class="card h-100">
-            <div class="card-header"><h3 class="card-title mb-0"><i class="bi bi-card-list me-1"></i> Coupons (<?= count($rows) ?>)</h3></div>
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h3 class="card-title mb-0"><i class="bi bi-card-list me-1"></i> Coupons (<?= count($rows) ?>)</h3>
+                <a href="<?= site_url('admin/coupons/log') ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-clock-history me-1"></i> Usage log</a>
+            </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
@@ -147,7 +150,11 @@ $money = static fn ($n) => '₹' . number_format((float) $n, 2);
                                 <td><span class="badge text-bg-<?= $isRedeem ? 'info' : 'primary' ?>"><?= $isRedeem ? 'Redeem' : 'Discount' ?></span></td>
                                 <td><?= esc($value) ?></td>
                                 <td class="small"><?= esc($c['plan_name'] ?? ($c['plan_id'] ? '#' . $c['plan_id'] : 'Any')) ?></td>
-                                <td class="small"><?= (int) $c['redeemed_count'] ?> / <?= esc((string) $cap) ?></td>
+                                <td class="small">
+                                    <a href="<?= site_url('admin/coupons/log?coupon_id=' . (int) $c['id']) ?>" title="View who used this">
+                                        <?= (int) $c['redeemed_count'] ?> / <?= esc((string) $cap) ?>
+                                    </a>
+                                </td>
                                 <td class="small text-muted"><?= esc($window) ?></td>
                                 <td class="text-end text-nowrap">
                                     <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"

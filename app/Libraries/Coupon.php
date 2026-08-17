@@ -154,6 +154,16 @@ class Coupon
             'days_granted'      => 0,
         ]);
         $this->coupons->bumpRedeemed((int) $coupon['id']);
+
+        // Best-effort audit line (see redeem() — must not break the payment flow).
+        try {
+            if (function_exists('activity_log')) {
+                activity_log('Subscription', 'Add', "Coupon {$coupon['code']} discounted ₹" . number_format($amountDiscounted, 2)
+                    . " on order {$orderId} for customer #{$customerId}");
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Coupon discount activity_log failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -206,8 +216,14 @@ class Coupon
         ]);
         $this->coupons->bumpRedeemed((int) $coupon['id']);
 
-        if (function_exists('activity_log')) {
-            activity_log('Subscription', 'Add', "Redeemed code {$coupon['code']} → {$days} days of {$plan['name']} for customer #{$customerId}");
+        // Best-effort audit line — never let a logging hiccup (e.g. no session in
+        // the API / webhook / CLI context) undo an already-recorded redemption.
+        try {
+            if (function_exists('activity_log')) {
+                activity_log('Subscription', 'Add', "Redeemed code {$coupon['code']} → {$days} days of {$plan['name']} for customer #{$customerId}");
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Coupon redeem activity_log failed: ' . $e->getMessage());
         }
 
         return [

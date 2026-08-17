@@ -22,11 +22,12 @@ class PaymentOrderModel extends Model
         return $this->where('order_id', $orderId)->first();
     }
 
-    /** A customer's payment history, newest first. */
+    /** A customer's payment history, newest first (with plan + any coupon used). */
     public function forCustomer(int $customerId): array
     {
-        return $this->select('payment_orders.*, subscription_plans.name AS plan_name')
+        return $this->select('payment_orders.*, subscription_plans.name AS plan_name, coupons.code AS coupon_code')
             ->join('subscription_plans', 'subscription_plans.id = payment_orders.plan_id', 'left')
+            ->join('coupons', 'coupons.id = payment_orders.coupon_id', 'left')
             ->where('customer_id', $customerId)
             ->orderBy('payment_orders.id', 'DESC')
             ->findAll();

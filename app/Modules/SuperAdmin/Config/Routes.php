@@ -34,6 +34,7 @@ $routes->group('admin', ['namespace' => 'Modules\SuperAdmin\Controllers', 'filte
 
     // Coupons (discount + redeem codes).
     $routes->get('coupons', 'SuperAdminController::coupons');
+    $routes->get('coupons/log', 'SuperAdminController::couponLog');
     $routes->post('coupons/save', 'SuperAdminController::couponSave');
     $routes->post('coupons/save/(:num)', 'SuperAdminController::couponSave/$1');
     $routes->get('coupons/toggle/(:num)', 'SuperAdminController::couponToggle/$1');

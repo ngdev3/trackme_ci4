@@ -82,8 +82,18 @@ $daysLeft = $expTs ? (int) ceil(($expTs - time()) / 86400) : null;
                                     <?php endif; ?>
                                     <span class="text-muted small"><?= esc($o['order_id']) ?></span>
                                 </td>
-                                <td><?= esc($o['plan_name'] ?? '—') ?></td>
-                                <td class="text-end">&#8377;<?= esc(number_format((float) $o['amount'], 2)) ?></td>
+                                <td>
+                                    <?= esc($o['plan_name'] ?? '—') ?>
+                                    <?php if (! empty($o['coupon_code'])): ?>
+                                        <br><span class="badge text-bg-success" title="Coupon applied"><i class="bi bi-ticket-perforated"></i> <?= esc($o['coupon_code']) ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-end">
+                                    &#8377;<?= esc(number_format((float) $o['amount'], 2)) ?>
+                                    <?php if (! empty($o['discount']) && (float) $o['discount'] > 0): ?>
+                                        <br><span class="text-success small">&#8722;&#8377;<?= esc(number_format((float) $o['discount'], 2)) ?> off</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <span class="badge text-bg-<?= esc($color) ?>"><?= esc($label) ?></span>
                                     <?php if ((int) ($o['refunded'] ?? 0) === 1): ?><span class="badge text-bg-warning">Refunded</span><?php endif; ?>

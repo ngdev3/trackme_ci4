@@ -5,6 +5,7 @@ namespace Modules\SuperAdmin\Controllers;
 use App\Controllers\BaseController;
 use App\Models\CompanyModel;
 use App\Models\CouponModel;
+use App\Models\CouponRedemptionModel;
 use App\Models\PaymentOrderModel;
 use App\Models\SubscriptionModel;
 use App\Models\SubscriptionPlanModel;
@@ -880,6 +881,31 @@ class SuperAdminController extends BaseController
         (new CouponModel())->delete((int) $id);
         activity_log('SuperAdmin', 'Delete', "Coupon #{$id} deleted");
         return redirect()->to(site_url('admin/coupons'))->with('success', 'Coupon deleted.');
+    }
+
+    /**
+     * Coupon usage trail — who redeemed which coupon, when, and what they got.
+     * Optional ?coupon_id= filter (drill in from the coupon list) and ?q= search.
+     */
+    public function couponLog()
+    {
+        $couponId = (int) $this->request->getGet('coupon_id') ?: null;
+        $q        = trim((string) $this->request->getGet('q'));
+        $model    = new CouponRedemptionModel();
+
+        return $this->render('coupon_redemptions', [
+            'title'      => 'Coupon Usage',
+            'breadcrumb' => [
+                ['label' => 'Super Admin', 'url' => site_url('admin')],
+                ['label' => 'Coupons', 'url' => site_url('admin/coupons')],
+                ['label' => 'Usage'],
+            ],
+            'rows'      => $model->recent($couponId, $q),
+            'stats'     => $model->summary(),
+            'q'         => $q,
+            'couponId'  => $couponId,
+            'coupon'    => $couponId ? (new CouponModel())->find($couponId) : null,
+        ]);
     }
 
     // ---------------------------------------------------------------
