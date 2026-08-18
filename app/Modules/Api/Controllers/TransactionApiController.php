@@ -656,8 +656,15 @@ class TransactionApiController extends BaseApiController
             $stored++;
         }
 
-        if ($stored > 0 && function_exists('activity_log')) {
-            activity_log('Transactions', 'Edit', "{$stored} attachment(s) added to {$row['txn_no']} (mobile)");
+        if ($stored > 0) {
+            // Bump the parent so the incremental sync-pull re-sends it and the
+            // mobile attachment-count badge stays accurate (attachment rows live
+            // in their own table and don't otherwise touch the transaction).
+            (new TransactionModel())->builder()->where('id', (int) $row['id'])
+                ->update(['updated_at' => date('Y-m-d H:i:s')]);
+            if (function_exists('activity_log')) {
+                activity_log('Transactions', 'Edit', "{$stored} attachment(s) added to {$row['txn_no']} (mobile)");
+            }
         }
 
         $message = "{$stored} file(s) attached.";
@@ -731,6 +738,9 @@ class TransactionApiController extends BaseApiController
             return $this->failNotFound('Attachment not found.');
         }
         $model->delete((int) $id);
+        // Bump the parent so the sync-pull re-sends it with the lowered count.
+        (new TransactionModel())->builder()->where('id', (int) $a['transaction_id'])
+            ->update(['updated_at' => date('Y-m-d H:i:s')]);
         return $this->respond(['status' => 'ok', 'message' => 'Attachment removed.']);
     }
 
@@ -933,12 +943,23 @@ class TransactionApiController extends BaseApiController
         }
         $rows = $b->orderBy('updated_at', 'ASC')->get()->getResultArray();
 
+        // Lightweight per-entry attachment counts (ONE grouped COUNT query, no
+        // files) — same source the web list uses, so the mobile paperclip badge
+        // matches. Excludes soft-deleted attachments.
+        $counts = (new TransactionAttachmentModel())
+            ->countsFor(array_map(static fn (array $r): int => (int) $r['id'], $rows));
+
         return $this->respond([
             'status'      => 'ok',
             'server_time' => date('Y-m-d H:i:s'),
-            'changes'     => array_map(fn (array $r): array => $this->syncShape($r), $rows),
+            'changes'     => array_map(function (array $r) use ($counts): array {
+                $shaped = $this->syncShape($r);
+                $shaped['attachment_count'] = $counts[(int) $r['id']] ?? 0;
+                return $shaped;
+            }, $rows),
         ]);
     }
+
 
     /**
      * POST api/v1/transactions/sync
