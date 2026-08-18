@@ -153,6 +153,8 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->post('inventory/voice/parse', 'InventoryApiController::voiceParse');
     $routes->post('inventory/inward', 'InventoryApiController::inward');
     $routes->post('inventory/outward', 'InventoryApiController::outward');
+    $routes->post('inventory/transfer', 'InventoryApiController::transfer');
+    $routes->post('inventory/production', 'InventoryApiController::production');
     $routes->post('inventory/verify', 'InventoryApiController::verify');
     $routes->get('inventory/entry/(:num)/attachments', 'InventoryApiController::entryAttachments/$1');
     $routes->post('inventory/entry/(:num)/attach', 'InventoryApiController::attachToEntry/$1');

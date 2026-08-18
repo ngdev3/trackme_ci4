@@ -24,6 +24,11 @@ $routes->group('inventory', ['namespace' => 'Modules\Inventory\Controllers'], st
     $routes->post('products/delete/(:num)', 'StockController::deleteProduct/$1', ['filter' => 'permission:inventory,delete']);
     $routes->get('position', 'StockController::position', ['filter' => 'permission:inventory,view']);
 
+    // ---- Unified Stock Movement (IN | OUT | TRANSFER | PRODUCTION | ADJUSTMENT) ----
+    $routes->get('movement', 'MovementController::index', ['filter' => 'permission:inventory,add']);
+    $routes->post('movement/save', 'MovementController::save', ['filter' => 'permission:inventory,add']);
+    $routes->get('movement/available', 'MovementController::available', ['filter' => 'permission:inventory,view']);
+
     // ---- Task 1 / 2 — detailed Inward / Outward ----
     $routes->get('inward', 'InventoryController::inward', ['filter' => 'permission:inventory,add']);
     $routes->post('inward', 'InventoryController::storeInward', ['filter' => 'permission:inventory,add']);

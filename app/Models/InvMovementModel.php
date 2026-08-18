@@ -17,17 +17,17 @@ class InvMovementModel extends Model
     protected $useSoftDeletes = true;
     protected $useTimestamps  = true;
     protected $allowedFields  = [
-        'company_id', 'entry_no', 'movement_type', 'direction', 'product_id', 'warehouse_id',
-        'party_id', 'lot_id', 'bags', 'weight', 'rate', 'amount', 'rack', 'vehicle_no', 'reason', 'notes',
-        'photo', 'source', 'day_closed', 'created_by', 'created_at',
+        'company_id', 'entry_no', 'link_group', 'movement_type', 'direction', 'product_id', 'warehouse_id',
+        'to_warehouse_id', 'party_id', 'lot_id', 'bags', 'wastage_bags', 'weight', 'rate', 'amount', 'rack',
+        'vehicle_no', 'reason', 'notes', 'photo', 'source', 'day_closed', 'created_by', 'created_at',
     ];
 
-    public const TYPES = ['inward', 'outward', 'adjustment'];
+    public const TYPES = ['inward', 'outward', 'adjustment', 'transfer', 'production'];
 
-    /** Next sequential entry number per type, e.g. INW-000123 / OUT-000123 / ADJ-000123. */
+    /** Next sequential entry number per type, e.g. INW-000123 / TRF-000123 / PRD-000123. */
     public function nextEntryNo(int $companyId, string $type): string
     {
-        $prefix = ['inward' => 'INW', 'outward' => 'OUT', 'adjustment' => 'ADJ'][$type] ?? 'MOV';
+        $prefix = ['inward' => 'INW', 'outward' => 'OUT', 'adjustment' => 'ADJ', 'transfer' => 'TRF', 'production' => 'PRD'][$type] ?? 'MOV';
         $rows   = $this->withDeleted()->builder()
             ->select('entry_no')->where('company_id', $companyId)->where('movement_type', $type)
             ->orderBy('id', 'DESC')->limit(200)->get()->getResultArray();

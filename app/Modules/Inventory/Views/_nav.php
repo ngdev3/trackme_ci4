@@ -11,6 +11,7 @@ $isOwner = (function_exists('is_super_admin_account') && is_super_admin_account(
 
 $tabs = [
     'daily'    => ['Daily Stock',    'bi-arrow-down-up',   site_url('inventory')],
+    'movement' => ['Movement',       'bi-arrow-left-right', site_url('inventory/movement')],
     'voice'    => ['Voice',          'bi-mic',             site_url('inventory/voice')],
     'verify'   => ['Verify',         'bi-clipboard-check', site_url('inventory/verify')],
     'products' => ['Products',       'bi-box-seam',        site_url('inventory/products')],

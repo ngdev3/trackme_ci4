@@ -229,6 +229,106 @@ class InventoryApiController extends BaseApiController
         ]);
     }
 
+    /** POST move stock between two godowns (atomic OUT+IN). */
+    public function transfer()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $cid = $this->companyId($user);
+        if (! $cid) {
+            return $this->failValidationErrors('No company for this user.');
+        }
+
+        $productId = (int) $this->input('product_id');
+        $fromId    = (int) $this->input('from_warehouse_id');
+        $toId      = (int) $this->input('to_warehouse_id');
+        $bags      = (float) $this->input('bags');
+
+        if (! (new InvProductModel())->findForCompany($productId, $cid)) {
+            return $this->failValidationErrors('Invalid product.');
+        }
+        if (! (new InvWarehouseModel())->findForCompany($fromId, $cid) || ! (new InvWarehouseModel())->findForCompany($toId, $cid)) {
+            return $this->failValidationErrors('Invalid godown.');
+        }
+
+        try {
+            $result = (new InventoryService())->recordTransfer([
+                'company_id'        => $cid,
+                'product_id'        => $productId,
+                'from_warehouse_id' => $fromId,
+                'to_warehouse_id'   => $toId,
+                'bags'              => $bags,
+                'weight'            => $this->input('weight') !== null ? (float) $this->input('weight') : null,
+                'notes'             => trim((string) ($this->input('notes') ?? '')) ?: null,
+                'allow_negative'    => (bool) $this->input('allow_negative'),
+                'source'            => 'mobile',
+                'created_by'        => (int) $user['id'],
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return $this->failValidationErrors($e->getMessage());
+        } catch (\RuntimeException $e) {
+            return $this->respond([
+                'status'    => 'insufficient_stock',
+                'message'   => 'Not enough stock in the source godown.',
+                'available' => (float) $e->getMessage(),
+            ], 409);
+        }
+
+        return $this->respondCreated(['status' => 'ok', 'message' => 'Transfer saved.'] + $result);
+    }
+
+    /** POST convert one input into many outputs + wastage (atomic batch). */
+    public function production()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $cid = $this->companyId($user);
+        if (! $cid) {
+            return $this->failValidationErrors('No company for this user.');
+        }
+
+        $input   = (array) ($this->input('input') ?? []);
+        $outputs = (array) ($this->input('outputs') ?? []);
+
+        // Every referenced product must belong to this company.
+        $ids = array_filter(array_merge([(int) ($input['product_id'] ?? 0)], array_map(static fn ($o) => (int) ($o['product_id'] ?? 0), $outputs)));
+        foreach (array_unique($ids) as $pid) {
+            if (! (new InvProductModel())->findForCompany((int) $pid, $cid)) {
+                return $this->failValidationErrors('Invalid product in production.');
+            }
+        }
+        if (! (new InvWarehouseModel())->findForCompany((int) ($input['warehouse_id'] ?? 0), $cid)) {
+            return $this->failValidationErrors('Invalid godown.');
+        }
+
+        try {
+            $result = (new InventoryService())->recordProduction([
+                'company_id'     => $cid,
+                'input'          => $input,
+                'outputs'        => $outputs,
+                'wastage_bags'   => (float) ($this->input('wastage_bags') ?? 0),
+                'notes'          => trim((string) ($this->input('notes') ?? '')) ?: null,
+                'allow_negative' => (bool) $this->input('allow_negative'),
+                'source'         => 'mobile',
+                'created_by'     => (int) $user['id'],
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return $this->failValidationErrors($e->getMessage());
+        } catch (\RuntimeException $e) {
+            return $this->respond([
+                'status'    => 'insufficient_stock',
+                'message'   => 'Not enough input stock to produce.',
+                'available' => (float) $e->getMessage(),
+            ], 409);
+        }
+
+        return $this->respondCreated(['status' => 'ok', 'message' => 'Production saved.'] + $result);
+    }
+
     /** GET the proof files linked to an entry. */
     public function entryAttachments($id = null)
     {
