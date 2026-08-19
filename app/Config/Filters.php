@@ -143,13 +143,12 @@ class Filters extends BaseFilters
             'passwords', 'passwords/*',      // → password_manager  (Standard+)
             'reminders', 'reminders/*',      // → reminder/calendar (Plus+)
             'notes', 'notes/*',              // → notes             (Premium)
-            'inventory', 'inventory/*',      // → inventory         (Premium)
             'company/trash',                 // → trash             (Plus+)
         ]],
 
-        // API package gate (bearer-token aware). Inventory is Premium-only.
+        // API package gate (bearer-token aware). No feature-gated API routes at
+        // present (the inventory module was removed).
         'apifeature' => ['before' => [
-            'api/v1/inventory', 'api/v1/inventory/*',
         ]],
 
         // Super-Admin "kill switch": if an endpoint has been toggled inactive in

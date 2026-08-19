@@ -145,35 +145,4 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     // Trash (feature-gated: trash). Soft-deleted rows across modules + restore.
     $routes->get('trash', 'TrashApiController::index');
     $routes->post('trash/restore', 'TrashApiController::restore');
-
-    // Mandi Inventory (mobile app). Bearer-token auth; company resolved per user.
-    $routes->get('inventory/masters', 'InventoryApiController::masters');
-    $routes->get('inventory/stock', 'InventoryApiController::stock');
-    $routes->get('inventory/search', 'InventoryApiController::search');
-    $routes->post('inventory/voice/parse', 'InventoryApiController::voiceParse');
-    $routes->post('inventory/inward', 'InventoryApiController::inward');
-    $routes->post('inventory/outward', 'InventoryApiController::outward');
-    $routes->post('inventory/transfer', 'InventoryApiController::transfer');
-    $routes->post('inventory/production', 'InventoryApiController::production');
-    $routes->post('inventory/verify', 'InventoryApiController::verify');
-    $routes->get('inventory/entry/(:num)/attachments', 'InventoryApiController::entryAttachments/$1');
-    $routes->post('inventory/entry/(:num)/attach', 'InventoryApiController::attachToEntry/$1');
-    $routes->get('inventory/dashboard', 'InventoryApiController::dashboard');
-    $routes->get('inventory/reports/(:alpha)', 'InventoryApiController::report/$1');
-    $routes->get('inventory/closing', 'InventoryApiController::closingSummary');
-    $routes->post('inventory/closing/close', 'InventoryApiController::closeDay');
-    $routes->post('inventory/closing/reopen', 'InventoryApiController::reopenDay');
-    $routes->get('inventory/corrections', 'InventoryApiController::corrections');
-    $routes->post('inventory/corrections/approve/(:num)', 'InventoryApiController::approveCorrection/$1');
-
-    // Inventory master CRUD (products / godowns / parties) for the mobile app.
-    $routes->post('inventory/products', 'InvMasterApiController::createProduct');
-    $routes->put('inventory/products/(:num)', 'InvMasterApiController::updateProduct/$1');
-    $routes->delete('inventory/products/(:num)', 'InvMasterApiController::deleteProduct/$1');
-    $routes->post('inventory/warehouses', 'InvMasterApiController::createWarehouse');
-    $routes->put('inventory/warehouses/(:num)', 'InvMasterApiController::updateWarehouse/$1');
-    $routes->delete('inventory/warehouses/(:num)', 'InvMasterApiController::deleteWarehouse/$1');
-    $routes->post('inventory/parties', 'InvMasterApiController::createParty');
-    $routes->put('inventory/parties/(:num)', 'InvMasterApiController::updateParty/$1');
-    $routes->delete('inventory/parties/(:num)', 'InvMasterApiController::deleteParty/$1');
 });

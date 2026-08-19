@@ -138,7 +138,6 @@ if (! function_exists('feature_catalog')) {
             'reminder'         => 'Reminder',
             'trash'            => 'Trash',
             'notes'            => 'Notes',
-            'inventory'        => 'Inventory',
         ];
     }
 }

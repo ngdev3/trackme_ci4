@@ -18,11 +18,11 @@ use App\Models\TransactionModel;
  *   - the active company (name),
  *   - the selected reporting period + its cash-book (Jama/Naam) summaries,
  *   - cash-book summaries for today, the period and the previous period,
- *   - the most recent cash-book entries within the period,
- *   - a compact, feature-gated inventory snapshot.
+ *   - the most recent cash-book entries within the period.
  *
- * It only reads — no business logic is added here; it reuses TransactionModel
- * and the InventoryReport library the web app already uses.
+ * It only reads — no business logic is added here; it reuses TransactionModel.
+ * (The inventory snapshot was removed with the inventory module; see
+ * inventorySnapshot() which now returns null until inventory is re-implemented.)
  */
 class DashboardApiController extends BaseApiController
 {
@@ -256,27 +256,11 @@ class DashboardApiController extends BaseApiController
     }
 
     /**
-     * Compact inventory snapshot, but only when the company's plan includes the
-     * inventory feature. Returns null otherwise so the app hides the section.
+     * Inventory snapshot placeholder — the inventory module was removed and will
+     * be re-implemented later; always returns null so the app hides the section.
      */
     private function inventorySnapshot(int $cid, ?array $company, array $user): ?array
     {
-        $ownerId = $company ? (int) $company['owner_id'] : (int) $user['id'];
-        if (! function_exists('customer_has_feature') || ! customer_has_feature($ownerId, 'inventory')) {
-            return null;
-        }
-
-        $d = (new \App\Libraries\InventoryReport())->dashboard($cid);
-
-        return [
-            'current_bags'        => $d['current_bags'] ?? 0,
-            'inventory_value'     => $d['inventory_value'] ?? 0,
-            'received_today'      => $d['received_today'] ?? 0,
-            'dispatched_today'    => $d['dispatched_today'] ?? 0,
-            'product_count'       => $d['product_count'] ?? 0,
-            'warehouse_count'     => $d['warehouse_count'] ?? 0,
-            'warehouse_util'      => $d['warehouse_util'] ?? 0,
-            'pending_corrections' => $d['pending_corrections'] ?? 0,
-        ];
+        return null;
     }
 }

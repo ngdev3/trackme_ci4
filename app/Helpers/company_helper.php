@@ -96,7 +96,6 @@ if (! function_exists('firm_roles')) {
             'accountant' => 'Accountant',
             'sales'      => 'Sales User',
             'purchase'   => 'Purchase User',
-            'inventory'  => 'Inventory User',
             'viewer'     => 'Viewer',
         ];
     }
@@ -108,14 +107,13 @@ if (! function_exists('firm_role_modules')) {
      */
     function firm_role_modules(string $role): array
     {
-        $all = ['dashboard', 'accounting', 'rokad', 'sales', 'purchase', 'inventory', 'gst', 'reports', 'notes', 'reminders', 'firm_users', 'firm_settings'];
+        $all = ['dashboard', 'accounting', 'rokad', 'sales', 'purchase', 'gst', 'reports', 'notes', 'reminders', 'firm_users', 'firm_settings'];
         switch ($role) {
             case 'owner':
             case 'admin':      return $all;
             case 'accountant': return ['dashboard', 'accounting', 'rokad', 'gst', 'reports', 'notes', 'reminders'];
             case 'sales':      return ['dashboard', 'sales', 'reports', 'notes', 'reminders'];
             case 'purchase':   return ['dashboard', 'purchase', 'reports', 'notes', 'reminders'];
-            case 'inventory':  return ['dashboard', 'inventory', 'reports', 'notes', 'reminders'];
             case 'viewer':     return ['dashboard', 'reports'];
             default:           return ['dashboard'];
         }

@@ -148,7 +148,6 @@ if (! function_exists('render_firm_sidebar')) {
                 ['Report', 'transactions/report/breakdown'],
                 ['Opening Balance', 'transactions/opening'],
             ]],
-            ['inventory', 'Inventory', 'bi bi-box-seam', 'inventory', []],
             ['notes', 'Notes', 'bi bi-sticky', 'notes', []],
             ['reminders', 'Reminders', 'bi bi-alarm', 'reminders', []],
             ['passwords', 'Password Manager', 'bi bi-shield-lock', null, [
