@@ -91,25 +91,45 @@ class DashboardController extends BaseController
         $customTo = $this->request->getGet('to') ? (string) $this->request->getGet('to') : null;
         [$from, $to, $periodLabel] = $m->dateRange($filter, $customFrom, $customTo, $firm);
 
-        $erp = $m->erpSummary($companyId, $from, $to);
-        $fy = $m->financialYearSummary($companyId, $firm);
+        // Heavy aggregates (25+ queries) are cached per company + period so the
+        // post-login load is fast and repeated loads / other users don't re-hit
+        // the DB. dash_bust() (on any transaction write) invalidates instantly;
+        // otherwise the data is at most 90s stale. `?fresh=1` forces a recompute.
+        $agg = dash_remember($companyId, 'page:' . $filter . ':' . md5($from . '|' . $to), 90, function () use ($m, $companyId, $from, $to, $firm) {
+            $erp = $m->erpSummary($companyId, $from, $to);
+            $charts = [
+                'cashFlow'     => $companyId ? $m->cashFlow($companyId, 14) : ($m->erpCharts(null, $from, $to)['jamaNaam'] ?? []),
+                'monthlyCash'  => $companyId ? $m->monthlyCash($companyId, 6) : ($m->erpCharts(null, $from, $to)['salesPurchase'] ?? []),
+                'reminders'    => $m->remindersByStatus(),
+                'notes'        => $m->notesBreakdown(),
+                'moneyInOut'   => ['labels' => ['Jama', 'Naam'], 'data' => [$erp['jama'], $erp['naam']]],
+                'erp'          => $m->erpCharts($companyId, $from, $to),
+                'txnTrend'     => $m->txnDailyTrend($companyId, 14),
+                'txnByMode'    => $m->txnByMode($companyId, $from, $to),
+            ];
+            return [
+                'erp'    => $erp,
+                'txn'    => $m->txnSummary($companyId, $from, $to),
+                'fy'     => $m->financialYearSummary($companyId, $firm),
+                'charts' => $charts,
+                'kpis'   => $companyId ? $m->kpis($companyId) : [
+                    'cash_balance' => $erp['cash_balance'],
+                    'month_in' => $erp['jama'],
+                    'month_out' => $erp['naam'],
+                    'ledgers' => 0, 'vouchers' => $erp['vouchers'],
+                    'reminders' => 0, 'notes' => 0, 'firm_users' => 0,
+                ],
+                'recentCash'         => $companyId ? $m->recentCash($companyId, 6) : [],
+                'recentTransactions' => $m->recentTransactions($companyId, $from, $to, 10),
+                'recentTxns'         => $m->recentTxns($companyId, 8),
+                'topParties'         => $m->topParties($companyId, 5),
+                'counts'             => $m->liveCounts($companyId),
+                'upcoming'           => $m->upcomingReminders(5),
+            ];
+        });
 
-        // Real Jama/Naam ledger figures (the data users actually populate).
-        $txn = $m->txnSummary($companyId, $from, $to);
-
-        $charts = [
-            'cashFlow'     => $companyId ? $m->cashFlow($companyId, 14) : ($m->erpCharts(null, $from, $to)['jamaNaam'] ?? []),
-            'monthlyCash'  => $companyId ? $m->monthlyCash($companyId, 6) : ($m->erpCharts(null, $from, $to)['salesPurchase'] ?? []),
-            'reminders'    => $m->remindersByStatus(),
-            'notes'        => $m->notesBreakdown(),
-            'moneyInOut'   => ['labels' => ['Jama', 'Naam'], 'data' => [$erp['jama'], $erp['naam']]],
-            'erp'          => $m->erpCharts($companyId, $from, $to),
-            // Redesigned dashboard: real ledger trend + payment-mode split.
-            'txnTrend'     => $m->txnDailyTrend($companyId, 14),
-            'txnByMode'    => $m->txnByMode($companyId, $from, $to),
-        ];
-
-        return $this->render('firm', [
+        // User/session-specific bits stay fresh (never cached across users).
+        return $this->render('firm', array_merge($agg, [
             'title'        => 'Dashboard',
             'breadcrumb'   => [['label' => 'Dashboard']],
             'firm'         => $firm,
@@ -118,32 +138,12 @@ class DashboardController extends BaseController
             'periodLabel'  => $periodLabel,
             'dateFrom'     => $from,
             'dateTo'       => $to,
-            'kpis'         => $companyId ? $m->kpis($companyId) : [
-                'cash_balance' => $erp['cash_balance'],
-                'month_in' => $erp['jama'],
-                'month_out' => $erp['naam'],
-                'ledgers' => 0,
-                'vouchers' => $erp['vouchers'],
-                'reminders' => 0,
-                'notes' => 0,
-                'firm_users' => 0,
-            ],
-            'erp'          => $erp,
-            'txn'          => $txn,
-            'fy'           => $fy,
-            'charts'       => $charts,
-            'recentCash'   => $companyId ? $m->recentCash($companyId, 6) : [],
-            'recentTransactions' => $m->recentTransactions($companyId, $from, $to, 10),
-            'recentTxns'   => $m->recentTxns($companyId, 8),
-            'topParties'   => $m->topParties($companyId, 5),
-            'counts'       => $m->liveCounts($companyId),
-            'upcoming'     => $m->upcomingReminders(5),
             'canRokad'     => (bool) session()->get('is_superadmin') || firm_can('rokad'),
             'me'           => current_user(),
             'liveUrl'      => site_url('dashboard/live'),
             'css'          => [base_url('assets/css/dashboard-live.css')],
             'js'           => [base_url('assets/vendor/chart/chart.umd.min.js'), base_url('assets/js/firm_dashboard.js')],
-        ]);
+        ]));
     }
 
     /**
@@ -206,29 +206,25 @@ class DashboardController extends BaseController
         $to     = $this->request->getGet('to') ? (string) $this->request->getGet('to') : null;
         [$dFrom, $dTo] = $m->dateRange($filter, $from, $to, $companyId ? current_company() : null);
 
-        $txn = $m->txnSummary($companyId, $dFrom, $dTo);
+        // The live feed is polled every ~20s; cache the query result for 12s so
+        // concurrent viewers share one computation (busted instantly on a write).
+        $payload = dash_remember($companyId, 'live:' . $filter . ':' . md5(($dFrom ?? '') . '|' . ($dTo ?? '')), 12, function () use ($m, $companyId, $dFrom, $dTo) {
+            $txn = $m->txnSummary($companyId, $dFrom, $dTo);
+            $recent = array_map(function ($r) {
+                return [
+                    'txn_no' => $r['txn_no'] ?? ('#' . $r['id']),
+                    'name'   => $r['name'],
+                    'type'   => $r['type'],
+                    'amount' => (float) $r['amount'],
+                    'mode'   => $r['payment_mode'] ?? 'cash',
+                    'status' => $r['status'] ?? 'paid',
+                    'date'   => $r['txn_date'],
+                    'href'   => site_url('transactions/report') . '?period=day&date=' . $r['txn_date'],
+                    'ago'    => $this->timeAgo($r['created_at'] ?? $r['txn_date']),
+                ];
+            }, $m->recentTxns($companyId, 8));
 
-        // Compact, ready-to-render recent activity for the live feed.
-        $recent = array_map(function ($r) {
             return [
-                'txn_no' => $r['txn_no'] ?? ('#' . $r['id']),
-                'name'   => $r['name'],
-                'type'   => $r['type'],
-                'amount' => (float) $r['amount'],
-                'mode'   => $r['payment_mode'] ?? 'cash',
-                'status' => $r['status'] ?? 'paid',
-                'date'   => $r['txn_date'],
-                'href'   => site_url('transactions/report') . '?period=day&date=' . $r['txn_date'],
-                'ago'    => $this->timeAgo($r['created_at'] ?? $r['txn_date']),
-            ];
-        }, $m->recentTxns($companyId, 8));
-
-        return $this->response
-            ->setHeader('Cache-Control', 'no-store')
-            ->setJSON([
-                'status' => 'ok',
-                'time'   => date('c'),
-                'clock'  => date('H:i:s'),
                 'kpis'   => [
                     'cash_in_hand' => $txn['cash_in_hand'],
                     'jama'         => $txn['jama'],
@@ -241,7 +237,16 @@ class DashboardController extends BaseController
                 ],
                 'counts' => $m->liveCounts($companyId),
                 'recent' => $recent,
-            ]);
+            ];
+        });
+
+        return $this->response
+            ->setHeader('Cache-Control', 'no-store')
+            ->setJSON(array_merge([
+                'status' => 'ok',
+                'time'   => date('c'),
+                'clock'  => date('H:i:s'),
+            ], $payload));
     }
 
     /** Compact "x mins ago" relative time for the activity feed. */

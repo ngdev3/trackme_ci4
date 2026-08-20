@@ -24,6 +24,25 @@ class TransactionModel extends Model
 
     protected $allowedFields = ['user_id', 'company_id', 'client_uuid', 'txn_no', 'txn_date', 'name', 'party_type', 'type', 'amount', 'payment_mode', 'source', 'status', 'notes', 'delete_reason'];
 
+    // Any write invalidates the cached firm dashboard for that company, so a new
+    // entry / edit / delete shows up immediately instead of after the cache TTL.
+    protected $afterInsert = ['bustDashboardCache'];
+    protected $afterUpdate = ['bustDashboardCache'];
+    protected $afterDelete = ['bustDashboardCache'];
+
+    /** Bust the dashboard cache for the affected company (or the active firm). */
+    protected function bustDashboardCache(array $eventData): array
+    {
+        if (function_exists('dash_bust')) {
+            $cid = $eventData['data']['company_id'] ?? null;
+            if ($cid === null && function_exists('company_id')) {
+                $cid = company_id(); // updates/deletes rarely carry company_id — use the active firm
+            }
+            dash_bust($cid !== null ? (int) $cid : null);
+        }
+        return $eventData;
+    }
+
     protected $validationRules = [
         'txn_date'   => 'required|valid_date[Y-m-d]',
         'name'       => 'required|min_length[1]|max_length[191]',

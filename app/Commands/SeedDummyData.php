@@ -54,16 +54,26 @@ class SeedDummyData extends BaseCommand
             CLI::write('Cleared prior rows for company ' . $this->cid, 'yellow');
         }
 
-        // Make the books span the whole year of data we insert.
-        $start = new \DateTime('-12 months');
-        $start->modify('first day of this month');
-        $this->db->table('companies')->where('id', $this->cid)->update([
-            'books_beginning_from' => $start->format('Y-m-d'),
-        ]);
+        $from = CLI::getOption('from');
+        $to   = CLI::getOption('to');
+        $start = $from ? new \DateTime($from) : (new \DateTime('-12 months'))->modify('first day of this month');
+        $end   = $to ? new \DateTime($to) : new \DateTime('today');
+
+        // Keep the books opening at/before the earliest data we insert.
+        $bb = (string) ($this->db->table('companies')->select('books_beginning_from')->where('id', $this->cid)->get()->getRowArray()['books_beginning_from'] ?? '');
+        if ($bb === '' || strtotime($start->format('Y-m-d')) < strtotime($bb)) {
+            $this->db->table('companies')->where('id', $this->cid)->update(['books_beginning_from' => $start->format('Y-m-d')]);
+        }
+
+        $txns = $this->seedTransactions($start, $end);
+
+        if (CLI::getOption('txns-only') !== null) {
+            CLI::write("Added {$txns} transactions ({$start->format('Y-m-d')} → {$end->format('Y-m-d')}) for company {$this->cid}.", 'green');
+            return 0;
+        }
 
         $groups  = $this->seedGroups();
         $ledgers = $this->seedLedgers($groups);
-        $txns    = $this->seedTransactions($start);
         $this->seedVouchers($start, $ledgers);
         $this->seedNotes();
         $this->seedReminders();
@@ -130,7 +140,7 @@ class SeedDummyData extends BaseCommand
         return $ids;
     }
 
-    private function seedTransactions(\DateTime $start): int
+    private function seedTransactions(\DateTime $start, ?\DateTime $end = null): int
     {
         $parties = ['Ramesh Traders', 'Sunrise Supplies', 'Balaji Enterprises', 'Gupta Distributors',
             'Sharma Wholesale', 'City Hardware', 'Annapurna Sweets', 'New Chicken Corner', 'Royal Tailors',
@@ -142,8 +152,10 @@ class SeedDummyData extends BaseCommand
         $jamaNotes = ['Payment received', 'Sale settled', 'Advance received', 'Cash deposit', 'Invoice cleared'];
         $naamNotes = ['Goods purchased', 'Rent paid', 'Transport charges', 'Salary paid', 'Electricity bill', 'Supplier payment'];
 
-        $seq = 100;
-        $end = new \DateTime('today');
+        // Continue the txn number from the company's current max so re-runs never collide.
+        $maxNo = (string) ($this->db->table('transactions')->selectMax('txn_no')->where('company_id', $this->cid)->get()->getRowArray()['txn_no'] ?? '');
+        $seq   = max(100, (int) preg_replace('/\D/', '', $maxNo));
+        $end   = $end ?? new \DateTime('today');
         $cur = clone $start;
         $count = 0;
         $this->db->transStart();

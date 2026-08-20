@@ -935,13 +935,73 @@ class TransactionApiController extends BaseApiController
         if ($err) {
             return $err;
         }
-        $since = trim((string) ($this->request->getGet('since') ?? ''));
+        $since   = trim((string) ($this->request->getGet('since') ?? ''));
+        $afterId = (int) $this->request->getGet('after_id');
+        // Optional pagination: bound the payload so a data-heavy firm never ships
+        // its whole history in one response (the mobile company-switch "hang").
+        $limit = (int) $this->request->getGet('limit');
+        $limit = $limit > 0 ? min($limit, 1000) : 0; // 0 = unlimited (back-compat)
+
+        // Cheap progress probe: ?count_only=1 returns just how many rows the pull
+        // will bring (since the cursor), so the mobile client can show a real %
+        // + ETA while syncing a firm — without shipping any row data.
+        if ($this->request->getGet('count_only') !== null) {
+            $cb = (new TransactionModel())->builder()->where('company_id', $cid);
+            if ($since !== '') {
+                if ($afterId > 0) {
+                    $cb->groupStart()
+                        ->where('updated_at >', $since)
+                        ->orGroupStart()->where('updated_at', $since)->where('id >', $afterId)->groupEnd()
+                      ->groupEnd();
+                } else {
+                    $cb->where('updated_at >=', $since);
+                }
+            }
+            return $this->respond(['status' => 'ok', 'total' => $cb->countAllResults()]);
+        }
 
         $b = (new TransactionModel())->builder()->where('company_id', $cid);
         if ($since !== '') {
-            $b->where('updated_at >=', $since);
+            if ($afterId > 0) {
+                // Keyset continuation within a page run: strictly after (updated_at, id).
+                $b->groupStart()
+                    ->where('updated_at >', $since)
+                    ->orGroupStart()->where('updated_at', $since)->where('id >', $afterId)->groupEnd()
+                  ->groupEnd();
+            } else {
+                $b->where('updated_at >=', $since);
+            }
         }
-        $rows = $b->orderBy('updated_at', 'ASC')->get()->getResultArray();
+        $b->orderBy('updated_at', 'ASC')->orderBy('id', 'ASC');
+        if ($limit > 0) {
+            $b->limit($limit + 1); // one extra row tells us whether more pages remain
+        }
+        $rows = $b->get()->getResultArray();
+
+        $hasMore = false;
+        if ($limit > 0 && count($rows) > $limit) {
+            $hasMore = true;
+            array_pop($rows); // drop the sentinel row
+        }
+
+        // ?with_total=1 → also return the TOTAL rows this pull will bring (since the
+        // cursor), so the mobile loader can show a real % + ETA. Computed once on
+        // the first page (one COUNT); the client passes the same cursor filters.
+        $total = null;
+        if ($this->request->getGet('with_total') !== null) {
+            $tb = (new TransactionModel())->builder()->where('company_id', $cid);
+            if ($since !== '') {
+                if ($afterId > 0) {
+                    $tb->groupStart()
+                        ->where('updated_at >', $since)
+                        ->orGroupStart()->where('updated_at', $since)->where('id >', $afterId)->groupEnd()
+                      ->groupEnd();
+                } else {
+                    $tb->where('updated_at >=', $since);
+                }
+            }
+            $total = $tb->countAllResults();
+        }
 
         // Lightweight per-entry attachment counts (ONE grouped COUNT query, no
         // files) — same source the web list uses, so the mobile paperclip badge
@@ -949,15 +1009,20 @@ class TransactionApiController extends BaseApiController
         $counts = (new TransactionAttachmentModel())
             ->countsFor(array_map(static fn (array $r): int => (int) $r['id'], $rows));
 
-        return $this->respond([
+        $payload = [
             'status'      => 'ok',
             'server_time' => date('Y-m-d H:i:s'),
+            'has_more'    => $hasMore,
             'changes'     => array_map(function (array $r) use ($counts): array {
                 $shaped = $this->syncShape($r);
                 $shaped['attachment_count'] = $counts[(int) $r['id']] ?? 0;
                 return $shaped;
             }, $rows),
-        ]);
+        ];
+        if ($total !== null) {
+            $payload['total'] = $total;
+        }
+        return $this->respond($payload);
     }
 
 
@@ -1074,6 +1139,12 @@ class TransactionApiController extends BaseApiController
             if ($row && (int) $row['company_id'] === (int) $cid) {
                 $model->builder()->where('id', $sid)->delete();
             }
+        }
+
+        // Builder updates/deletes above bypass the model's afterUpdate hook, so
+        // invalidate this firm's dashboard cache explicitly after a sync batch.
+        if (function_exists('dash_bust')) {
+            dash_bust((int) $cid);
         }
 
         return $this->respond([

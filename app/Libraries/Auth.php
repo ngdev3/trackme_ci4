@@ -362,8 +362,41 @@ class Auth
         if ($name === '' || $email === '' || $password === '') {
             return ['error' => 'Name, email and password are required.'];
         }
-        if ($this->users->where('email', $email)->first()) {
-            return ['error' => 'This email is already registered.'];
+
+        // The email column is UNIQUE in the DB, and users are SOFT-deleted — so a
+        // previously-deleted account still occupies this address (a plain INSERT
+        // would fail on the unique key). Look with withDeleted() to catch it.
+        $existing = $this->users->withDeleted()->where('email', $email)->first();
+        if ($existing) {
+            if (empty($existing['deleted_at'])) {
+                return ['error' => 'This email is already registered.'];
+            }
+
+            // A deleted account held this email. Revive that row into a brand-new
+            // PENDING signup (same id keeps foreign keys intact) so the person can
+            // sign up again with the same address. Uses the query builder so the
+            // soft-delete flag can be cleared regardless of allowedFields.
+            $ok = $this->users->builder()->where('id', (int) $existing['id'])->update([
+                'name'                 => $name,
+                'password'             => password_hash($password, PASSWORD_DEFAULT),
+                'username'             => $existing['username'] ?: $this->users->generateUniqueUsername($email),
+                'auth_provider'        => null,
+                'provider_id'          => null,
+                'account_type'         => 'customer',
+                'status'               => 0,    // inactive until activated
+                'email_verified_at'    => null,
+                'must_change_password' => 0,
+                'deleted_at'           => null, // restore so the email is usable
+                'updated_at'           => date('Y-m-d H:i:s'),
+            ]);
+            if (! $ok) {
+                log_message('error', '[Register] revive failed: ' . implode(' ', $this->users->errors() ?: []));
+                return ['error' => 'We could not create your account. Please try again.'];
+            }
+            if ($roleId = ($this->defaultRoleId('admin') ?? $this->defaultRoleId('viewer'))) {
+                $this->users->syncRoles((int) $existing['id'], [$roleId]);
+            }
+            return ['user' => $this->users->withDeleted()->find((int) $existing['id']), 'id' => (int) $existing['id']];
         }
 
         $id = $this->users->insert([

@@ -92,8 +92,14 @@
         // ---- Reveal content only after the language module has applied ----
         // The <head> sets html.lang-loading when a non-English cookie exists,
         // so the page stays hidden (spinner shown) until Google finishes
-        // translating — no flash of untranslated English. A timeout is the
-        // safety net in case the translate engine is unreachable.
+        // translating — no flash of untranslated English.
+        //
+        // CRITICAL: the reveal must never gate page visibility on the (external,
+        // often slow/blocked) Google Translate engine for long — otherwise every
+        // navigation, including a firm switch, hangs behind the loader. We reveal
+        // the instant translation applies, and otherwise on a SHORT safety
+        // timeout (was 3.5s → felt like a "loading hang" after every switch). If
+        // translate is slow we accept a brief flash of English rather than a hang.
         if (document.documentElement.classList.contains('lang-loading')) {
             var revealed = false;
             var reveal = function () {
@@ -112,7 +118,14 @@
                 });
                 obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
             }
-            setTimeout(reveal, 3500); // fallback so the page never stays hidden
+            // Reveal as soon as the page is interactive too, so a stalled translate
+            // engine can never keep the page hidden beyond a moment.
+            if (document.readyState === 'complete') {
+                setTimeout(reveal, 300);
+            } else {
+                window.addEventListener('load', function () { setTimeout(reveal, 300); });
+            }
+            setTimeout(reveal, 1000); // hard cap — page is never hidden more than ~1s
         }
 
         // ---- First-visit language chooser popup ----
