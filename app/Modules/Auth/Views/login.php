@@ -81,7 +81,7 @@
                             <div class="input-wrap">
                                 <span class="input-icon"><i class="bi bi-envelope"></i></span>
                                 <input id="su-email" class="auth-control" type="email" name="email" inputmode="email"
-                                       value="<?= esc(old('email')) ?>" placeholder="you@company.com" required>
+                                       value="<?= esc(old('email') ?: session('prefill_email') ?: '') ?>" placeholder="you@company.com" required>
                             </div>
                         </div>
 

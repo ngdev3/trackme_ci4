@@ -48,7 +48,16 @@ class AuthApiController extends BaseApiController
 
         $user = (new UserModel())->findByLogin($login);
         if (! $user || ! $user['password'] || ! password_verify($password, $user['password'])) {
-            return $this->failUnauthorized('Invalid credentials.');
+            // Tell the client whether the account EXISTS (so it can auto-route:
+            // registered + repeated wrong password -> forgot-password; unknown
+            // email -> sign-up). Not an enumeration concern here — the product
+            // deliberately guides the user (same policy as forgot-password).
+            return $this->respond([
+                'status'           => 'error',
+                'error'            => 401,
+                'email_registered' => (bool) $user,
+                'messages'         => ['error' => $user ? 'Incorrect password. Please try again.' : 'No account found for this email.'],
+            ], 401);
         }
         if ((int) $user['status'] !== 1) {
             // A self-service signup that hasn't confirmed its email yet: the

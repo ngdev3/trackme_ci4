@@ -35,8 +35,35 @@ class AuthController extends BaseController
         [$ok, $message] = auth()->attempt($login, $password, $remember);
 
         if (! $ok) {
+            // Guide the user after repeated failures for the SAME email:
+            //   • a REGISTERED email + 3 wrong passwords → forgot-password (prefilled)
+            //   • an UNKNOWN email    + 2 attempts        → sign-up (prefilled)
+            $session = session();
+            $key     = 'login_fail_' . md5(strtolower($login));
+            $count   = (int) $session->get($key) + 1;
+            $session->set($key, $count);
+
+            $registered = (bool) (new UserModel())->where('email', $login)->first();
+
+            if ($registered && $count >= 3) {
+                $session->remove($key);
+                return redirect()->to(site_url('forgot-password'))
+                    ->with('prefill_email', $login)
+                    ->with('error', 'Too many incorrect attempts. Reset your password to continue.');
+            }
+            if (! $registered && $count >= 2) {
+                $session->remove($key);
+                return redirect()->to(site_url('login'))
+                    ->with('show', 'signup')
+                    ->with('prefill_email', $login)
+                    ->with('error', 'We couldn\'t find an account for that email. Create one to get started.');
+            }
+
             return redirect()->back()->withInput()->with('error', $message);
         }
+
+        // Successful login — clear the failure counter for this email.
+        session()->remove('login_fail_' . md5(strtolower($login)));
 
         activity_log('Auth', 'Login', 'User logged in');
         helper('company');
