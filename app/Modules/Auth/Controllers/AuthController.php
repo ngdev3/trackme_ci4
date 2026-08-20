@@ -166,30 +166,40 @@ class AuthController extends BaseController
         $email = (string) $this->request->getPost('email');
         $user  = (new UserModel())->where('email', $email)->first();
 
-        // Always respond the same way to avoid account enumeration.
-        if ($user) {
-            $token = bin2hex(random_bytes(32));
-            (new PasswordResetModel())->insert([
-                'email'      => $email,
-                'token'      => hash('sha256', $token),
-                'expires_at' => date('Y-m-d H:i:s', time() + 3600),
-                'created_at' => date('Y-m-d H:i:s'),
-            ]);
+        // No account for this email — warn the user about the account issue.
+        if (! $user) {
+            return redirect()->to(site_url('forgot-password'))->withInput()
+                ->with('error', 'No account was found for this email address. Please check the spelling, or create a new account.');
+        }
 
-            // Email the reset link; also surface it in-session as a fallback for
-            // environments where SMTP isn't configured yet.
-            helper('reset_email');
-            $sent = send_password_reset_email($email, $token);
-            $link = site_url('reset-password/' . $token);
-            // NEVER log the link/token (it grants a reset). Log the event only.
-            log_message('info', 'Password reset requested for {email} (mailed: {sent})', ['email' => $email, 'sent' => $sent ? 'yes' : 'no']);
-            if (! $sent) {
-                session()->setFlashdata('reset_link', $link);
-            }
+        // Account exists but signs in with a social provider (no password to reset).
+        if (empty($user['password'])) {
+            $provider = ucfirst((string) ($user['auth_provider'] ?? 'google'));
+            return redirect()->to(site_url('forgot-password'))->withInput()
+                ->with('error', 'This account signs in with ' . $provider . '. Please use "Continue with ' . $provider . '" on the login page — there is no password to reset.');
+        }
+
+        $token = bin2hex(random_bytes(32));
+        (new PasswordResetModel())->insert([
+            'email'      => $email,
+            'token'      => hash('sha256', $token),
+            'expires_at' => date('Y-m-d H:i:s', time() + 3600),
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        // Email the reset link; also surface it in-session as a fallback for
+        // environments where SMTP isn't configured yet.
+        helper('reset_email');
+        $sent = send_password_reset_email($email, $token);
+        $link = site_url('reset-password/' . $token);
+        // NEVER log the link/token (it grants a reset). Log the event only.
+        log_message('info', 'Password reset requested for {email} (mailed: {sent})', ['email' => $email, 'sent' => $sent ? 'yes' : 'no']);
+        if (! $sent) {
+            session()->setFlashdata('reset_link', $link);
         }
 
         return redirect()->to(site_url('forgot-password'))
-            ->with('success', 'If that email exists, a password reset link has been generated.');
+            ->with('success', 'A password reset link has been sent to ' . esc($email) . '.');
     }
 
     // ---------------------------------------------------------------

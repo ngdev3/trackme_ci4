@@ -18,13 +18,6 @@
     <a href="<?= esc($link, 'attr') ?>" style="color:#0f766e;word-break:break-all;"><?= esc($link) ?></a>
 </p>
 
-<?php if (! empty($code)): ?>
-<div style="margin:22px 0;padding:14px 16px;background:#f4f7fb;border-radius:10px;text-align:center;">
-    <div style="color:#5d687c;font-size:12px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;margin:0 0 6px;">Prefer to type a code in the app?</div>
-    <div style="font-size:26px;font-weight:bold;letter-spacing:8px;color:#0f213c;"><?= esc($code) ?></div>
-</div>
-<?php endif; ?>
-
 <p style="margin:0;color:#5d687c;font-size:13px;">This link expires in <?= esc($ttl) ?> hours. If you didn't create this account, you can safely ignore this email.</p>
 
 <?= $this->endSection() ?>

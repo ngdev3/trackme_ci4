@@ -202,34 +202,51 @@ class AuthApiController extends BaseApiController
         }
 
         // Throttle reset requests so this can't be used to spam a victim's inbox
-        // or farm reset tokens. Same generic response either way (no enumeration).
+        // or farm reset tokens.
         if ($this->tooManyAttempts('forgot-ip-' . $this->clientIpKey(), 5, 10 * MINUTE)
             || $this->tooManyAttempts('forgot-acct-' . md5(strtolower($email)), 3, 15 * MINUTE)) {
-            return $this->respond([
-                'status'  => 'success',
-                'message' => 'If that email exists, a password reset link has been sent.',
-            ]);
+            return $this->fail('Too many attempts. Please wait a few minutes and try again.', 429);
         }
 
         $user = (new UserModel())->where('email', $email)->first();
-        if ($user) {
-            $token = bin2hex(random_bytes(32));
-            (new PasswordResetModel())->insert([
-                'email'      => $email,
-                'token'      => hash('sha256', $token),
-                'expires_at' => date('Y-m-d H:i:s', time() + 3600),
-                'created_at' => date('Y-m-d H:i:s'),
-            ]);
-            // Email the reset link (opens the web reset page).
-            helper('reset_email');
-            send_password_reset_email($email, $token);
-            // NEVER log the raw token — it grants password reset. Log the event only.
-            log_message('info', 'API password reset requested for {email}', ['email' => $email]);
+
+        // No account for this email — warn the user about the account issue instead
+        // of silently pretending a link was sent.
+        if (! $user) {
+            return $this->respond([
+                'status'          => 'error',
+                'account_missing' => true,
+                'message'         => 'No account was found for this email address. Please check the spelling, or create a new account.',
+            ], 404);
         }
+
+        // Account exists but signs in with a social provider (no password to reset).
+        if (empty($user['password'])) {
+            $provider = ucfirst((string) ($user['auth_provider'] ?? 'google'));
+            return $this->respond([
+                'status'     => 'error',
+                'oauth_only' => true,
+                'provider'   => $provider,
+                'message'    => 'This account signs in with ' . $provider . '. Please use "Continue with ' . $provider . '" — there is no password to reset.',
+            ], 409);
+        }
+
+        $token = bin2hex(random_bytes(32));
+        (new PasswordResetModel())->insert([
+            'email'      => $email,
+            'token'      => hash('sha256', $token),
+            'expires_at' => date('Y-m-d H:i:s', time() + 3600),
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+        // Email the reset link (opens the web reset page).
+        helper('reset_email');
+        send_password_reset_email($email, $token);
+        // NEVER log the raw token — it grants password reset. Log the event only.
+        log_message('info', 'API password reset requested for {email}', ['email' => $email]);
 
         return $this->respond([
             'status'  => 'success',
-            'message' => 'If that email exists, a password reset link has been sent.',
+            'message' => 'A password reset link has been sent to ' . $email . '.',
         ]);
     }
 
@@ -281,8 +298,8 @@ class AuthApiController extends BaseApiController
 
     /**
      * Self-service signup: create a PENDING email/password account and email a
-     * 6-digit activation code. The account stays inactive until the code is
-     * confirmed via verifyEmailOtp (which then activates it and logs the user in).
+     * one-click activation LINK (48h). The account stays inactive until the user
+     * taps the link (which activates it); there is no 6-digit code.
      *
      *   POST /api/v1/auth/register  {name, email, password}
      */
@@ -307,27 +324,24 @@ class AuthApiController extends BaseApiController
             return $this->failValidationErrors(['email' => $result['error']]);
         }
 
-        // Send ONE activation email containing a one-click "Activate" button
-        // (48h link) AND a 6-digit code fallback for the in-app entry screen.
-        $code  = (new EmailOtpModel())->issue($email, 'email_verify', 10);
+        // Send ONE activation email with a single one-click "Activate" link (48h).
+        // Activation is LINK-ONLY — no 6-digit code is generated or shown.
         $token = (new \App\Models\AccountActivationModel())->issue($email, 48);
         helper('activation_email');
-        send_activation_email($email, $token, $code);
+        send_activation_email($email, $token);
         log_message('info', 'Activation email sent for {email}', ['email' => $email]);
 
         return $this->respondCreated([
-            'status'     => 'success',
-            'message'    => 'Account created. Check your email and tap the activation link, or enter the 6-digit code.',
-            'email'      => $email,
-            'expires_in' => 600,
+            'status'  => 'success',
+            'message' => 'Account created. Check your email and tap the activation link to confirm your account.',
+            'email'   => $email,
         ]);
     }
 
     /**
-     * Resend the activation email — a one-click "Activate" link (48h) plus a
-     * 6-digit code fallback. Used by the app's "Resend" action on the activation
-     * screen. Throttled to one send per minute; answers the same way regardless
-     * of whether the email exists (no account enumeration).
+     * Resend the activation email — a single one-click "Activate" link (48h).
+     * LINK-ONLY (no 6-digit code). Throttled to one send per minute; answers the
+     * same way regardless of whether the email exists (no account enumeration).
      */
     public function requestEmailOtp()
     {
@@ -336,27 +350,23 @@ class AuthApiController extends BaseApiController
             return $this->failValidationErrors('A valid email is required.');
         }
 
-        $otps = new EmailOtpModel();
-        $since = $otps->secondsSinceLast($email);
-        if ($since !== null && $since < 60) {
-            return $this->fail('Please wait a moment before requesting another code.', 429);
+        if ($this->tooManyAttempts('resend-activation-' . md5($email), 1, MINUTE)) {
+            return $this->fail('Please wait a moment before requesting another email.', 429);
         }
 
         // Only mail a live activation link when a pending account actually exists
         // for this email; otherwise respond the same way but send nothing.
         $user = (new UserModel())->where('email', $email)->first();
         if ($user) {
-            $code  = $otps->issue($email, 'email_verify', 10);
             $token = (new \App\Models\AccountActivationModel())->issue($email, 48);
             helper('activation_email');
-            send_activation_email($email, $token, $code);
+            send_activation_email($email, $token);
             log_message('info', 'Activation email resent for {email}', ['email' => $email]);
         }
 
         return $this->respond([
             'status'  => 'success',
             'message' => 'If that account exists, an activation email has been sent.',
-            'expires_in' => 600,
         ]);
     }
 
