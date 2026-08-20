@@ -937,42 +937,54 @@ class TransactionApiController extends BaseApiController
         }
         $since   = trim((string) ($this->request->getGet('since') ?? ''));
         $afterId = (int) $this->request->getGet('after_id');
+        // Newest-first initial backfill (dir=desc): the mobile client pulls a firm's
+        // history newest→oldest so TODAY/this-week's entries land in the first chunk
+        // and the app is instantly useful, while old history streams in the background.
+        // Steady-state incremental sync stays ASC (default) so the updated_at cursor
+        // advances monotonically. DESC paginates by a (before, before_id) keyset.
+        $desc     = strtolower(trim((string) ($this->request->getGet('dir') ?? 'asc'))) === 'desc';
+        $before   = trim((string) ($this->request->getGet('before') ?? ''));
+        $beforeId = (int) $this->request->getGet('before_id');
         // Optional pagination: bound the payload so a data-heavy firm never ships
         // its whole history in one response (the mobile company-switch "hang").
         $limit = (int) $this->request->getGet('limit');
         $limit = $limit > 0 ? min($limit, 1000) : 0; // 0 = unlimited (back-compat)
 
-        // Cheap progress probe: ?count_only=1 returns just how many rows the pull
-        // will bring (since the cursor), so the mobile client can show a real %
-        // + ETA while syncing a firm — without shipping any row data.
-        if ($this->request->getGet('count_only') !== null) {
-            $cb = (new TransactionModel())->builder()->where('company_id', $cid);
-            if ($since !== '') {
+        // Apply the keyset filter shared by the page query, has-more sentinel, and
+        // the count probes — so all three see exactly the same window of rows.
+        $applyCursor = function ($b) use ($desc, $since, $afterId, $before, $beforeId) {
+            if ($desc) {
+                // Backfill continuation: rows strictly BEFORE (updated_at, id).
+                if ($before !== '') {
+                    $b->groupStart()
+                        ->where('updated_at <', $before)
+                        ->orGroupStart()->where('updated_at', $before)->where('id <', $beforeId)->groupEnd()
+                      ->groupEnd();
+                }
+            } elseif ($since !== '') {
                 if ($afterId > 0) {
-                    $cb->groupStart()
+                    // Keyset continuation within a page run: strictly after (updated_at, id).
+                    $b->groupStart()
                         ->where('updated_at >', $since)
                         ->orGroupStart()->where('updated_at', $since)->where('id >', $afterId)->groupEnd()
                       ->groupEnd();
                 } else {
-                    $cb->where('updated_at >=', $since);
+                    $b->where('updated_at >=', $since);
                 }
             }
+            return $b;
+        };
+
+        // Cheap progress probe: ?count_only=1 returns just how many rows the pull
+        // will bring (from the cursor), so the mobile client can show a real %
+        // + ETA while syncing a firm — without shipping any row data.
+        if ($this->request->getGet('count_only') !== null) {
+            $cb = $applyCursor((new TransactionModel())->builder()->where('company_id', $cid));
             return $this->respond(['status' => 'ok', 'total' => $cb->countAllResults()]);
         }
 
-        $b = (new TransactionModel())->builder()->where('company_id', $cid);
-        if ($since !== '') {
-            if ($afterId > 0) {
-                // Keyset continuation within a page run: strictly after (updated_at, id).
-                $b->groupStart()
-                    ->where('updated_at >', $since)
-                    ->orGroupStart()->where('updated_at', $since)->where('id >', $afterId)->groupEnd()
-                  ->groupEnd();
-            } else {
-                $b->where('updated_at >=', $since);
-            }
-        }
-        $b->orderBy('updated_at', 'ASC')->orderBy('id', 'ASC');
+        $b = $applyCursor((new TransactionModel())->builder()->where('company_id', $cid));
+        $b->orderBy('updated_at', $desc ? 'DESC' : 'ASC')->orderBy('id', $desc ? 'DESC' : 'ASC');
         if ($limit > 0) {
             $b->limit($limit + 1); // one extra row tells us whether more pages remain
         }
@@ -984,22 +996,12 @@ class TransactionApiController extends BaseApiController
             array_pop($rows); // drop the sentinel row
         }
 
-        // ?with_total=1 → also return the TOTAL rows this pull will bring (since the
+        // ?with_total=1 → also return the TOTAL rows this pull will bring (from the
         // cursor), so the mobile loader can show a real % + ETA. Computed once on
         // the first page (one COUNT); the client passes the same cursor filters.
         $total = null;
         if ($this->request->getGet('with_total') !== null) {
-            $tb = (new TransactionModel())->builder()->where('company_id', $cid);
-            if ($since !== '') {
-                if ($afterId > 0) {
-                    $tb->groupStart()
-                        ->where('updated_at >', $since)
-                        ->orGroupStart()->where('updated_at', $since)->where('id >', $afterId)->groupEnd()
-                      ->groupEnd();
-                } else {
-                    $tb->where('updated_at >=', $since);
-                }
-            }
+            $tb = $applyCursor((new TransactionModel())->builder()->where('company_id', $cid));
             $total = $tb->countAllResults();
         }
 
