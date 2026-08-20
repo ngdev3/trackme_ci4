@@ -375,6 +375,22 @@ textarea.control{resize:vertical;min-height:118px}
   </div>
 </section>
 
+<!-- PRODUCT SHOWCASE -->
+<section class="showcase" aria-label="<?= esc($appName) ?> product showcase">
+  <div class="container">
+    <img src="<?= base_url('assets/img/hero-showcase.png') ?>"
+         alt="<?= esc($appName) ?> — manage accounts, inventory and transactions on web and mobile"
+         class="showcase-img reveal" loading="lazy" decoding="async">
+  </div>
+</section>
+<style>
+.showcase{ padding:6px 0 46px; }
+.showcase .container{ max-width:1200px; }
+.showcase-img{ display:block; width:100%; height:auto; border-radius:22px; background:#fff;
+  border:1px solid var(--line, #e4ebf5); box-shadow:0 34px 80px rgba(21,32,51,.18); }
+@media(max-width:860px){ .showcase{ padding:4px 0 30px; } .showcase-img{ border-radius:14px; box-shadow:0 18px 44px rgba(21,32,51,.16); } }
+</style>
+
 <!-- STATS -->
 <div class="stats">
   <div class="container">
@@ -413,6 +429,54 @@ textarea.control{resize:vertical;min-height:118px}
     </div>
   </div>
 </section>
+
+<!-- SCREENSHOTS GALLERY -->
+<section class="section" id="screens" style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="container center">
+    <span class="eyebrow"><i class="bi bi-images"></i> See it in action</span>
+    <h2 class="h-sec">A closer look at <?= esc($appName) ?></h2>
+    <p class="lede">Real screens from the app — your daily cash book, reports and party statements, all clean and ready to share.</p>
+  </div>
+  <div class="container">
+    <div class="shots">
+      <?php
+      $shots = [
+        ['shot-report.png',           'Reports',           'Party-wise and payment-mode breakdowns with running totals, plus one-tap PDF, Excel and print exports.'],
+        ['shot-statement.png',        'Account Statement', 'Every party in one list with total Jama, Naam and net balance — tap any account to open its full statement.'],
+        ['shot-statement-detail.png', 'Party Ledger',      'A complete running-balance statement for any party, ready to print or export as a PDF.'],
+        ['shot-notes.png',            'Notes & Reminders', 'Pin important notes, tag them by category, and never miss GST filing, follow-ups or a payment.'],
+        ['shot-passwords.png',        'Password Vault',    'Keep business logins in an encrypted, company-scoped vault — reveal or copy a password only when you need it.'],
+        ['shot-calculator.png',       'Smart Calculator',  'A quick calculator that saves every calculation with a title, so bulk prices, taxes and splits stay one tap away.'],
+        ['shot-appearance.png',       'Make it yours',     'Choose light, dark or system theme and set your own brand colours — the whole app updates with a live preview.'],
+        ['shot-support.png',          'Help & Support',    'WhatsApp, email and a searchable FAQ — real help from real people whenever you need it.'],
+      ];
+      foreach ($shots as [$img,$t,$d]): ?>
+        <figure class="shot reveal">
+          <div class="shot-frame">
+            <img src="<?= base_url('assets/img/' . $img) ?>"
+                 alt="<?= esc($appName) ?> — <?= esc($t) ?>"
+                 loading="lazy" decoding="async">
+          </div>
+          <figcaption><b><?= esc($t) ?></b><span><?= esc($d) ?></span></figcaption>
+        </figure>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<style>
+.shots{ display:grid; grid-template-columns:repeat(2,1fr); gap:28px; }
+.shot{ margin:0; }
+.shot-frame{ border-radius:16px; overflow:hidden; background:#fff;
+  border:1px solid var(--line,#e4ebf5); box-shadow:0 24px 60px rgba(21,32,51,.16);
+  transition:transform .25s ease, box-shadow .25s ease; }
+.shot-frame img{ display:block; width:100%; height:auto; }
+.shot:hover .shot-frame{ transform:translateY(-4px); box-shadow:0 34px 80px rgba(21,32,51,.22); }
+.shot figcaption{ padding:16px 4px 0; }
+.shot figcaption b{ display:block; font-size:1.05rem; font-weight:800; }
+.shot figcaption span{ display:block; margin-top:4px; color:var(--muted); font-size:.95rem; line-height:1.5; }
+@media(max-width:860px){ .shots{ grid-template-columns:1fr; gap:22px; }
+  .shot-frame{ border-radius:12px; box-shadow:0 16px 40px rgba(21,32,51,.14); } }
+</style>
 
 <!-- HOW IT WORKS / SHOWCASE -->
 <section class="section" id="how" style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">

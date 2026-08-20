@@ -68,9 +68,11 @@ class ApiRegistry
 
     /**
      * Parse the route collection and upsert every api/v1 endpoint. Preserves the
-     * operator's is_active toggle and last health result on existing rows.
+     * operator's is_active toggle and last health result on existing rows, and
+     * PRUNES rows whose route no longer exists (so removed endpoints disappear
+     * from the monitor instead of lingering as stale entries).
      *
-     * @return array{added:int, updated:int, total:int}
+     * @return array{added:int, updated:int, removed:int, total:int}
      */
     public function sync(): array
     {
@@ -118,7 +120,18 @@ class ApiRegistry
             }
         }
 
-        return ['added' => $added, 'updated' => $updated, 'total' => count($seen)];
+        // Prune stale rows: any registry entry whose "METHOD path" is no longer
+        // in the live route collection (its route/controller was removed).
+        $removed = 0;
+        foreach ($this->model->findAll() as $r) {
+            $key = strtoupper((string) $r['http_method']) . ' ' . $r['path'];
+            if (! isset($seen[$key])) {
+                $this->model->delete($r['id']);
+                $removed++;
+            }
+        }
+
+        return ['added' => $added, 'updated' => $updated, 'removed' => $removed, 'total' => count($seen)];
     }
 
     /**
