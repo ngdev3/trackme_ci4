@@ -116,6 +116,24 @@ class Mailer
         return $this->send($to, 'Activate your ' . $this->appName() . ' account', $html);
     }
 
+    /**
+     * Send the owner a FINAL report of a company that was just permanently
+     * deleted — entry/account totals and a clear "cannot be recovered" notice.
+     * `$stats` comes from send_company_deletion_report() (company_report helper).
+     */
+    public function companyDeleted(string $to, string $name, string $companyName, array $stats): bool
+    {
+        $app  = $this->appName();
+        $html = $this->render('company_deleted', [
+            'app'         => $app,
+            'name'        => $name !== '' ? $name : 'there',
+            'companyName' => $companyName,
+            'stats'       => $stats,
+            'preheader'   => 'Final report for "' . $companyName . '" — permanently deleted and not recoverable.',
+        ]);
+        return $this->send($to, 'Final report — "' . $companyName . '" was permanently deleted', $html);
+    }
+
     /** Confirm that the account password was just changed. */
     public function passwordChanged(string $to, string $name): bool
     {

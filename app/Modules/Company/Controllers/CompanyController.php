@@ -503,6 +503,11 @@ class CompanyController extends BaseController
             return redirect()->to(site_url('company/trash'))->with('error', 'You can only delete a company you own.');
         }
 
+        // Email the owner a FINAL report of the company BEFORE anything is erased
+        // (entries, accounts, totals + a "cannot be recovered" notice). Best-effort.
+        helper('company_report');
+        send_company_deletion_report($company);
+
         $db = \Config\Database::connect();
         $db->query('SET FOREIGN_KEY_CHECKS=0');
         // Purge every table scoped by company_id, then memberships, then the row.

@@ -1,0 +1,81 @@
+<?php
+
+use App\Models\UserModel;
+use Config\Database;
+use Config\Services;
+
+if (! function_exists('send_company_deletion_report')) {
+    /**
+     * Email the company OWNER a final snapshot of a company immediately BEFORE it
+     * is permanently deleted — entry count, total Jama/Naam, net, number of
+     * accounts and the date range — together with a clear notice that the company
+     * cannot be recovered.
+     *
+     * MUST be called BEFORE the rows are purged (it reads the data being removed).
+     * Best-effort and self-contained: any failure is logged and swallowed so a
+     * mail/DB hiccup can never block the permanent delete. Shared by the web
+     * (CompanyController::forceDeleteCompany) and the mobile API
+     * (CompanyApiController::purge) so both send an identical report.
+     *
+     * @param array $company The (soft-deleted) company row about to be purged.
+     * @return bool true when the report was accepted for delivery.
+     */
+    function send_company_deletion_report(array $company): bool
+    {
+        try {
+            $db  = Database::connect();
+            $cid = (int) ($company['id'] ?? 0);
+            if ($cid <= 0) {
+                return false;
+            }
+
+            // Cash-book snapshot (Jama = deposits/in, Naam = expenses/out).
+            $row = $db->table('transactions')
+                ->select(
+                    "COUNT(*) AS entries,
+                     COALESCE(SUM(CASE WHEN type = 'jama' THEN amount ELSE 0 END), 0) AS jama,
+                     COALESCE(SUM(CASE WHEN type = 'naam' THEN amount ELSE 0 END), 0) AS naam,
+                     COUNT(DISTINCT NULLIF(name, '')) AS parties,
+                     MIN(txn_date) AS first_date,
+                     MAX(txn_date) AS last_date",
+                    false
+                )
+                ->where('company_id', $cid)
+                ->where('deleted_at', null) // active entries only (exclude trashed)
+                ->get()
+                ->getRowArray() ?: [];
+
+            $jama = (float) ($row['jama'] ?? 0);
+            $naam = (float) ($row['naam'] ?? 0);
+
+            $stats = [
+                'entries'    => (int) ($row['entries'] ?? 0),
+                'jama'       => $jama,
+                'naam'       => $naam,
+                'net'        => $jama - $naam,
+                'parties'    => (int) ($row['parties'] ?? 0),
+                'first_date' => $row['first_date'] ?? null,
+                'last_date'  => $row['last_date'] ?? null,
+                'deleted_at' => date('d M Y, H:i'),
+            ];
+
+            // Report goes to the company OWNER (only an owner/super-admin can purge;
+            // if a super-admin deleted it, the owner still gets their record).
+            $owner = (new UserModel())->find((int) ($company['owner_id'] ?? 0));
+            $to    = trim((string) ($owner['email'] ?? ''));
+            if ($to === '' || ! filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                return false;
+            }
+
+            return Services::mailer()->companyDeleted(
+                $to,
+                (string) ($owner['name'] ?? ''),
+                (string) ($company['name'] ?? 'your company'),
+                $stats
+            );
+        } catch (\Throwable $e) {
+            log_message('error', 'Company deletion report failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+}
