@@ -60,18 +60,18 @@ class NotificationModel extends Model
 
     /**
      * Notifications visible to a specific user by id — for the token-authenticated
-     * mobile API (no session). Includes the user's own notifications plus global
-     * ones (no user and no role). A fresh builder each call so it can be reused.
+     * mobile API (no session). STRICTLY per-user: a customer only ever sees their
+     * OWN notifications.
+     *
+     * It deliberately does NOT include role-less "global" broadcasts: those are
+     * admin-only alerts (suspicious logins, website inquiries) that would
+     * otherwise leak other people's data into every customer's feed — and show up
+     * in a brand-new account. Admin alerts are delivered per-admin instead
+     * (see Notifier::toSuperAdmins()), so nothing legitimate is lost here.
      */
     public function visibleForUser(int $userId)
     {
-        return $this->groupStart()
-            ->where('notifications.user_id', $userId)
-            ->orGroupStart()
-                ->where('notifications.user_id', null)
-                ->where('notifications.role_id', null)
-            ->groupEnd()
-        ->groupEnd();
+        return $this->where('notifications.user_id', $userId);
     }
 
     public function unreadCount(): int

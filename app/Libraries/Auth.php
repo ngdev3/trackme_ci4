@@ -706,7 +706,7 @@ class Auth
         ]);
 
         if ($suspicious) {
-            Services::notifier()->broadcast('Suspicious login detected', trim($username . ' - ' . $reason), [
+            Services::notifier()->toSuperAdmins('Suspicious login detected', trim($username . ' - ' . $reason), [
                 'type'       => $status === 'failed' ? 'warning' : 'error',
                 'module'     => 'login_logs',
                 'priority'   => 'high',

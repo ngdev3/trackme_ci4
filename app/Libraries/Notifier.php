@@ -173,4 +173,27 @@ class Notifier
             'message' => $message,
         ]);
     }
+
+    /**
+     * Deliver an ADMIN-ONLY alert (suspicious logins, website inquiries, etc.) to
+     * every active super-admin as a per-user notification — NOT a global broadcast.
+     *
+     * A global broadcast (user_id/role_id null) is visible to every account,
+     * including brand-new ones, which leaks other people's data into customers'
+     * feeds. Targeting super-admins by id keeps these alerts where they belong.
+     *
+     * @return int number of admins notified
+     */
+    public function toSuperAdmins(string $title, string $message, array $options = []): int
+    {
+        $ids = (new \App\Models\UserModel())
+            ->where('account_type', 'super_admin')
+            ->where('status', 1)
+            ->findColumn('id') ?? [];
+
+        foreach ($ids as $uid) {
+            $this->user((int) $uid, $title, $message, $options);
+        }
+        return count($ids);
+    }
 }

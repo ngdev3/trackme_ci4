@@ -234,7 +234,7 @@ class LandingController extends BaseController
 
         // Notify the Super Admin (in-app bell) so inquiries don't go unseen.
         try {
-            service('notifier')->broadcast(
+            service('notifier')->toSuperAdmins(
                 'New inquiry from ' . $data['name'],
                 ucfirst($subject) . ' — ' . $data['email'] . ($data['phone'] ? ' · ' . $data['phone'] : ''),
                 [
