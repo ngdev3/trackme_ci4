@@ -399,6 +399,13 @@ class CompanyApiController extends BaseApiController
             return $this->failForbidden('You can only delete a company you own.');
         }
 
+        // Final safety gate: the caller must type the exact company name to confirm
+        // this irreversible action (case-insensitive, trimmed).
+        $typed = trim((string) ($this->input('confirm_name') ?? $this->request->getGet('confirm_name') ?? ''));
+        if ($typed === '' || mb_strtolower($typed) !== mb_strtolower(trim((string) $company['name']))) {
+            return $this->fail('Please type the company name exactly to confirm permanent deletion.', 422);
+        }
+
         // Email the owner a FINAL report of the company BEFORE anything is erased
         // (entries, accounts, totals + a "cannot be recovered" notice). Best-effort.
         helper('company_report');

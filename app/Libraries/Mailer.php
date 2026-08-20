@@ -121,7 +121,7 @@ class Mailer
      * deleted — entry/account totals and a clear "cannot be recovered" notice.
      * `$stats` comes from send_company_deletion_report() (company_report helper).
      */
-    public function companyDeleted(string $to, string $name, string $companyName, array $stats): bool
+    public function companyDeleted(string $to, string $name, string $companyName, array $stats, ?string $pdf = null, string $pdfName = 'company-final-report.pdf'): bool
     {
         $app  = $this->appName();
         $html = $this->render('company_deleted', [
@@ -129,9 +129,13 @@ class Mailer
             'name'        => $name !== '' ? $name : 'there',
             'companyName' => $companyName,
             'stats'       => $stats,
+            'hasPdf'      => $pdf !== null && $pdf !== '',
             'preheader'   => 'Final report for "' . $companyName . '" — permanently deleted and not recoverable.',
         ]);
-        return $this->send($to, 'Final report — "' . $companyName . '" was permanently deleted', $html);
+        $attachment = ($pdf !== null && $pdf !== '')
+            ? ['content' => $pdf, 'filename' => $pdfName, 'type' => 'application/pdf']
+            : null;
+        return $this->send($to, 'Final report — "' . $companyName . '" was permanently deleted', $html, $attachment);
     }
 
     /** Confirm that the account password was just changed. */
@@ -172,7 +176,11 @@ class Mailer
     /**
      * Low-level send. Returns true on a 2xx from SendGrid. Never throws.
      */
-    private function send(string $to, string $subject, string $html): bool
+    /**
+     * @param array{content:string,filename:string,type:string}|null $attachment
+     *        Optional file attachment — raw bytes in `content` (base64-encoded here).
+     */
+    private function send(string $to, string $subject, string $html, ?array $attachment = null): bool
     {
         if (! filter_var($to, FILTER_VALIDATE_EMAIL)) {
             log_message('error', 'Mailer: refusing to send to invalid address "{to}"', ['to' => $to]);
@@ -193,6 +201,15 @@ class Mailer
             $mail->addTo($to);
             $mail->addContent('text/html', $html);
             $mail->addContent('text/plain', $this->toPlainText($html));
+
+            if ($attachment !== null && ($attachment['content'] ?? '') !== '') {
+                $mail->addAttachment(
+                    base64_encode((string) $attachment['content']),
+                    (string) ($attachment['type'] ?? 'application/octet-stream'),
+                    (string) ($attachment['filename'] ?? 'attachment'),
+                    'attachment'
+                );
+            }
 
             $sg   = new SendGrid($this->apiKey);
             $resp = $sg->send($mail);

@@ -1,5 +1,6 @@
 <?php
-/** @var string $app @var string $name @var string $companyName @var array $stats */
+/** @var string $app @var string $name @var string $companyName @var array $stats @var bool $hasPdf */
+$hasPdf = $hasPdf ?? false;
 $rupee   = static fn ($n) => '₹' . number_format((float) $n, 2);
 $fmtDate = static fn ($d) => $d ? date('d M Y', strtotime((string) $d)) : '—';
 $period  = ($stats['first_date'] ?? null)
@@ -50,6 +51,10 @@ $net     = (float) ($stats['net'] ?? 0);
         </td>
     </tr>
 </table>
+
+<?php if ($hasPdf): ?>
+<p style="margin:0 0 14px;color:#152033;font-size:14px;">📎 A detailed <strong>PDF report</strong> — including the per-account breakdown — is attached to this email for your records.</p>
+<?php endif; ?>
 
 <p style="margin:0;color:#5d687c;font-size:13px;">If you did not intend to delete this company, please contact our support team right away — but note that the data itself is not restorable.</p>
 

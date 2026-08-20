@@ -503,6 +503,14 @@ class CompanyController extends BaseController
             return redirect()->to(site_url('company/trash'))->with('error', 'You can only delete a company you own.');
         }
 
+        // Final safety gate: the operator must type the exact company name to
+        // confirm this irreversible action (case-insensitive, trimmed).
+        $typed = trim((string) $this->request->getPost('confirm_name'));
+        if ($typed === '' || mb_strtolower($typed) !== mb_strtolower(trim((string) $company['name']))) {
+            return redirect()->to(site_url('company/trash'))
+                ->with('error', 'Permanent deletion cancelled — the company name you typed did not match.');
+        }
+
         // Email the owner a FINAL report of the company BEFORE anything is erased
         // (entries, accounts, totals + a "cannot be recovered" notice). Best-effort.
         helper('company_report');

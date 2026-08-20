@@ -54,13 +54,12 @@ $dmy = fn ($d) => $d ? date('d-m-Y H:i', strtotime($d)) : '—';
                                                     <?= csrf_field() ?>
                                                     <button class="btn btn-sm btn-outline-success" type="submit"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
                                                 </form>
-                                                <form action="<?= site_url('company/force-delete/' . (int) $c['id']) ?>" method="post" class="d-inline" data-no-validate
-                                                      data-confirm="This permanently deletes &ldquo;<?= esc($c['name'], 'attr') ?>&rdquo; and ALL of its data (transactions, ledgers, inventory, notes, reminders, etc.). Recovery is NOT possible after this."
-                                                      data-confirm-title="Delete forever?"
-                                                      data-confirm-btn="Delete permanently"
-                                                      data-confirm-icon="error">
+                                                <form action="<?= site_url('company/force-delete/' . (int) $c['id']) ?>" method="post" class="d-inline" data-no-validate id="purgeForm<?= (int) $c['id'] ?>">
                                                     <?= csrf_field() ?>
-                                                    <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-x-octagon"></i> Delete forever</button>
+                                                    <input type="hidden" name="confirm_name" value="">
+                                                    <button class="btn btn-sm btn-outline-danger js-purge" type="button"
+                                                            data-name="<?= esc($c['name'], 'attr') ?>"
+                                                            data-form="purgeForm<?= (int) $c['id'] ?>"><i class="bi bi-x-octagon"></i> Delete forever</button>
                                                 </form>
                                             </div>
                                         </td>
@@ -78,3 +77,27 @@ $dmy = fn ($d) => $d ? date('d-m-Y H:i', strtotime($d)) : '—';
         </div>
     </div>
 </div>
+
+<script>
+// Permanent company delete requires typing the exact firm name — a final,
+// deliberate confirmation for an irreversible action. The server re-checks it too.
+document.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('.js-purge');
+    if (!btn) return;
+    ev.preventDefault();
+    var expected = btn.getAttribute('data-name') || '';
+    var typed = window.prompt(
+        'This permanently deletes "' + expected + '" and ALL of its data (entries, accounts, attachments).\n' +
+        'This CANNOT be undone.\n\nType the company name exactly to confirm:'
+    );
+    if (typed === null) return; // cancelled
+    if (typed.trim().toLowerCase() !== expected.trim().toLowerCase()) {
+        alert('The name you typed did not match "' + expected + '". Deletion cancelled.');
+        return;
+    }
+    var form = document.getElementById(btn.getAttribute('data-form'));
+    if (!form) return;
+    form.querySelector('input[name="confirm_name"]').value = typed;
+    form.submit();
+});
+</script>
