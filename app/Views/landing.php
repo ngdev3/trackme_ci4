@@ -401,6 +401,73 @@ textarea.control{resize:vertical;min-height:118px}
   </div>
 </div>
 
+<!-- KEY ADVANTAGES -->
+<section class="section adv" id="why">
+  <div class="container center">
+    <span class="eyebrow"><i class="bi bi-patch-check"></i> Why <?= esc($appName) ?></span>
+    <h2 class="h-sec">Simple. Affordable. <span class="grad">Always available.</span></h2>
+    <p class="lede">No ads &nbsp;&middot;&nbsp; Less than ₹1 a day &nbsp;&middot;&nbsp; Works offline &nbsp;&middot;&nbsp; Automatic backup.</p>
+  </div>
+  <div class="container">
+    <div class="adv-grid">
+      <!-- 1 · Ad-free -->
+      <div class="adv-card reveal">
+        <div class="adv-ic" style="background:linear-gradient(135deg,#ef4444,#b91c1c)"><i class="bi bi-slash-circle"></i></div>
+        <h3>100% Ad-Free</h3>
+        <p>Your business, no distractions. No pop-ups, no banner ads, no interruptions — ever — on both the web and the mobile app.</p>
+        <div class="adv-tags"><span>No pop-ups</span><span>No banners</span><span>Zero distractions</span></div>
+      </div>
+      <!-- 2 · Price (highlighted) -->
+      <div class="adv-card pop reveal">
+        <span class="adv-flag">Best value</span>
+        <div class="adv-ic" style="background:linear-gradient(135deg,#2563eb,#7c3aed)"><i class="bi bi-cash-coin"></i></div>
+        <h3>Less than ₹1 a day</h3>
+        <div class="adv-price"><b>₹0.82</b><span>/day</span></div>
+        <p>Plans start at just <b>₹299/year</b> — about <b>82 paise a day</b> to run your entire firm.</p>
+        <a href="#pricing" class="btn btn-primary" style="justify-content:center">View plans <i class="bi bi-arrow-right"></i></a>
+      </div>
+      <!-- 3 · Offline + backup -->
+      <div class="adv-card reveal">
+        <div class="adv-ic" style="background:linear-gradient(135deg,#0f766e,#08A64A)"><i class="bi bi-cloud-arrow-up"></i></div>
+        <h3>Offline + Auto Backup</h3>
+        <p>Keep recording entries with no internet. Back online, they <b>sync &amp; back up automatically</b> — and on a new phone, just sign in to restore your data.</p>
+        <div class="adv-flow"><span>Offline</span><i class="bi bi-arrow-right"></i><span>Auto-sync</span><i class="bi bi-arrow-right"></i><span>Backed up</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+.adv{ padding-top:48px; }
+.adv-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:24px; align-items:stretch; }
+.adv-card{ position:relative; background:#fff; border:1px solid var(--line,#e4ebf5); border-radius:20px;
+  padding:30px 26px; box-shadow:0 18px 44px rgba(21,32,51,.08);
+  display:flex; flex-direction:column; transition:transform .25s ease, box-shadow .25s ease; }
+.adv-card:hover{ transform:translateY(-5px); box-shadow:0 30px 66px rgba(21,32,51,.14); }
+.adv-card.pop{ border:1.5px solid transparent; background:
+  linear-gradient(#fff,#fff) padding-box,
+  linear-gradient(135deg,#2563eb,#7c3aed) border-box; box-shadow:0 26px 60px rgba(37,99,235,.18); }
+.adv-flag{ position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+  background:var(--grad,linear-gradient(135deg,#2563eb,#7c3aed)); color:#fff; font-size:.72rem; font-weight:800;
+  letter-spacing:.04em; text-transform:uppercase; padding:5px 14px; border-radius:999px; white-space:nowrap; }
+.adv-ic{ width:56px; height:56px; border-radius:15px; display:grid; place-items:center;
+  color:#fff; font-size:1.5rem; box-shadow:0 10px 22px rgba(21,32,51,.16); }
+.adv-card h3{ margin:18px 0 8px; font-size:1.28rem; font-weight:800; }
+.adv-card p{ color:var(--muted); font-size:.98rem; line-height:1.6; margin:0 0 16px; }
+.adv-card .btn{ margin-top:auto; }
+.adv-price{ display:flex; align-items:baseline; gap:6px; margin:2px 0 12px; }
+.adv-price b{ font-size:2.7rem; font-weight:800; line-height:1;
+  background:var(--grad,linear-gradient(135deg,#2563eb,#7c3aed)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.adv-price span{ color:var(--muted); font-weight:700; font-size:1.05rem; }
+.adv-tags{ display:flex; flex-wrap:wrap; gap:8px; margin-top:auto; }
+.adv-tags span{ background:var(--surface,#f1f6fd); color:var(--muted); font-size:.8rem; font-weight:700;
+  padding:6px 11px; border-radius:999px; border:1px solid var(--line,#e4ebf5); }
+.adv-flow{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:auto; }
+.adv-flow span{ background:#e9f9f0; color:#0f766e; font-size:.8rem; font-weight:800;
+  padding:6px 11px; border-radius:8px; }
+.adv-flow i{ color:var(--teal,#0f766e); font-size:.85rem; }
+@media(max-width:900px){ .adv-grid{ grid-template-columns:1fr; max-width:460px; margin-inline:auto; } }
+</style>
+
 <!-- FEATURES -->
 <section class="section" id="features">
   <div class="container center">
@@ -476,6 +543,60 @@ textarea.control{resize:vertical;min-height:118px}
 .shot figcaption span{ display:block; margin-top:4px; color:var(--muted); font-size:.95rem; line-height:1.5; }
 @media(max-width:860px){ .shots{ grid-template-columns:1fr; gap:22px; }
   .shot-frame{ border-radius:12px; box-shadow:0 16px 40px rgba(21,32,51,.14); } }
+</style>
+
+<!-- MOBILE APP SHOWCASE -->
+<section class="section appshow" id="mobile">
+  <span class="ablob a1"></span><span class="ablob a2"></span>
+  <div class="container center" style="position:relative;z-index:1">
+    <span class="eyebrow on-dark"><i class="bi bi-phone"></i> In your pocket</span>
+    <h2 class="h-sec" style="color:#fff">The whole cash book, on your Android phone</h2>
+    <p class="lede" style="color:rgba(255,255,255,.82)">Add entries by voice, work fully offline, and switch between 12 Indian languages — <?= esc($appName) ?> syncs everything the moment you're back online.</p>
+  </div>
+  <div class="container" style="position:relative;z-index:1">
+    <div class="phones">
+      <?php
+      $appShots = [
+        ['app-dashboard.png', 'Dashboard',        'Balance, Jama/Naam and recent entries at a glance.'],
+        ['app-rokad.png',     'Rokadh Parcha',    'Daily cash voucher with totals — share or export a PDF.'],
+        ['app-report.png',    'Reports',          'Net flow by payment mode &amp; party type, PDF in a tap.'],
+        ['app-opening.png',   'Opening Balance',  'Set opening cash per year — it carries forward on its own.'],
+        ['app-offline.png',   'Works Offline',    'Fully offline, auto-syncs later — nothing is ever lost.'],
+        ['app-languages.png', '12 Languages',     'Hindi, Marathi, Tamil, Telugu, Gujarati, Bengali &amp; more.'],
+      ];
+      foreach ($appShots as [$img,$t,$d]): ?>
+        <figure class="phone reveal">
+          <img src="<?= base_url('assets/img/' . $img) ?>" alt="<?= esc($appName) ?> app — <?= esc($t) ?>" loading="lazy" decoding="async">
+          <figcaption><b><?= esc($t) ?></b><span><?= $d ?></span></figcaption>
+        </figure>
+      <?php endforeach; ?>
+    </div>
+    <div class="center" style="margin-top:38px">
+      <a href="<?= esc($loginUrl) ?>" class="btn btn-light btn-lg"><i class="bi bi-google-play"></i> Start your <?= $trialDays ?>-day free trial</a>
+      <p style="margin-top:14px;color:rgba(255,255,255,.7);font-size:.9rem"><i class="bi bi-phone"></i> Android app &middot; <i class="bi bi-wifi-off"></i> works offline &middot; <i class="bi bi-mic"></i> voice entry</p>
+    </div>
+  </div>
+</section>
+<style>
+.appshow{ position:relative; overflow:hidden;
+  background:linear-gradient(135deg,#041B4D 0%,#0B2F73 55%,#08A64A 140%); }
+.appshow .ablob{ position:absolute; border-radius:50%; filter:blur(80px); opacity:.5; }
+.appshow .a1{ width:460px;height:460px; background:#2563eb55; top:-160px; right:-120px; }
+.appshow .a2{ width:420px;height:420px; background:#00C85344; bottom:-180px; left:-120px; }
+.eyebrow.on-dark{ background:rgba(255,255,255,.12); color:#fff; border-color:rgba(255,255,255,.18); }
+.phones{ display:grid; grid-template-columns:repeat(3,1fr); gap:30px 24px; }
+.phone{ margin:0; text-align:center; }
+.phone img{ display:block; width:100%; max-width:260px; height:auto; margin:0 auto;
+  filter:drop-shadow(0 26px 44px rgba(0,0,0,.45)); transition:transform .25s ease; }
+.phone:hover img{ transform:translateY(-6px); }
+.phone figcaption{ margin-top:16px; }
+.phone figcaption b{ display:block; color:#fff; font-weight:800; font-size:1.05rem; }
+.phone figcaption span{ display:block; margin-top:4px; color:rgba(255,255,255,.72); font-size:.92rem; line-height:1.5; }
+.btn-light{ background:#fff; color:#0B2F73; font-weight:700; }
+.btn-light:hover{ background:#eaf1ff; }
+@media(max-width:860px){ .phones{ grid-template-columns:repeat(2,1fr); gap:24px 16px; }
+  .phone img{ max-width:200px; } }
+@media(max-width:520px){ .phones{ grid-template-columns:repeat(2,1fr); } .phone img{ max-width:150px; } }
 </style>
 
 <!-- HOW IT WORKS / SHOWCASE -->
@@ -565,8 +686,8 @@ textarea.control{resize:vertical;min-height:118px}
 <section class="section" id="pricing">
   <div class="container center">
     <span class="eyebrow"><i class="bi bi-tags"></i> Simple pricing</span>
-    <h2 class="h-sec">Start free, upgrade when you grow</h2>
-    <p class="lede">Every plan starts with a <b><?= $trialDays ?>-day free trial</b> — full access, no card needed. Pick the package that fits your firm.</p>
+    <h2 class="h-sec">Run your firm for <span class="grad">less than ₹1 a day</span></h2>
+    <p class="lede">Plans start at just <b>₹299/year</b> — about <b>₹0.82 a day</b>. Every plan begins with a <b><?= $trialDays ?>-day free trial</b> (full access, no card needed), and there are <b>never any ads</b>.</p>
   </div>
   <div class="container">
     <?php if (empty($plans)): ?>
@@ -581,7 +702,11 @@ textarea.control{resize:vertical;min-height:118px}
           <div class="pcard reveal <?= $isPop ? 'pop' : '' ?>">
             <h3><?= esc($p['name']) ?></h3>
             <div class="price"><b>₹<?= esc(number_format($price, 0)) ?></b><span><?= esc($cycleWord($p['billing_cycle'] ?? 'yearly')) ?></span></div>
-            <div style="color:var(--muted);font-size:.86rem;font-weight:600">Billed <?= esc($p['billing_cycle'] ?? 'yearly') ?></div>
+            <?php if (($p['billing_cycle'] ?? 'yearly') === 'yearly' && $price > 0): ?>
+              <div style="display:inline-block;color:#0f766e;background:#e9f9f0;font-size:.82rem;font-weight:800;padding:4px 11px;border-radius:999px;margin-top:2px">≈ ₹<?= number_format($price / 365, 2) ?>/day</div>
+            <?php else: ?>
+              <div style="color:var(--muted);font-size:.86rem;font-weight:600">Billed <?= esc($p['billing_cycle'] ?? 'yearly') ?></div>
+            <?php endif; ?>
             <ul>
               <?php foreach ($feats as $f): ?>
                 <li><i class="bi bi-check-circle-fill"></i> <?= esc($f) ?></li>
