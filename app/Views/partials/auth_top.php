@@ -151,6 +151,11 @@ a{text-decoration:none}
   .mobile-logo .wm{font-size:1.5rem}
   .mobile-logo .mark{width:40px;height:40px;border-radius:11px;background:var(--grad);color:#fff;display:grid;place-items:center;font-size:1.15rem}
 }
+/* Sign in ↔ Create account toggle (self-service signup) */
+.auth-view[hidden]{display:none}
+.auth-switch{margin:18px 0 0;text-align:center;font-size:.92rem;color:var(--muted)}
+.auth-switch a{font-weight:800;color:var(--brand);cursor:pointer;margin-left:4px;text-decoration:none}
+.auth-switch a:hover{text-decoration:underline}
 </style>
 </head>
 <body class="auth-body">

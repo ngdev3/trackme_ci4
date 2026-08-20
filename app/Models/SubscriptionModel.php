@@ -30,7 +30,7 @@ class SubscriptionModel extends Model
             return;
         }
         helper('subscription');
-        $days = function_exists('sub_trial_days') ? sub_trial_days() : 30;
+        $days = function_exists('sub_trial_days') ? sub_trial_days() : 180;
         $this->insert([
             'customer_id'    => $customerId,
             'plan_id'        => $planId,

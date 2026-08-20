@@ -67,7 +67,28 @@ class CompanyController extends BaseController
             'errors'      => session()->getFlashdata('errors') ?? [],
             'hasCompany'  => Services::company()->activeId() !== null,
             'accountName' => $this->accountName(),
+            'nameSuggestions' => $this->nameSuggestions(),
         ]);
+    }
+
+    /**
+     * Ready-made company-name ideas so a user with none in mind can pick one
+     * (mirrors the mobile onboarding chips). First ten are personalised with the
+     * account's first name; the rest are common Indian shop/firm names.
+     *
+     * @return list<string>
+     */
+    private function nameSuggestions(): array
+    {
+        $n = trim((string) strtok($this->accountName(), ' ')) ?: 'My';
+        return [
+            "{$n} Chai Wala", "{$n} Kirana Store", "{$n} General Store", "{$n} Traders",
+            "{$n} Enterprises", "{$n} Chicken Corner", "{$n} Sweets & Snacks", "{$n} Mobile Shop",
+            "{$n} Medical Store", "{$n} Electronics",
+            'Sharma Kirana Store', 'Gupta Traders', 'Balaji Enterprises', 'Sai Provision Store',
+            'New Chicken Corner', 'Annapurna Sweets', 'Maa Vaishno Dhaba', 'Royal Tailors',
+            'City Hardware', 'Bombay Fashion',
+        ];
     }
 
     /**

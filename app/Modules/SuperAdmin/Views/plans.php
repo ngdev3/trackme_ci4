@@ -9,7 +9,7 @@
                     <?= csrf_field() ?>
                     <div class="col-12">
                         <label class="form-label">Trial length (days)</label>
-                        <input type="number" name="trial_days" class="form-control" min="0" max="3650" value="<?= (int) ($trialDays ?? 30) ?>">
+                        <input type="number" name="trial_days" class="form-control" min="0" max="3650" value="<?= (int) ($trialDays ?? 180) ?>">
                         <div class="form-text">New customers get full access for this many days. 0 = no trial.</div>
                     </div>
                     <div class="col-12"><button class="btn btn-primary"><i class="bi bi-save me-1"></i> Save trial</button></div>

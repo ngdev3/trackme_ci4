@@ -21,6 +21,29 @@ $typeBadge = static fn (string $t): string => $t === 'naam'
     : '<span class="tx-type tx-income"><i class="bi bi-arrow-up-right"></i> Jama</span>';
 ?>
 
+<style>
+/* Wide 15-column cash-book table: pin the row-number (#) column on the left and
+   the running Balance column on the right so they never scroll away or clip.
+   Opaque backgrounds (covering thead / tbody / tfoot + highlighted rows) keep
+   the scrolled middle columns from showing through the pinned cells. */
+.rp-scroll{ position:relative; }
+.rp-scroll .tm-table th:first-child, .rp-scroll .tm-table td:first-child{
+    position:sticky; left:0; z-index:3; box-shadow:1px 0 0 var(--bs-border-color); }
+.rp-scroll .tm-table th:last-child,  .rp-scroll .tm-table td:last-child{
+    position:sticky; right:0; z-index:3; box-shadow:-1px 0 0 var(--bs-border-color); }
+/* default opaque background for every pinned cell (all row groups) */
+.rp-scroll .tm-table td:first-child, .rp-scroll .tm-table td:last-child{ background:var(--bs-body-bg); }
+/* header pinned cells sit above the body ones */
+.rp-scroll .tm-table thead th:first-child, .rp-scroll .tm-table thead th:last-child{
+    background:var(--bs-secondary-bg,#f6f7fb); z-index:4; }
+/* opening (tbody) + closing (tfoot) highlighted rows */
+.rp-scroll .tm-table tr.table-light td:first-child, .rp-scroll .tm-table tr.table-light td:last-child{
+    background:var(--bs-secondary-bg,#eef1f6); }
+/* keep pinned cells opaque on hover, else scrolled content shows through */
+.rp-scroll .tm-table tbody tr:hover td:first-child, .rp-scroll .tm-table tbody tr:hover td:last-child{
+    background:color-mix(in srgb, var(--bs-primary) 6%, var(--bs-body-bg)); }
+</style>
+
 <!-- ===== Period selector ===== -->
 <div class="card tm-table-card mb-3">
     <div class="tm-table-head">
@@ -106,7 +129,7 @@ $typeBadge = static fn (string $t): string => $t === 'naam'
         <span class="tx-mode"><i class="bi bi-arrow-right-circle"></i> Carry forward: &#8377; <?= $fmt($carry) ?></span>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
+        <div class="table-responsive rp-scroll">
             <table class="table align-middle mb-0 tm-table">
                 <thead><tr>
                     <th>#</th><th>Date</th><th>Txn No</th><th>Party</th><th>Party Type</th><th>Type</th>

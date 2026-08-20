@@ -12,7 +12,7 @@ $plan    = ! empty($state['plan']) ? (string) $state['plan'] : ($isPro ? 'Active
 $expiresTs = ! empty($state['expires_at']) ? strtotime((string) $state['expires_at']) : null;
 $expires = $expiresTs ? date('d M Y', $expiresTs) : null;
 $daysLeft = $expiresTs ? (int) ceil(($expiresTs - time()) / 86400) : null;
-$trialDays = isset($trialDays) ? (int) $trialDays : 30;
+$trialDays = isset($trialDays) ? (int) $trialDays : 180;
 $trialProgress = ($daysLeft !== null && $trialDays > 0)
     ? max(0, min(100, (int) round((($trialDays - max(0, $daysLeft)) / $trialDays) * 100)))
     : ($isPro ? 100 : 0);

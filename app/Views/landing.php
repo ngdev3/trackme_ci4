@@ -10,7 +10,7 @@ $supportWaShown= $supportWaShown?? '+91 63935 05070';
 $supportEmail  = $supportEmail  ?? brand_support_email();
 $plans         = $plans         ?? [];
 $planFeatures  = $planFeatures  ?? [];
-$trialDays     = (int) ($trialDays ?? 30);
+$trialDays     = (int) ($trialDays ?? 180);
 
 // Legal / contact identity (kept in sync with the Privacy Policy page).
 $company      = 'CR Industries';

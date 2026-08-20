@@ -43,6 +43,46 @@ class AuthController extends BaseController
         return redirect()->to(post_login_url())->with('success', $message);
     }
 
+    // ---------------------------------------------------------------
+    // Self-service signup — creates a pending account and emails a
+    // one-click activation link (no code entry; the link activates).
+    // ---------------------------------------------------------------
+
+    /** Create a pending account and email a one-click activation link. */
+    public function register()
+    {
+        $rules = [
+            'name'     => 'required|min_length[2]|max_length[120]',
+            'email'    => 'required|valid_email',
+            'password' => 'required|min_length[8]',
+        ];
+        if (! $this->validate($rules)) {
+            return redirect()->back()->withInput()
+                ->with('error', implode(' ', $this->validator->getErrors()))
+                ->with('show', 'signup');
+        }
+
+        $name     = trim((string) $this->request->getPost('name'));
+        $email    = strtolower(trim((string) $this->request->getPost('email')));
+        $password = (string) $this->request->getPost('password');
+
+        $result = auth()->createEmailUser($name, $email, $password);
+        if (isset($result['error'])) {
+            return redirect()->back()->withInput()->with('error', $result['error'])->with('show', 'signup');
+        }
+
+        // Email a one-click activation link (48h). No 6-digit code — activation
+        // happens by clicking the link, which hits activate/{token}.
+        $token = (new \App\Models\AccountActivationModel())->issue($email, 48);
+        helper('activation_email');
+        send_activation_email($email, $token);
+
+        activity_log('Auth', 'Signup', 'Self-service signup started: ' . $email);
+        return redirect()->to(site_url('login'))->with('success',
+            "Account created! We've emailed an activation link to " . $email
+            . ' — click it to activate your account, then sign in.');
+    }
+
     public function logout()
     {
         activity_log('Auth', 'Logout', 'User logged out');

@@ -60,7 +60,7 @@ class LandingController extends BaseController
             'supportEmail' => brand_support_email(),
             'plans'        => $plans,
             'planFeatures' => $planFeatures,
-            'trialDays'    => function_exists('sub_trial_days') ? sub_trial_days() : 30,
+            'trialDays'    => function_exists('sub_trial_days') ? sub_trial_days() : 180,
         ]);
     }
 

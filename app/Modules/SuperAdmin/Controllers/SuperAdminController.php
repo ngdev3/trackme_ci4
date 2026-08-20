@@ -668,7 +668,7 @@ class SuperAdminController extends BaseController
             'title'      => 'Subscription Plans',
             'breadcrumb' => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'Plans']],
             'rows'       => (new SubscriptionPlanModel())->orderBy('price', 'ASC')->findAll(),
-            'trialDays'  => (int) $set->get('subscription_trial_days', 0, 30),
+            'trialDays'  => (int) $set->get('subscription_trial_days', 0, 180),
             'upiId'      => (string) $set->get('subscription_upi_id', 0, ''),
             'upiName'    => (string) $set->get('subscription_upi_name', 0, ''),
             'invoice'    => [

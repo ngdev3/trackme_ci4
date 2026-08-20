@@ -13,13 +13,13 @@ use App\Models\SubscriptionModel;
  */
 
 if (! function_exists('sub_trial_days')) {
-    /** Configured free-trial length in days (Super Admin setting; default 30). */
+    /** Configured free-trial length in days (Super Admin setting; default 180). */
     function sub_trial_days(): int
     {
         static $days = null;
         if ($days === null) {
-            $v    = (int) (new SettingModel())->get('subscription_trial_days', 0, 30);
-            $days = $v > 0 ? $v : 30;
+            $v    = (int) (new SettingModel())->get('subscription_trial_days', 0, 180);
+            $days = $v > 0 ? $v : 180;
         }
         return $days;
     }
