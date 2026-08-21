@@ -223,7 +223,10 @@ class ReminderController extends BaseController
      */
     public function due()
     {
-        $rows = $this->reminders->overdue($this->cid());
+        // Only reminders that are due AND haven't been dismissed/announced yet
+        // (notified = 0). Dismissing anywhere sets notified = 1, so the alarm
+        // stops popping on EVERY device/browser — the shared "don't show again".
+        $rows = $this->reminders->dueForNotification($this->cid());
         $items = [];
         foreach ($rows as $r) {
             $effective = $r['snoozed_until'] ?: $r['remind_at'];
@@ -291,6 +294,24 @@ class ReminderController extends BaseController
             return $this->response->setJSON(['ok' => true, 'csrf' => csrf_hash()]);
         }
         return redirect()->back()->with('success', 'Reminder marked complete.' . ($next ? ' Next occurrence scheduled.' : ''));
+    }
+
+    /**
+     * Dismiss a due reminder — the shared, cross-device "stop alarming me".
+     * Sets notified = 1 so `due()` no longer returns it on ANY web browser or
+     * the mobile app. The reminder stays pending/overdue in the list; it won't
+     * re-announce until it is snoozed, edited, or (for repeats) rolls forward.
+     */
+    public function dismiss($id = null)
+    {
+        $id = (int) $id;
+        $r  = $this->reminders->findForCompany($id, $this->cid());
+        if (! $r) {
+            return $this->response->setStatusCode(404)->setJSON(['ok' => false]);
+        }
+        $this->reminders->update($id, ['notified' => 1, 'last_notified_at' => date('Y-m-d H:i:s')]);
+        activity_log('Reminders', 'Edit', "Reminder #{$id} dismissed");
+        return $this->response->setJSON(['ok' => true, 'csrf' => csrf_hash()]);
     }
 
     public function snooze($id = null)

@@ -84,7 +84,12 @@
             setTimeout(function () { card.remove(); }, 200);
         }
 
-        card.querySelector('.rem-pop-x').addEventListener('click', remove);
+        // Dismiss = the shared, cross-device "stop alarming me" — tell the server
+        // (notified=1) so it won't pop again here, on another browser, or on the
+        // mobile app until it's snoozed / re-armed.
+        card.querySelector('.rem-pop-x').addEventListener('click', function () {
+            post(base + 'reminders/dismiss/' + item.id).then(remove, remove);
+        });
         card.querySelectorAll('[data-act]').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var act = btn.getAttribute('data-act');

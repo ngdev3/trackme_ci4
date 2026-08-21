@@ -134,9 +134,12 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
 
     // Reminders (feature-gated: reminder). Company-scoped.
     $routes->get('reminders', 'RemindersApiController::index');
+    $routes->get('reminders/due', 'RemindersApiController::due');
     $routes->post('reminders', 'RemindersApiController::create');
     $routes->put('reminders/(:num)', 'RemindersApiController::update/$1');
     $routes->post('reminders/(:num)/complete', 'RemindersApiController::complete/$1');
+    $routes->post('reminders/(:num)/dismiss', 'RemindersApiController::dismiss/$1');
+    $routes->post('reminders/(:num)/snooze', 'RemindersApiController::snooze/$1');
     $routes->delete('reminders/(:num)', 'RemindersApiController::delete/$1');
 
     // Calendar (feature-gated: calendar). A month view over reminders.

@@ -105,6 +105,65 @@ class RemindersApiController extends BaseApiController
         return $this->respond(['status' => 'ok', 'id' => (int) $id]);
     }
 
+    /**
+     * Reminders due right now that HAVEN'T been dismissed yet (notified = 0) —
+     * the cross-device alarm feed. Dismissing on any device sets notified = 1,
+     * so this stops returning it everywhere until it's snoozed / re-armed.
+     */
+    public function due()
+    {
+        $g = $this->guard();
+        if (isset($g['error'])) {
+            return $g['error'];
+        }
+        $rows = (new ReminderModel())->dueForNotification($g['companyId']);
+        return $this->respond(['status' => 'ok', 'reminders' => $rows]);
+    }
+
+    /**
+     * Snooze a reminder by N minutes — sets snoozed_until ahead and clears the
+     * notified flag so it re-alarms (here + web) when the snooze elapses.
+     */
+    public function snooze($id = null)
+    {
+        $g = $this->guard();
+        if (isset($g['error'])) {
+            return $g['error'];
+        }
+        $model = new ReminderModel();
+        $row   = $this->findScoped($model, (int) $id, $g['companyId']);
+        if (! $row) {
+            return $this->failNotFound('Reminder not found.');
+        }
+        $minutes = (int) ($this->request->getJsonVar('minutes') ?? $this->request->getPost('minutes') ?? 10);
+        $minutes = max(1, min($minutes, 60 * 24 * 7));
+        $model->update((int) $id, [
+            'snoozed_until' => date('Y-m-d H:i:s', time() + $minutes * 60),
+            'notified'      => 0,
+        ]);
+        return $this->respond(['status' => 'ok', 'id' => (int) $id, 'minutes' => $minutes]);
+    }
+
+    /**
+     * Dismiss a due reminder — the shared "stop alarming me". Sets notified = 1
+     * so the alarm stops popping on this device, other browsers, and the web
+     * portal until the reminder is snoozed / re-armed.
+     */
+    public function dismiss($id = null)
+    {
+        $g = $this->guard();
+        if (isset($g['error'])) {
+            return $g['error'];
+        }
+        $model = new ReminderModel();
+        $row   = $this->findScoped($model, (int) $id, $g['companyId']);
+        if (! $row) {
+            return $this->failNotFound('Reminder not found.');
+        }
+        $model->update((int) $id, ['notified' => 1, 'last_notified_at' => date('Y-m-d H:i:s')]);
+        return $this->respond(['status' => 'ok', 'id' => (int) $id]);
+    }
+
     public function delete($id = null)
     {
         $g = $this->guard();
