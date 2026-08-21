@@ -155,6 +155,18 @@ class TransactionApiController extends BaseApiController
             'net'   => round((float) $g['net'], 2),
         ], $model->groupTotals($cid, 'party_type', $from, $to));
 
+        // Account-wise ledger — one bucket per account NAME (the mobile Report tab
+        // shows this, not the party-type grouping). Sorted by |net| desc so the
+        // biggest accounts lead. Rows with no name fall under 'Unnamed'.
+        $byAccount = array_map(static fn (array $g): array => [
+            'label' => trim((string) $g['label']) !== '' ? $g['label'] : 'Unnamed',
+            'count' => (int) $g['count'],
+            'jama'  => round((float) $g['jama'], 2),
+            'naam'  => round((float) $g['naam'], 2),
+            'net'   => round((float) $g['net'], 2),
+        ], $model->groupTotals($cid, 'name', $from, $to));
+        usort($byAccount, static fn (array $a, array $b): int => abs((float) $b['net']) <=> abs((float) $a['net']));
+
         return $this->respond([
             'status'        => 'ok',
             'range'         => ['from' => $from, 'to' => $to],
@@ -168,6 +180,7 @@ class TransactionApiController extends BaseApiController
             ],
             'by_mode'       => $byMode,
             'by_party_type' => $byParty,
+            'by_account'    => $byAccount,
         ]);
     }
 

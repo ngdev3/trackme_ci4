@@ -355,7 +355,7 @@ class TransactionModel extends Model
     }
 
     /** Columns the breakdown report may group by. Anything else is a programming error. */
-    public const GROUPABLE = ['party_type', 'payment_mode'];
+    public const GROUPABLE = ['party_type', 'payment_mode', 'name'];
 
     /** Filter sentinel meaning "the value is not set" — e.g. an entry with no party type. */
     public const UNSET_VALUE = '__none';

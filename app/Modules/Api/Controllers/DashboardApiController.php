@@ -88,6 +88,7 @@ class DashboardApiController extends BaseApiController
             'id'           => (int) $r['id'],
             'txn_no'       => $r['txn_no'],
             'date'         => $r['txn_date'],
+            'created_at'   => $r['created_at'] ?? null,
             'name'         => $r['name'],
             'party_type'   => $r['party_type'],
             'type'         => $r['type'],
