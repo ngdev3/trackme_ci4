@@ -95,7 +95,12 @@ class DashboardController extends BaseController
         // post-login load is fast and repeated loads / other users don't re-hit
         // the DB. dash_bust() (on any transaction write) invalidates instantly;
         // otherwise the data is at most 90s stale. `?fresh=1` forces a recompute.
-        $agg = dash_remember($companyId, 'page:' . $filter . ':' . md5($from . '|' . $to), 90, function () use ($m, $companyId, $from, $to, $firm) {
+        // Cache TTL: a firm's board stays fresh at 90s (and busts instantly on any
+        // of its writes); the Super-Admin all-firms board aggregates 1M+ rows and
+        // changes slowly, so cache it far longer to avoid the ~2.5s recompute on
+        // every load (it isn't busted per-firm-write, only by TTL).
+        $ttl = $companyId === null ? 600 : 90;
+        $agg = dash_remember($companyId, 'page:' . $filter . ':' . md5($from . '|' . $to), $ttl, function () use ($m, $companyId, $from, $to, $firm) {
             $erp = $m->erpSummary($companyId, $from, $to);
             $charts = [
                 'cashFlow'     => $companyId ? $m->cashFlow($companyId, 14) : ($m->erpCharts(null, $from, $to)['jamaNaam'] ?? []),

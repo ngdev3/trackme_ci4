@@ -29,9 +29,27 @@ class ReportController extends BaseController
         $this->settings = new CompanySettingModel();
     }
 
+    /** Record-level scope: null lets a Super Admin reach any firm's entry. */
     private function scope(): ?int
     {
         return Services::acl()->isSuperAdmin() ? null : (int) company_id();
+    }
+
+    /**
+     * Bounded scope for the ledger/report aggregates (opening + carry-forward
+     * running balance, summary, trend). Everyone is scoped to the active company;
+     * a Super Admin with no firm selected is scoped to a non-existent company
+     * (empty) rather than "all rows" — the carry-forward balance is per cash book
+     * and an unscoped scan of the whole transactions table (1M+ rows) took ~6s+.
+     * Cross-firm data lives on Admin › Transactions.
+     */
+    private function ledgerScope(): ?int
+    {
+        $companyId = (int) company_id();
+        if ($companyId > 0) {
+            return $companyId;
+        }
+        return Services::acl()->isSuperAdmin() ? -1 : null;
     }
 
     private ?OpeningBalance $ob = null;
@@ -43,7 +61,7 @@ class ReportController extends BaseController
      */
     private function ob(): OpeningBalance
     {
-        return $this->ob ??= new OpeningBalance($this->scope(), (int) company_id(), $this->txns, $this->settings);
+        return $this->ob ??= new OpeningBalance($this->ledgerScope(), (int) company_id(), $this->txns, $this->settings);
     }
 
     /** Financial-year start year (Indian FY, 1 Apr) for a date. */
@@ -84,7 +102,9 @@ class ReportController extends BaseController
      */
     public function build(array $in): array
     {
-        $scope = $this->scope();
+        // Aggregates (range rows/totals, carry-forward balance) use the bounded
+        // ledger scope so a Super Admin never scans the whole transactions table.
+        $scope = $this->ledgerScope();
         $p     = ReportPeriod::resolve($in, date('Y-m-d'));
 
         // Opening carried into the period = the FY's Shri Rokad Nagad plus the
@@ -171,8 +191,8 @@ class ReportController extends BaseController
             return $this->render('report_day', $data + $common + [
                 'prevDate'   => date('Y-m-d', strtotime($date . ' -1 day')),
                 'nextDate'   => date('Y-m-d', strtotime($date . ' +1 day')),
-                'parties'    => $this->txns->partyDirectory($this->scope()),
-                'partyTypes' => $this->txns->partyTypes($this->scope()),
+                'parties'    => $this->txns->partyDirectory($this->ledgerScope()),
+                'partyTypes' => $this->txns->partyTypes($this->ledgerScope()),
                 'authors'    => $authors,
             ]);
         }
@@ -197,7 +217,8 @@ class ReportController extends BaseController
      */
     public function buildBreakdown(array $in): array
     {
-        $scope = $this->scope();
+        // Grouped report aggregates → bounded to the active firm (never all rows).
+        $scope = $this->ledgerScope();
 
         $ymd  = static fn ($v) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $v) ? (string) $v : '';
         $from = $ymd($in['from'] ?? '') ?: date('Y-m-01');

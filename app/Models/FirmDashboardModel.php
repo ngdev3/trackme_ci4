@@ -461,7 +461,18 @@ class FirmDashboardModel
             . "COALESCE(SUM(CASE WHEN type='naam' THEN amount ELSE 0 END),0) AS n"
         )->where('txn_date', $today)->get()->getRowArray();
 
-        $pending = ($this->txnBuilder($companyId))->whereIn('status', ['pending', 'overdue'])->countAllResults();
+        // Pending/overdue count. For the all-firms (super-admin) view force the
+        // status index — otherwise MySQL picks a deleted_at-leading index and
+        // scans ~1M rows (20s+). Company-scoped queries stay fast on the company
+        // index, so they keep the normal builder.
+        if ($companyId === null) {
+            $pending = (int) (($this->db->query(
+                "SELECT COUNT(*) AS c FROM transactions FORCE INDEX (idx_dash_status) "
+                . "WHERE deleted_at IS NULL AND status IN ('pending','overdue')"
+            )->getRowArray()['c']) ?? 0);
+        } else {
+            $pending = ($this->txnBuilder($companyId))->whereIn('status', ['pending', 'overdue'])->countAllResults();
+        }
 
         $jama = round((float) ($row['jama'] ?? 0), 2);
         $naam = round((float) ($row['naam'] ?? 0), 2);
@@ -489,9 +500,13 @@ class FirmDashboardModel
             return 0.0;
         }
         if ($companyId === null) {
-            $row = $this->db->table('transactions')->where('deleted_at', null)
-                ->select("COALESCE(SUM(CASE WHEN type='jama' THEN amount ELSE -amount END),0) AS net")
-                ->get()->getRowArray();
+            // Whole-ledger net across every firm — force the covering date index so
+            // MySQL does an index-only scan instead of mis-choosing a non-covering
+            // index and doing ~1M random row lookups (20s → ~0.4s).
+            $row = $this->db->query(
+                "SELECT COALESCE(SUM(CASE WHEN type='jama' THEN amount ELSE -amount END),0) AS net "
+                . "FROM transactions FORCE INDEX (idx_dash_date) WHERE deleted_at IS NULL"
+            )->getRowArray();
             return round((float) ($row['net'] ?? 0), 2);
         }
         $ob = new \App\Libraries\OpeningBalance($companyId, $companyId);

@@ -202,6 +202,13 @@ class RemindersApiController extends BaseApiController
             'remind_at'   => $remindAt !== '' ? date('Y-m-d H:i:s', strtotime($remindAt)) : null,
             'priority'    => in_array($priority, ReminderModel::PRIORITIES, true) ? $priority : 'medium',
             'repeat_type' => in_array($repeat, ReminderModel::REPEATS, true) ? $repeat : 'none',
+            // Editing/rescheduling the due time clears any active snooze (so the new
+            // remind_at is the effective time), unless a snooze time is passed
+            // explicitly. Mirrors the web edit behaviour.
+            'snoozed_until' => (($sn = trim((string) ($this->input('snoozed_until') ?? ''))) !== '')
+                ? date('Y-m-d H:i:s', strtotime($sn))
+                : null,
+            'notified'    => 0,
         ];
     }
 }

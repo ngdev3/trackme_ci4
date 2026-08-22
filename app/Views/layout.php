@@ -133,7 +133,20 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
         }, 'google_translate_element');
     }
 </script>
-<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<!-- Load the Google Translate widget lazily (after first paint) so its external
+     round-trips never block the page. It applies the saved language once ready. -->
+<script>
+  (function () {
+    function loadGT() {
+      var s = document.createElement('script');
+      s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      s.async = true;
+      document.body.appendChild(s);
+    }
+    if (document.readyState === 'complete') { setTimeout(loadGT, 200); }
+    else { window.addEventListener('load', function () { setTimeout(loadGT, 200); }); }
+  })();
+</script>
 <script src="<?= erp_asset('assets/js/i18n.js') ?>"></script>
 
 <script src="<?= erp_asset('assets/vendor/jquery/jquery.min.js') ?>"></script>

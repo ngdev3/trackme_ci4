@@ -47,10 +47,29 @@ class TransactionController extends BaseController
         return mb_substr(trim((string) preg_replace('/\s+/u', ' ', $value)), 0, $max);
     }
 
-    /** Query scope: null for the Super Admin (all rows), else the active company. */
+    /** Record-level scope: null lets a Super Admin reach any firm's entry
+     *  (view/edit/delete/attach are keyed by id), else the active company. */
     private function scope(): ?int
     {
-        return Services::acl()->isSuperAdmin() ? null : company_id();
+        return Services::acl()->isSuperAdmin() ? null : (int) company_id();
+    }
+
+    /**
+     * Bounded scope for the LIST + aggregates (opening/running balance, summary,
+     * trend, pager count). Everyone is scoped to the active company; a Super Admin
+     * with NO firm selected is scoped to a non-existent company (empty ledger)
+     * rather than "all rows" — a running-balance cash book merged across every
+     * firm is meaningless AND the unscoped aggregates scanned the whole
+     * transactions table (1M+ rows, ~25s). Cross-firm data lives on Admin ›
+     * Transactions.
+     */
+    private function ledgerScope(): ?int
+    {
+        $companyId = (int) company_id();
+        if ($companyId > 0) {
+            return $companyId;
+        }
+        return Services::acl()->isSuperAdmin() ? -1 : null;
     }
 
     private function filters(): array
@@ -73,7 +92,9 @@ class TransactionController extends BaseController
         // Announce any of the company's reminders that have come due.
         (new ReminderService())->fireDueForCompany(company_id());
 
-        $scope = $this->scope();
+        // Aggregates/pager use the bounded ledger scope so a Super Admin never
+        // scans the whole transactions table for a cross-firm running balance.
+        $scope = $this->ledgerScope();
         $f     = $this->filters();
 
         $per = (int) $this->request->getGet('per');
@@ -151,7 +172,8 @@ class TransactionController extends BaseController
      */
     private function statementData(): array
     {
-        $scope = $this->scope();
+        // Per-account ledger is an aggregate → bounded to the active firm.
+        $scope = $this->ledgerScope();
         $party = trim((string) $this->request->getGet('party'));
         $from  = (string) $this->request->getGet('from');
         $to    = (string) $this->request->getGet('to');
@@ -198,7 +220,7 @@ class TransactionController extends BaseController
         return $this->render('statement', $data + [
             'title'      => 'Account Statement',
             'breadcrumb' => [['label' => 'Transactions', 'url' => site_url('transactions')], ['label' => 'Account Statement']],
-            'parties'    => $this->txns->partyDirectory($this->scope()),
+            'parties'    => $this->txns->partyDirectory($this->ledgerScope()),
             'moduleCode' => $this->moduleCode,
             'baseRoute'  => $this->baseRoute,
             'css'        => [base_url('assets/css/tm-table.css'), base_url('assets/css/transactions.css')],
@@ -310,7 +332,7 @@ class TransactionController extends BaseController
     public function accountsSearch()
     {
         $q    = (string) $this->request->getGet('q');
-        $list = $this->txns->searchParties($this->scope(), $q, 20);
+        $list = $this->txns->searchParties($this->ledgerScope(), $q, 20);
 
         $items = array_map(static function ($p) {
             $net  = (float) $p['net'];
@@ -346,7 +368,7 @@ class TransactionController extends BaseController
             'presetType'  => $type,
             'nextNo'      => $mode === 'edit' ? ($row['txn_no'] ?? '') : $this->txns->nextTxnNo((int) company_id()),
             'attachments' => $row ? $this->files->forTransaction((int) $row['id']) : [],
-            'partyTypes'  => $this->txns->partyTypes($this->scope()),
+            'partyTypes'  => $this->txns->partyTypes($this->ledgerScope()),
             'errors'      => session()->getFlashdata('errors') ?? [],
             'moduleCode'  => $this->moduleCode,
             'css'         => [base_url('assets/css/transactions.css')],
