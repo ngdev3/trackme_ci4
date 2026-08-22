@@ -7,6 +7,9 @@ use CodeIgniter\Router\RouteCollection;
 $routes->group('admin', ['namespace' => 'Modules\SuperAdmin\Controllers', 'filter' => 'superadmin'], static function (RouteCollection $routes) {
     $routes->get('/', 'SuperAdminController::dashboard');
     $routes->get('customers', 'SuperAdminController::customers');
+    // AJAX fragment (table + pager) for the customers list — powers live
+    // search / page-size / sort / pagination without a full page reload.
+    $routes->get('customers/data', 'SuperAdminController::customersData');
     $routes->get('activate', 'SuperAdminController::activate');
     $routes->post('activate', 'SuperAdminController::activateSave');
     $routes->get('customers/toggle/(:num)', 'SuperAdminController::toggleCustomer/$1');

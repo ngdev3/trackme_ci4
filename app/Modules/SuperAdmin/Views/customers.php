@@ -1,4 +1,8 @@
-<?php /** Super Admin — all customers. Rendered inside layout.php. */ ?>
+<?php /** Super Admin — all customers. Rendered inside layout.php.
+ * Design ported from the TrackmeNew invoice-listing table view: soft-shadowed
+ * white panels (radius 8px), a gradient hero, snapshot stat cards, an
+ * uppercase-header table with light dividers + hover, and color-coded 32px
+ * square action icons. */ ?>
 
 <?php if ($np = session()->getFlashdata('new_password')): ?>
     <div class="alert alert-success alert-dismissible d-flex flex-wrap align-items-center gap-2 shadow-sm" role="alert">
@@ -35,76 +39,81 @@
     </div>
 <?php endif; ?>
 
-<div class="card">
-    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <h3 class="card-title mb-0"><i class="bi bi-people me-1"></i> Customers</h3>
-        <form class="d-flex gap-2" method="get">
-            <input type="search" name="q" value="<?= esc($search) ?>" class="form-control form-control-sm" placeholder="Search name or email...">
-            <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i></button>
-        </form>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead><tr>
-                    <th>#</th><th>Name</th><th>Email</th><th>Firms</th><th>Subscription</th><th>Payment</th><th>Status</th><th class="text-end">Actions</th>
-                </tr></thead>
-                <tbody>
-                <?php if (empty($rows)): ?>
-                    <tr><td colspan="8" class="text-center text-secondary py-4">No customers found.</td></tr>
-                <?php else: foreach ($rows as $r): $sub = $r['subscription'] ?? null; ?>
-                    <tr>
-                        <td><?= esc($r['id']) ?></td>
-                        <td class="fw-semibold"><?= esc($r['name']) ?></td>
-                        <td><?= esc($r['email']) ?></td>
-                        <td><span class="badge text-bg-light border"><?= (int) $r['firm_count'] ?></span></td>
-                        <td>
-                            <a href="<?= site_url('admin/customers/subscription/' . $r['id']) ?>" class="text-decoration-none" title="Manage subscription">
-                                <small><?= esc($sub['plan_name'] ?? '—') ?> <span class="text-muted"><?= esc($sub['status'] ?? '') ?></span></small>
-                            </a>
-                        </td>
-                        <td>
-                            <form action="<?= site_url('admin/customers/payment/' . $r['id']) ?>" method="post" class="d-flex gap-1">
-                                <?= csrf_field() ?>
-                                <select name="payment_status" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
-                                    <?php foreach (['trial', 'paid', 'unpaid'] as $ps): ?>
-                                        <option value="<?= $ps ?>" <?= ($sub['payment_status'] ?? 'trial') === $ps ? 'selected' : '' ?>><?= ucfirst($ps) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </form>
-                        </td>
-                        <td>
-                            <a href="<?= site_url('admin/customers/toggle/' . $r['id']) ?>">
-                                <?= (int) $r['status'] === 1 ? '<span class="badge text-bg-success">Active</span>' : '<span class="badge text-bg-secondary">Inactive</span>' ?>
-                            </a>
-                        </td>
-                        <td class="text-end text-nowrap">
-                            <a href="<?= site_url('admin/customers/subscription/' . $r['id']) ?>" class="btn btn-sm btn-outline-info" title="Manage subscription"><i class="bi bi-gem"></i></a>
-                            <a href="<?= site_url('admin/impersonate/' . $r['id']) ?>" class="btn btn-sm btn-outline-primary" title="Access this account"
-                               data-confirm="You can return to Super Admin anytime." data-confirm-title="Sign in as <?= esc($r['name'], 'attr') ?>?" data-confirm-btn="Sign in" data-confirm-icon="info">
-                                <i class="bi bi-box-arrow-in-right"></i>
-                            </a>
-                            <button type="button" class="btn btn-sm btn-outline-success" title="Set a new password"
-                                    data-bs-toggle="modal" data-bs-target="#setPwdModal"
-                                    data-id="<?= esc($r['id'], 'attr') ?>" data-name="<?= esc($r['name'], 'attr') ?>">
-                                <i class="bi bi-shield-lock"></i>
-                            </button>
-                            <form action="<?= site_url('admin/customers/send-reset/' . $r['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="Email a one-click password-reset link to this customer?" data-confirm-title="Send reset link?" data-confirm-btn="Send link" data-confirm-icon="info">
-                                <?= csrf_field() ?>
-                                <button class="btn btn-sm btn-outline-primary" title="Email a reset link"><i class="bi bi-envelope-lock"></i></button>
-                            </form>
-                            <form action="<?= site_url('admin/customers/reset/' . $r['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="This customer will be forced to reset their password on next login." data-confirm-title="Reset access?" data-confirm-btn="Yes, reset" data-confirm-icon="warning">
-                                <?= csrf_field() ?>
-                                <button class="btn btn-sm btn-outline-warning" title="Reset access"><i class="bi bi-key"></i></button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endforeach; endif; ?>
-                </tbody>
-            </table>
+<?php
+// Toolbar state (with safe defaults). The table + pager live in the
+// _customers_table partial (also served on its own for AJAX).
+$per  = $per  ?? 25;
+$perOpts = [25, 35, 50, 100];
+?>
+<div class="cust-page">
+
+    <!-- Hero -->
+    <section class="cust-hero">
+        <div>
+            <h4 class="cust-title">Customers</h4>
+            <p class="cust-subtitle">Manage customer accounts, subscriptions, access and passwords — all in one place.</p>
         </div>
-    </div>
-    <?php if (isset($pager)): ?><div class="card-footer d-flex justify-content-end"><?= $pager->links() ?></div><?php endif; ?>
+        <div class="cust-hero-actions">
+            <a href="<?= site_url('admin/activate') ?>" class="cust-btn cust-btn-primary"><i class="bi bi-gem"></i> Activate Plan</a>
+        </div>
+    </section>
+
+    <!-- Snapshot stat cards -->
+    <section class="cust-snap-grid">
+        <div class="cust-snap"><span class="cust-snap-ic ic-blue"><i class="bi bi-people-fill"></i></span>
+            <div><p class="cust-snap-label">Total Customers</p><p class="cust-snap-value"><?= number_format((int) ($stats['total'] ?? 0)) ?></p></div></div>
+        <div class="cust-snap"><span class="cust-snap-ic ic-green"><i class="bi bi-check-circle-fill"></i></span>
+            <div><p class="cust-snap-label">Active</p><p class="cust-snap-value"><?= number_format((int) ($stats['active'] ?? 0)) ?></p></div></div>
+        <div class="cust-snap"><span class="cust-snap-ic ic-gray"><i class="bi bi-slash-circle-fill"></i></span>
+            <div><p class="cust-snap-label">Inactive</p><p class="cust-snap-value"><?= number_format((int) ($stats['inactive'] ?? 0)) ?></p></div></div>
+        <div class="cust-snap"><span class="cust-snap-ic ic-violet"><i class="bi bi-building-fill"></i></span>
+            <div><p class="cust-snap-label">Total Firms</p><p class="cust-snap-value"><?= number_format((int) ($stats['firms'] ?? 0)) ?></p></div></div>
+    </section>
+
+    <!-- Table panel -->
+    <section class="cust-panel cust-table-panel">
+        <div class="cust-toolbar">
+            <div>
+                <h5 class="cust-table-title">Customer Records</h5>
+                <p class="cust-table-note">Open a subscription, sign in as the customer, or reset their access from the actions.</p>
+            </div>
+            <span class="cust-total-tag"><i class="bi bi-people"></i> <?= number_format((int) ($stats['total'] ?? 0)) ?> total</span>
+        </div>
+
+        <!-- DataTables-style controls: page-size (Records) + Search -->
+        <div class="cust-tabletools">
+            <form method="get" class="cust-len" role="search">
+                <?php if ($search !== ''): ?><input type="hidden" name="q" value="<?= esc($search, 'attr') ?>"><?php endif; ?>
+                <label>Show</label>
+                <select name="per" class="cust-len-select">
+                    <?php foreach ($perOpts as $opt): ?>
+                        <option value="<?= $opt ?>" <?= ((string) $per === (string) $opt) ? 'selected' : '' ?>><?= $opt ?></option>
+                    <?php endforeach; ?>
+                    <option value="all" <?= ($per === 'all') ? 'selected' : '' ?>>All</option>
+                </select>
+                <label>Records</label>
+            </form>
+
+            <form method="get" class="cust-find" role="search">
+                <?php if ($per !== 25): ?><input type="hidden" name="per" value="<?= esc((string) $per, 'attr') ?>"><?php endif; ?>
+                <label for="custSearch">Search:</label>
+                <div class="cust-find-box">
+                    <i class="bi bi-search"></i>
+                    <input type="search" id="custSearch" name="q" value="<?= esc($search) ?>" placeholder="Name or email…" autocomplete="off">
+                    <?php if ($search !== ''): ?><a href="<?= site_url('admin/customers') ?>" class="cust-find-clear" title="Clear"><i class="bi bi-x-lg"></i></a><?php endif; ?>
+                </div>
+            </form>
+        </div>
+
+        <!-- AJAX host: table + pager fragment. Live search / page-size / sort /
+             pagination swap only this node's HTML, never the whole page. -->
+        <div id="custTableHost" class="cust-host">
+            <?= view('Modules\SuperAdmin\Views\_customers_table', [
+                'rows' => $rows, 'per' => $per, 'sort' => $sort ?? 'id', 'dir' => $dir ?? 'desc',
+                'search' => $search, 'offset' => $offset, 'pager' => $pager,
+            ]) ?>
+        </div>
+    </section>
 </div>
 
 <!-- Set-password modal (shared; populated by the clicked row's button) -->
@@ -142,6 +151,170 @@
     </div>
 </div>
 
+<style>
+/* ---- Customers listing — TrackmeNew-inspired table design ------------------ */
+.cust-page{--c-primary:#1769c2;--c-primary-d:#0c5aaa;--c-ink:#18243c;--c-text:#26374f;
+    --c-muted:#718096;--c-soft:#516174;--c-border:#dce6f2;--c-line:#edf2f7;--c-bg:#fbfdff;
+    color:var(--c-text)}
+.cust-page .cust-panel{border:1px solid var(--c-border);border-radius:8px;background:#fff;box-shadow:0 16px 38px rgba(24,36,60,.08)}
+
+/* Hero */
+.cust-hero{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+    margin-bottom:18px;padding:22px 24px;border:1px solid var(--c-border);border-radius:8px;
+    background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(255,255,255,.92)),
+        radial-gradient(circle at 94% 0,rgba(23,105,194,.13),transparent 34%);
+    box-shadow:0 16px 38px rgba(24,36,60,.08)}
+.cust-title{margin:0;color:var(--c-ink);font-size:25px;font-weight:900}
+.cust-subtitle{margin:6px 0 0;color:var(--c-muted);font-size:13px;font-weight:700;line-height:1.55}
+.cust-hero-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cust-search{position:relative;display:flex;align-items:center}
+.cust-search input{min-height:42px;width:250px;max-width:60vw;padding:8px 34px 8px 36px;border:1px solid var(--c-border);
+    border-radius:8px;background:var(--c-bg);color:var(--c-ink);font-weight:700;box-shadow:none;outline:none}
+.cust-search input:focus{border-color:var(--c-primary);background:#fff;box-shadow:0 0 0 4px rgba(23,105,194,.12)}
+.cust-search-ic{position:absolute;left:12px;color:var(--c-muted);font-size:14px;pointer-events:none}
+.cust-search-clear{position:absolute;right:11px;color:var(--c-muted);font-size:12px;text-decoration:none}
+.cust-search-clear:hover{color:#c53030}
+.cust-btn{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:10px 16px;border-radius:8px;
+    font-weight:900;font-size:14px;text-decoration:none;transition:all .18s ease;border:0}
+.cust-btn-primary{background:var(--c-primary);color:#fff;box-shadow:0 10px 22px rgba(23,105,194,.2)}
+.cust-btn-primary:hover{background:var(--c-primary-d);color:#fff}
+
+/* Snapshot cards */
+.cust-snap-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.cust-snap{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--c-border);border-radius:8px;
+    background:#fff;box-shadow:0 12px 26px rgba(24,36,60,.06)}
+.cust-snap-ic{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:12px;
+    font-size:20px;flex:0 0 auto}
+.cust-snap-ic.ic-blue{background:#e9f1fc;color:#1769c2}
+.cust-snap-ic.ic-green{background:#e8f7ef;color:#1f9d70}
+.cust-snap-ic.ic-gray{background:#eef1f6;color:#64748b}
+.cust-snap-ic.ic-violet{background:#f1ecfe;color:#7c4dff}
+.cust-snap-label{margin:0;color:var(--c-muted);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.02em}
+.cust-snap-value{margin:3px 0 0;color:var(--c-ink);font-size:22px;font-weight:900;line-height:1}
+
+/* Table panel + toolbar */
+.cust-table-panel{overflow:hidden}
+.cust-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px;border-bottom:1px solid var(--c-line)}
+.cust-table-title{margin:0;color:var(--c-ink);font-size:17px;font-weight:900}
+.cust-table-note{margin:4px 0 0;color:var(--c-muted);font-size:12px;font-weight:700}
+.cust-search-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#eef6ff;
+    color:#1769c2;font-size:12px;font-weight:800;border:1px solid #cfe3fb}
+.cust-total-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#f1f5f9;
+    color:var(--c-soft);font-size:12px;font-weight:800;border:1px solid #e2e8f0;white-space:nowrap}
+
+/* DataTables-style controls bar (page-size + search) */
+.cust-tabletools{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    padding:14px 20px;border-bottom:1px solid var(--c-line);background:#fcfdff}
+.cust-len,.cust-find{display:flex;align-items:center;gap:8px;margin:0}
+.cust-len label,.cust-find label{margin:0;color:var(--c-soft);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.02em}
+.cust-len-select{min-height:38px;padding:6px 30px 6px 12px;border:1px solid var(--c-border);border-radius:8px;
+    background:var(--c-bg);color:var(--c-ink);font-size:13px;font-weight:800;cursor:pointer}
+.cust-len-select:focus{border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(23,105,194,.12);outline:none}
+.cust-find-box{position:relative;display:flex;align-items:center}
+.cust-find-box>.bi{position:absolute;left:12px;color:var(--c-muted);font-size:14px;pointer-events:none}
+.cust-find-box input{min-height:38px;width:240px;max-width:60vw;padding:7px 32px 7px 34px;border:1px solid var(--c-border);
+    border-radius:8px;background:var(--c-bg);color:var(--c-ink);font-weight:700;outline:none}
+.cust-find-box input:focus{border-color:var(--c-primary);background:#fff;box-shadow:0 0 0 4px rgba(23,105,194,.12)}
+.cust-find-clear{position:absolute;right:11px;color:var(--c-muted);font-size:11px;text-decoration:none}
+.cust-find-clear:hover{color:#c53030}
+
+/* Sortable headers */
+.cust-th-sort{cursor:pointer}
+.cust-table th.cust-th-sort{padding:0}
+.cust-sort{display:inline-flex;align-items:center;gap:6px;width:100%;padding:12px 16px;color:var(--c-soft);
+    text-decoration:none;font:inherit;font-weight:900;text-transform:uppercase;letter-spacing:.02em;font-size:12px}
+.cust-th-sort.text-center .cust-sort{justify-content:center}
+.cust-th-sort.text-end .cust-sort{justify-content:flex-end}
+.cust-sort .bi{font-size:11px;opacity:.45;transition:opacity .15s ease,color .15s ease}
+.cust-sort:hover{color:var(--c-primary)}
+.cust-sort:hover .bi{opacity:.9}
+.cust-sort.is-sorted{color:var(--c-primary)}
+.cust-sort.is-sorted .bi{opacity:1;color:var(--c-primary)}
+
+/* Table */
+.cust-table-wrap{overflow-x:auto}
+.cust-table{width:100%;margin:0;border-collapse:separate;border-spacing:0}
+.cust-table thead th{padding:12px 16px;background:#f7fafc;color:var(--c-soft);font-size:12px;font-weight:900;
+    text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;border-bottom:1px solid var(--c-border)}
+.cust-table tbody td{padding:12px 16px;border-top:1px solid var(--c-line);color:var(--c-text);font-size:13px;
+    font-weight:700;vertical-align:middle}
+.cust-table tbody tr:first-child td{border-top:0}
+.cust-table tbody tr:hover td{background:var(--c-bg)}
+/* Alignment helpers scoped to the table so header + cells always match. */
+.cust-table th.text-center,.cust-table td.text-center{text-align:center}
+.cust-table th.text-start,.cust-table td.text-start{text-align:left}
+.cust-table th.text-end,.cust-table td.text-end{text-align:right}
+.cust-table .col-sno{width:64px;color:var(--c-soft);font-weight:800}
+.cust-table .col-id{width:104px;white-space:nowrap}
+.cust-idchip{display:inline-block;padding:3px 9px;border-radius:6px;background:#eef2f8;border:1px solid #e0e7f1;
+    color:#516174;font-size:11.5px;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.cust-muted{color:var(--c-soft);font-weight:600}
+.cust-name{display:flex;align-items:center;gap:10px}
+.cust-avatar{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;
+    background:linear-gradient(135deg,#1769c2,#3b82f6);color:#fff;font-size:13px;font-weight:900;flex:0 0 auto}
+.cust-name .fw-semibold{color:var(--c-ink)}
+.cust-pill{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:24px;padding:0 8px;
+    border-radius:7px;background:#eef1f6;color:var(--c-soft);font-size:12px;font-weight:900}
+.cust-sub-link{display:inline-flex;flex-direction:column;line-height:1.25;text-decoration:none}
+.cust-sub-plan{color:var(--c-ink);font-weight:800;font-size:13px}
+.cust-sub-status{color:var(--c-muted);font-size:11px;font-weight:700;text-transform:capitalize}
+.cust-select{min-height:34px;padding:5px 26px 5px 10px;border:1px solid var(--c-border);border-radius:8px;
+    background:var(--c-bg);color:var(--c-ink);font-size:12px;font-weight:800;cursor:pointer}
+.cust-select:focus{border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(23,105,194,.12);outline:none}
+.cust-select.pay-paid{border-color:#bbe7cf;background:#f0fbf5;color:#137a4c}
+.cust-select.pay-unpaid{border-color:#f6c6c9;background:#fdf4f4;color:#c53030}
+.cust-select.pay-trial{border-color:#f6dcae;background:#fdf8ef;color:#b7791f}
+.cust-badge{display:inline-flex;align-items:center;gap:0;padding:4px 11px 4px 6px;border-radius:20px;font-size:12px;font-weight:800}
+.cust-badge .bi{font-size:18px;margin:-4px -2px -4px -4px}
+.cust-badge.is-active{background:#e8f7ef;color:#1f9d70}
+.cust-badge.is-inactive{background:#f1f5f9;color:#94a3b8}
+
+/* Row action icons */
+.cust-row-actions{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.cust-row-actions form{margin:0}
+.cust-act{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;
+    border:1px solid transparent;font-size:13px;line-height:1;text-decoration:none;cursor:pointer;background:transparent;
+    transition:transform .12s ease,box-shadow .15s ease,background .15s ease,color .15s ease,border-color .15s ease}
+.cust-act:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(16,24,40,.14)}
+.cust-act.act-sub{background:#e9f1fc;color:#1769c2;border-color:#cbe0f7}
+.cust-act.act-sub:hover{background:#1769c2;color:#fff;border-color:#1769c2}
+.cust-act.act-login{background:#e8f7ef;color:#1f9d70;border-color:#c6ecd8}
+.cust-act.act-login:hover{background:#1f9d70;color:#fff;border-color:#1f9d70}
+.cust-act.act-pwd{background:#f1ecfe;color:#7c4dff;border-color:#ddd0fb}
+.cust-act.act-pwd:hover{background:#7c4dff;color:#fff;border-color:#7c4dff}
+.cust-act.act-mail{background:#eef1f6;color:#26374f;border-color:#d7deea}
+.cust-act.act-mail:hover{background:#26374f;color:#fff;border-color:#26374f}
+.cust-act.act-reset{background:#fff4ed;color:#c2410c;border-color:#fdd6bb}
+.cust-act.act-reset:hover{background:#c2410c;color:#fff;border-color:#c2410c}
+
+/* Empty state */
+.cust-empty{text-align:center;padding:44px 16px !important;color:var(--c-muted);font-weight:700}
+.cust-empty .bi{font-size:34px;display:block;margin-bottom:8px;opacity:.6}
+
+/* Pager bar — match the reference blue/8px, override the generic modern pager */
+.cust-pager-bar{padding:14px 20px;border-top:1px solid var(--c-line)}
+.cust-pager-bar .erp-pager__btn{border-radius:8px;border-color:var(--c-border)}
+.cust-pager-bar .erp-pager__btn:hover{border-color:#b9d5f5;color:var(--c-primary);background:#edf6ff}
+.cust-pager-bar .erp-pager__btn.is-active{background:var(--c-primary);border-color:var(--c-primary);
+    box-shadow:0 6px 14px -3px rgba(23,105,194,.5)}
+.cust-pager-bar .erp-pager__info b{color:var(--c-ink)}
+
+/* AJAX loading state for the table host */
+.cust-host{position:relative;transition:opacity .12s ease;min-height:120px}
+.cust-host.is-loading{opacity:.5;pointer-events:none}
+.cust-host.is-loading:after{content:"";position:absolute;top:26px;left:50%;width:26px;height:26px;margin-left:-13px;
+    border:3px solid #cbd8ea;border-top-color:var(--c-primary);border-radius:50%;animation:custSpin .8s linear infinite;z-index:3}
+@keyframes custSpin{to{transform:rotate(360deg)}}
+
+@media (max-width:1100px){.cust-snap-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:767px){
+    .cust-hero{align-items:stretch;flex-direction:column}
+    .cust-hero-actions,.cust-search,.cust-search input,.cust-btn{width:100%}
+    .cust-snap-grid{grid-template-columns:1fr}
+    .cust-toolbar{align-items:stretch;flex-direction:column}
+}
+</style>
+
 <script>
 (function () {
     var modal = document.getElementById('setPwdModal');
@@ -154,7 +327,6 @@
         document.getElementById('setPwdForm').setAttribute('action', '<?= site_url('admin/customers/set-password') ?>/' + id);
         document.getElementById('setPwdInput').value = '';
     });
-    // Client-side generator for the "type your own" box (server also generates when blank).
     document.getElementById('setPwdGen').addEventListener('click', function () {
         var lower = 'abcdefghijkmnpqrstuvwxyz', upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ', digits = '23456789', sym = '@#%&*!?';
         var all = lower + upper + digits + sym, out = [
@@ -167,5 +339,86 @@
         for (var i = out.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = out[i]; out[i] = out[j]; out[j] = t; }
         document.getElementById('setPwdInput').value = out.join('');
     });
+})();
+</script>
+
+<script>
+/* Live customers table — search / page-size / sort / pagination via AJAX.
+   Only #custTableHost is swapped; the whole page never reloads. */
+(function () {
+    var host   = document.getElementById('custTableHost');
+    if (!host) return;
+    var lenSel = document.querySelector('.cust-len-select');
+    var lenFrm = document.querySelector('.cust-len');
+    var search = document.getElementById('custSearch');
+    var findFrm = document.querySelector('.cust-find');
+    var DATA_PATH = '<?= site_url('admin/customers/data') ?>';
+    var PAGE_PATH = '<?= site_url('admin/customers') ?>';
+
+    // Turn a pretty /admin/customers?… URL into its /data AJAX twin.
+    function toDataUrl(pretty) {
+        var u = new URL(pretty, location.origin);
+        return DATA_PATH + u.search;
+    }
+
+    function loadUrl(prettyUrl, push) {
+        host.classList.add('is-loading');
+        fetch(toDataUrl(prettyUrl), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                host.innerHTML = d.html;
+                if (push !== false) { history.pushState({ ajax: 1 }, '', prettyUrl); }
+                host.classList.remove('is-loading');
+                // keep focus in the search box while typing
+                if (document.activeElement !== search && push !== false && window.__custKeepFocus) {
+                    search.focus();
+                }
+            })
+            .catch(function () {
+                host.classList.remove('is-loading');
+                if (window.erpNotify) { erpNotify('error', 'Could not load customers.'); }
+            });
+    }
+
+    // Build a new URL from the current one, applying overrides (null = remove).
+    function go(overrides) {
+        var p = new URLSearchParams(location.search);
+        Object.keys(overrides).forEach(function (k) {
+            var v = overrides[k];
+            if (v === null || v === '' || v === undefined) { p.delete(k); } else { p.set(k, v); }
+        });
+        var qs = p.toString();
+        loadUrl(PAGE_PATH + (qs ? '?' + qs : ''));
+    }
+
+    // Debounced live search across ALL columns.
+    var t = null;
+    if (search) {
+        search.addEventListener('input', function () {
+            clearTimeout(t);
+            window.__custKeepFocus = true;
+            t = setTimeout(function () { go({ q: search.value.trim(), page: null }); }, 300);
+        });
+    }
+    if (findFrm) {
+        findFrm.addEventListener('submit', function (e) { e.preventDefault(); clearTimeout(t); go({ q: search.value.trim(), page: null }); });
+    }
+
+    // Page-size selector.
+    if (lenSel) { lenSel.addEventListener('change', function () { window.__custKeepFocus = false; go({ per: lenSel.value, page: null }); }); }
+    if (lenFrm) { lenFrm.addEventListener('submit', function (e) { e.preventDefault(); }); }
+
+    // Delegated: sort headers + pager buttons inside the (replaceable) host.
+    host.addEventListener('click', function (e) {
+        var a = e.target.closest('.cust-sort, .erp-pager__btn');
+        if (!a || !host.contains(a)) { return; }
+        if (a.classList.contains('is-active')) { e.preventDefault(); return; }
+        e.preventDefault();
+        window.__custKeepFocus = false;
+        loadUrl(a.getAttribute('href'));
+    });
+
+    // Back / forward buttons re-sync the fragment without pushing a new entry.
+    window.addEventListener('popstate', function () { loadUrl(location.href, false); });
 })();
 </script>

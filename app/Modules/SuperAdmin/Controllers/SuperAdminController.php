@@ -207,28 +207,114 @@ class SuperAdminController extends BaseController
     // ---------------------------------------------------------------
     public function customers()
     {
+        $data = $this->customerListData();
+
+        // Snapshot totals across ALL customers (not just this page) for the stat cards.
+        $cust  = static fn () => (new UserModel())->where('account_type', 'customer');
+        $data['stats'] = [
+            'total'    => $cust()->countAllResults(),
+            'active'   => $cust()->where('status', 1)->countAllResults(),
+            'inactive' => $cust()->where('status', 0)->countAllResults(),
+            'firms'    => (int) ((new \App\Models\CompanyModel())->where('deleted_at', null)->countAllResults()),
+        ];
+        $data['title']      = 'Customers';
+        $data['breadcrumb'] = [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'Customers']];
+
+        return $this->render('customers', $data);
+    }
+
+    /**
+     * AJAX fragment: just the sortable table + pager for the customers list.
+     * Powers live search / page-size / sort / pagination without a full reload.
+     */
+    public function customersData()
+    {
+        $data = $this->customerListData();
+        $html = view('Modules\SuperAdmin\Views\_customers_table', $data);
+        return $this->response->setJSON([
+            'html'  => $html,
+            'count' => $data['pager']->getTotal(),
+        ]);
+    }
+
+    /**
+     * Shared query for the customers list. Reads q / per / sort / dir / page from
+     * the request and returns the view data (rows with subscription, pager, offset,
+     * and the resolved control state). Search matches ANY column — name, email,
+     * numeric id, latest subscription plan + payment status, and the active/inactive
+     * label — via correlated subqueries in the WHERE clause.
+     */
+    private function customerListData(): array
+    {
         $search = trim((string) $this->request->getGet('q'));
+
+        // Page-size ("Records"). Whitelisted; "All" capped so a huge table can't
+        // exhaust memory rendering every row at once.
+        $allowed = [25, 35, 50, 100];
+        $perRaw  = (string) ($this->request->getGet('per') ?? '');
+        $isAll   = strtolower($perRaw) === 'all';
+        $per     = $isAll ? 2000 : (in_array((int) $perRaw, $allowed, true) ? (int) $perRaw : 25);
+
+        // Column sorting — whitelisted keys map to an ORDER BY expression.
+        $sortMap = [
+            'id'           => 'users.id',
+            'name'         => 'users.name',
+            'email'        => 'users.email',
+            'firms'        => 'firm_count',
+            'subscription' => 'plan_sort',
+            'payment'      => 'pay_sort',
+            'status'       => 'users.status',
+        ];
+        $sort = (string) ($this->request->getGet('sort') ?? 'id');
+        $sort = isset($sortMap[$sort]) ? $sort : 'id';
+        $dir  = strtolower((string) ($this->request->getGet('dir') ?? 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        // Correlated subqueries reused for both SELECT (sort) and WHERE (search).
+        $payExpr  = '(SELECT s.payment_status FROM subscriptions s WHERE s.customer_id = users.id ORDER BY s.id DESC LIMIT 1)';
+        $planExpr = '(SELECT sp.name FROM subscriptions s LEFT JOIN subscription_plans sp ON sp.id = s.plan_id'
+                  . ' WHERE s.customer_id = users.id ORDER BY s.id DESC LIMIT 1)';
+        $statusExpr = "CASE WHEN users.status = 1 THEN 'active' ELSE 'inactive' END";
+
         $b = (new UserModel())
-            ->select('users.*, (SELECT COUNT(*) FROM companies c WHERE c.owner_id = users.id AND c.deleted_at IS NULL) AS firm_count')
+            ->select("users.*,
+                (SELECT COUNT(*) FROM companies c WHERE c.owner_id = users.id AND c.deleted_at IS NULL) AS firm_count,
+                {$payExpr} AS pay_sort,
+                {$planExpr} AS plan_sort", false)
             ->where('account_type', 'customer')
-            ->orderBy('users.id', 'DESC');
+            ->orderBy($sortMap[$sort], $dir);
+
         if ($search !== '') {
-            $b->groupStart()->like('users.name', $search)->orLike('users.email', $search)->groupEnd();
+            // Any-column search. escapeLikeString → escape → raw OR group.
+            $db   = db_connect();
+            $safe = $db->escape('%' . $db->escapeLikeString($search) . '%');
+            $b->where(
+                "(users.name LIKE {$safe} ESCAPE '!'"
+                . " OR users.email LIKE {$safe} ESCAPE '!'"
+                . " OR CAST(users.id AS CHAR) LIKE {$safe} ESCAPE '!'"
+                . " OR {$statusExpr} LIKE {$safe} ESCAPE '!'"
+                . " OR {$payExpr} LIKE {$safe} ESCAPE '!'"
+                . " OR {$planExpr} LIKE {$safe} ESCAPE '!')",
+                null,
+                false
+            );
         }
 
-        $rows = $b->paginate(15);
+        $rows = $b->paginate($per);
         $subModel = new SubscriptionModel();
         foreach ($rows as &$r) {
             $r['subscription'] = $subModel->forCustomer((int) $r['id']);
         }
+        unset($r);
 
-        return $this->render('customers', [
-            'title'      => 'Customers',
-            'breadcrumb' => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'Customers']],
-            'rows'       => $rows,
-            'pager'      => (new UserModel())->pager,
-            'search'     => $search,
-        ]);
+        return [
+            'rows'   => $rows,
+            'pager'  => $b->pager, // same instance that ran paginate() (fresh model's pager is null)
+            'search' => $search,
+            'offset' => (max(1, (int) $b->pager->getCurrentPage()) - 1) * $per,
+            'per'    => $isAll ? 'all' : $per,
+            'sort'   => $sort,
+            'dir'    => $dir,
+        ];
     }
 
     /** Simple guided screen: pick a customer + package and activate the paid plan. */
@@ -642,7 +728,7 @@ class SuperAdminController extends BaseController
             'title'      => 'Firms',
             'breadcrumb' => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'Firms']],
             'rows'       => $b->paginate(15),
-            'pager'      => (new CompanyModel())->pager,
+            'pager'      => $b->pager, // must be the instance that ran paginate(), not a new model
             'search'     => $search,
         ]);
     }

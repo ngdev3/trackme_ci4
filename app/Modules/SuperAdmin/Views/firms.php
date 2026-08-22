@@ -36,5 +36,5 @@
             </table>
         </div>
     </div>
-    <?php if (isset($pager)): ?><div class="card-footer d-flex justify-content-end"><?= $pager->links() ?></div><?php endif; ?>
+    <?php if (isset($pager)): ?><div class="card-footer"><?= $pager->only(['q'])->links('default', 'modern') ?></div><?php endif; ?>
 </div>
