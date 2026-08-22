@@ -128,60 +128,69 @@ class TransactionApiController extends BaseApiController
             $to = date('Y-m-d');
         }
 
-        $model = new TransactionModel();
-        $f     = ['from' => $from, 'to' => $to];
+        // Cache the report's 5 aggregates (summary + opening + by-mode + two
+        // group-totals) per company + date range. A short TTL, and any transaction
+        // write for this firm busts it instantly (dash_bust); `?fresh=1` forces a
+        // recompute for pull-to-refresh.
+        $data = dash_remember($cid, 'apiv1:report:' . md5($from . '|' . $to), 60, static function () use ($cid, $from, $to) {
+            $model = new TransactionModel();
+            $f     = ['from' => $from, 'to' => $to];
 
-        $summary = $model->summary($cid, $f);
+            $summary = $model->summary($cid, $f);
 
-        // Opening cash carried into the range, and the closing after this range's
-        // net — so the report reflects true cash-in-hand, not just the period net.
-        $opening = round((new OpeningBalance($cid, $cid))->carryInto($from), 2);
-        $closing = round($opening + (float) $summary['net'], 2);
+            // Opening cash carried into the range, and the closing after this range's
+            // net — so the report reflects true cash-in-hand, not just the period net.
+            $opening = round((new OpeningBalance($cid, $cid))->carryInto($from), 2);
+            $closing = round($opening + (float) $summary['net'], 2);
 
-        $byMode = [];
-        foreach ($model->byMode($cid, $f) as $mode => $v) {
-            $byMode[] = [
-                'mode' => $mode,
-                'jama' => round((float) $v['jama'], 2),
-                'naam' => round((float) $v['naam'], 2),
+            $byMode = [];
+            foreach ($model->byMode($cid, $f) as $mode => $v) {
+                $byMode[] = [
+                    'mode' => $mode,
+                    'jama' => round((float) $v['jama'], 2),
+                    'naam' => round((float) $v['naam'], 2),
+                ];
+            }
+
+            $byParty = array_map(static fn (array $g): array => [
+                'label' => $g['label'] !== '' ? $g['label'] : 'Unspecified',
+                'count' => (int) $g['count'],
+                'jama'  => round((float) $g['jama'], 2),
+                'naam'  => round((float) $g['naam'], 2),
+                'net'   => round((float) $g['net'], 2),
+            ], $model->groupTotals($cid, 'party_type', $from, $to));
+
+            // Account-wise ledger — one bucket per account NAME (the mobile Report
+            // tab shows this, not the party-type grouping). Sorted by |net| desc so
+            // the biggest accounts lead. Rows with no name fall under 'Unnamed'.
+            $byAccount = array_map(static fn (array $g): array => [
+                'label' => trim((string) $g['label']) !== '' ? $g['label'] : 'Unnamed',
+                'count' => (int) $g['count'],
+                'jama'  => round((float) $g['jama'], 2),
+                'naam'  => round((float) $g['naam'], 2),
+                'net'   => round((float) $g['net'], 2),
+            ], $model->groupTotals($cid, 'name', $from, $to));
+            usort($byAccount, static fn (array $a, array $b): int => abs((float) $b['net']) <=> abs((float) $a['net']));
+
+            return [
+                'summary'       => [
+                    'jama'    => round((float) $summary['jama'], 2),
+                    'naam'    => round((float) $summary['naam'], 2),
+                    'net'     => round((float) $summary['net'], 2),
+                    'count'   => (int) $summary['count'],
+                    'opening' => $opening,
+                    'closing' => $closing,
+                ],
+                'by_mode'       => $byMode,
+                'by_party_type' => $byParty,
+                'by_account'    => $byAccount,
             ];
-        }
+        });
 
-        $byParty = array_map(static fn (array $g): array => [
-            'label' => $g['label'] !== '' ? $g['label'] : 'Unspecified',
-            'count' => (int) $g['count'],
-            'jama'  => round((float) $g['jama'], 2),
-            'naam'  => round((float) $g['naam'], 2),
-            'net'   => round((float) $g['net'], 2),
-        ], $model->groupTotals($cid, 'party_type', $from, $to));
-
-        // Account-wise ledger — one bucket per account NAME (the mobile Report tab
-        // shows this, not the party-type grouping). Sorted by |net| desc so the
-        // biggest accounts lead. Rows with no name fall under 'Unnamed'.
-        $byAccount = array_map(static fn (array $g): array => [
-            'label' => trim((string) $g['label']) !== '' ? $g['label'] : 'Unnamed',
-            'count' => (int) $g['count'],
-            'jama'  => round((float) $g['jama'], 2),
-            'naam'  => round((float) $g['naam'], 2),
-            'net'   => round((float) $g['net'], 2),
-        ], $model->groupTotals($cid, 'name', $from, $to));
-        usort($byAccount, static fn (array $a, array $b): int => abs((float) $b['net']) <=> abs((float) $a['net']));
-
-        return $this->respond([
-            'status'        => 'ok',
-            'range'         => ['from' => $from, 'to' => $to],
-            'summary'       => [
-                'jama'    => round((float) $summary['jama'], 2),
-                'naam'    => round((float) $summary['naam'], 2),
-                'net'     => round((float) $summary['net'], 2),
-                'count'   => (int) $summary['count'],
-                'opening' => $opening,
-                'closing' => $closing,
-            ],
-            'by_mode'       => $byMode,
-            'by_party_type' => $byParty,
-            'by_account'    => $byAccount,
-        ]);
+        return $this->respond(array_merge([
+            'status' => 'ok',
+            'range'  => ['from' => $from, 'to' => $to],
+        ], $data));
     }
 
     /**

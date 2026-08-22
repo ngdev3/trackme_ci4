@@ -39,90 +39,93 @@ class DashboardApiController extends BaseApiController
             return $this->failValidationErrors('No company for this user.');
         }
 
-        $txn = new TransactionModel();
-        $today = date('Y-m-d');
-
-        // Selected reporting period (month / range / FY) + the comparable prior
-        // period used for the up/down deltas.
-        $p          = $this->resolvePeriod();
-        $periodFrom = $p['from'];
-        $periodTo   = $p['to'];
-
-        $todaySum  = $this->shapeSummary($txn->summary($cid, ['from' => $today, 'to' => $today]));
-        $periodSum = $this->shapeSummary($txn->summary($cid, ['from' => $periodFrom, 'to' => $periodTo]));
-        $prevSum   = $this->shapeSummary($txn->summary($cid, ['from' => $p['prevFrom'], 'to' => $p['prevTo']]));
-
-        // Percent change of the period's net vs the previous period (null = no base).
-        $periodSum['net_delta'] = $this->percentDelta($periodSum['net'], $prevSum['net']);
-
-        // Running balance is cumulative to the period end (capped at today so a
-        // current/future period end doesn't imply future transactions).
-        $balanceTo = min($periodTo, $today);
-
-        // Opening cash carried into the selected period (Shri Rokad Nagad opening
-        // + net of entries from the FY start up to, but excluding, the period
-        // start). The closing balance is then Opening + this period's Jama − Naam,
-        // so the 4th card reflects true cash-in-hand, not just transaction net.
-        $ob        = new OpeningBalance($cid, $cid);
-        $opening   = round($ob->carryInto($periodFrom), 2);
-        $periodNet = $this->shapeSummary($txn->summary($cid, ['from' => $periodFrom, 'to' => $balanceTo]))['net'];
-        $closing   = round($opening + $periodNet, 2);
-
-        // Headline cards (money-in framed as "sales", money-out as "expenses";
-        // this is a cash book, so the 4th card shows the running balance). Each
-        // metric carries a signed % delta vs the previous period for the chips.
-        $metrics = [
-            'sales'    => ['value' => $periodSum['deposits'], 'delta' => $this->percentDelta($periodSum['deposits'], $prevSum['deposits'])],
-            'expenses' => ['value' => $periodSum['expenses'], 'delta' => $this->percentDelta($periodSum['expenses'], $prevSum['expenses'])],
-            'profit'   => ['value' => $periodSum['net'],      'delta' => $this->percentDelta($periodSum['net'],      $prevSum['net'])],
-            'opening'  => ['value' => $opening,               'delta' => null],
-            'balance'  => ['value' => $closing,               'delta' => null],
-        ];
-
-        // Money-in / money-out / net series for the chart: the FY's 12 months, or
-        // the 6 months ending at the period end for month/range.
-        $series = $this->monthlySeries($txn, $cid, $p['seriesMonths'], $p['seriesAnchor']);
-
-        // Recent entries within the selected period.
-        $recent = array_map(static fn (array $r): array => [
-            'id'           => (int) $r['id'],
-            'txn_no'       => $r['txn_no'],
-            'date'         => $r['txn_date'],
-            'created_at'   => $r['created_at'] ?? null,
-            'name'         => $r['name'],
-            'party_type'   => $r['party_type'],
-            'type'         => $r['type'],
-            'amount'       => (float) $r['amount'],
-            'payment_mode' => $r['payment_mode'],
-            'status'       => $r['status'],
-        ], $txn->limitedFiltered($cid, ['from' => $periodFrom, 'to' => $periodTo], 6, 0));
-
+        $txn     = new TransactionModel();
+        $today   = date('Y-m-d');
+        $p       = $this->resolvePeriod();
         $company = (new CompanyModel())->find($cid);
 
-        return $this->respond([
-            'status'    => 'ok',
-            'company'   => [
+        // Cache the heavy aggregate block per company + period: ~10 SUM queries
+        // plus the 6-month series and the recent feed. TTL is short and any
+        // transaction write for this firm busts the cache instantly (dash_bust,
+        // fired from TransactionModel + the sync endpoint), so figures never go
+        // stale. `?fresh=1` forces a recompute (pull-to-refresh). Shared with the
+        // web dashboard cache via the same per-company version key.
+        $data = dash_remember($cid, 'apiv1:dash:' . $p['type'] . ':' . md5($p['from'] . '|' . $p['to']), 60, function () use ($txn, $cid, $today, $p, $company, $user) {
+            $periodFrom = $p['from'];
+            $periodTo   = $p['to'];
+
+            $todaySum  = $this->shapeSummary($txn->summary($cid, ['from' => $today, 'to' => $today]));
+            $periodSum = $this->shapeSummary($txn->summary($cid, ['from' => $periodFrom, 'to' => $periodTo]));
+            $prevSum   = $this->shapeSummary($txn->summary($cid, ['from' => $p['prevFrom'], 'to' => $p['prevTo']]));
+
+            // Percent change of the period's net vs the previous period (null = no base).
+            $periodSum['net_delta'] = $this->percentDelta($periodSum['net'], $prevSum['net']);
+
+            // Running balance is cumulative to the period end (capped at today so a
+            // current/future period end doesn't imply future transactions).
+            $balanceTo = min($periodTo, $today);
+
+            // Opening cash carried into the selected period (Shri Rokad Nagad opening
+            // + net of entries from the FY start up to, but excluding, the period
+            // start). The closing balance is then Opening + this period's Jama − Naam.
+            $ob        = new OpeningBalance($cid, $cid);
+            $opening   = round($ob->carryInto($periodFrom), 2);
+            $periodNet = $this->shapeSummary($txn->summary($cid, ['from' => $periodFrom, 'to' => $balanceTo]))['net'];
+            $closing   = round($opening + $periodNet, 2);
+
+            // Headline cards (money-in framed as "sales", money-out as "expenses";
+            // this is a cash book, so the 4th card shows the running balance).
+            $metrics = [
+                'sales'    => ['value' => $periodSum['deposits'], 'delta' => $this->percentDelta($periodSum['deposits'], $prevSum['deposits'])],
+                'expenses' => ['value' => $periodSum['expenses'], 'delta' => $this->percentDelta($periodSum['expenses'], $prevSum['expenses'])],
+                'profit'   => ['value' => $periodSum['net'],      'delta' => $this->percentDelta($periodSum['net'],      $prevSum['net'])],
+                'opening'  => ['value' => $opening,               'delta' => null],
+                'balance'  => ['value' => $closing,               'delta' => null],
+            ];
+
+            $series = $this->monthlySeries($txn, $cid, $p['seriesMonths'], $p['seriesAnchor']);
+
+            $recent = array_map(static fn (array $r): array => [
+                'id'           => (int) $r['id'],
+                'txn_no'       => $r['txn_no'],
+                'date'         => $r['txn_date'],
+                'created_at'   => $r['created_at'] ?? null,
+                'name'         => $r['name'],
+                'party_type'   => $r['party_type'],
+                'type'         => $r['type'],
+                'amount'       => (float) $r['amount'],
+                'payment_mode' => $r['payment_mode'],
+                'status'       => $r['status'],
+            ], $txn->limitedFiltered($cid, ['from' => $periodFrom, 'to' => $periodTo], 6, 0));
+
+            return [
+                'cash'      => [
+                    'today'      => $todaySum,
+                    'month'      => $periodSum, // "month" key kept for back-compat; holds the selected period
+                    'prev_month' => $prevSum,
+                ],
+                'metrics'   => $metrics,
+                'series'    => $series,
+                'recent'    => $recent,
+                'inventory' => $this->inventorySnapshot($cid, $company, $user),
+            ];
+        });
+
+        return $this->respond(array_merge([
+            'status'  => 'ok',
+            'company' => [
                 'id'            => $cid,
                 'name'          => $company['name'] ?? null,
                 'business_type' => $company['business_type'] ?? null,
                 'state'         => $company['state'] ?? null,
             ],
-            'period'    => [
+            'period'  => [
                 'type'  => $p['type'],
-                'from'  => $periodFrom,
-                'to'    => $periodTo,
+                'from'  => $p['from'],
+                'to'    => $p['to'],
                 'label' => $p['label'],
             ],
-            'cash'      => [
-                'today'      => $todaySum,
-                'month'      => $periodSum, // "month" key kept for back-compat; holds the selected period
-                'prev_month' => $prevSum,
-            ],
-            'metrics'   => $metrics,
-            'series'    => $series,
-            'recent'    => $recent,
-            'inventory' => $this->inventorySnapshot($cid, $company, $user),
-        ]);
+        ], $data));
     }
 
     /**

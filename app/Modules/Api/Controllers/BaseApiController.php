@@ -18,7 +18,11 @@ abstract class BaseApiController extends Controller
 {
     use ResponseTrait;
 
-    protected $helpers = ['settings'];
+    // 'dashcache' is loaded API-wide so dashboard endpoints can dash_remember()
+    // their aggregates AND every write path's dash_bust() actually fires (it is
+    // guarded by function_exists) — keeping the cached API + web dashboards in
+    // step with each other and with the DB.
+    protected $helpers = ['settings', 'dashcache'];
 
     /** Cached authenticated user for this request. */
     protected ?array $apiUser = null;
