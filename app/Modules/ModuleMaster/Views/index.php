@@ -11,25 +11,37 @@
         </form>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+        <div class="erp-tbl-wrap">
+            <table class="erp-tbl auto">
                 <thead><tr>
-                    <th style="width:60px">#</th><th>Icon</th><th>Name</th><th>Code</th><th>URL</th>
-                    <th>Parent</th><th>Sort</th><th>Status</th><th class="col-actions text-end">Actions</th>
+                    <th class="text-start">ID</th><th class="text-center">Icon</th><th class="text-start">Name</th><th class="text-start">Code</th><th class="text-start">URL</th>
+                    <th class="text-start">Parent</th><th class="text-center">Sort</th><th class="text-center">Status</th><th class="text-end">Actions</th>
                 </tr></thead>
                 <tbody>
                 <?php if (empty($rows)): ?>
-                    <tr><td colspan="9" class="text-center text-secondary py-4">No records found.</td></tr>
+                    <tr><td colspan="9" class="erp-empty"><i class="bi bi-inbox"></i><div>No records found.</div></td></tr>
                 <?php else: foreach ($rows as $r): ?>
                     <tr>
-                        <td><?= esc($r['id']) ?></td>
-                        <td><i class="<?= esc($r['icon']) ?>"></i></td>
-                        <td class="fw-semibold"><?= esc($r['name']) ?></td>
-                        <td><code><?= esc($r['code']) ?></code></td>
-                        <td><?= $r['url'] ? '<span class="badge text-bg-light border">' . esc($r['url']) . '</span>' : '<span class="text-secondary">—</span>' ?></td>
-                        <td><?= esc($r['parent_name'] ?? '—') ?></td>
-                        <td><?= esc($r['sort_order']) ?></td>
-                        <td>
+                        <td class="text-start"><span class="erp-idchip"><?= esc($r['id']) ?></span></td>
+                        <td class="text-center"><i class="<?= esc($r['icon']) ?>"></i></td>
+                        <td class="text-start"><?= erp_cell_name((string) $r['name'], [
+                            'type' => 'Module', 'icon' => 'grid-3x3-gap',
+                            'chips' => array_values(array_filter([
+                                ['t' => (string) $r['code'], 'ic' => 'upc-scan'],
+                                ! empty($r['parent_name']) ? ['t' => (string) $r['parent_name'], 'ic' => 'diagram-2'] : null,
+                            ])),
+                            'rows' => array_values(array_filter([
+                                ! empty($r['url']) ? ['ic' => 'link-45deg', 'l' => 'URL', 'v' => (string) $r['url']] : null,
+                                ['ic' => 'sort-numeric-down', 'l' => 'Sort order', 'v' => (string) $r['sort_order']],
+                                ['ic' => (int) $r['status'] === 1 ? 'check-circle' : 'pause-circle', 'l' => 'Status', 'v' => (int) $r['status'] === 1 ? 'Active' : 'Inactive'],
+                            ])),
+                            'foot' => 'Module #' . $r['id'],
+                        ], ['green' => (int) $r['status'] === 1]) ?></td>
+                        <td class="text-start"><code><?= esc($r['code']) ?></code></td>
+                        <td class="text-start"><?= $r['url'] ? '<span class="erp-badge">' . esc($r['url']) . '</span>' : '<span class="erp-muted">—</span>' ?></td>
+                        <td class="text-start"><span class="erp-muted"><?= esc($r['parent_name'] ?? '—') ?></span></td>
+                        <td class="text-center"><span class="erp-muted"><?= esc($r['sort_order']) ?></span></td>
+                        <td class="text-center">
                             <?php if (can($moduleCode, 'edit')): ?>
                                 <a href="<?= site_url($baseRoute . '/toggle/' . $r['id']) ?>" class="text-decoration-none"><?= status_badge($r['status']) ?></a>
                             <?php else: ?><?= status_badge($r['status']) ?><?php endif; ?>

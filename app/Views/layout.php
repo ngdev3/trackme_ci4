@@ -33,6 +33,8 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
 <html lang="en">
 <head>
     <?= $this->include('partials/head') ?>
+    <!-- Shared data-table + hover-card design system (used by every module's listing) -->
+    <link rel="stylesheet" href="<?= erp_asset('assets/css/erp-table.css') ?>">
     <?php foreach (($css ?? []) as $href): ?>
         <link rel="stylesheet" href="<?= erp_asset($href) ?>">
     <?php endforeach; ?>
@@ -200,6 +202,8 @@ window.erpFreshSubmit = function (form) {
     </script>
 <?php endif; ?>
 
+<!-- Shared table hover-card engine (renders #erpTip for any .erp-hover[data-tip]) -->
+<script src="<?= erp_asset('assets/js/erp-table.js') ?>"></script>
 <!-- Page-specific scripts -->
 <?php foreach (($js ?? []) as $src): ?>
     <script src="<?= erp_asset($src) ?>"></script>

@@ -204,19 +204,29 @@ $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
         <div class="card">
             <div class="card-header"><h3 class="card-title mb-0"><i class="bi bi-clock-history me-1"></i> Subscription Activity Log</h3></div>
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
-                        <thead><tr><th>When</th><th>By</th><th>Module</th><th>Action</th><th>Detail</th></tr></thead>
+                <div class="erp-tbl-wrap">
+                    <table class="erp-tbl auto">
+                        <thead><tr><th class="text-start">When</th><th class="text-start">By</th><th class="text-start">Module</th><th class="text-start">Action</th><th class="text-start">Detail</th></tr></thead>
                         <tbody>
                         <?php if (empty($logs)): ?>
-                            <tr><td colspan="5" class="text-center text-secondary py-4">No subscription activity recorded yet.</td></tr>
+                            <tr><td colspan="5" class="erp-empty"><i class="bi bi-clock-history"></i><div>No subscription activity recorded yet.</div></td></tr>
                         <?php else: foreach ($logs as $l): ?>
                             <tr>
-                                <td class="text-nowrap small"><?= esc($dt($l['created_at'] ?? null)) ?></td>
-                                <td class="small"><?= esc($l['user_name'] ?? ($l['user_id'] ? '#' . $l['user_id'] : 'System')) ?></td>
-                                <td><span class="badge text-bg-light border"><?= esc($l['module'] ?? '—') ?></span></td>
-                                <td class="small"><?= esc($l['action'] ?? '—') ?></td>
-                                <td class="small"><?= esc($l['description'] ?? '') ?></td>
+                                <td class="text-start"><span class="erp-muted"><?= esc($dt($l['created_at'] ?? null)) ?></span></td>
+                                <td class="text-start"><?php $lby = (string) ($l['user_name'] ?? ($l['user_id'] ? '#' . $l['user_id'] : 'System')); ?><?= erp_cell_name($lby, [
+                                    'type' => 'Activity', 'icon' => 'clock-history',
+                                    'chips' => array_values(array_filter([
+                                        ! empty($l['module']) ? ['t' => (string) $l['module'], 'ic' => 'folder2'] : null,
+                                        ! empty($l['action']) ? ['t' => (string) $l['action'], 'ic' => 'lightning-charge-fill', 'ok' => true] : null,
+                                    ])),
+                                    'rows' => array_values(array_filter([
+                                        ! empty($l['description']) ? ['ic' => 'card-text', 'l' => 'Detail', 'v' => (string) $l['description']] : null,
+                                        ['ic' => 'clock', 'l' => 'When', 'v' => (string) $dt($l['created_at'] ?? null)],
+                                    ])),
+                                ]) ?></td>
+                                <td class="text-start"><span class="erp-badge"><?= esc($l['module'] ?? '—') ?></span></td>
+                                <td class="text-start"><span class="erp-pill"><?= esc($l['action'] ?? '—') ?></span></td>
+                                <td class="text-start"><span class="erp-muted"><?= esc($l['description'] ?? '') ?></span></td>
                             </tr>
                         <?php endforeach; endif; ?>
                         </tbody>

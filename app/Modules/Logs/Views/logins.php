@@ -83,26 +83,46 @@ $duration = static function ($seconds): string {
         </form>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover table-sm align-middle mb-0">
+        <div class="erp-tbl-wrap">
+            <table class="erp-tbl auto">
                 <thead>
                 <tr>
-                    <th>#</th><th>User</th><th>Username</th><th>Status</th><th>IP</th><th>Location</th><th>Browser</th><th>OS</th><th>Device</th><th>Login</th><th>Logout</th><th>Duration</th><th>Risk</th>
+                    <th class="text-start">ID</th><th class="text-start">User</th><th class="text-start">Username</th><th class="text-start">Status</th><th class="text-start">IP</th><th class="text-start">Location</th><th class="text-start">Browser</th><th class="text-start">OS</th><th class="text-start">Device</th><th class="text-start">Login</th><th class="text-start">Logout</th><th class="text-start">Duration</th><th class="text-start">Risk</th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php if (empty($rows)): ?>
-                    <tr><td colspan="13" class="text-center text-secondary py-4">No login history.</td></tr>
+                    <tr><td colspan="13" class="erp-empty"><i class="bi bi-inbox"></i><div>No login history.</div></td></tr>
                 <?php else: foreach ($rows as $r): ?>
                     <tr class="<?= ! empty($r['is_suspicious']) ? 'table-danger' : '' ?>">
-                        <td><?= esc($r['id']) ?></td>
-                        <td><?= esc($r['user_name'] ?? 'System') ?></td>
+                        <td><span class="erp-idchip"><?= esc($r['id']) ?></span></td>
+                        <?php $liOk = $r['status'] === 'success'; ?>
+                        <td><?= erp_cell_name((string) ($r['user_name'] ?? 'System'), [
+                            'type' => 'Login', 'icon' => 'box-arrow-in-right',
+                            'accent' => ! empty($r['is_suspicious']) ? 'red' : ($liOk ? 'blue' : 'gray'),
+                            'chips' => array_values(array_filter([
+                                ['t' => $liOk ? 'Success' : 'Failed', 'ic' => $liOk ? 'check-circle-fill' : 'x-circle-fill', 'ok' => $liOk],
+                                ! empty($r['is_suspicious']) ? ['t' => 'Suspicious', 'ic' => 'exclamation-triangle-fill'] : null,
+                            ])),
+                            'rows' => array_values(array_filter([
+                                ['ic' => 'person', 'l' => 'Username', 'v' => (string) $r['username']],
+                                ! empty($r['ip_address']) ? ['ic' => 'hdd-network', 'l' => 'IP', 'v' => (string) $r['ip_address']] : null,
+                                ! empty($r['location_label']) ? ['ic' => 'geo-alt', 'l' => 'Location', 'v' => (string) $r['location_label']] : null,
+                                ['ic' => 'window', 'l' => 'Browser / OS', 'v' => trim(($r['browser'] ?: 'Unknown') . ' · ' . ($r['operating_system'] ?: 'Unknown'))],
+                                ['ic' => 'phone', 'l' => 'Device', 'v' => (string) ($r['device_type'] ?: 'Unknown')],
+                                ! empty($r['login_at']) ? ['ic' => 'box-arrow-in-right', 'l' => 'Login', 'v' => date('d M Y, H:i', strtotime($r['login_at']))] : null,
+                                ['ic' => 'stopwatch', 'l' => 'Duration', 'v' => $duration($r['session_duration'] ?? null)],
+                                ! empty($r['failure_reason']) ? ['ic' => 'exclamation-circle', 'l' => 'Failure', 'v' => (string) $r['failure_reason']] : null,
+                                ! empty($r['suspicious_reason']) ? ['ic' => 'shield-exclamation', 'l' => 'Risk', 'v' => (string) $r['suspicious_reason']] : null,
+                            ])),
+                            'foot' => 'Login #' . $r['id'],
+                        ], ['green' => $liOk && empty($r['is_suspicious'])]) ?></td>
                         <td><code><?= esc($r['username']) ?></code></td>
                         <td>
                             <?php if ($r['status'] === 'success'): ?>
-                                <span class="badge text-bg-success">Success</span>
+                                <span class="erp-status active">Success</span>
                             <?php else: ?>
-                                <span class="badge text-bg-danger">Failed</span>
+                                <span class="erp-status delete">Failed</span>
                             <?php endif; ?>
                             <?php if (! empty($r['failure_reason'])): ?>
                                 <small class="d-block text-secondary"><?= esc($r['failure_reason']) ?></small>
@@ -135,16 +155,16 @@ $duration = static function ($seconds): string {
                         </td>
                         <td><small title="<?= esc($r['user_agent'] ?? '') ?>"><?= esc($r['browser'] ?: 'Unknown') ?></small></td>
                         <td><small><?= esc($r['operating_system'] ?: 'Unknown') ?></small></td>
-                        <td><span class="badge text-bg-light border"><?= esc($r['device_type'] ?: 'Unknown') ?></span></td>
+                        <td><span class="erp-badge"><?= esc($r['device_type'] ?: 'Unknown') ?></span></td>
                         <td><small><?= ! empty($r['login_at']) ? esc(date('d M Y, H:i', strtotime($r['login_at']))) : '-' ?></small></td>
                         <td><small><?= ! empty($r['logout_at']) ? esc(date('d M Y, H:i', strtotime($r['logout_at']))) : 'Active/unknown' ?></small></td>
                         <td><small><?= esc($duration($r['session_duration'] ?? null)) ?></small></td>
                         <td>
                             <?php if (! empty($r['is_suspicious'])): ?>
-                                <span class="badge text-bg-danger">Suspicious</span>
+                                <span class="erp-status delete">Suspicious</span>
                                 <small class="d-block text-danger"><?= esc($r['suspicious_reason']) ?></small>
                             <?php else: ?>
-                                <span class="badge text-bg-light border">Normal</span>
+                                <span class="erp-badge">Normal</span>
                             <?php endif; ?>
                         </td>
                     </tr>

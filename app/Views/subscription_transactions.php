@@ -54,49 +54,50 @@ $daysLeft = $expTs ? (int) ceil(($expTs - time()) / 86400) : null;
                 <a href="<?= site_url('subscription') ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-gem me-1"></i> Plans</a>
             </div>
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
+                <?php $statusCls = ['paid' => 'active', 'created' => 'inactive', 'failed' => 'delete', 'refunded' => 'inactive']; ?>
+                <div class="erp-tbl-wrap">
+                    <table class="erp-tbl auto">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Invoice / Order</th>
-                                <th>Plan</th>
+                                <th class="text-start">Date</th>
+                                <th class="text-start">Invoice / Order</th>
+                                <th class="text-start">Plan</th>
                                 <th class="text-end">Amount</th>
-                                <th>Status</th>
+                                <th class="text-center">Status</th>
                                 <th class="text-end">Receipt</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php if (empty($orders)): ?>
-                            <tr><td colspan="6" class="text-center text-secondary py-4">
-                                <i class="bi bi-inbox fs-4 d-block mb-1"></i>No payments yet.
+                            <tr><td colspan="6" class="erp-empty">
+                                <i class="bi bi-inbox"></i><div>No payments yet.</div>
                                 <div class="mt-2"><a href="<?= site_url('subscription') ?>" class="btn btn-sm btn-primary">Choose a plan</a></div>
                             </td></tr>
                         <?php else: foreach ($orders as $o): ?>
-                            <?php [$label, $color] = $statusMeta[$o['status']] ?? ['—', 'secondary']; ?>
+                            <?php [$label, $color] = $statusMeta[$o['status']] ?? ['—', 'secondary']; $scls = $statusCls[$o['status']] ?? 'inactive'; ?>
                             <tr>
-                                <td><?= esc(date('d M Y, H:i', strtotime($o['invoice_date'] ?: $o['created_at']))) ?></td>
-                                <td>
+                                <td class="text-start"><span class="erp-muted"><?= esc(date('d M Y, H:i', strtotime($o['invoice_date'] ?: $o['created_at']))) ?></span></td>
+                                <td class="text-start">
                                     <?php if (! empty($o['invoice_no'])): ?>
                                         <strong><?= esc($o['invoice_no']) ?></strong><br>
                                     <?php endif; ?>
-                                    <span class="text-muted small"><?= esc($o['order_id']) ?></span>
+                                    <span class="erp-muted small"><?= esc($o['order_id']) ?></span>
                                 </td>
-                                <td>
+                                <td class="text-start">
                                     <?= esc($o['plan_name'] ?? '—') ?>
                                     <?php if (! empty($o['coupon_code'])): ?>
-                                        <br><span class="badge text-bg-success" title="Coupon applied"><i class="bi bi-ticket-perforated"></i> <?= esc($o['coupon_code']) ?></span>
+                                        <br><span class="erp-pill green" title="Coupon applied"><i class="bi bi-ticket-perforated"></i> <?= esc($o['coupon_code']) ?></span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-end">
+                                <td class="text-end fw-semibold">
                                     &#8377;<?= esc(number_format((float) $o['amount'], 2)) ?>
                                     <?php if (! empty($o['discount']) && (float) $o['discount'] > 0): ?>
                                         <br><span class="text-success small">&#8722;&#8377;<?= esc(number_format((float) $o['discount'], 2)) ?> off</span>
                                     <?php endif; ?>
                                 </td>
-                                <td>
-                                    <span class="badge text-bg-<?= esc($color) ?>"><?= esc($label) ?></span>
-                                    <?php if ((int) ($o['refunded'] ?? 0) === 1): ?><span class="badge text-bg-warning">Refunded</span><?php endif; ?>
+                                <td class="text-center">
+                                    <span class="erp-status <?= $scls ?>"><?= esc($label) ?></span>
+                                    <?php if ((int) ($o['refunded'] ?? 0) === 1): ?><span class="erp-status inactive">Refunded</span><?php endif; ?>
                                 </td>
                                 <td class="text-end">
                                     <?php if ((int) $o['activated'] === 1): ?>
@@ -106,7 +107,7 @@ $daysLeft = $expTs ? (int) ceil(($expTs - time()) / 86400) : null;
                                     <?php elseif ($o['status'] === 'failed'): ?>
                                         <a href="<?= site_url('subscription') ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-repeat me-1"></i>Retry</a>
                                     <?php else: ?>
-                                        <span class="text-muted small">—</span>
+                                        <span class="erp-muted small">—</span>
                                     <?php endif; ?>
                                 </td>
                             </tr>

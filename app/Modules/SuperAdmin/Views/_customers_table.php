@@ -5,6 +5,11 @@
  * SuperAdminController::customersData() for live (AJAX) search / page-size /
  * sort / pagination. Self-contained: it defines its own sort-header helper.
  *
+ * Compact layout: the Subscription column is narrowed to a single plan pill and
+ * the standalone "Firms" column is folded into a badge on the customer name, so
+ * the primary columns (name, email, payment, status) get more room. Truncated
+ * cells carry a native title tooltip with the full / detailed value.
+ *
  * @var array       $rows
  * @var string|int  $per
  * @var string      $sort
@@ -36,17 +41,27 @@ $sortTh = static function (string $key, string $label, string $align = 'text-sta
     return '<th class="' . $align . ' cust-th-sort"><a href="' . $url . '" class="cust-sort ' . $cls . '">'
         . '<span>' . esc($label) . '</span><i class="bi ' . $icon . '"></i></a></th>';
 };
+
+/** Compact relative time ("2 mo ago") for the hover-card footer / last-seen. */
+$ago = static function ($ts): string {
+    if (! $ts) { return ''; }
+    $d = time() - strtotime((string) $ts);
+    if ($d < 60)       { return 'just now'; }
+    if ($d < 3600)     { return floor($d / 60) . 'm ago'; }
+    if ($d < 86400)    { return floor($d / 3600) . 'h ago'; }
+    if ($d < 2592000)  { return floor($d / 86400) . 'd ago'; }
+    if ($d < 31536000) { return floor($d / 2592000) . ' mo ago'; }
+    return round($d / 31536000, 1) . ' yr ago';
+};
 ?>
 <div class="cust-table-wrap">
     <table class="cust-table">
         <thead>
             <tr>
-                <th class="col-sno text-center">S.No</th>
-                <?= $sortTh('id', 'ID', 'col-id text-center') ?>
+                <?= $sortTh('id', 'ID', 'col-id text-start') ?>
                 <?= $sortTh('name', 'Name', 'text-start') ?>
                 <?= $sortTh('email', 'Email', 'text-start') ?>
-                <?= $sortTh('firms', 'Firms', 'text-center') ?>
-                <?= $sortTh('subscription', 'Subscription', 'text-start') ?>
+                <?= $sortTh('subscription', 'Plan', 'col-sub text-start') ?>
                 <?= $sortTh('payment', 'Payment', 'text-center') ?>
                 <?= $sortTh('status', 'Status', 'text-center') ?>
                 <th class="text-center">Actions</th>
@@ -54,30 +69,71 @@ $sortTh = static function (string $key, string $label, string $align = 'text-sta
         </thead>
         <tbody>
         <?php if (empty($rows)): ?>
-            <tr><td colspan="9" class="cust-empty"><i class="bi bi-inbox"></i><div>No customers found<?= $search !== '' ? ' for “' . esc($search) . '”' : '' ?>.</div></td></tr>
-        <?php else: $sno = (int) ($offset ?? 0); foreach ($rows as $r): $sub = $r['subscription'] ?? null; $sno++; ?>
+            <tr><td colspan="7" class="cust-empty"><i class="bi bi-inbox"></i><div>No customers found<?= $search !== '' ? ' for “' . esc($search) . '”' : '' ?>.</div></td></tr>
+        <?php else: foreach ($rows as $r): $sub = $r['subscription'] ?? null;
+            $firmCount = (int) $r['firm_count'];
+
+            // Detailed tooltips for values that may be clipped in the compact view.
+            $nameTip = (string) $r['name'];
+            if ($firmCount > 0) { $nameTip .= ' • Owns ' . $firmCount . ' firm' . ($firmCount === 1 ? '' : 's'); }
+
+            $subParts = ['Plan: ' . ($sub['plan_name'] ?? '—')];
+            if (! empty($sub['status']))         { $subParts[] = 'Status: ' . ucfirst((string) $sub['status']); }
+            if (! empty($sub['payment_status'])) { $subParts[] = 'Payment: ' . ucfirst((string) $sub['payment_status']); }
+            if (! empty($sub['started_at']))     { $subParts[] = 'Started: ' . date('d M Y', strtotime((string) $sub['started_at'])); }
+            if (! empty($sub['expires_at']))     { $subParts[] = 'Expires: ' . date('d M Y', strtotime((string) $sub['expires_at'])); }
+            $subTip = implode(' • ', $subParts);
+
+            // Rich hover-card payload (mirrors the TrackMe account preview, mapped
+            // to SaaS-customer fields). Read by the delegated JS in customers.php.
+            $tip = [
+                'id'          => (int) $r['id'],
+                'name'        => (string) $r['name'],
+                'email'       => (string) ($r['email'] ?? ''),
+                'mobile'      => (string) ($r['mobile'] ?? ''),
+                'status'      => ((int) ($r['status'] ?? 0) === 1) ? 'active' : 'inactive',
+                'source'      => ! empty($r['auth_provider']) ? ucfirst((string) $r['auth_provider']) : 'Web',
+                'firms'       => $firmCount,
+                'plan'        => (string) ($sub['plan_name'] ?? ''),
+                'plan_status' => (string) ($sub['status'] ?? ''),
+                'payment'     => (string) ($sub['payment_status'] ?? ''),
+                'started'     => ! empty($sub['started_at']) ? date('d M Y', strtotime((string) $sub['started_at'])) : '',
+                'expires'     => ! empty($sub['expires_at']) ? date('d M Y', strtotime((string) $sub['expires_at'])) : '',
+                'last_ago'    => ! empty($r['last_login_at']) ? $ago($r['last_login_at']) : '',
+                'created'     => ! empty($r['created_at']) ? date('d M Y', strtotime((string) $r['created_at'])) : '',
+                'created_ago' => ! empty($r['created_at']) ? $ago($r['created_at']) : '',
+            ];
+            if (! empty($sub['started_at']) && ! empty($sub['expires_at'])) {
+                $s = strtotime((string) $sub['started_at']);
+                $e = strtotime((string) $sub['expires_at']);
+                $now = time();
+                $tip['valid_pct'] = $e > $s ? max(0, min(100, (int) round(($now - $s) / ($e - $s) * 100))) : 100;
+                $tip['days_left'] = (int) floor(($e - $now) / 86400);
+            }
+            $tipJson = json_encode($tip, JSON_UNESCAPED_UNICODE);
+        ?>
             <tr>
-                <td class="col-sno text-center"><?= $sno ?></td>
-                <td class="col-id text-center"><span class="cust-idchip">CUS-<?= str_pad((string) $r['id'], 4, '0', STR_PAD_LEFT) ?></span></td>
+                <td class="col-id text-start"><span class="cust-idchip" title="Customer ID <?= esc($r['id'], 'attr') ?>">CUS-<?= str_pad((string) $r['id'], 4, '0', STR_PAD_LEFT) ?></span></td>
                 <td class="text-start">
                     <div class="cust-name">
                         <span class="cust-avatar"><?= esc(strtoupper(mb_substr((string) $r['name'], 0, 1) ?: '?')) ?></span>
-                        <span class="fw-semibold"><?= esc($r['name']) ?></span>
+                        <span class="cust-name-txt cust-hover-name fw-semibold" data-tip="<?= esc($tipJson, 'attr') ?>"><?= esc($r['name']) ?></span>
+                        <?php if ($firmCount > 0): ?>
+                            <span class="cust-firmbadge" title="Owns <?= $firmCount ?> firm<?= $firmCount === 1 ? '' : 's' ?>"><i class="bi bi-building"></i><?= $firmCount ?></span>
+                        <?php endif; ?>
                     </div>
                 </td>
-                <td class="text-start cust-muted"><?= esc($r['email']) ?></td>
-                <td class="text-center"><span class="cust-pill"><?= (int) $r['firm_count'] ?></span></td>
-                <td class="text-start">
-                    <a href="<?= site_url('admin/customers/subscription/' . $r['id']) ?>" class="cust-sub-link" title="Manage subscription">
-                        <span class="cust-sub-plan"><?= esc($sub['plan_name'] ?? '—') ?></span>
-                        <?php if (! empty($sub['status'])): ?><span class="cust-sub-status"><?= esc($sub['status']) ?></span><?php endif; ?>
+                <td class="text-start cust-email"><span class="cust-muted" title="<?= esc($r['email'], 'attr') ?>"><?= esc($r['email']) ?></span></td>
+                <td class="text-start col-sub">
+                    <a href="<?= site_url('admin/customers/subscription/' . $r['id']) ?>" class="cust-planpill" title="<?= esc($subTip, 'attr') ?>">
+                        <?= esc($sub['plan_name'] ?? '—') ?>
                     </a>
                 </td>
                 <td class="text-center">
                     <form action="<?= site_url('admin/customers/payment/' . $r['id']) ?>" method="post" class="m-0">
                         <?= csrf_field() ?>
                         <?php $pstat = $sub['payment_status'] ?? 'trial'; ?>
-                        <select name="payment_status" class="cust-select pay-<?= esc($pstat, 'attr') ?>" onchange="this.form.submit()">
+                        <select name="payment_status" class="cust-select pay-<?= esc($pstat, 'attr') ?>" title="Payment status — change to update" onchange="this.form.submit()">
                             <?php foreach (['trial', 'paid', 'unpaid'] as $ps): ?>
                                 <option value="<?= $ps ?>" <?= $pstat === $ps ? 'selected' : '' ?>><?= ucfirst($ps) ?></option>
                             <?php endforeach; ?>
@@ -85,7 +141,7 @@ $sortTh = static function (string $key, string $label, string $align = 'text-sta
                     </form>
                 </td>
                 <td class="text-center">
-                    <a href="<?= site_url('admin/customers/toggle/' . $r['id']) ?>" class="text-decoration-none" title="Toggle active">
+                    <a href="<?= site_url('admin/customers/toggle/' . $r['id']) ?>" class="text-decoration-none" title="<?= (int) $r['status'] === 1 ? 'Active — click to deactivate' : 'Inactive — click to activate' ?>">
                         <?= (int) $r['status'] === 1
                             ? '<span class="cust-badge is-active"><i class="bi bi-dot"></i>Active</span>'
                             : '<span class="cust-badge is-inactive"><i class="bi bi-dot"></i>Inactive</span>' ?>

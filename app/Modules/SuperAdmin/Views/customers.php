@@ -244,8 +244,7 @@ $perOpts = [25, 35, 50, 100];
 .cust-table th.text-center,.cust-table td.text-center{text-align:center}
 .cust-table th.text-start,.cust-table td.text-start{text-align:left}
 .cust-table th.text-end,.cust-table td.text-end{text-align:right}
-.cust-table .col-sno{width:64px;color:var(--c-soft);font-weight:800}
-.cust-table .col-id{width:104px;white-space:nowrap}
+.cust-table .col-id{white-space:nowrap}
 .cust-idchip{display:inline-block;padding:3px 9px;border-radius:6px;background:#eef2f8;border:1px solid #e0e7f1;
     color:#516174;font-size:11.5px;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .cust-muted{color:var(--c-soft);font-weight:600}
@@ -253,6 +252,69 @@ $perOpts = [25, 35, 50, 100];
 .cust-avatar{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;
     background:linear-gradient(135deg,#1769c2,#3b82f6);color:#fff;font-size:13px;font-weight:900;flex:0 0 auto}
 .cust-name .fw-semibold{color:var(--c-ink)}
+/* ---- Compact layout: fixed columns so the narrow Subscription pill frees room
+   for Name/Email, which ellipsis-truncate; the full/detailed value for every
+   clipped cell lives in its title tooltip (name+firms, plan+dates, email…). ---- */
+.cust-table{table-layout:fixed}
+.cust-table th,.cust-table td{box-sizing:border-box}
+.cust-table th:nth-child(1),.cust-table td:nth-child(1){width:130px}   /* ID (fits CUS-999999 chip, no overflow) */
+.cust-table th:nth-child(2),.cust-table td:nth-child(2){width:250px}   /* Name */
+.cust-table th:nth-child(3),.cust-table td:nth-child(3){width:290px}   /* Email */
+.cust-table .col-sub{width:112px}                                      /* Subscription (plan pill) */
+.cust-table th:nth-child(5),.cust-table td:nth-child(5){width:124px}   /* Payment */
+.cust-table th:nth-child(6),.cust-table td:nth-child(6){width:112px}   /* Status */
+.cust-table th:nth-child(7),.cust-table td:nth-child(7){width:220px}   /* Actions (5 icon buttons) */
+/* Name (col 2) + Email (col 3) truncate within their fixed width. */
+.cust-name-txt{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cust-firmbadge{display:inline-flex;align-items:center;gap:3px;flex:0 0 auto;padding:2px 7px;border-radius:999px;
+    background:#eef2f8;color:#5b6b7f;font-size:11px;font-weight:800;text-decoration:none}
+.cust-firmbadge .bi{font-size:11px}
+.cust-email .cust-muted{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cust-planpill{display:inline-block;max-width:100%;padding:4px 11px;border-radius:999px;background:#eef4ff;
+    border:1px solid #d7e6fb;color:#1769c2;font-size:12px;font-weight:800;text-decoration:none;vertical-align:middle;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cust-planpill:hover{background:#e0edff;border-color:#b9d5f7}
+/* ===== Rich customer hover card (hover a name) — adapted from the TrackMe
+   account preview, re-skinned to the ERP blue theme + Bootstrap Icons. ===== */
+#custTip{position:fixed;z-index:12000;width:360px;max-width:94vw;pointer-events:none;opacity:0;
+    transform:translateY(6px) scale(.98);transition:opacity .16s ease,transform .16s ease;font-family:inherit}
+#custTip.show{opacity:1;transform:translateY(0) scale(1)}
+.cust-tip-box{background:#fff;border:1px solid #e2e9f2;border-radius:16px;overflow:hidden;
+    box-shadow:0 26px 70px rgba(15,30,60,.28),0 4px 12px rgba(15,30,60,.12)}
+.cust-tip-head{position:relative;padding:15px 16px 13px;color:#fff;overflow:hidden;
+    background:linear-gradient(135deg,#0c315f 0%,#1769c2 62%,#2f8fd6 100%)}
+.cust-tip-head::after{content:'';position:absolute;right:-40px;top:-50px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.09)}
+.cust-tip-head.is-inactive{background:linear-gradient(135deg,#4a5568 0%,#718096 100%)}
+.cust-tip-eyebrow{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;opacity:.9;position:relative;z-index:1}
+.cust-tip-name{margin:5px 0 0;font-size:17px;font-weight:900;line-height:1.2;position:relative;z-index:1;word-break:break-word}
+.cust-tip-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;position:relative;z-index:1}
+.cust-tip-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:800;background:rgba(255,255,255,.16);color:#fff}
+.cust-tip-chip.ok{background:rgba(255,255,255,.26)}
+.cust-tip-chip .bi{font-size:11px}
+.cust-tip-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#eef2f7;border-bottom:1px solid #eef2f7}
+.cust-tip-stat{background:#fff;padding:11px 6px;text-align:center;min-width:0}
+.cust-tip-stat .v{font-size:14px;font-weight:900;color:#18243c;line-height:1.05;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cust-tip-stat .l{display:block;margin-top:4px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:#8a97a8;white-space:nowrap}
+.cust-tip-body{padding:13px 16px 14px}
+.cust-tip-flow{margin-bottom:12px}
+.cust-tip-flow-top{display:flex;justify-content:space-between;font-size:11px;font-weight:900;margin-bottom:5px}
+.cust-tip-flow-top .dep{color:#1769c2}.cust-tip-flow-top .exp{color:#c0392b}
+.cust-tip-bar{height:9px;border-radius:20px;overflow:hidden;display:flex;background:#eef2f7}
+.cust-tip-bar .b-dep{background:linear-gradient(90deg,#1769c2,#2f8fd6)}
+.cust-tip-bar .b-exp{background:linear-gradient(90deg,#ef4444,#f87171)}
+.cust-tip-flow-sub{display:flex;justify-content:space-between;margin-top:5px;font-size:10px;font-weight:800;color:#8a97a8}
+.cust-tip-rows{border-top:1px dashed #e6edf5;padding-top:11px}
+.cust-tip-row{display:flex;align-items:flex-start;gap:9px;padding:5px 0;font-size:12px}
+.cust-tip-row .ic{flex:0 0 auto;width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:#eef4fc;color:#1769c2;font-size:11px;margin-top:1px}
+.cust-tip-row .ct{min-width:0;flex:1}
+.cust-tip-row .rl{font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:#a0aec0}
+.cust-tip-row .rv{font-weight:800;color:#26374f;word-break:break-word}
+.cust-tip-row .rv .muted{color:#b0bac7;font-weight:700}
+.cust-tip-foot{padding:9px 16px;background:#f8fafc;border-top:1px solid #eef2f7;font-size:10.5px;font-weight:800;color:#8a97a8;display:flex;align-items:center;gap:6px}
+.cust-tip-foot b{color:#516174}
+.cust-hover-name{cursor:default;border-bottom:1px dashed transparent}
+.cust-hover-name:hover{border-bottom-color:#c7d7ea}
+@media (max-width:480px){#custTip{width:300px}.cust-tip-stats{grid-template-columns:repeat(2,1fr)}}
 .cust-pill{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:24px;padding:0 8px;
     border-radius:7px;background:#eef1f6;color:var(--c-soft);font-size:12px;font-weight:900}
 .cust-sub-link{display:inline-flex;flex-direction:column;line-height:1.25;text-decoration:none}
@@ -420,5 +482,94 @@ $perOpts = [25, 35, 50, 100];
 
     // Back / forward buttons re-sync the fragment without pushing a new entry.
     window.addEventListener('popstate', function () { loadUrl(location.href, false); });
+})();
+</script>
+
+<!-- Rich customer hover card (mouse over a name) — data comes from each name
+     cell's data-tip JSON; delegated so it keeps working after AJAX table swaps. -->
+<div id="custTip" aria-hidden="true"></div>
+<script>
+(function () {
+    var tip = document.getElementById('custTip');
+    if (!tip) { return; }
+    var hideTimer = null, curEl = null;
+    function esc(s) { var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
+    function cap(s) { s = String(s || ''); return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+    function tile(v, l) { return '<div class="cust-tip-stat"><div class="v">' + v + '</div><span class="l">' + l + '</span></div>'; }
+    function row(ic, l, v) { return '<div class="cust-tip-row"><span class="ic"><i class="bi bi-' + ic + '"></i></span><div class="ct"><div class="rl">' + l + '</div><div class="rv">' + v + '</div></div></div>'; }
+
+    function build(o) {
+        var headCls = o.status === 'inactive' ? 'is-inactive' : '';
+        var chips = '<span class="cust-tip-chip ok"><i class="bi bi-' + (o.status === 'active' ? 'check-circle-fill' : 'pause-circle-fill') + '"></i> ' + cap(o.status) + '</span>';
+        if (o.plan) { chips += '<span class="cust-tip-chip"><i class="bi bi-gem"></i> ' + esc(o.plan) + '</span>'; }
+        chips += '<span class="cust-tip-chip"><i class="bi bi-' + (o.source === 'Google' ? 'google' : 'display') + '"></i> ' + esc(o.source || 'Web') + '</span>';
+
+        var stats = tile(o.firms, 'Firms') + tile(esc(o.plan || '—'), 'Plan')
+                  + tile(cap(o.payment || '—'), 'Payment') + tile(o.last_ago ? esc(o.last_ago) : '—', 'Last seen');
+
+        var flow = '';
+        if ((o.started || o.expires) && o.valid_pct != null) {
+            var pct = Math.max(0, Math.min(100, o.valid_pct));
+            var expired = (o.days_left != null && o.days_left < 0);
+            var right = o.days_left != null ? (expired ? 'Expired' : o.days_left + ' days left') : '';
+            flow = '<div class="cust-tip-flow">'
+                 +   '<div class="cust-tip-flow-top"><span class="dep">' + esc(o.plan || 'Subscription') + '</span><span class="' + (expired ? 'exp' : 'dep') + '">' + right + '</span></div>'
+                 +   '<div class="cust-tip-bar"><div class="b-' + (expired ? 'exp' : 'dep') + '" style="width:' + pct + '%"></div></div>'
+                 +   '<div class="cust-tip-flow-sub"><span>' + esc(o.started || '—') + '</span><span>' + esc(o.expires || '—') + '</span></div>'
+                 + '</div>';
+        }
+
+        var rows = row('envelope', 'Email', esc(o.email || '—'));
+        if (o.mobile) { rows += row('telephone', 'Mobile', esc(o.mobile)); }
+        rows += row('gem', 'Plan', esc(o.plan || '—') + (o.plan_status ? ' <span class="muted">· ' + esc(cap(o.plan_status)) + '</span>' : ''));
+        if (o.started || o.expires) { rows += row('calendar-range', 'Subscription', esc(o.started || '—') + ' <span class="muted">→</span> ' + esc(o.expires || '—')); }
+        rows += row('building', 'Firms owned', o.firms + (String(o.firms) === '1' ? ' firm' : ' firms'));
+
+        var foot = '<div class="cust-tip-foot"><i class="bi bi-clock"></i> Joined <b>' + esc(o.created || '—') + '</b>'
+                 + (o.created_ago ? ' <span>(' + esc(o.created_ago) + ')</span>' : '') + '</div>';
+
+        return '<div class="cust-tip-box">'
+             +   '<div class="cust-tip-head ' + headCls + '">'
+             +     '<div class="cust-tip-eyebrow"><i class="bi bi-person-badge"></i> Customer · #' + esc(o.id) + '</div>'
+             +     '<div class="cust-tip-name">' + esc(o.name) + '</div>'
+             +     '<div class="cust-tip-chips">' + chips + '</div>'
+             +   '</div>'
+             +   '<div class="cust-tip-stats">' + stats + '</div>'
+             +   '<div class="cust-tip-body">' + flow + '<div class="cust-tip-rows">' + rows + '</div></div>'
+             +   foot
+             + '</div>';
+    }
+
+    function place(el) {
+        var r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight, vw = window.innerWidth, vh = window.innerHeight, pad = 10;
+        var left = r.left, top = r.bottom + 8;
+        if (left + tw > vw - pad) { left = Math.max(pad, vw - tw - pad); }
+        if (top + th > vh - pad) { top = r.top - th - 8; }
+        if (top < pad) { top = pad; }
+        tip.style.left = Math.round(left) + 'px';
+        tip.style.top = Math.round(top) + 'px';
+    }
+    function open(el) {
+        var raw = el.getAttribute('data-tip'); if (!raw) { return; }
+        var o; try { o = JSON.parse(raw); } catch (e) { return; }
+        curEl = el;
+        tip.innerHTML = build(o);
+        tip.setAttribute('aria-hidden', 'false');
+        place(el); place(el); // measure then reposition with height known
+        tip.classList.add('show');
+    }
+    function close() { tip.classList.remove('show'); tip.setAttribute('aria-hidden', 'true'); curEl = null; }
+
+    document.addEventListener('mouseover', function (e) {
+        var el = e.target.closest ? e.target.closest('.cust-hover-name') : null;
+        if (!el) { return; }
+        clearTimeout(hideTimer); open(el);
+    });
+    document.addEventListener('mouseout', function (e) {
+        var el = e.target.closest ? e.target.closest('.cust-hover-name') : null;
+        if (!el) { return; }
+        hideTimer = setTimeout(close, 120);
+    });
+    window.addEventListener('scroll', function () { if (curEl) { place(curEl); } }, true);
 })();
 </script>

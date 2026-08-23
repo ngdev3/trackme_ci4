@@ -11,9 +11,7 @@ if (! function_exists('status_badge')) {
     function status_badge($status): string
     {
         $active = (int) $status === 1;
-        $class  = $active ? 'text-bg-success' : 'text-bg-secondary';
-        $label  = $active ? 'Active' : 'Inactive';
-        return '<span class="badge ' . $class . '">' . $label . '</span>';
+        return '<span class="erp-status ' . ($active ? 'active' : 'inactive') . '">' . ($active ? 'Active' : 'Inactive') . '</span>';
     }
 }
 
@@ -21,8 +19,8 @@ if (! function_exists('bool_badge')) {
     function bool_badge($value, string $yes = 'Yes', string $no = 'No'): string
     {
         return (int) $value === 1
-            ? '<span class="badge text-bg-primary">' . esc($yes) . '</span>'
-            : '<span class="badge text-bg-light border">' . esc($no) . '</span>';
+            ? '<span class="erp-pill">' . esc($yes) . '</span>'
+            : '<span class="erp-pill gray">' . esc($no) . '</span>';
     }
 }
 
@@ -36,17 +34,42 @@ if (! function_exists('action_buttons')) {
      */
     function action_buttons(string $moduleCode, string $baseUrl, int $id, array $opts = []): string
     {
-        $html = '<div class="btn-group btn-group-sm" role="group">';
+        $html = '<div class="erp-actions">';
 
         if (can($moduleCode, 'edit') && ($opts['edit'] ?? true)) {
-            $html .= '<a href="' . site_url("{$baseUrl}/edit/{$id}") . '" class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil-square"></i></a>';
+            $html .= '<a href="' . site_url("{$baseUrl}/edit/{$id}") . '" class="erp-act" title="Edit"><i class="bi bi-pencil-square"></i></a>';
         }
         if (can($moduleCode, 'delete') && ($opts['delete'] ?? true)) {
-            $html .= '<button type="button" class="btn btn-outline-danger btn-delete" '
+            $html .= '<button type="button" class="erp-act red btn-delete" '
                 . 'data-url="' . site_url("{$baseUrl}/delete/{$id}") . '" title="Delete"><i class="bi bi-trash"></i></button>';
         }
         $html .= '</div>';
         return $html;
+    }
+}
+
+if (! function_exists('erp_cell_name')) {
+    /**
+     * Render a primary "name" cell exactly like the Customers listing:
+     * a round initial avatar + the name, which reveals a rich hover-card
+     * (built by assets/js/erp-table.js from the generic $tip payload).
+     *
+     * @param string $name  the visible label (also the card title if $tip has none)
+     * @param array  $tip   generic card payload: type, icon, accent, chips[], stats[], bar{}, rows[], foot
+     * @param array  $opts  avatar (bool, default true) · green (bool) · badge (raw html appended) · initial (override)
+     */
+    function erp_cell_name(string $name, array $tip, array $opts = []): string
+    {
+        $tip['name'] = $tip['name'] ?? $name;
+        $json  = esc(json_encode($tip, JSON_UNESCAPED_UNICODE), 'attr');
+        $html  = '<div class="erp-cellname">';
+        if ($opts['avatar'] ?? true) {
+            $initial = $opts['initial'] ?? (strtoupper(mb_substr(trim($name), 0, 1)) ?: '?');
+            $html .= '<span class="erp-avatar' . (! empty($opts['green']) ? ' green' : '') . '">' . esc($initial) . '</span>';
+        }
+        $html .= '<span class="erp-name-txt erp-hover" data-tip="' . $json . '">' . esc($name) . '</span>';
+        if (! empty($opts['badge'])) { $html .= $opts['badge']; }
+        return $html . '</div>';
     }
 }
 

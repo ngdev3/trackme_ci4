@@ -112,16 +112,16 @@ $money = static fn ($n) => '₹' . number_format((float) $n, 2);
                 <a href="<?= site_url('admin/coupons/log') ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-clock-history me-1"></i> Usage log</a>
             </div>
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                <div class="erp-tbl-wrap">
+                    <table class="erp-tbl auto">
                         <thead>
                             <tr>
-                                <th>Code</th><th>Type</th><th>Value</th><th>Plan</th><th>Used</th><th>Window</th><th></th>
+                                <th class="text-start">Code</th><th class="text-start">Type</th><th class="text-start">Value</th><th class="text-start">Plan</th><th class="text-start">Used</th><th class="text-start">Window</th><th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php if (empty($rows)): ?>
-                            <tr><td colspan="7" class="text-center text-muted py-4">No coupons yet. Create one on the left.</td></tr>
+                            <tr><td colspan="7" class="erp-empty"><i class="bi bi-ticket-perforated"></i><div>No coupons yet. Create one on the left.</div></td></tr>
                         <?php else: foreach ($rows as $c):
                             $isRedeem = ($c['kind'] === 'redeem');
                             $value = $isRedeem
@@ -143,29 +143,43 @@ $money = static fn ($n) => '₹' . number_format((float) $n, 2);
                             ]), 'attr');
                         ?>
                             <tr class="<?= (int) $c['status'] === 1 ? '' : 'opacity-50' ?>">
-                                <td>
-                                    <strong><?= esc($c['code']) ?></strong>
-                                    <?php if (!empty($c['description'])): ?><div class="small text-muted"><?= esc($c['description']) ?></div><?php endif; ?>
-                                </td>
-                                <td><span class="badge text-bg-<?= $isRedeem ? 'info' : 'primary' ?>"><?= $isRedeem ? 'Redeem' : 'Discount' ?></span></td>
-                                <td><?= esc($value) ?></td>
-                                <td class="small"><?= esc($c['plan_name'] ?? ($c['plan_id'] ? '#' . $c['plan_id'] : 'Any')) ?></td>
-                                <td class="small">
-                                    <a href="<?= site_url('admin/coupons/log?coupon_id=' . (int) $c['id']) ?>" title="View who used this">
+                                <td class="text-start"><?= erp_cell_name((string) $c['code'], [
+                                    'type' => 'Coupon', 'icon' => 'ticket-perforated',
+                                    'accent' => $isRedeem ? 'green' : 'blue',
+                                    'chips' => [
+                                        ['t' => $isRedeem ? 'Redeem' : 'Discount', 'ic' => $isRedeem ? 'gift' : 'percent', 'ok' => true],
+                                        (int) $c['status'] === 1 ? ['t' => 'Active', 'ic' => 'check-circle-fill'] : ['t' => 'Paused', 'ic' => 'pause-circle-fill'],
+                                    ],
+                                    'rows' => array_values(array_filter([
+                                        ['ic' => 'cash-coin', 'l' => 'Value', 'v' => (string) $value],
+                                        ['ic' => 'box', 'l' => 'Plan', 'v' => (string) ($c['plan_name'] ?? ($c['plan_id'] ? '#' . $c['plan_id'] : 'Any'))],
+                                        ['ic' => 'people', 'l' => 'Used', 'v' => (int) $c['redeemed_count'] . ' / ' . $cap],
+                                        ['ic' => 'calendar-range', 'l' => 'Window', 'v' => (string) $window],
+                                        ! empty($c['description']) ? ['ic' => 'card-text', 'l' => 'Description', 'v' => (string) $c['description']] : null,
+                                    ])),
+                                    'foot' => 'Coupon #' . (int) $c['id'],
+                                ], ['green' => (int) $c['status'] === 1]) ?></td>
+                                <td class="text-start"><span class="erp-pill <?= $isRedeem ? 'green' : '' ?>"><?= $isRedeem ? 'Redeem' : 'Discount' ?></span></td>
+                                <td class="text-start fw-semibold"><?= esc($value) ?></td>
+                                <td class="text-start"><span class="erp-muted"><?= esc($c['plan_name'] ?? ($c['plan_id'] ? '#' . $c['plan_id'] : 'Any')) ?></span></td>
+                                <td class="text-start">
+                                    <a href="<?= site_url('admin/coupons/log?coupon_id=' . (int) $c['id']) ?>" class="text-decoration-none fw-semibold" title="View who used this">
                                         <?= (int) $c['redeemed_count'] ?> / <?= esc((string) $cap) ?>
                                     </a>
                                 </td>
-                                <td class="small text-muted"><?= esc($window) ?></td>
-                                <td class="text-end text-nowrap">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"
-                                            data-coupon-edit data-coupon='<?= $json ?>'><i class="bi bi-pencil"></i></button>
-                                    <a href="<?= site_url('admin/coupons/toggle/' . (int) $c['id']) ?>" class="btn btn-sm btn-outline-<?= (int) $c['status'] === 1 ? 'warning' : 'success' ?>" title="Toggle">
-                                        <i class="bi bi-<?= (int) $c['status'] === 1 ? 'pause' : 'play' ?>"></i>
-                                    </a>
-                                    <form action="<?= site_url('admin/coupons/delete/' . (int) $c['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Delete coupon <?= esc($c['code'], 'attr') ?>?');">
-                                        <?= csrf_field() ?>
-                                        <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
-                                    </form>
+                                <td class="text-start"><span class="erp-muted"><?= esc($window) ?></span></td>
+                                <td class="text-end">
+                                    <div class="erp-actions">
+                                        <button type="button" class="erp-act slate" title="Edit"
+                                                data-coupon-edit data-coupon='<?= $json ?>'><i class="bi bi-pencil"></i></button>
+                                        <a href="<?= site_url('admin/coupons/toggle/' . (int) $c['id']) ?>" class="erp-act <?= (int) $c['status'] === 1 ? 'amber' : 'green' ?>" title="Toggle">
+                                            <i class="bi bi-<?= (int) $c['status'] === 1 ? 'pause' : 'play' ?>"></i>
+                                        </a>
+                                        <form action="<?= site_url('admin/coupons/delete/' . (int) $c['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Delete coupon <?= esc($c['code'], 'attr') ?>?');">
+                                            <?= csrf_field() ?>
+                                            <button class="erp-act red" title="Delete"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; endif; ?>

@@ -69,23 +69,32 @@
                 <h3 class="card-title mb-0">Saved History</h3>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" id="histTable">
-                        <thead class="table-light">
-                            <tr><th>Title</th><th>Calculation</th><th>Result</th><th>Saved</th><th class="text-end">Actions</th></tr>
+                <div class="erp-tbl-wrap">
+                    <table class="erp-tbl auto" id="histTable">
+                        <thead>
+                            <tr><th class="text-start">Title</th><th class="text-start">Calculation</th><th class="text-start">Result</th><th class="text-start">Saved</th><th class="text-end">Actions</th></tr>
                         </thead>
                         <tbody id="histBody">
                             <?php if (empty($rows)): ?>
-                                <tr id="histEmpty"><td colspan="5" class="text-center text-secondary py-4">No saved calculations yet.</td></tr>
+                                <tr id="histEmpty"><td colspan="5" class="erp-empty"><i class="bi bi-clock-history"></i><div>No saved calculations yet.</div></td></tr>
                             <?php else: foreach ($rows as $r): ?>
                                 <tr data-id="<?= (int) $r['id'] ?>">
-                                    <td class="fw-semibold"><?= esc($r['title'] ?: ('Calculation #' . $r['id'])) ?></td>
-                                    <td><code class="calc-expr" role="button" title="Load into calculator"><?= esc($r['expression']) ?></code></td>
-                                    <td class="fw-bold"><?= esc($r['result']) ?></td>
-                                    <td class="text-secondary small"><?= esc(date('d M Y, H:i', strtotime($r['created_at'] ?? 'now'))) ?></td>
+                                    <td class="text-start"><?= erp_cell_name((string) ($r['title'] ?: ('Calculation #' . $r['id'])), [
+                                        'type' => 'Calculation', 'icon' => 'calculator',
+                                        'rows' => [
+                                            ['ic' => 'input-cursor-text', 'l' => 'Expression', 'v' => (string) $r['expression']],
+                                            ['ic' => 'check2', 'l' => 'Result', 'v' => (string) $r['result']],
+                                        ],
+                                        'foot' => 'Saved ' . date('d M Y, H:i', strtotime($r['created_at'] ?? 'now')),
+                                    ]) ?></td>
+                                    <td class="text-start"><code class="calc-expr" role="button" title="Load into calculator"><?= esc($r['expression']) ?></code></td>
+                                    <td class="text-start fw-bold"><?= esc($r['result']) ?></td>
+                                    <td class="text-start"><span class="erp-muted"><?= esc(date('d M Y, H:i', strtotime($r['created_at'] ?? 'now'))) ?></span></td>
                                     <td class="text-end">
-                                        <button class="btn btn-sm btn-outline-secondary hist-load" title="Load"><i class="bi bi-arrow-up-left-square"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger hist-del" title="Delete"><i class="bi bi-trash"></i></button>
+                                        <div class="erp-actions">
+                                            <button class="erp-act slate hist-load" title="Load"><i class="bi bi-arrow-up-left-square"></i></button>
+                                            <button class="erp-act red hist-del" title="Delete"><i class="bi bi-trash"></i></button>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; endif; ?>

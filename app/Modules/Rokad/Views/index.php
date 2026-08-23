@@ -63,45 +63,58 @@ $fmt     = fn ($n) => number_format((float) $n, 2);
         <?php endif; ?>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+        <div class="erp-tbl-wrap">
+            <table class="erp-tbl auto">
                 <thead><tr>
-                    <th style="width:60px">#</th><th>Particular</th>
+                    <th class="text-start" style="width:60px">#</th><th class="text-start">Particular</th>
                     <th class="text-end">Jama (In)</th><th class="text-end">Naam (Out)</th>
-                    <th class="text-end">Balance</th><th>Remarks</th>
+                    <th class="text-end">Balance</th><th class="text-start">Remarks</th>
                     <?php if ($canEdit): ?><th class="text-end">Actions</th><?php endif; ?>
                 </tr></thead>
                 <tbody>
-                    <tr class="table-light">
+                    <tr style="background:#f6f9fd">
                         <td></td><td class="fw-semibold">Opening Balance</td>
                         <td></td><td></td>
                         <td class="text-end fw-semibold">&#8377; <?= $fmt($opening) ?></td>
                         <td colspan="<?= $canEdit ? 2 : 1 ?>"></td>
                     </tr>
                     <?php if (empty($entries)): ?>
-                        <tr><td colspan="<?= $canEdit ? 7 : 6 ?>" class="text-center text-secondary py-3">No transactions on this day. Add one below.</td></tr>
+                        <tr><td colspan="<?= $canEdit ? 7 : 6 ?>" class="erp-empty"><i class="bi bi-journal-x"></i><div>No transactions on this day. Add one below.</div></td></tr>
                     <?php else: $i = 1; foreach ($entries as $e): ?>
                         <tr>
-                            <td><?= $i++ ?></td>
-                            <td class="fw-semibold"><?= esc($e['particular']) ?></td>
-                            <td class="text-end text-success"><?= (float) $e['jama'] > 0 ? $fmt($e['jama']) : '' ?></td>
-                            <td class="text-end text-danger"><?= (float) $e['naam'] > 0 ? $fmt($e['naam']) : '' ?></td>
-                            <td class="text-end"><?= $fmt($e['balance']) ?></td>
-                            <td><small class="text-muted"><?= esc($e['remarks'] ?: '') ?></small></td>
+                            <td class="text-start"><span class="erp-idchip"><?= $i++ ?></span></td>
+                            <td class="text-start"><?php $isJama = (float) $e['jama'] > 0; ?><?= erp_cell_name((string) $e['particular'], [
+                                'type' => 'Cash Entry', 'icon' => 'journal-text',
+                                'accent' => $isJama ? 'green' : 'blue',
+                                'chips' => [$isJama ? ['t' => 'Jama · In', 'ic' => 'arrow-down-circle-fill', 'ok' => true] : ['t' => 'Naam · Out', 'ic' => 'arrow-up-circle-fill']],
+                                'rows' => array_values(array_filter([
+                                    (float) $e['jama'] > 0 ? ['ic' => 'arrow-down-circle', 'l' => 'Jama (In)', 'v' => '₹ ' . $fmt($e['jama'])] : null,
+                                    (float) $e['naam'] > 0 ? ['ic' => 'arrow-up-circle', 'l' => 'Naam (Out)', 'v' => '₹ ' . $fmt($e['naam'])] : null,
+                                    ['ic' => 'wallet2', 'l' => 'Running balance', 'v' => '₹ ' . $fmt($e['balance'])],
+                                    ! empty($e['remarks']) ? ['ic' => 'chat-left-text', 'l' => 'Remarks', 'v' => (string) $e['remarks']] : null,
+                                ])),
+                                'foot' => date('d M Y', strtotime($date)),
+                            ], ['green' => $isJama]) ?></td>
+                            <td class="text-end text-success fw-semibold"><?= (float) $e['jama'] > 0 ? $fmt($e['jama']) : '' ?></td>
+                            <td class="text-end text-danger fw-semibold"><?= (float) $e['naam'] > 0 ? $fmt($e['naam']) : '' ?></td>
+                            <td class="text-end fw-semibold"><?= $fmt($e['balance']) ?></td>
+                            <td class="text-start"><small class="erp-muted"><?= esc($e['remarks'] ?: '') ?></small></td>
                             <?php if ($canEdit): ?>
-                                <td class="text-end text-nowrap">
-                                    <a href="<?= site_url('rokad?date=' . $date . '&edit=' . $e['id']) ?>" class="btn btn-sm btn-outline-primary py-0"><i class="bi bi-pencil"></i></a>
-                                    <form action="<?= site_url('rokad/delete/' . $e['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="This entry will be deleted." data-confirm-title="Delete entry?" data-confirm-btn="Yes, delete">
-                                        <?= csrf_field() ?>
-                                        <button class="btn btn-sm btn-outline-danger py-0"><i class="bi bi-trash"></i></button>
-                                    </form>
+                                <td class="text-end">
+                                    <div class="erp-actions">
+                                        <a href="<?= site_url('rokad?date=' . $date . '&edit=' . $e['id']) ?>" class="erp-act" title="Edit"><i class="bi bi-pencil"></i></a>
+                                        <form action="<?= site_url('rokad/delete/' . $e['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="This entry will be deleted." data-confirm-title="Delete entry?" data-confirm-btn="Yes, delete">
+                                            <?= csrf_field() ?>
+                                            <button class="erp-act red" title="Delete"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
                                 </td>
                             <?php endif; ?>
                         </tr>
                     <?php endforeach; endif; ?>
                 </tbody>
                 <tfoot>
-                    <tr class="table-light fw-bold">
+                    <tr class="fw-bold" style="background:#eef4fc">
                         <td></td><td>Closing Balance</td>
                         <td class="text-end text-success"><?= $fmt($totalJama) ?></td>
                         <td class="text-end text-danger"><?= $fmt($totalNaam) ?></td>
