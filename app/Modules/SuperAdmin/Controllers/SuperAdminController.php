@@ -487,21 +487,45 @@ class SuperAdminController extends BaseController
         }
         $rows = $b->get()->getResultArray();
 
-        // Most-tapped menus overall (last 30 days).
-        $top = $db->table('app_events')
+        // Most-tapped menus (last 30 days) — scoped to the selected user, if any.
+        $tb = $db->table('app_events')
             ->select('label, COUNT(*) AS c')
             ->where('label IS NOT NULL', null, false)
             ->where('created_at >=', date('Y-m-d H:i:s', strtotime('-30 days')))
-            ->groupBy('label')->orderBy('c', 'DESC')->limit(10)
+            ->groupBy('label')->orderBy('c', 'DESC')->limit(10);
+        if ($userId > 0) {
+            $tb->where('user_id', $userId);
+        }
+        $top = $tb->get()->getResultArray();
+
+        // Per-USER usage summary — the user-based view: who used the app, how much,
+        // how many distinct menus, and when they were last active. Most active first.
+        $users = $db->table('app_events ae')
+            ->select('ae.user_id, u.name AS user_name, u.email AS user_email,'
+                . ' COUNT(*) AS events, COUNT(DISTINCT ae.label) AS menus, MAX(ae.created_at) AS last_seen')
+            ->join('users u', 'u.id = ae.user_id', 'left')
+            ->groupBy('ae.user_id')
+            ->orderBy('events', 'DESC')
+            ->limit(200)
             ->get()->getResultArray();
 
+        // The selected user's display name (for the header), if filtering.
+        $selectedUser = null;
+        if ($userId > 0) {
+            foreach ($users as $u) {
+                if ((int) $u['user_id'] === $userId) { $selectedUser = $u; break; }
+            }
+        }
+
         return $this->render('app_events', [
-            'title'      => 'App Usage — Menu Taps',
-            'breadcrumb' => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'App Usage']],
-            'rows'       => $rows,
-            'top'        => $top,
-            'userId'     => $userId,
-            'total'      => (int) $db->table('app_events')->countAllResults(),
+            'title'        => 'App Usage — Menu Taps',
+            'breadcrumb'   => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'App Usage']],
+            'rows'         => $rows,
+            'top'          => $top,
+            'users'        => $users,
+            'userId'       => $userId,
+            'selectedUser' => $selectedUser,
+            'total'        => (int) $db->table('app_events')->countAllResults(),
         ]);
     }
 
