@@ -167,6 +167,12 @@ $ago = static function ($ts): string {
                             <?= csrf_field() ?>
                             <button class="cust-act act-reset" title="Force password reset"><i class="bi bi-key"></i></button>
                         </form>
+                        <button type="button" class="cust-act act-purge" title="Delete permanently (customer + all data)"
+                                data-bs-toggle="modal" data-bs-target="#purgeModal"
+                                data-id="<?= esc($r['id'], 'attr') ?>" data-name="<?= esc($r['name'], 'attr') ?>"
+                                data-firms="<?= (int) $r['firm_count'] ?>">
+                            <i class="bi bi-trash3"></i>
+                        </button>
                     </div>
                 </td>
             </tr>

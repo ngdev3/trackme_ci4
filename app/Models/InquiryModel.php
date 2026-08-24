@@ -12,7 +12,7 @@ class InquiryModel extends Model
     protected $useTimestamps  = true;
 
     protected $allowedFields = [
-        'name', 'email', 'phone', 'company', 'subject', 'message',
-        'status', 'ip_address', 'user_agent',
+        'user_id', 'name', 'email', 'phone', 'company', 'subject', 'message',
+        'status', 'customer_unread', 'ip_address', 'user_agent',
     ];
 }

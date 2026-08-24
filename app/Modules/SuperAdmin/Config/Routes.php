@@ -17,6 +17,9 @@ $routes->group('admin', ['namespace' => 'Modules\SuperAdmin\Controllers', 'filte
     $routes->post('customers/set-password/(:num)', 'SuperAdminController::setPassword/$1');
     $routes->post('customers/send-reset/(:num)', 'SuperAdminController::sendResetLink/$1');
     $routes->post('customers/payment/(:num)', 'SuperAdminController::updatePayment/$1');
+    // Permanent, irreversible delete of a customer + every dependency (firms,
+    // transactions, subscriptions, payments, logs, firm-users, …).
+    $routes->post('customers/purge/(:num)', 'SuperAdminController::purgeCustomer/$1');
     $routes->get('impersonate/(:num)', 'SuperAdminController::impersonate/$1');
 
     // Per-customer subscription oversight: current plan, activation / deactivation,
@@ -45,9 +48,17 @@ $routes->group('admin', ['namespace' => 'Modules\SuperAdmin\Controllers', 'filte
     $routes->post('plans/payment', 'SuperAdminController::savePayment');
     $routes->post('plans/invoice', 'SuperAdminController::saveInvoice');
 
-    // Public inquiry / contact-form submissions.
+    // Public inquiry / contact-form submissions + two-way reply thread.
     $routes->get('inquiries', 'SuperAdminController::inquiries');
+    $routes->get('inquiries/(:num)', 'SuperAdminController::inquiry/$1');
+    $routes->post('inquiries/(:num)/reply', 'SuperAdminController::inquiryReply/$1');
     $routes->post('inquiries/status/(:num)', 'SuperAdminController::inquiryStatus/$1');
+
+    // Self-service account-deletion requests (raised from the app or web portal).
+    // Approve = permanent purge (AccountPurgeService); reject keeps the account.
+    $routes->get('deletion-requests', 'SuperAdminController::deletionRequests');
+    $routes->post('deletion-requests/approve/(:num)', 'SuperAdminController::approveDeletion/$1');
+    $routes->post('deletion-requests/reject/(:num)', 'SuperAdminController::rejectDeletion/$1');
 
     // Transactions / payments oversight.
     $routes->get('transactions', 'SuperAdminController::transactions');

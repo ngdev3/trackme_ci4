@@ -11,9 +11,14 @@
                         <h3 class="mb-1 text-white"><i class="bi bi-life-preserver me-2"></i>Help &amp; Support</h3>
                         <p class="mb-0" style="opacity:.9">We’re here to help you get the most out of <strong translate="no"><?= esc($appName) ?></strong>. Reach us on WhatsApp or email — we usually reply fast.</p>
                     </div>
-                    <a href="<?= esc($waLink, 'attr') ?>" target="_blank" rel="noopener" class="btn btn-light btn-lg fw-semibold">
-                        <i class="bi bi-whatsapp text-success me-1"></i> Chat on WhatsApp
-                    </a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="<?= esc($waLink, 'attr') ?>" target="_blank" rel="noopener" class="btn btn-light btn-lg fw-semibold">
+                            <i class="bi bi-whatsapp text-success me-1"></i> Chat on WhatsApp
+                        </a>
+                        <a href="<?= site_url('help/support') ?>" class="btn btn-outline-light btn-lg fw-semibold">
+                            <i class="bi bi-life-preserver me-1"></i> My Support Requests
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

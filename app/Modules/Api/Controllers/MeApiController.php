@@ -106,6 +106,108 @@ class MeApiController extends BaseApiController
         return $this->respond(['status' => 'ok', 'user' => $this->publicUser($fresh)]);
     }
 
+    /**
+     * Raise a request to delete the caller's account. This does NOT delete
+     * anything — it files the request in the inquiries inbox for a super admin to
+     * review and action (self-service deletion is a hard delete for the user but a
+     * soft delete for the system; only a super admin can reactivate, on request).
+     * Idempotent-ish: a fresh pending request per submit is fine (staff triage).
+     *
+     *   POST /api/v1/me/deletion-request  (Bearer) {reason?}
+     */
+    public function deletionRequest()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+
+        // Light throttle so a stuck button can't spam the inbox.
+        if ($this->tooManyAttempts('del-req-' . (int) $user['id'], 3, 10 * MINUTE)) {
+            return $this->fail('You have already sent a request. Our team will get back to you shortly.', 429);
+        }
+
+        $reason = trim((string) ($this->input('reason') ?? ''));
+        if (mb_strlen($reason) > 1000) {
+            $reason = mb_substr($reason, 0, 1000);
+        }
+
+        $uid   = (int) $user['id'];
+        $name  = (string) ($user['name'] ?? $user['username'] ?? 'User');
+        $email = (string) ($user['email'] ?? '');
+
+        $requests = new \App\Models\AccountDeletionRequestModel();
+
+        // One open request at a time — resubmits just report the existing one.
+        if ($requests->hasPending($uid)) {
+            return $this->respond([
+                'status'  => 'ok',
+                'message' => 'Your account deletion request is already pending review. Our team will get back to you.',
+            ]);
+        }
+
+        $requests->insert([
+            'user_id'    => $uid,
+            'name'       => mb_substr($name, 0, 150),
+            'email'      => mb_substr($email, 0, 190),
+            'mobile'     => isset($user['mobile']) ? mb_substr((string) $user['mobile'], 0, 20) : null,
+            'reason'     => $reason !== '' ? $reason : null,
+            'source'     => 'app',
+            'status'     => 'pending',
+            'ip_address' => $this->request->getIPAddress(),
+            'user_agent' => mb_substr((string) $this->request->getUserAgent()->getAgentString(), 0, 255),
+        ]);
+
+        log_message('info', 'Account deletion requested by user #{id}', ['id' => $uid]);
+
+        return $this->respond([
+            'status'  => 'ok',
+            'message' => 'Your account deletion request has been submitted. Our team will review it and get back to you.',
+        ]);
+    }
+
+    // --- Support: one ongoing conversation per user --------------------------
+
+    /** GET /api/v1/me/support — the user's single support thread (clears unread). */
+    public function support()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $svc  = new \App\Services\SupportConversation();
+        $conv = $svc->getFor($user);
+        if (! $conv) {
+            return $this->respond(['status' => 'ok', 'has_thread' => false, 'unread' => false, 'open' => true, 'messages' => []]);
+        }
+        (new \App\Models\InquiryModel())->update((int) $conv['id'], ['customer_unread' => 0]);
+        return $this->respond([
+            'status'     => 'ok',
+            'has_thread' => true,
+            'unread'     => false,
+            'open'       => $conv['status'] !== 'closed',
+            'messages'   => $svc->messages($conv),
+        ]);
+    }
+
+    /** POST /api/v1/me/support {message} — append a message (creates on first use). */
+    public function supportSend()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $message = trim((string) ($this->input('message') ?? ''));
+        if ($message === '') {
+            return $this->fail('Please type a message.', 422);
+        }
+        (new \App\Services\SupportConversation())->appendCustomer($user, $message, (string) ($this->input('subject') ?? ''), [
+            'ip' => $this->request->getIPAddress(),
+            'ua' => (string) $this->request->getUserAgent()->getAgentString(),
+        ]);
+        return $this->respond(['status' => 'ok', 'message' => 'Message sent to support.']);
+    }
+
     /** Validate a company switch and return the refreshed context for it. */
     public function switchCompany()
     {

@@ -178,3 +178,56 @@
         </div>
     </div>
 <?php endif; ?>
+
+<!-- Danger zone: self-service account deletion request -->
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-10">
+        <div class="card border-danger">
+            <div class="card-header bg-danger-subtle d-flex align-items-center">
+                <i class="bi bi-exclamation-octagon-fill text-danger me-2"></i>
+                <h3 class="card-title mb-0 text-danger">Delete my account</h3>
+            </div>
+            <div class="card-body d-flex flex-wrap gap-3 align-items-center justify-content-between">
+                <p class="text-secondary small mb-0" style="max-width:640px">
+                    Requesting deletion permanently removes your account and <strong>all</strong> your data — firms,
+                    transactions, rokad, reports, subscriptions and more. This can’t be undone. Your request is reviewed
+                    by our team before anything is deleted.
+                </p>
+                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                    <i class="bi bi-trash3 me-1"></i>Request account deletion
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" method="post" action="<?= site_url('profile/request-deletion') ?>" id="deleteAccountForm" data-no-validate>
+            <?= csrf_field() ?>
+            <div class="modal-header" style="background:#fdecec">
+                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-octagon-fill me-1"></i> Request account deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">This will submit a request to <strong>permanently delete your account and all data</strong>. A member of our team reviews every request before anything is removed.</p>
+                <label class="form-label">Reason <span class="text-muted">(optional)</span></label>
+                <textarea name="reason" class="form-control mb-3" rows="3" maxlength="1000" placeholder="Tell us why you're leaving (optional)"></textarea>
+                <label class="form-label">Type <code class="text-danger">DELETE</code> to confirm</label>
+                <input type="text" id="deleteAccountConfirm" class="form-control" autocomplete="off" placeholder="DELETE">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger" id="deleteAccountSubmit" disabled><i class="bi bi-send me-1"></i> Submit request</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function () {
+    var input = document.getElementById('deleteAccountConfirm');
+    var btn = document.getElementById('deleteAccountSubmit');
+    if (!input || !btn) return;
+    input.addEventListener('input', function () { btn.disabled = input.value.trim().toUpperCase() !== 'DELETE'; });
+})();
+</script>

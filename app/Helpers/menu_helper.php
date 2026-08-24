@@ -339,6 +339,7 @@ if (! function_exists('render_sidebar')) {
                 ['Mobile User Locations', 'admin/locations', 'bi bi-geo-alt'],
                 ['Transactions', 'admin/transactions', 'bi bi-receipt'],
                 ['Inquiries', 'admin/inquiries', 'bi bi-chat-left-text'],
+                ['Deletion Requests', 'admin/deletion-requests', 'bi bi-person-x'],
                 ['Plans & Pricing', 'admin/plans', 'bi bi-card-checklist'],
                 ['Coupons', 'admin/coupons', 'bi bi-ticket-perforated'],
             ];

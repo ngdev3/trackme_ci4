@@ -378,6 +378,124 @@ class SuperAdminController extends BaseController
         return redirect()->back()->with('success', 'Customer status updated.');
     }
 
+    /**
+     * PERMANENTLY delete a customer and every dependency (their firms, all
+     * transactions / rokad / vouchers / ledgers, subscriptions, payments,
+     * notes, reminders, passwords, logs and firm-user accounts). Irreversible.
+     *
+     * Guarded by a type-to-confirm: the admin must type the exact account name.
+     * The heavy lifting (ordered, transaction-wrapped cascade) is in
+     * App\Services\AccountPurgeService.
+     */
+    public function purgeCustomer($id = null)
+    {
+        $id    = (int) $id;
+        $users = new UserModel();
+        $user  = $users->find($id);
+        if (! $user) {
+            return redirect()->back()->with('error', 'Customer not found.');
+        }
+        if (($user['account_type'] ?? '') === 'super_admin') {
+            return redirect()->back()->with('error', 'Super-admin accounts cannot be deleted.');
+        }
+
+        // Type-to-confirm — the admin must type the exact account name.
+        $typed = trim((string) $this->request->getPost('confirm_name'));
+        if ($typed === '' || mb_strtolower($typed) !== mb_strtolower(trim((string) $user['name']))) {
+            return redirect()->back()->with('error', 'Deletion cancelled — the confirmation name did not match.');
+        }
+
+        try {
+            $summary = (new \App\Services\AccountPurgeService())->purge($id);
+        } catch (\Throwable $e) {
+            log_message('error', 'Customer purge failed for #' . $id . ': ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Could not delete: ' . $e->getMessage());
+        }
+
+        $rows = array_sum($summary['deleted']);
+        activity_log('SuperAdmin', 'Delete', "Permanently deleted customer #{$id} ({$user['name']}) — {$summary['companies']} firm(s), {$summary['firm_users']} firm-user(s), {$rows} rows");
+
+        return redirect()->to(site_url('admin/customers'))
+            ->with('success', "“{$user['name']}” and all their data were permanently deleted — {$summary['companies']} firm(s), {$summary['firm_users']} firm-user(s) and {$rows} records removed.");
+    }
+
+    /** Super-admin inbox of self-service account-deletion requests (app + web). */
+    public function deletionRequests()
+    {
+        $model = new \App\Models\AccountDeletionRequestModel();
+        $rows  = $model->orderBy("status = 'pending'", 'DESC', false)
+                       ->orderBy('created_at', 'DESC')
+                       ->findAll();
+
+        return $this->render('deletion_requests', [
+            'title'      => 'Account Deletion Requests',
+            'breadcrumb' => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'Deletion Requests']],
+            'rows'       => $rows,
+            'pending'    => $model->where('status', 'pending')->countAllResults(),
+        ]);
+    }
+
+    /** Approve a request → permanently purge the account, then mark it done. */
+    public function approveDeletion($id = null)
+    {
+        $model = new \App\Models\AccountDeletionRequestModel();
+        $req   = $model->find((int) $id);
+        if (! $req) {
+            return redirect()->back()->with('error', 'Request not found.');
+        }
+        if ($req['status'] !== 'pending') {
+            return redirect()->back()->with('error', 'This request has already been actioned.');
+        }
+
+        // Type-to-confirm — the admin must type the exact account name.
+        $typed = trim((string) $this->request->getPost('confirm_name'));
+        if ($typed === '' || mb_strtolower($typed) !== mb_strtolower(trim((string) $req['name']))) {
+            return redirect()->back()->with('error', 'Approval cancelled — the confirmation name did not match.');
+        }
+
+        try {
+            $summary = (new \App\Services\AccountPurgeService())->purge((int) $req['user_id']);
+        } catch (\Throwable $e) {
+            log_message('error', 'Deletion-request purge failed (#' . $id . '): ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Could not delete: ' . $e->getMessage());
+        }
+
+        $model->update((int) $id, [
+            'status'       => 'approved',
+            'processed_by' => (int) session('user_id'),
+            'processed_at' => date('Y-m-d H:i:s'),
+        ]);
+        $rows = array_sum($summary['deleted']);
+        activity_log('SuperAdmin', 'Delete', "Approved deletion request #{$id} — purged user #{$req['user_id']} ({$req['name']}); {$summary['companies']} firm(s), {$rows} rows");
+
+        return redirect()->to(site_url('admin/deletion-requests'))
+            ->with('success', "Request approved — “{$req['name']}” and all data permanently deleted ({$rows} records).");
+    }
+
+    /** Reject a request → keep the account, record an optional note. */
+    public function rejectDeletion($id = null)
+    {
+        $model = new \App\Models\AccountDeletionRequestModel();
+        $req   = $model->find((int) $id);
+        if (! $req) {
+            return redirect()->back()->with('error', 'Request not found.');
+        }
+        if ($req['status'] !== 'pending') {
+            return redirect()->back()->with('error', 'This request has already been actioned.');
+        }
+        $note = mb_substr(trim((string) $this->request->getPost('admin_note')), 0, 500);
+        $model->update((int) $id, [
+            'status'       => 'rejected',
+            'admin_note'   => $note !== '' ? $note : null,
+            'processed_by' => (int) session('user_id'),
+            'processed_at' => date('Y-m-d H:i:s'),
+        ]);
+        activity_log('SuperAdmin', 'Edit', "Rejected deletion request #{$id} (user #{$req['user_id']})");
+
+        return redirect()->to(site_url('admin/deletion-requests'))
+            ->with('success', 'Deletion request rejected — the account has been kept.');
+    }
+
     /** Force the customer to reset their password on next login. */
     public function resetAccess($id = null)
     {
@@ -1036,6 +1154,55 @@ class SuperAdminController extends BaseController
         }
         $m->update((int) $id, ['status' => $status]);
         return redirect()->back()->with('success', 'Inquiry marked ' . $status . '.');
+    }
+
+    /** Inquiry detail — the message + the full two-way reply thread. */
+    public function inquiry($id = null)
+    {
+        $m       = new \App\Models\InquiryModel();
+        $inquiry = $m->find((int) $id);
+        if (! $inquiry) {
+            return redirect()->to(site_url('admin/inquiries'))->with('error', 'Inquiry not found.');
+        }
+        // Opening it clears the "new" flag for the admin.
+        if ($inquiry['status'] === 'new') {
+            $m->update((int) $id, ['status' => 'read']);
+            $inquiry['status'] = 'read';
+        }
+
+        return $this->render('inquiry_thread', [
+            'title'      => 'Inquiry #' . $inquiry['id'],
+            'breadcrumb' => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'Inquiries', 'url' => site_url('admin/inquiries')], ['label' => '#' . $inquiry['id']]],
+            'inquiry'    => $inquiry,
+            'replies'    => (new \App\Models\InquiryReplyModel())->thread((int) $id),
+        ]);
+    }
+
+    /** Post an admin reply into the thread (the customer sees it on web + app). */
+    public function inquiryReply($id = null)
+    {
+        $m       = new \App\Models\InquiryModel();
+        $inquiry = $m->find((int) $id);
+        if (! $inquiry) {
+            return redirect()->to(site_url('admin/inquiries'))->with('error', 'Inquiry not found.');
+        }
+        $message = trim((string) $this->request->getPost('message'));
+        if ($message === '') {
+            return redirect()->back()->with('error', 'Write a reply first.');
+        }
+
+        (new \App\Models\InquiryReplyModel())->insert([
+            'inquiry_id'  => (int) $id,
+            'sender_type' => 'admin',
+            'user_id'     => (int) session('user_id'),
+            'name'        => (string) (session('user_name') ?? 'Support'),
+            'message'     => mb_substr($message, 0, 5000),
+        ]);
+        // Flag it unread for the customer so the app/web can badge the new reply.
+        $m->update((int) $id, ['status' => 'read', 'customer_unread' => 1]);
+        activity_log('SuperAdmin', 'Add', "Replied to inquiry #{$id}");
+
+        return redirect()->to(site_url('admin/inquiries/' . $id))->with('success', 'Reply sent — the customer will see it on the web and app.');
     }
 
     /** All Cashfree payment orders with customer + plan, filterable by status. */

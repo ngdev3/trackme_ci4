@@ -29,6 +29,39 @@ class ProfileController extends BaseController
         ]);
     }
 
+    /**
+     * File a self-service request to permanently delete this account. Nothing is
+     * deleted here — a super admin reviews and approves it (which triggers the
+     * full purge via AccountPurgeService). One open request at a time.
+     */
+    public function requestDeletion()
+    {
+        $user = current_user();
+        if (! $user) {
+            return redirect()->to(site_url('login'));
+        }
+        $requests = new \App\Models\AccountDeletionRequestModel();
+        if ($requests->hasPending((int) $user['id'])) {
+            return redirect()->to(site_url('profile'))->with('info', 'Your account deletion request is already pending review.');
+        }
+        $reason = trim((string) $this->request->getPost('reason'));
+        $requests->insert([
+            'user_id'    => (int) $user['id'],
+            'name'       => mb_substr((string) ($user['name'] ?? ''), 0, 150),
+            'email'      => mb_substr((string) ($user['email'] ?? ''), 0, 190),
+            'mobile'     => isset($user['mobile']) ? mb_substr((string) $user['mobile'], 0, 20) : null,
+            'reason'     => $reason !== '' ? mb_substr($reason, 0, 1000) : null,
+            'source'     => 'web',
+            'status'     => 'pending',
+            'ip_address' => $this->request->getIPAddress(),
+            'user_agent' => mb_substr((string) $this->request->getUserAgent()->getAgentString(), 0, 255),
+        ]);
+        activity_log('Profile', 'Add', 'Account deletion requested by user #' . $user['id']);
+
+        return redirect()->to(site_url('profile'))
+            ->with('success', 'Your account deletion request has been submitted. Our team will review it and get back to you.');
+    }
+
     public function update()
     {
         $id    = user_id();

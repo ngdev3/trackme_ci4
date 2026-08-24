@@ -35,6 +35,42 @@ class HelpController extends BaseController
         ]);
     }
 
+    /** The customer's single ongoing support conversation — web chat view. */
+    public function support()
+    {
+        $user = current_user();
+        $svc  = new \App\Services\SupportConversation();
+        $conv = $svc->getFor($user);
+
+        if ($conv) {
+            \Config\Database::connect()->table('inquiries')->where('id', (int) $conv['id'])->update(['customer_unread' => 0]);
+        }
+
+        return $this->render('support', [
+            'title'      => 'Support',
+            'breadcrumb' => [['label' => 'Help & Support', 'url' => site_url('help')], ['label' => 'Support Chat']],
+            'messages'   => $conv ? $svc->messages($conv) : [],
+            'open'       => ! $conv || $conv['status'] !== 'closed',
+        ]);
+    }
+
+    /** Send a message into the single conversation (creates it on first use). */
+    public function supportSend()
+    {
+        $user    = current_user();
+        $message = trim((string) $this->request->getPost('message'));
+        if ($message === '') {
+            return redirect()->back()->with('error', 'Please type a message.');
+        }
+        (new \App\Services\SupportConversation())->appendCustomer($user, $message, 'support', [
+            'ip' => $this->request->getIPAddress(),
+            'ua' => (string) $this->request->getUserAgent()->getAgentString(),
+        ]);
+        activity_log('Help', 'Add', 'Sent a support message');
+
+        return redirect()->to(site_url('help/support'))->with('success', 'Message sent to support.');
+    }
+
     /** @return list<array{q:string,a:string}> */
     private function faqs(): array
     {

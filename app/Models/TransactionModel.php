@@ -114,12 +114,32 @@ class TransactionModel extends Model
         if ($companyIds === []) {
             return [];
         }
-        $rows = $this->builder()
-            ->select('company_id, COUNT(*) AS cnt')
-            ->where('deleted_at', null)
-            ->whereIn('company_id', $companyIds)
-            ->groupBy('company_id')
-            ->get()->getResultArray();
+        // Sanitise to ints and force the (company_id, deleted_at) covering index.
+        // With a multi-value IN() list the optimiser otherwise mis-picks the
+        // deleted_at-leading dashboard index and scans ~half the table (58s on a
+        // large book); FORCE INDEX keeps it an index-only company scan (~0.6s).
+        $ids = array_values(array_filter(array_map('intval', $companyIds)));
+        if ($ids === []) {
+            return [];
+        }
+        $inList = implode(',', $ids);
+        try {
+            $rows = $this->db->query(
+                "SELECT company_id, COUNT(*) AS cnt
+                   FROM {$this->table} FORCE INDEX (idx_txn_company_deleted)
+                  WHERE deleted_at IS NULL AND company_id IN ({$inList})
+                  GROUP BY company_id"
+            )->getResultArray();
+        } catch (\Throwable $e) {
+            // Index not present yet (migration not run) — fall back to the plain
+            // grouped count so the endpoint still works, just without the hint.
+            $rows = $this->builder()
+                ->select('company_id, COUNT(*) AS cnt')
+                ->where('deleted_at', null)
+                ->whereIn('company_id', $ids)
+                ->groupBy('company_id')
+                ->get()->getResultArray();
+        }
         $out = [];
         foreach ($rows as $r) {
             $out[(int) $r['company_id']] = (int) $r['cnt'];

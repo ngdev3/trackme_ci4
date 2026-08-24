@@ -29,6 +29,13 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     // and the module→actions permission map. Powers the app's menu/route gating.
     $routes->get('me', 'MeApiController::me');
     $routes->put('me', 'MeApiController::updateProfile');
+    // Raise (file) an account-deletion request for a super admin to review.
+    $routes->post('me/deletion-request', 'MeApiController::deletionRequest');
+    // Support: ONE ongoing conversation per user. GET returns the whole thread
+    // (with an unread flag); POST appends a message (raising a request or replying
+    // — the same single thread either way), creating the conversation on first use.
+    $routes->get('me/support', 'MeApiController::support');
+    $routes->post('me/support', 'MeApiController::supportSend');
     $routes->post('company/switch', 'MeApiController::switchCompany');
 
     // Attach the device's precise GPS location to the current session's login
