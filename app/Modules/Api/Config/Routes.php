@@ -118,6 +118,12 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->get('transactions/attachment/(:num)', 'TransactionApiController::attachment/$1');
     $routes->delete('transactions/attachment/(:num)', 'TransactionApiController::deleteAttachment/$1');
 
+    // Saved UPI QR payees — per-company directory synced with the mobile app.
+    $routes->get('upi-qr', 'UpiQrApiController::index');
+    $routes->post('upi-qr', 'UpiQrApiController::create');
+    $routes->post('upi-qr/update/(:num)', 'UpiQrApiController::update/$1');
+    $routes->post('upi-qr/delete/(:num)', 'UpiQrApiController::remove/$1');
+
     // Account logs: the caller's own login history (read-only).
     $routes->get('logs/logins', 'LogsApiController::logins');
 
