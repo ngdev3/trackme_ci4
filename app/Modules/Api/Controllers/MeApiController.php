@@ -208,6 +208,85 @@ class MeApiController extends BaseApiController
         return $this->respond(['status' => 'ok', 'message' => 'Message sent to support.']);
     }
 
+    /** POST /api/v1/me/resend-verification — re-send the email-validation link. */
+    public function resendVerification()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        if (! empty($user['email_verified_at'])) {
+            return $this->respond(['status' => 'ok', 'verified' => true, 'message' => 'Your email is already verified.']);
+        }
+        if ($this->tooManyAttempts('resend-verify-' . (int) $user['id'], 3, 5 * MINUTE)) {
+            return $this->fail('A link was just sent — check your inbox before requesting another.', 429);
+        }
+        $token = (new \App\Models\AccountActivationModel())->issue((string) $user['email'], 24 * 7);
+        helper('activation_email');
+        send_activation_email((string) $user['email'], $token);
+
+        return $this->respond([
+            'status'  => 'ok',
+            'message' => 'A new validation link has been sent to ' . $user['email'] . '.',
+        ]);
+    }
+
+    /**
+     * POST /api/v1/me/events — record a batch of usage events (menu/screen taps).
+     * Body: {events: [{event?, label, route?, at?}]} (or a single {event,label,route}).
+     * Surfaced only in the Super Admin panel.
+     */
+    public function recordEvents()
+    {
+        $user = $this->currentApiUser();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $events = $this->input('events');
+        if (! is_array($events) || $events === []) {
+            $events = [['event' => $this->input('event'), 'label' => $this->input('label'), 'route' => $this->input('route')]];
+        }
+
+        $ip   = $this->request->getIPAddress();
+        $ua   = mb_substr((string) $this->request->getUserAgent()->getAgentString(), 0, 255);
+        $rows = [];
+        foreach (array_slice($events, 0, 100) as $e) {
+            if (! is_array($e)) {
+                continue;
+            }
+            $label = trim((string) ($e['label'] ?? ''));
+            $route = trim((string) ($e['route'] ?? ''));
+            if ($label === '' && $route === '') {
+                continue;
+            }
+            $rows[] = [
+                'user_id'    => (int) $user['id'],
+                'event'      => mb_substr((string) ($e['event'] ?? 'nav'), 0, 40) ?: 'nav',
+                'label'      => $label !== '' ? mb_substr($label, 0, 120) : null,
+                'route'      => $route !== '' ? mb_substr($route, 0, 191) : null,
+                'platform'   => 'app',
+                'ip_address' => $ip,
+                'user_agent' => $ua,
+                'created_at' => $this->eventStamp($e['at'] ?? null),
+            ];
+        }
+        if ($rows !== []) {
+            (new \App\Models\AppEventModel())->insertBatch($rows);
+        }
+
+        return $this->respond(['status' => 'ok', 'recorded' => count($rows)]);
+    }
+
+    /** Trust a client timestamp only if it's sane (±7 days); else use server now. */
+    private function eventStamp($at): string
+    {
+        $ts = $at ? strtotime((string) $at) : false;
+        if (! $ts || abs(time() - $ts) > 7 * 86400) {
+            return date('Y-m-d H:i:s');
+        }
+        return date('Y-m-d H:i:s', $ts);
+    }
+
     /** Validate a company switch and return the refreshed context for it. */
     public function switchCompany()
     {

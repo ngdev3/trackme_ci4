@@ -17,8 +17,13 @@ $routes->group('admin', ['namespace' => 'Modules\SuperAdmin\Controllers', 'filte
     $routes->post('customers/set-password/(:num)', 'SuperAdminController::setPassword/$1');
     $routes->post('customers/send-reset/(:num)', 'SuperAdminController::sendResetLink/$1');
     $routes->post('customers/payment/(:num)', 'SuperAdminController::updatePayment/$1');
+    // Reversible soft-delete → Trash → Restore, plus the permanent purge (only
+    // reachable from Trash). Deleting no longer destroys data by default.
+    $routes->post('customers/delete/(:num)', 'SuperAdminController::softDeleteCustomer/$1');
+    $routes->get('customers/trash', 'SuperAdminController::customersTrash');
+    $routes->post('customers/restore/(:num)', 'SuperAdminController::restoreCustomer/$1');
     // Permanent, irreversible delete of a customer + every dependency (firms,
-    // transactions, subscriptions, payments, logs, firm-users, …).
+    // transactions, subscriptions, payments, logs, firm-users, …). Trash only.
     $routes->post('customers/purge/(:num)', 'SuperAdminController::purgeCustomer/$1');
     $routes->get('impersonate/(:num)', 'SuperAdminController::impersonate/$1');
 
@@ -53,6 +58,9 @@ $routes->group('admin', ['namespace' => 'Modules\SuperAdmin\Controllers', 'filte
     $routes->get('inquiries/(:num)', 'SuperAdminController::inquiry/$1');
     $routes->post('inquiries/(:num)/reply', 'SuperAdminController::inquiryReply/$1');
     $routes->post('inquiries/status/(:num)', 'SuperAdminController::inquiryStatus/$1');
+
+    // App usage analytics — which menus/screens users tap and when.
+    $routes->get('app-events', 'SuperAdminController::appEvents');
 
     // Self-service account-deletion requests (raised from the app or web portal).
     // Approve = permanent purge (AccountPurgeService); reject keeps the account.

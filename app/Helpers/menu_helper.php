@@ -144,6 +144,7 @@ if (! function_exists('render_firm_sidebar')) {
                 ['Add Deposit (Jama)', 'transactions/add/jama'],
                 ['Add Expense (Naam)', 'transactions/add/naam'],
                 ['Rokad Vahi', 'transactions/list'],
+                ['Party Accounts', 'transactions/parties'],
                 ['Account Statement', 'transactions/statement'],
                 ['Report', 'transactions/report/breakdown'],
                 ['Opening Balance', 'transactions/opening'],
@@ -161,7 +162,10 @@ if (! function_exists('render_firm_sidebar')) {
             ]],
             ['firm_users', 'Trash', 'bi bi-trash', 'company/trash', []],
             ['settings', 'Settings', 'bi bi-gear', 'settings', []],
-            ['help', 'Help & Support', 'bi bi-life-preserver', 'help', []],
+            ['help', 'Help & Support', 'bi bi-life-preserver', null, [
+                ['Help & FAQ', 'help'],
+                ['Support Chat', 'help/support'],
+            ]],
         ];
 
         $html = '';
@@ -329,60 +333,59 @@ if (! function_exists('render_sidebar')) {
                 . '<ul class="nav nav-treeview">' . $childHtml . '</ul></li>';
         }
 
-        // Subscription / billing management — the admin pages are not DB modules,
-        // so add them to the Super Admin sidebar explicitly.
+        // Super Admin management pages — not DB modules, so grouped into logical
+        // sub-menus explicitly (one collapsible menu per area).
         if (function_exists('is_super_admin_account') && is_super_admin_account()) {
-            $adminChildren = [
-                ['Activate Plan', 'admin/activate', 'bi bi-gem'],
-                ['Customers', 'admin/customers', 'bi bi-people'],
-                ['Firms', 'admin/firms', 'bi bi-building'],
-                ['Mobile User Locations', 'admin/locations', 'bi bi-geo-alt'],
-                ['Transactions', 'admin/transactions', 'bi bi-receipt'],
-                ['Inquiries', 'admin/inquiries', 'bi bi-chat-left-text'],
-                ['Deletion Requests', 'admin/deletion-requests', 'bi bi-person-x'],
-                ['Plans & Pricing', 'admin/plans', 'bi bi-card-checklist'],
-                ['Coupons', 'admin/coupons', 'bi bi-ticket-perforated'],
+            $adminGroups = [
+                ['Customers', 'bi bi-people', [
+                    ['All Customers', 'admin/customers', 'bi bi-person-lines-fill'],
+                    ['Deleted (Trash)', 'admin/customers/trash', 'bi bi-trash3'],
+                    ['Firms / Companies', 'admin/firms', 'bi bi-building'],
+                    ['Mobile User Locations', 'admin/locations', 'bi bi-geo-alt'],
+                ]],
+                ['Subscription & Billing', 'bi bi-gem', [
+                    ['Activate Plan', 'admin/activate', 'bi bi-patch-check'],
+                    ['Plans & Pricing', 'admin/plans', 'bi bi-card-checklist'],
+                    ['Coupons', 'admin/coupons', 'bi bi-ticket-perforated'],
+                    ['Payments', 'admin/transactions', 'bi bi-receipt'],
+                ]],
+                ['Support', 'bi bi-headset', [
+                    ['Inquiries', 'admin/inquiries', 'bi bi-chat-left-text'],
+                    ['Deletion Requests', 'admin/deletion-requests', 'bi bi-person-x'],
+                ]],
+                ['Developer Tools', 'bi bi-tools', [
+                    ['App Usage (Menu Taps)', 'admin/app-events', 'bi bi-activity'],
+                    ['Load Test Console', 'loadtest', 'bi bi-speedometer'],
+                    ['Health Check', 'health', 'bi bi-heart-pulse'],
+                ]],
             ];
-            $bestIdx = -1;
-            $bestLen = -1;
-            foreach ($adminChildren as $i => $c) {
-                $len = menu_match_len($c[1]);
-                if ($len > $bestLen) {
-                    $bestLen = $len;
-                    $bestIdx = $i;
-                }
-            }
-            $open  = $bestLen >= 0;
-            $inner = '';
-            foreach ($adminChildren as $i => $c) {
-                $inner .= '<li class="nav-item"><a href="' . site_url($c[1]) . '" class="nav-link' . ($i === $bestIdx ? ' active' : '') . '">'
-                    . '<i class="nav-icon ' . esc($c[2]) . '"></i><p>' . esc($c[0]) . '</p></a></li>';
-            }
-            $html .= '<li class="nav-item' . ($open ? ' menu-open' : '') . '">'
-                . '<a href="#" class="nav-link' . ($open ? ' active' : '') . '">'
-                . '<i class="nav-icon bi bi-gem"></i><p>Subscription<i class="nav-arrow bi bi-chevron-right"></i></p></a>'
-                . '<ul class="nav nav-treeview">' . $inner . '</ul></li>';
 
-            // Developer / performance tools (Super Admin only).
-            $devChildren = [
-                ['Load Test Console', 'loadtest', 'bi bi-speedometer'],
-                ['Health Check', 'health', 'bi bi-heart-pulse'],
-            ];
-            $devBest = -1; $devBestLen = -1;
-            foreach ($devChildren as $i => $c) {
-                $len = menu_match_len($c[1]);
-                if ($len > $devBestLen) { $devBestLen = $len; $devBest = $i; }
+            // Render one collapsible menu, opening + highlighting the active child.
+            $renderGroup = static function (string $label, string $groupIcon, array $children): string {
+                $bestIdx = -1;
+                $bestLen = -1;
+                foreach ($children as $i => $c) {
+                    $len = menu_match_len($c[1]);
+                    if ($len > $bestLen) {
+                        $bestLen = $len;
+                        $bestIdx = $i;
+                    }
+                }
+                $open  = $bestLen >= 0;
+                $inner = '';
+                foreach ($children as $i => $c) {
+                    $inner .= '<li class="nav-item"><a href="' . site_url($c[1]) . '" class="nav-link' . ($i === $bestIdx ? ' active' : '') . '">'
+                        . '<i class="nav-icon ' . esc($c[2]) . '"></i><p>' . esc($c[0]) . '</p></a></li>';
+                }
+                return '<li class="nav-item' . ($open ? ' menu-open' : '') . '">'
+                    . '<a href="#" class="nav-link' . ($open ? ' active' : '') . '">'
+                    . '<i class="nav-icon ' . esc($groupIcon) . '"></i><p>' . esc($label) . '<i class="nav-arrow bi bi-chevron-right"></i></p></a>'
+                    . '<ul class="nav nav-treeview">' . $inner . '</ul></li>';
+            };
+
+            foreach ($adminGroups as $g) {
+                $html .= $renderGroup($g[0], $g[1], $g[2]);
             }
-            $devOpen  = $devBestLen >= 0;
-            $devInner = '';
-            foreach ($devChildren as $i => $c) {
-                $devInner .= '<li class="nav-item"><a href="' . site_url($c[1]) . '" class="nav-link' . ($i === $devBest ? ' active' : '') . '">'
-                    . '<i class="nav-icon ' . esc($c[2]) . '"></i><p>' . esc($c[0]) . '</p></a></li>';
-            }
-            $html .= '<li class="nav-item' . ($devOpen ? ' menu-open' : '') . '">'
-                . '<a href="#" class="nav-link' . ($devOpen ? ' active' : '') . '">'
-                . '<i class="nav-icon bi bi-tools"></i><p>Developer Tools<i class="nav-arrow bi bi-chevron-right"></i></p></a>'
-                . '<ul class="nav nav-treeview">' . $devInner . '</ul></li>';
         }
 
         return $html;

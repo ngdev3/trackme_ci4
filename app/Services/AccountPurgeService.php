@@ -159,6 +159,97 @@ class AccountPurgeService
     }
 
     /**
+     * Reversible soft-delete: mark the customer + their firm-users and companies
+     * as deleted (and deactivate them) WITHOUT removing any data, so a super admin
+     * can restore them from Trash. Same guards as purge().
+     *
+     * @return array{user: array, companies: int, firm_users: int}
+     */
+    public function softDelete(int $userId): array
+    {
+        $user = $this->db->table('users')->where('id', $userId)->get()->getRowArray();
+        if (! $user) {
+            throw new RuntimeException('Account not found.');
+        }
+        if (($user['account_type'] ?? '') === 'super_admin') {
+            throw new RuntimeException('Super-admin accounts cannot be deleted.');
+        }
+        if ((int) $userId === (int) session('user_id')) {
+            throw new RuntimeException('You cannot delete your own account.');
+        }
+
+        [$companyIds, $firmUserIds] = $this->relations($userId);
+        $allUserIds = array_values(array_unique(array_merge([$userId], $firmUserIds)));
+        $now        = date('Y-m-d H:i:s');
+
+        $this->db->transException(true);
+        $this->db->transStart();
+        $this->db->table('users')->whereIn('id', $allUserIds)->update(['deleted_at' => $now, 'status' => 0]);
+        if ($companyIds) {
+            $this->db->table('companies')->whereIn('id', $companyIds)->update(['deleted_at' => $now]);
+        }
+        $this->db->transComplete();
+        if ($this->db->transStatus() === false) {
+            throw new RuntimeException('Could not move the account to Trash.');
+        }
+
+        return ['user' => $user, 'companies' => count($companyIds), 'firm_users' => count($firmUserIds)];
+    }
+
+    /**
+     * Restore a soft-deleted account: clear deleted_at + reactivate the customer,
+     * their firm-users and companies.
+     *
+     * @return array{user: array, companies: int, firm_users: int}
+     */
+    public function restore(int $userId): array
+    {
+        $user = $this->db->table('users')->where('id', $userId)->get()->getRowArray();
+        if (! $user) {
+            throw new RuntimeException('Account not found.');
+        }
+
+        [$companyIds, $firmUserIds] = $this->relations($userId);
+        $allUserIds = array_values(array_unique(array_merge([$userId], $firmUserIds)));
+
+        $this->db->transException(true);
+        $this->db->transStart();
+        $this->db->table('users')->whereIn('id', $allUserIds)->update(['deleted_at' => null, 'status' => 1]);
+        if ($companyIds) {
+            $this->db->table('companies')->whereIn('id', $companyIds)->update(['deleted_at' => null]);
+        }
+        $this->db->transComplete();
+        if ($this->db->transStatus() === false) {
+            throw new RuntimeException('Could not restore the account.');
+        }
+
+        return ['user' => $user, 'companies' => count($companyIds), 'firm_users' => count($firmUserIds)];
+    }
+
+    /** Company ids owned by + firm-user ids under a customer (incl. soft-deleted). */
+    private function relations(int $userId): array
+    {
+        $companyIds = array_map('intval', array_column(
+            $this->db->table('companies')->select('id')->where('owner_id', $userId)->get()->getResultArray(),
+            'id'
+        ));
+        $firmUserIds = array_map('intval', array_column(
+            $this->db->table('users')->select('id')->where('parent_id', $userId)->get()->getResultArray(),
+            'id'
+        ));
+        if ($this->db->fieldExists('customer_id', 'company_users')) {
+            $linked = array_map('intval', array_column(
+                $this->db->table('company_users')->select('user_id')->where('customer_id', $userId)->get()->getResultArray(),
+                'user_id'
+            ));
+            $firmUserIds = array_merge($firmUserIds, $linked);
+        }
+        $firmUserIds = array_values(array_filter(array_unique($firmUserIds), static fn ($id) => $id !== $userId));
+
+        return [$companyIds, $firmUserIds];
+    }
+
+    /**
      * Delete rows of $table where $column is in $ids, guarding table/column
      * existence and accumulating affected-row counts.
      */

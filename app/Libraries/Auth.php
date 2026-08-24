@@ -102,6 +102,21 @@ class Auth
     }
 
     /**
+     * Sign a freshly-registered user straight in. Self-service signup now logs
+     * the user in immediately (the account is created active) and they validate
+     * their email within a week. Assumes $user is an active account.
+     */
+    public function loginNewUser(array $user): void
+    {
+        $this->establishSession($user);
+        $this->users->update((int) $user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
+        $logId = $this->logLogin((int) $user['id'], (string) ($user['email'] ?? $user['username'] ?? ''), 'success', 'Signed in after registration');
+        if ($logId) {
+            $this->session->set('login_log_id', $logId);
+        }
+    }
+
+    /**
      * Sign a user in from a verified social (OAuth) profile.
      *
      * Only pre-existing database accounts may sign in: the profile is matched
@@ -383,7 +398,7 @@ class Auth
                 'auth_provider'        => null,
                 'provider_id'          => null,
                 'account_type'         => 'customer',
-                'status'               => 0,    // inactive until activated
+                'status'               => 1,    // active immediately — email verified within a week
                 'email_verified_at'    => null,
                 'must_change_password' => 0,
                 'deleted_at'           => null, // restore so the email is usable
@@ -408,8 +423,8 @@ class Auth
             'provider_id'       => null,
             'user_type_id'      => $this->defaultTypeId('admin') ?? $this->defaultTypeId('viewer'),
             'account_type'      => 'customer',
-            'status'            => 0,    // inactive until email is activated
-            'email_verified_at' => null, // set when the OTP is confirmed
+            'status'            => 1,    // active immediately — email verified within a week
+            'email_verified_at' => null, // set when they click the emailed validation link
         ], true);
 
         if (! $id) {

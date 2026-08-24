@@ -281,6 +281,7 @@ class SuperAdminController extends BaseController
                 {$payExpr} AS pay_sort,
                 {$planExpr} AS plan_sort", false)
             ->where('account_type', 'customer')
+            ->where('users.deleted_at', null)   // hide soft-deleted (Trash) accounts
             ->orderBy($sortMap[$sort], $dir);
 
         if ($search !== '') {
@@ -378,6 +379,57 @@ class SuperAdminController extends BaseController
         return redirect()->back()->with('success', 'Customer status updated.');
     }
 
+    /** Move a customer to Trash — reversible soft-delete (data is kept). */
+    public function softDeleteCustomer($id = null)
+    {
+        $id   = (int) $id;
+        $user = (new UserModel())->find($id);
+        if (! $user) {
+            return redirect()->back()->with('error', 'Customer not found.');
+        }
+        try {
+            (new \App\Services\AccountPurgeService())->softDelete($id);
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Could not delete: ' . $e->getMessage());
+        }
+        activity_log('SuperAdmin', 'Delete', "Moved customer #{$id} ({$user['name']}) to Trash");
+
+        return redirect()->to(site_url('admin/customers'))
+            ->with('success', "“{$user['name']}” moved to Trash — restore it anytime from Customers › Trash.");
+    }
+
+    /** Trash: soft-deleted customers, with Restore / Delete-forever. */
+    public function customersTrash()
+    {
+        $rows = $this->db()->table('users')
+            ->select('users.*, (SELECT COUNT(*) FROM companies c WHERE c.owner_id = users.id) AS firm_count', false)
+            ->where('account_type', 'customer')
+            ->where('users.deleted_at IS NOT NULL', null, false)
+            ->orderBy('users.deleted_at', 'DESC')
+            ->get()->getResultArray();
+
+        return $this->render('customers_trash', [
+            'title'      => 'Deleted Customers',
+            'breadcrumb' => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'Customers', 'url' => site_url('admin/customers')], ['label' => 'Trash']],
+            'rows'       => $rows,
+        ]);
+    }
+
+    /** Restore a soft-deleted customer (reactivates account + firms). */
+    public function restoreCustomer($id = null)
+    {
+        $id = (int) $id;
+        try {
+            $s = (new \App\Services\AccountPurgeService())->restore($id);
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Could not restore: ' . $e->getMessage());
+        }
+        activity_log('SuperAdmin', 'Edit', "Restored customer #{$id} from Trash");
+
+        return redirect()->to(site_url('admin/customers/trash'))
+            ->with('success', "“{$s['user']['name']}” restored — the account is active again.");
+    }
+
     /**
      * PERMANENTLY delete a customer and every dependency (their firms, all
      * transactions / rokad / vouchers / ledgers, subscriptions, payments,
@@ -419,6 +471,40 @@ class SuperAdminController extends BaseController
             ->with('success', "“{$user['name']}” and all their data were permanently deleted — {$summary['companies']} firm(s), {$summary['firm_users']} firm-user(s) and {$rows} records removed.");
     }
 
+    /** App usage analytics — which menus/screens users tapped and when. */
+    public function appEvents()
+    {
+        $db     = $this->db();
+        $userId = (int) $this->request->getGet('user');
+
+        $b = $db->table('app_events ae')
+            ->select('ae.id, ae.event, ae.label, ae.route, ae.platform, ae.created_at, ae.user_id, u.name AS user_name, u.email AS user_email')
+            ->join('users u', 'u.id = ae.user_id', 'left')
+            ->orderBy('ae.id', 'DESC')
+            ->limit(300);
+        if ($userId > 0) {
+            $b->where('ae.user_id', $userId);
+        }
+        $rows = $b->get()->getResultArray();
+
+        // Most-tapped menus overall (last 30 days).
+        $top = $db->table('app_events')
+            ->select('label, COUNT(*) AS c')
+            ->where('label IS NOT NULL', null, false)
+            ->where('created_at >=', date('Y-m-d H:i:s', strtotime('-30 days')))
+            ->groupBy('label')->orderBy('c', 'DESC')->limit(10)
+            ->get()->getResultArray();
+
+        return $this->render('app_events', [
+            'title'      => 'App Usage — Menu Taps',
+            'breadcrumb' => [['label' => 'Super Admin', 'url' => site_url('admin')], ['label' => 'App Usage']],
+            'rows'       => $rows,
+            'top'        => $top,
+            'userId'     => $userId,
+            'total'      => (int) $db->table('app_events')->countAllResults(),
+        ]);
+    }
+
     /** Super-admin inbox of self-service account-deletion requests (app + web). */
     public function deletionRequests()
     {
@@ -453,10 +539,13 @@ class SuperAdminController extends BaseController
             return redirect()->back()->with('error', 'Approval cancelled — the confirmation name did not match.');
         }
 
+        // Approving moves the account to Trash (reversible) rather than erasing it
+        // outright, so an approval by mistake can still be undone. Permanent removal
+        // is a deliberate second step from Customers › Trash.
         try {
-            $summary = (new \App\Services\AccountPurgeService())->purge((int) $req['user_id']);
+            $summary = (new \App\Services\AccountPurgeService())->softDelete((int) $req['user_id']);
         } catch (\Throwable $e) {
-            log_message('error', 'Deletion-request purge failed (#' . $id . '): ' . $e->getMessage());
+            log_message('error', 'Deletion-request soft-delete failed (#' . $id . '): ' . $e->getMessage());
             return redirect()->back()->with('error', 'Could not delete: ' . $e->getMessage());
         }
 
@@ -465,11 +554,10 @@ class SuperAdminController extends BaseController
             'processed_by' => (int) session('user_id'),
             'processed_at' => date('Y-m-d H:i:s'),
         ]);
-        $rows = array_sum($summary['deleted']);
-        activity_log('SuperAdmin', 'Delete', "Approved deletion request #{$id} — purged user #{$req['user_id']} ({$req['name']}); {$summary['companies']} firm(s), {$rows} rows");
+        activity_log('SuperAdmin', 'Delete', "Approved deletion request #{$id} — moved user #{$req['user_id']} ({$req['name']}) to Trash; {$summary['companies']} firm(s)");
 
         return redirect()->to(site_url('admin/deletion-requests'))
-            ->with('success', "Request approved — “{$req['name']}” and all data permanently deleted ({$rows} records).");
+            ->with('success', "Request approved — “{$req['name']}” moved to Trash (restore within Customers › Trash if needed).");
     }
 
     /** Reject a request → keep the account, record an optional note. */

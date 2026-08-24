@@ -332,18 +332,30 @@ class AuthApiController extends BaseApiController
         if (isset($result['error'])) {
             return $this->failValidationErrors(['email' => $result['error']]);
         }
+        $user = $result['user'];
 
-        // Send ONE activation email with a single one-click "Activate" link (48h).
-        // Activation is LINK-ONLY — no 6-digit code is generated or shown.
-        $token = (new \App\Models\AccountActivationModel())->issue($email, 48);
+        // Email a one-click validation link (valid a week). The account is already
+        // active, so the link just verifies the email address.
+        $linkToken = (new \App\Models\AccountActivationModel())->issue($email, 24 * 7);
         helper('activation_email');
-        send_activation_email($email, $token);
-        log_message('info', 'Activation email sent for {email}', ['email' => $email]);
+        send_activation_email($email, $linkToken);
+        log_message('info', 'Validation email sent for {email}', ['email' => $email]);
+
+        // New flow: sign the user straight in and return a bearer token so the app
+        // proceeds directly to onboarding — no waiting for email activation.
+        $apiToken = (new ApiTokenModel())->issue((int) $user['id'], 'mobile');
+        (new UserModel())->update((int) $user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
+        $this->recordLoginLog($user, 'Signup');
 
         return $this->respondCreated([
-            'status'  => 'success',
-            'message' => 'Account created. Check your email and tap the activation link to confirm your account.',
-            'email'   => $email,
+            'status'         => 'success',
+            'token'          => $apiToken,
+            'token_type'     => 'Bearer',
+            'email_verified' => false,
+            'warning'        => 'A validation link has been sent to ' . $email
+                . '. Please validate it within a week to use your account without any restrictions.',
+            'message'        => 'Account created — you are signed in.',
+            'user'           => $this->publicUser($user),
         ]);
     }
 

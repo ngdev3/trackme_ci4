@@ -167,12 +167,12 @@ $ago = static function ($ts): string {
                             <?= csrf_field() ?>
                             <button class="cust-act act-reset" title="Force password reset"><i class="bi bi-key"></i></button>
                         </form>
-                        <button type="button" class="cust-act act-purge" title="Delete permanently (customer + all data)"
-                                data-bs-toggle="modal" data-bs-target="#purgeModal"
-                                data-id="<?= esc($r['id'], 'attr') ?>" data-name="<?= esc($r['name'], 'attr') ?>"
-                                data-firms="<?= (int) $r['firm_count'] ?>">
-                            <i class="bi bi-trash3"></i>
-                        </button>
+                        <form action="<?= site_url('admin/customers/delete/' . $r['id']) ?>" method="post" class="d-inline m-0" data-no-validate
+                              data-confirm="This moves the customer and all their data to Trash. Nothing is erased — you can restore it anytime from Customers › Trash."
+                              data-confirm-title="Move “<?= esc($r['name'], 'attr') ?>” to Trash?" data-confirm-btn="Move to Trash" data-confirm-icon="warning">
+                            <?= csrf_field() ?>
+                            <button class="cust-act act-purge" title="Move to Trash"><i class="bi bi-trash3"></i></button>
+                        </form>
                     </div>
                 </td>
             </tr>

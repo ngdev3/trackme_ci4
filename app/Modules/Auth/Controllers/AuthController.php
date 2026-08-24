@@ -98,16 +98,43 @@ class AuthController extends BaseController
             return redirect()->back()->withInput()->with('error', $result['error'])->with('show', 'signup');
         }
 
-        // Email a one-click activation link (48h). No 6-digit code — activation
-        // happens by clicking the link, which hits activate/{token}.
-        $token = (new \App\Models\AccountActivationModel())->issue($email, 48);
+        // Email a one-click validation link (valid for a week). The account is
+        // already active, so this link just verifies the email address.
+        $token = (new \App\Models\AccountActivationModel())->issue($email, 24 * 7);
         helper('activation_email');
         send_activation_email($email, $token);
 
-        activity_log('Auth', 'Signup', 'Self-service signup started: ' . $email);
-        return redirect()->to(site_url('login'))->with('success',
-            "Account created! We've emailed an activation link to " . $email
-            . ' — click it to activate your account, then sign in.');
+        // New flow: sign the user straight in — no waiting for email activation.
+        auth()->loginNewUser($result['user']);
+
+        activity_log('Auth', 'Signup', 'Self-service signup + auto-login: ' . $email);
+        return redirect()->to(site_url('dashboard'))->with('warning',
+            'Welcome! Your account is ready. We\'ve sent an account-validation link to '
+            . esc($email) . ' — please validate it within a week to keep using your account without any restrictions.');
+    }
+
+    /** Re-send the email-validation link for a signed-in, not-yet-verified user. */
+    public function resendVerification()
+    {
+        $user = current_user();
+        if (! $user) {
+            return redirect()->to(site_url('login'));
+        }
+        if (! empty($user['email_verified_at'])) {
+            return redirect()->back()->with('info', 'Your email is already verified.');
+        }
+        // Light throttle: at most one resend per minute.
+        $last = (int) session('verify_resend_at');
+        if ($last && time() - $last < 60) {
+            return redirect()->back()->with('info', 'A link was just sent — check your inbox (and spam) before requesting another.');
+        }
+        $token = (new \App\Models\AccountActivationModel())->issue((string) $user['email'], 24 * 7);
+        helper('activation_email');
+        send_activation_email((string) $user['email'], $token);
+        session()->set('verify_resend_at', time());
+        activity_log('Auth', 'Edit', 'Resent email-validation link');
+
+        return redirect()->back()->with('success', 'A new validation link has been sent to ' . esc($user['email']) . '.');
     }
 
     public function logout()

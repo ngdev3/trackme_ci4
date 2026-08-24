@@ -188,8 +188,16 @@ class TransactionController extends BaseController
         $data = ['party' => $party, 'from' => $from, 'to' => $to, 'hasParty' => false];
 
         if ($party !== '') {
-            $rows    = $this->txns->partyRows($scope, $party, $from ?: null, $to ?: null);
-            $opening = $from !== '' ? round($this->txns->partyNetBefore($scope, $party, $from), 2) : 0.0;
+            $rows = $this->txns->partyRows($scope, $party, $from ?: null, $to ?: null);
+
+            // The party's master opening balance (Dr = to receive/+, Cr = to pay/−)
+            // is the true start of its ledger; add the net of anything before the
+            // window when a "from" date is set. Same sign convention as the Party
+            // Accounts balance, so statement closing == party balance.
+            $master     = (new \App\Models\PartyModel())->forName((int) company_id(), $party);
+            $masterOpen = $master ? (($master['opening_type'] === 'cr' ? -1 : 1) * (float) $master['opening_balance']) : 0.0;
+            $priorNet   = $from !== '' ? round($this->txns->partyNetBefore($scope, $party, $from), 2) : 0.0;
+            $opening    = round($masterOpen + $priorNet, 2);
 
             $running = $opening;
             foreach ($rows as &$r) {
@@ -200,13 +208,15 @@ class TransactionController extends BaseController
 
             [$jama, $naam] = $this->txns->partyTotals($scope, $party, $from ?: null, $to ?: null);
             $data = array_merge($data, [
-                'hasParty'  => true,
-                'rows'      => $rows,
-                'opening'   => $opening,
-                'totalJama' => $jama,
-                'totalNaam' => $naam,
-                'closing'   => round($opening + $jama - $naam, 2),
-                'count'     => count($rows),
+                'hasParty'      => true,
+                'rows'          => $rows,
+                'opening'       => $opening,
+                'masterOpening' => round($masterOpen, 2),
+                'masterOpenType'=> $master['opening_type'] ?? 'dr',
+                'totalJama'     => $jama,
+                'totalNaam'     => $naam,
+                'closing'       => round($opening + $jama - $naam, 2),
+                'count'         => count($rows),
             ]);
         }
 
@@ -221,7 +231,7 @@ class TransactionController extends BaseController
         return $this->render('parties', [
             'title'      => 'Party Accounts',
             'breadcrumb' => [['label' => 'Transactions', 'url' => site_url('transactions')], ['label' => 'Party Accounts']],
-            'rows'       => $this->txns->partyAccounts($this->ledgerScope(), $q),
+            'rows'       => (new \App\Services\PartyDirectory())->list((int) company_id(), $q),
             'search'     => $q,
             'partyTypes' => \App\Models\TransactionModel::PARTY_TYPES,
             'canEdit'    => can($this->moduleCode, 'edit'),
@@ -230,23 +240,20 @@ class TransactionController extends BaseController
         ]);
     }
 
-    /** Rename / re-type a party across every one of its transactions. */
+    /** Save a party: rename/re-type across transactions + balance-sheet details. */
     public function partyUpdate()
     {
-        $old  = trim((string) $this->request->getPost('old_name'));
-        $new  = trim((string) $this->request->getPost('new_name'));
-        $type = trim((string) $this->request->getPost('party_type'));
+        $old = trim((string) $this->request->getPost('old_name'));
+        $new = trim((string) $this->request->getPost('new_name'));
         if ($old === '' || $new === '') {
             return redirect()->back()->with('error', 'Party name is required.');
         }
-        $res = $this->txns->renameParty((int) company_id(), $old, $new, $type !== '' ? $type : null);
+        $res = (new \App\Services\PartyDirectory())->save((int) company_id(), $this->request->getPost());
         activity_log('Transactions', 'Edit', "Party “{$old}” → “{$new}” ({$res['affected']} entries)");
 
-        $msg = $res['affected'] > 0
-            ? ($res['merged']
-                ? "Merged into “{$new}” — {$res['affected']} entries updated."
-                : "Party updated — {$res['affected']} " . ($res['affected'] === 1 ? 'entry' : 'entries') . ' changed.')
-            : 'No entries were changed.';
+        $msg = $res['merged']
+            ? "Merged into “{$new}” — details saved, {$res['affected']} entries updated."
+            : "Party saved — {$res['affected']} " . ($res['affected'] === 1 ? 'entry' : 'entries') . ' updated.';
 
         return redirect()->to(site_url('transactions/parties'))->with('success', $msg);
     }

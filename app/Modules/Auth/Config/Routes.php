@@ -17,6 +17,8 @@ $routes->group('', ['namespace' => 'Modules\Auth\Controllers'], static function 
     $routes->post('reset-password', 'AuthController::updatePassword', ['filter' => 'guest']);
     // One-click account activation from the signup email link.
     $routes->get('activate/(:segment)', 'AuthController::activate/$1', ['filter' => 'guest']);
+    // Re-send the email-validation link (for a signed-in, not-yet-verified user).
+    $routes->post('verify-email/resend', 'AuthController::resendVerification', ['filter' => 'auth']);
 
     // Social sign-in (OAuth 2.0) — {provider} = google, and future apple/github/…
     // Callback serves BOTH the guest login flow and the authenticated link flow;

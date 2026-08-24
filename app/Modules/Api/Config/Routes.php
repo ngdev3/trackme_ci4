@@ -31,6 +31,10 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->put('me', 'MeApiController::updateProfile');
     // Raise (file) an account-deletion request for a super admin to review.
     $routes->post('me/deletion-request', 'MeApiController::deletionRequest');
+    // Re-send the email-validation link (signed-in, not-yet-verified user).
+    $routes->post('me/resend-verification', 'MeApiController::resendVerification');
+    // Usage analytics: record which menu/screen the user tapped and when (batched).
+    $routes->post('me/events', 'MeApiController::recordEvents');
     // Support: ONE ongoing conversation per user. GET returns the whole thread
     // (with an unread flag); POST appends a message (raising a request or replying
     // — the same single thread either way), creating the conversation on first use.

@@ -160,6 +160,7 @@ abstract class BaseApiController extends Controller
             'username'             => $user['username'],
             'mobile'               => $user['mobile'] ?? null,
             'must_change_password' => (int) ($user['must_change_password'] ?? 0) === 1,
+            'email_verified'       => ! empty($user['email_verified_at']),
         ];
     }
 }

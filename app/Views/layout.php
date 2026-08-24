@@ -54,6 +54,24 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
     </div>
 <?php endif; ?>
 
+<?php $__cu = function_exists('current_user') ? current_user() : null; ?>
+<?php if ($__cu && empty($__cu['email_verified_at']) && ($__cu['account_type'] ?? '') !== 'super_admin' && ! session('impersonator_id')): ?>
+    <div class="verify-bar">
+        <span><i class="bi bi-envelope-exclamation"></i> Please validate your email <strong><?= esc($__cu['email']) ?></strong> within a week to keep using your account without restrictions.</span>
+        <form action="<?= site_url('verify-email/resend') ?>" method="post">
+            <?= csrf_field() ?>
+            <button type="submit"><i class="bi bi-arrow-repeat"></i> Resend link</button>
+        </form>
+    </div>
+    <style>
+    .verify-bar{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:9px 16px;background:linear-gradient(90deg,#fff4e0,#ffe9c7);color:#8a5a00;font-size:13.5px;font-weight:600;border-bottom:1px solid #f6dcae}
+    .verify-bar .bi{font-size:16px}
+    .verify-bar form{margin:0}
+    .verify-bar button{border:0;border-radius:8px;padding:5px 12px;background:#b7791f;color:#fff;font-weight:700;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+    .verify-bar button:hover{background:#8a5a00}
+    </style>
+<?php endif; ?>
+
 <div class="app-wrapper">
 
     <?= $this->include('partials/navbar') ?>

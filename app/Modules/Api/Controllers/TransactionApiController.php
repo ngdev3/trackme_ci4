@@ -232,31 +232,47 @@ class TransactionApiController extends BaseApiController
         $q = trim((string) ($this->request->getGet('q') ?? ''));
         return $this->respond([
             'status'      => 'ok',
-            'parties'     => (new TransactionModel())->partyAccounts($cid, $q),
+            'parties'     => (new \App\Services\PartyDirectory())->list((int) $cid, $q),
             'party_types' => TransactionModel::PARTY_TYPES,
         ]);
     }
 
-    /** POST /api/v1/transactions/party/update {old_name, new_name, party_type?}. */
+    /**
+     * POST /api/v1/transactions/party/update — rename/re-type across a party's
+     * transactions + save its balance-sheet master details.
+     * {old_name, new_name, party_type?, mobile?, email?, address?, gst_number?,
+     *  opening_balance?, opening_type?(dr|cr), notes?}
+     */
     public function partyUpdate()
     {
         [$user, $cid, $err] = $this->authScope();
         if ($err) {
             return $err;
         }
-        $old  = trim((string) ($this->input('old_name') ?? ''));
-        $new  = trim((string) ($this->input('new_name') ?? ''));
-        $type = trim((string) ($this->input('party_type') ?? ''));
+        $old = trim((string) ($this->input('old_name') ?? ''));
+        $new = trim((string) ($this->input('new_name') ?? ''));
         if ($old === '' || $new === '') {
             return $this->fail('Party name is required.', 422);
         }
-        $res = (new TransactionModel())->renameParty((int) $cid, $old, $new, $type !== '' ? $type : null);
+        $res = (new \App\Services\PartyDirectory())->save((int) $cid, [
+            'old_name'        => $old,
+            'new_name'        => $new,
+            'party_type'      => (string) ($this->input('party_type') ?? ''),
+            'party_role'      => (string) ($this->input('party_role') ?? ''),
+            'mobile'          => (string) ($this->input('mobile') ?? ''),
+            'email'           => (string) ($this->input('email') ?? ''),
+            'address'         => (string) ($this->input('address') ?? ''),
+            'gst_number'      => (string) ($this->input('gst_number') ?? ''),
+            'opening_balance' => $this->input('opening_balance') ?? 0,
+            'opening_type'    => (string) ($this->input('opening_type') ?? 'dr'),
+            'notes'           => (string) ($this->input('notes') ?? ''),
+        ]);
 
         return $this->respond([
             'status'   => 'ok',
             'affected' => $res['affected'],
             'merged'   => $res['merged'],
-            'message'  => $res['merged'] ? 'Parties merged.' : 'Party updated.',
+            'message'  => $res['merged'] ? 'Parties merged.' : 'Party saved.',
         ]);
     }
 
@@ -290,8 +306,15 @@ class TransactionApiController extends BaseApiController
             ]);
         }
 
-        $rows    = $model->partyRows($cid, $party, $from ?: null, $to ?: null);
-        $opening = $from !== '' ? round($model->partyNetBefore($cid, $party, $from), 2) : 0.0;
+        $rows = $model->partyRows($cid, $party, $from ?: null, $to ?: null);
+
+        // Seed the ledger with the party's master opening balance (Dr = +, Cr = −)
+        // plus the net of anything before a "from" window — matching the web
+        // statement and the Party Accounts balance.
+        $master     = (new \App\Models\PartyModel())->forName((int) $cid, $party);
+        $masterOpen = $master ? (($master['opening_type'] === 'cr' ? -1 : 1) * (float) $master['opening_balance']) : 0.0;
+        $priorNet   = $from !== '' ? round($model->partyNetBefore($cid, $party, $from), 2) : 0.0;
+        $opening    = round($masterOpen + $priorNet, 2);
 
         $running = $opening;
         $out     = [];
@@ -319,6 +342,7 @@ class TransactionApiController extends BaseApiController
             'from'       => $from,
             'to'         => $to,
             'opening'    => $opening,
+            'master_opening' => round($masterOpen, 2),
             'rows'       => $out,
             'total_jama' => round((float) $jama, 2),
             'total_naam' => round((float) $naam, 2),

@@ -77,7 +77,10 @@ $perOpts = [25, 35, 50, 100];
                 <h5 class="cust-table-title">Customer Records</h5>
                 <p class="cust-table-note">Open a subscription, sign in as the customer, or reset their access from the actions.</p>
             </div>
-            <span class="cust-total-tag"><i class="bi bi-people"></i> <?= number_format((int) ($stats['total'] ?? 0)) ?> total</span>
+            <div class="d-flex align-items-center gap-2">
+                <a href="<?= site_url('admin/customers/trash') ?>" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3 me-1"></i> Trash</a>
+                <span class="cust-total-tag"><i class="bi bi-people"></i> <?= number_format((int) ($stats['total'] ?? 0)) ?> total</span>
+            </div>
         </div>
 
         <!-- DataTables-style controls: page-size (Records) + Search -->
