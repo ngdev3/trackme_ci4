@@ -222,6 +222,44 @@ class TransactionApiController extends BaseApiController
         return $this->respond(['status' => 'ok', 'parties' => $parties]);
     }
 
+    /** GET /api/v1/transactions/party-accounts — editable party directory. */
+    public function partyAccounts()
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+        $q = trim((string) ($this->request->getGet('q') ?? ''));
+        return $this->respond([
+            'status'      => 'ok',
+            'parties'     => (new TransactionModel())->partyAccounts($cid, $q),
+            'party_types' => TransactionModel::PARTY_TYPES,
+        ]);
+    }
+
+    /** POST /api/v1/transactions/party/update {old_name, new_name, party_type?}. */
+    public function partyUpdate()
+    {
+        [$user, $cid, $err] = $this->authScope();
+        if ($err) {
+            return $err;
+        }
+        $old  = trim((string) ($this->input('old_name') ?? ''));
+        $new  = trim((string) ($this->input('new_name') ?? ''));
+        $type = trim((string) ($this->input('party_type') ?? ''));
+        if ($old === '' || $new === '') {
+            return $this->fail('Party name is required.', 422);
+        }
+        $res = (new TransactionModel())->renameParty((int) $cid, $old, $new, $type !== '' ? $type : null);
+
+        return $this->respond([
+            'status'   => 'ok',
+            'affected' => $res['affected'],
+            'merged'   => $res['merged'],
+            'message'  => $res['merged'] ? 'Parties merged.' : 'Party updated.',
+        ]);
+    }
+
     /**
      * GET api/v1/transactions/statement — per-account (party) ledger with a
      * running balance seeded by the account's opening (net before `from`), plus

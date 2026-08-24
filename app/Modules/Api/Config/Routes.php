@@ -94,6 +94,10 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->get('transactions/list', 'TransactionApiController::list');
     $routes->get('transactions/report', 'TransactionApiController::report');
     $routes->get('transactions/parties', 'TransactionApiController::parties');
+    // Party Accounts — editable directory + rename/re-type across all a party's
+    // entries (mirrors the web Party Accounts screen).
+    $routes->get('transactions/party-accounts', 'TransactionApiController::partyAccounts');
+    $routes->post('transactions/party/update', 'TransactionApiController::partyUpdate');
     $routes->get('transactions/statement', 'TransactionApiController::statement');
     $routes->get('transactions/opening', 'TransactionApiController::opening');
     $routes->post('transactions/opening', 'TransactionApiController::saveOpening');

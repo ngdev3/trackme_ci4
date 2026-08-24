@@ -13,6 +13,11 @@ $routes->group('transactions', ['namespace' => 'Modules\Transactions\Controllers
     // Type-ahead account search for the entry forms (JSON).
     $routes->get('accounts/search', 'TransactionController::accountsSearch', ['filter' => 'permission:transactions,view']);
 
+    // Party Accounts — editable directory of parties (rename / re-type across
+    // all a party's entries, on web + app).
+    $routes->get('parties', 'TransactionController::parties', ['filter' => 'permission:transactions,view']);
+    $routes->post('parties/update', 'TransactionController::partyUpdate', ['filter' => 'permission:transactions,edit']);
+
     // Account (party) statement — searchable per-account ledger + print
     $routes->get('statement', 'TransactionController::statement', ['filter' => 'permission:transactions,view']);
     $routes->get('statement/print', 'TransactionController::statementPrint', ['filter' => 'permission:transactions,view']);

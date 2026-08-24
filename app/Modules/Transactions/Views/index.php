@@ -134,6 +134,7 @@ window.TX_CHARTS = {
         <div class="d-flex flex-wrap gap-2">
             <a href="<?= site_url('transactions/report') ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-journal-text"></i> Rokadh Parcha</a>
             <a href="<?= site_url('transactions/statement') ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-person-vcard"></i> Account Statement</a>
+            <a href="<?= site_url('transactions/parties') ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-people"></i> Party Accounts</a>
             <?php if (sub_is_pro()): ?>
                 <a href="<?= site_url('transactions/export/pdf') . '?' . http_build_query($qs) ?>" class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-file-earmark-pdf me-1"></i>Export PDF

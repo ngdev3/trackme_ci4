@@ -551,6 +551,62 @@ class TransactionModel extends Model
         ], $rows);
     }
 
+    /**
+     * Party "accounts" for a company — one row per distinct party name with its
+     * type, entry count, Jama/Naam totals, net balance and last-activity date.
+     * Powers the editable Party Accounts screen (web + app).
+     */
+    public function partyAccounts(?int $companyId, string $q = ''): array
+    {
+        $b = $this->scopedBuilder($companyId)
+            ->select("name, MAX(party_type) AS party_type, COUNT(*) AS cnt,"
+                . "COALESCE(SUM(CASE WHEN type='jama' THEN amount ELSE 0 END),0) AS jama,"
+                . "COALESCE(SUM(CASE WHEN type='naam' THEN amount ELSE 0 END),0) AS naam,"
+                . 'MAX(txn_date) AS last_date')
+            ->where('name IS NOT NULL')->where('name !=', '');
+        if (trim($q) !== '') {
+            $b->like('name', trim($q));
+        }
+        $rows = $b->groupBy('name')->orderBy('name', 'ASC')->get()->getResultArray();
+
+        return array_map(static fn ($r) => [
+            'name'       => (string) $r['name'],
+            'party_type' => (string) ($r['party_type'] ?? ''),
+            'count'      => (int) $r['cnt'],
+            'jama'       => (float) $r['jama'],
+            'naam'       => (float) $r['naam'],
+            'net'        => (float) $r['jama'] - (float) $r['naam'],
+            'last_date'  => $r['last_date'] ?: null,
+        ], $rows);
+    }
+
+    /**
+     * Rename / re-type a party account across ALL its transactions in a company
+     * (active + trashed, so a later restore keeps the new name). Returns the
+     * number of rows changed. Renaming onto an existing party merges them.
+     *
+     * @return array{affected:int,merged:bool}
+     */
+    public function renameParty(int $companyId, string $oldName, string $newName, ?string $partyType = null): array
+    {
+        $oldName = trim($oldName);
+        $newName = trim($newName);
+        if ($companyId <= 0 || $oldName === '' || $newName === '') {
+            return ['affected' => 0, 'merged' => false];
+        }
+        $db     = $this->db;
+        $merged = $newName !== $oldName
+            && $db->table($this->table)->where('company_id', $companyId)->where('name', $newName)->countAllResults() > 0;
+
+        $data = ['name' => $newName, 'updated_at' => date('Y-m-d H:i:s')];
+        if ($partyType !== null) {
+            $data['party_type'] = mb_substr(trim($partyType), 0, 32);
+        }
+        $db->table($this->table)->where('company_id', $companyId)->where('name', $oldName)->update($data);
+
+        return ['affected' => $db->affectedRows(), 'merged' => $merged];
+    }
+
     /** All rows for one party (account), oldest first, optional date range. */
     public function partyRows(?int $userId, string $name, ?string $from = null, ?string $to = null): array
     {

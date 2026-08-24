@@ -214,6 +214,43 @@ class TransactionController extends BaseController
     }
 
     /** On-screen account statement with a search/browse picker. */
+    /** Party Accounts — an editable directory of all parties in the ledger. */
+    public function parties()
+    {
+        $q = trim((string) $this->request->getGet('q'));
+        return $this->render('parties', [
+            'title'      => 'Party Accounts',
+            'breadcrumb' => [['label' => 'Transactions', 'url' => site_url('transactions')], ['label' => 'Party Accounts']],
+            'rows'       => $this->txns->partyAccounts($this->ledgerScope(), $q),
+            'search'     => $q,
+            'partyTypes' => \App\Models\TransactionModel::PARTY_TYPES,
+            'canEdit'    => can($this->moduleCode, 'edit'),
+            'moduleCode' => $this->moduleCode,
+            'baseRoute'  => $this->baseRoute,
+        ]);
+    }
+
+    /** Rename / re-type a party across every one of its transactions. */
+    public function partyUpdate()
+    {
+        $old  = trim((string) $this->request->getPost('old_name'));
+        $new  = trim((string) $this->request->getPost('new_name'));
+        $type = trim((string) $this->request->getPost('party_type'));
+        if ($old === '' || $new === '') {
+            return redirect()->back()->with('error', 'Party name is required.');
+        }
+        $res = $this->txns->renameParty((int) company_id(), $old, $new, $type !== '' ? $type : null);
+        activity_log('Transactions', 'Edit', "Party “{$old}” → “{$new}” ({$res['affected']} entries)");
+
+        $msg = $res['affected'] > 0
+            ? ($res['merged']
+                ? "Merged into “{$new}” — {$res['affected']} entries updated."
+                : "Party updated — {$res['affected']} " . ($res['affected'] === 1 ? 'entry' : 'entries') . ' changed.')
+            : 'No entries were changed.';
+
+        return redirect()->to(site_url('transactions/parties'))->with('success', $msg);
+    }
+
     public function statement()
     {
         $data = $this->statementData();
