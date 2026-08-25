@@ -84,63 +84,25 @@ class InvoiceApiController extends BaseApiController
         $dateIn    = (string) ($this->input('invoice_date') ?? '');
         $ts        = strtotime($dateIn);
         $invDate   = $ts !== false ? date('Y-m-d', $ts) : date('Y-m-d');
-        $rawItems  = $this->input('items');
 
-        if (! is_array($rawItems) || count($rawItems) === 0) {
-            return $this->failValidationErrors(['items' => 'Add at least one product line.']);
-        }
         if (! in_array($mode, TransactionModel::MODES, true)) {
             $mode = 'cash';
         }
 
-        // ---- Validate + normalise the line items against the catalogue -------
-        $products = new ProductModel();
-        $lines    = [];
-        $subtotal = 0.0;
-        $taxTotal = 0.0;
-        foreach ($rawItems as $it) {
-            $pid  = (int) ($it['product_id'] ?? 0) ?: null;
-            $qty  = round((float) ($it['qty'] ?? 0), 3);
-            $rate = round((float) ($it['rate'] ?? 0), 2);
-            $tax  = round((float) ($it['tax_rate'] ?? 0), 2);
-            $name = trim((string) ($it['name'] ?? ''));
-            if ($qty <= 0) {
-                continue;
-            }
-            $product = null;
-            if ($pid) {
-                $product = $products->scoped($cid)->find($pid);
-                if (! $product) {
-                    return $this->failNotFound('A product on this bill was not found.');
-                }
-                if ($name === '') {
-                    $name = $product['name'];
-                }
-            }
-            if ($name === '') {
-                $name = 'Item';
-            }
-            $lineAmt   = round($qty * $rate, 2);
-            $lineTax   = round($lineAmt * $tax / 100, 2);
-            $subtotal += $lineAmt;
-            $taxTotal += $lineTax;
-            $lines[] = [
-                'product_id' => $pid,
-                'product'    => $product,
-                'name'       => mb_substr($name, 0, 191),
-                'qty'        => $qty,
-                'rate'       => $rate,
-                'tax_rate'   => $tax,
-                'amount'     => $lineAmt,
-            ];
+        $parsed = $this->parseLines($this->input('items'), $cid);
+        if (isset($parsed['error'])) {
+            return $this->failValidationErrors($parsed['error']);
         }
-        if (count($lines) === 0) {
-            return $this->failValidationErrors(['items' => 'Every line needs a quantity greater than zero.']);
+        $lines    = $parsed['lines'];
+        $subtotal = $parsed['subtotal'];
+        $taxTotal = $parsed['taxTotal'];
+
+        // Block overselling up front with a clear, per-product message.
+        if ($type === 'sale' && ($short = $this->stockShortage($lines)) !== null) {
+            return $this->failValidationErrors(['items' => $short]);
         }
 
-        $subtotal = round($subtotal, 2);
-        $taxTotal = round($taxTotal, 2);
-        $total    = round($subtotal + $taxTotal - $discount, 2);
+        $total = round($subtotal + $taxTotal - $discount, 2);
         if ($total < 0) {
             $total = 0.0;
         }
@@ -175,6 +137,9 @@ class InvoiceApiController extends BaseApiController
                 'lines'        => $lines,
             ]);
         } catch (\Throwable $e) {
+            if (($msg = $this->stockErrorMessage($e)) !== null) {
+                return $this->failValidationErrors(['items' => $msg]);
+            }
             log_message('error', '[Invoice] post failed: ' . $e->getMessage());
             return $this->fail('Could not save the bill. Please try again.', 500);
         }
@@ -247,6 +212,9 @@ class InvoiceApiController extends BaseApiController
                 'lines'        => $parsed['lines'],
             ]);
         } catch (\Throwable $e) {
+            if (($msg = $this->stockErrorMessage($e)) !== null) {
+                return $this->failValidationErrors(['items' => $msg]);
+            }
             log_message('error', '[Invoice] return failed: ' . $e->getMessage());
             return $this->fail('Could not save the return. Please try again.', 500);
         }
@@ -329,6 +297,44 @@ class InvoiceApiController extends BaseApiController
             return ['error' => ['items' => 'Every line needs a quantity greater than zero.']];
         }
         return ['lines' => $lines, 'subtotal' => round($subtotal, 2), 'taxTotal' => round($taxTotal, 2)];
+    }
+
+    /**
+     * Aggregate qty per product and flag any that exceed available stock.
+     * Returns a friendly message, or null when everything is in stock.
+     */
+    private function stockShortage(array $lines): ?string
+    {
+        $need = [];   // product_id => [name, qty, available]
+        foreach ($lines as $ln) {
+            if (($ln['product'] ?? null) === null) {
+                continue;
+            }
+            $pid = (int) $ln['product_id'];
+            if (! isset($need[$pid])) {
+                $need[$pid] = ['name' => $ln['name'], 'qty' => 0.0, 'have' => (float) $ln['product']['current_stock']];
+            }
+            $need[$pid]['qty'] += (float) $ln['qty'];
+        }
+        $short = [];
+        foreach ($need as $n) {
+            if ($n['qty'] > $n['have'] + 0.0001) {
+                $short[] = $n['name'] . ' (need ' . rtrim(rtrim(number_format($n['qty'], 3, '.', ''), '0'), '.')
+                    . ', have ' . rtrim(rtrim(number_format($n['have'], 3, '.', ''), '0'), '.') . ')';
+            }
+        }
+        return $short === [] ? null : 'Not enough stock: ' . implode('; ', $short) . '.';
+    }
+
+    /** Extract a user-friendly message from the service's INSUFFICIENT_STOCK sentinel. */
+    private function stockErrorMessage(\Throwable $e): ?string
+    {
+        if (! str_contains($e->getMessage(), 'INSUFFICIENT_STOCK:')) {
+            return null;
+        }
+        $part = explode('INSUFFICIENT_STOCK:', $e->getMessage(), 2)[1] ?? '';
+        [$name, $have] = array_pad(explode(':', $part, 2), 2, '0');
+        return 'Not enough stock for ' . trim($name) . ' (available ' . rtrim(rtrim($have, '0'), '.') . ').';
     }
 
     // ---- Shapers -----------------------------------------------------------

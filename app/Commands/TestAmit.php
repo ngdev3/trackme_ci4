@@ -60,6 +60,26 @@ class TestAmit extends BaseCommand
         ]);
         $riceId = (int) $products->getInsertID();
 
+        // 1b) Oversell guard: selling 600 bags when only 500 exist must be blocked.
+        $rice = $products->find($riceId);
+        $blocked = false;
+        try {
+            (new LedgerPostingService())->postInvoice([
+                'company_id' => $cid, 'user_id' => $uid, 'type' => 'sale', 'party_name' => 'Amit',
+                'party_type' => 'Trader', 'payment_mode' => 'cash', 'invoice_date' => date('Y-m-d'),
+                'notes' => null, 'discount' => 0, 'subtotal' => 300000, 'tax_total' => 0, 'total' => 300000, 'received' => 0,
+                'client_uuid' => 'test-oversell',
+                'lines' => [['product_id' => $riceId, 'product' => $rice, 'name' => 'Rice', 'qty' => 600, 'rate' => 500, 'tax_rate' => 0, 'amount' => 300000]],
+            ]);
+        } catch (\Throwable $e) {
+            $blocked = str_contains($e->getMessage(), 'INSUFFICIENT_STOCK');
+        }
+        $stockAfterBlock = (float) $products->find($riceId)['current_stock'];
+        CLI::newLine();
+        CLI::write(CLI::color('Stock guard', 'yellow'));
+        $g1 = $blocked;                            $pass &= $g1; $line($g1, 'Oversell blocked (600 > 500)', $blocked ? 'blocked' : 'ALLOWED', 'blocked');
+        $g2 = abs($stockAfterBlock - 500) < 0.001; $pass &= $g2; $line($g2, 'Stock untouched after block', $stockAfterBlock, 500);
+
         // 2) Credit sale: 100 bags @ 500 = 50,000, received 0.
         $rice = $products->find($riceId);
         (new LedgerPostingService())->postInvoice([

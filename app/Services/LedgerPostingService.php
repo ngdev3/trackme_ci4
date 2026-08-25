@@ -173,6 +173,10 @@ class LedgerPostingService
                 $moveType = $type === 'sale' ? 'out' : 'in';
                 $current  = (float) $ln['product']['current_stock'];
                 $newStock = $moveType === 'in' ? $current + $ln['qty'] : $current - $ln['qty'];
+                // Never let a sale drive stock negative (audit §11).
+                if ($moveType === 'out' && $newStock < -0.0001) {
+                    throw new \RuntimeException('INSUFFICIENT_STOCK:' . $ln['name'] . ':' . $current);
+                }
                 $moves->insert([
                     'company_id' => $cid,
                     'product_id' => $ln['product_id'],
@@ -318,6 +322,9 @@ class LedgerPostingService
                 $moveType = $isSale ? 'in' : 'out'; // sale_return brings goods back in; purchase_return sends them out
                 $current  = (float) $ln['product']['current_stock'];
                 $newStock = $moveType === 'in' ? $current + $ln['qty'] : $current - $ln['qty'];
+                if ($moveType === 'out' && $newStock < -0.0001) {
+                    throw new \RuntimeException('INSUFFICIENT_STOCK:' . $ln['name'] . ':' . $current);
+                }
                 $moves->insert([
                     'company_id' => $cid, 'product_id' => $ln['product_id'], 'type' => $moveType, 'qty' => $ln['qty'],
                     'rate' => (float) $ln['product']['purchase_price'], 'note' => $invNo, 'created_by' => $uid,
