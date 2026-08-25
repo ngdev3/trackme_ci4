@@ -35,6 +35,15 @@ class GooglePlay extends BaseConfig
     public string $rtdnSecret = '';
 
     /**
+     * Trust the client's Play purchase WITHOUT a server-side Google check, and
+     * grant the plan immediately. Use only for testing / early rollout before the
+     * service-account verification is set up — it trusts the app, so a crafted
+     * request could self-grant a plan. Turn OFF once a service account is live.
+     *   googleplay.trustClient = true
+     */
+    public bool $trustClient = false;
+
+    /**
      * Play subscription product id → our plan code. Empty means "the product id
      * is the plan code" (the default the plan seeds already use).
      *
@@ -50,6 +59,7 @@ class GooglePlay extends BaseConfig
         $this->packageName        = (string) env('googleplay.packageName', $this->packageName);
         $this->serviceAccountPath = (string) env('googleplay.serviceAccountPath', '');
         $this->rtdnSecret         = (string) env('googleplay.rtdnSecret', '');
+        $this->trustClient        = filter_var(env('googleplay.trustClient', $this->trustClient), FILTER_VALIDATE_BOOL);
 
         $map = (string) env('googleplay.productMap', '');
         if ($map !== '') {

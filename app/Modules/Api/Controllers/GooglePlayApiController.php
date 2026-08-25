@@ -47,14 +47,11 @@ class GooglePlayApiController extends BaseApiController
         }
 
         $verifier = new GooglePlayVerifier();
-        if (! $verifier->isConfigured()) {
-            return $this->fail('Billing is not configured on the server yet.', 503);
-        }
-
-        $ownerId = $this->ownerId($user);
+        $cfg      = config('GooglePlay');
+        $ownerId  = $this->ownerId($user);
 
         // Map the Play product id to one of our plans.
-        $planCode = config('GooglePlay')->planCodeForProduct($productId);
+        $planCode = $cfg->planCodeForProduct($productId);
         $plan     = (new SubscriptionPlanModel())->where('code', $planCode)->where('status', 1)->first();
         if (! $plan) {
             return $this->failValidationErrors("No active plan is mapped to product '{$productId}'.");
@@ -65,6 +62,46 @@ class GooglePlayApiController extends BaseApiController
         $existing  = $purchases->findByToken($token);
         if ($existing && (int) $existing['customer_id'] !== $ownerId) {
             return $this->failForbidden('This purchase is linked to another account.');
+        }
+
+        // Trust-client mode: grant based on the Play purchase the app reports,
+        // WITHOUT a server-side Google check. For testing / early rollout only —
+        // enable via `googleplay.trustClient=true` until a service account is live.
+        if ($cfg->trustClient) {
+            $expiry  = $this->cycleExpiry($plan);
+            $orderId = 'play_' . substr(hash('sha256', $token), 0, 24);
+            $purchases->upsertByToken($token, [
+                'customer_id'   => $ownerId,
+                'user_id'       => (int) $user['id'],
+                'plan_id'       => (int) $plan['id'],
+                'product_id'    => $productId,
+                'order_id'      => $orderId,
+                'expiry_time'   => $expiry,
+                'status'        => 'active',
+                'auto_renewing' => 1,
+                'acknowledged'  => 1,
+                'activated'     => 1,
+                'raw'           => json_encode(['trusted_client' => true]),
+            ]);
+            (new SubscriptionModel())->activateWithExpiry($ownerId, (int) $plan['id'], $expiry, $orderId);
+            $this->recordTransaction($ownerId, $plan, $orderId);
+            if (function_exists('activity_log')) {
+                activity_log('Subscription', 'Edit', "Play Billing (client-trusted): activated {$plan['name']} for customer #{$ownerId}");
+            }
+            return $this->respond([
+                'status'             => 'ok',
+                'subscription_state' => 'active',
+                'plan'               => $plan['name'],
+                'plan_code'          => $plan['code'],
+                'expires_at'         => $expiry,
+                'auto_renewing'      => true,
+                'granted'            => true,
+            ]);
+        }
+
+        // Otherwise a service account is required to verify with Google.
+        if (! $verifier->isConfigured()) {
+            return $this->fail('Billing is not configured on the server yet.', 503);
         }
 
         // Authoritative state from Google.
@@ -333,6 +370,21 @@ class GooglePlayApiController extends BaseApiController
      * web (Cashfree) flow. Keyed on the Play order id (unique per billing period),
      * so re-verification or a repeated RTDN never issues a second invoice.
      */
+    /** Expiry for a client-trusted grant, derived from the plan's billing cycle. */
+    private function cycleExpiry(array $plan): string
+    {
+        $cycle = strtolower((string) ($plan['billing_cycle'] ?? 'yearly'));
+        $add   = [
+            'yearly'      => '+1 year',
+            'monthly'     => '+1 month',
+            'quarterly'   => '+3 months',
+            'half_yearly' => '+6 months',
+            'lifetime'    => '+50 years',
+        ][$cycle] ?? '+1 year';
+
+        return date('Y-m-d H:i:s', strtotime($add));
+    }
+
     private function recordTransaction(int $customerId, array $plan, string $orderId): void
     {
         if ($orderId === '' || $customerId <= 0) {
