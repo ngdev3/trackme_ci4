@@ -156,6 +156,11 @@ if (! function_exists('render_firm_sidebar')) {
                 ['Add Password', 'passwords/add'],
             ]],
             ['calculator', 'Calculator', 'bi bi-calculator-fill', 'calculator', []],
+            ['invoices', 'Sales & Purchase', 'bi bi-receipt', null, [
+                ['All Bills', 'invoices'],
+                ['New Sale', 'invoices/new/sale'],
+                ['New Purchase', 'invoices/new/purchase'],
+            ]],
             ['upi_qr', 'Receive Payment', 'bi bi-qr-code', 'upi-qr', []],
             ['subscription', 'Subscription', 'bi bi-gem', null, [
                 ['My Plan', 'subscription'],
