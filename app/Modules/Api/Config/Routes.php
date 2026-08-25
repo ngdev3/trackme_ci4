@@ -177,6 +177,9 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->get('invoices', 'InvoiceApiController::index');
     $routes->get('invoices/(:num)', 'InvoiceApiController::show/$1');
     $routes->post('invoices', 'InvoiceApiController::create');
+    // Sale/Purchase returns (reverse stock + party ledger) and bill void.
+    $routes->post('invoices/return', 'InvoiceApiController::returnBill');
+    $routes->post('invoices/(:num)/void', 'InvoiceApiController::void/$1');
 
     // Calendar (feature-gated: calendar). A month view over reminders.
     $routes->get('calendar', 'CalendarApiController::month');

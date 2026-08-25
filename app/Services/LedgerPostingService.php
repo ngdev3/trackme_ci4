@@ -221,6 +221,208 @@ class LedgerPostingService
         ];
     }
 
+    /**
+     * Post a sale/purchase RETURN. Mirror of a bill:
+     *   SALE_RETURN total T, refunded R now
+     *     • party ledger : JAMA  T (ledger_only)  → receivable −T
+     *     • cash book     : NAAM  R                → cash −R (money refunded)
+     *     • stock         : IN qty  (goods come back)
+     *   PURCHASE_RETURN — opposite (ledger NAAM = payable−, cash JAMA in, stock OUT).
+     *
+     * Never posts a "payment" for the return itself; only an explicit refund
+     * moves cash. One DB transaction, idempotent on (company, client_uuid).
+     *
+     * @param array $ctx same shape as postInvoice, with type 'sale_return'|
+     *                   'purchase_return', an optional 'ref_invoice_id', and
+     *                   'received' reused as the refund amount.
+     * @return array{invoice:array, items:array, duplicate:bool}
+     */
+    public function postReturn(array $ctx): array
+    {
+        $cid    = (int) $ctx['company_id'];
+        $uid    = (int) $ctx['user_id'];
+        $isSale = ($ctx['type'] ?? 'sale_return') !== 'purchase_return';
+        $type   = $isSale ? 'sale_return' : 'purchase_return';
+        $uuid   = trim((string) ($ctx['client_uuid'] ?? '')) ?: null;
+
+        $invoices = new InvoiceModel();
+        $items    = new InvoiceItemModel();
+
+        if ($uuid !== null) {
+            $existing = $invoices->where('company_id', $cid)->where('client_uuid', $uuid)->first();
+            if ($existing) {
+                return ['invoice' => $existing, 'items' => $items->forInvoice((int) $existing['id']), 'duplicate' => true];
+            }
+        }
+
+        $total  = round((float) $ctx['total'], 2);
+        $refund = max(0.0, min(round((float) ($ctx['received'] ?? 0), 2), $total));
+        $party  = trim((string) ($ctx['party_name'] ?? ''));
+        $partyTyp = trim((string) ($ctx['party_type'] ?? '')) ?: null;
+        $mode   = in_array($ctx['payment_mode'] ?? 'cash', TransactionModel::MODES, true) ? $ctx['payment_mode'] : 'cash';
+        $date   = $ctx['invoice_date'];
+        $partyId = $this->resolvePartyId($cid, $party);
+        $refId  = isset($ctx['ref_invoice_id']) ? ((int) $ctx['ref_invoice_id'] ?: null) : null;
+
+        $db  = Database::connect();
+        $txn = new TransactionModel();
+        $inv = null;
+
+        $db->transStart();
+        try {
+            // Ledger reversal of the party balance.
+            $ledgerType = $isSale ? 'jama' : 'naam'; // sale_return → receivable−, purchase_return → payable−
+            $ledgerTxnId = null;
+            if ($total > 0 && $party !== '') {
+                $ledgerTxnId = (int) $txn->insert([
+                    'user_id' => $uid, 'company_id' => $cid, 'txn_no' => $txn->nextTxnNo($cid),
+                    'txn_date' => $date, 'name' => mb_substr($party, 0, 191), 'party_id' => $partyId,
+                    'party_type' => $partyTyp, 'type' => $ledgerType, 'amount' => $total, 'payment_mode' => $mode,
+                    'status' => 'pending', 'ledger_only' => 1, 'notes' => ucfirst(str_replace('_', ' ', $type)), 'source' => 'invoice',
+                ]);
+            }
+            // Optional cash refund.
+            $payTxnId = null;
+            if ($refund > 0) {
+                $cashType = $isSale ? 'naam' : 'jama'; // refund to customer = cash out; from supplier = cash in
+                $payTxnId = (int) $txn->insert([
+                    'user_id' => $uid, 'company_id' => $cid, 'txn_no' => $txn->nextTxnNo($cid),
+                    'txn_date' => $date, 'name' => $party !== '' ? mb_substr($party, 0, 191) : 'Return',
+                    'party_id' => $partyId, 'party_type' => $partyTyp, 'type' => $cashType, 'amount' => $refund,
+                    'payment_mode' => $mode, 'status' => $isSale ? 'paid' : 'received', 'ledger_only' => 0,
+                    'notes' => 'Return refund', 'source' => 'invoice',
+                ]);
+            }
+
+            $status = $refund >= $total ? 'refunded' : ($refund > 0 ? 'partial' : 'credited');
+            $invId  = (int) $invoices->insert([
+                'company_id' => $cid, 'client_uuid' => $uuid, 'created_by' => $uid, 'type' => $type,
+                'ref_invoice_id' => $refId, 'invoice_no' => $invoices->nextInvoiceNo($cid, $type),
+                'party_name' => $party !== '' ? mb_substr($party, 0, 191) : null, 'party_type' => $partyTyp, 'party_id' => $partyId,
+                'invoice_date' => $date, 'subtotal' => round((float) $ctx['subtotal'], 2), 'tax_total' => round((float) $ctx['tax_total'], 2),
+                'discount' => round((float) $ctx['discount'], 2), 'total' => $total, 'received' => $refund,
+                'payment_mode' => $mode, 'status' => $status, 'txn_id' => $ledgerTxnId, 'pay_txn_id' => $payTxnId, 'notes' => $ctx['notes'] ?? null,
+            ]);
+
+            $products = new ProductModel();
+            $moves    = new StockMovementModel();
+            $invNo    = $invoices->find($invId)['invoice_no'] ?? '';
+            foreach ($ctx['lines'] as $ln) {
+                $items->insert([
+                    'invoice_id' => $invId, 'product_id' => $ln['product_id'], 'name' => $ln['name'],
+                    'qty' => $ln['qty'], 'rate' => $ln['rate'], 'tax_rate' => $ln['tax_rate'], 'amount' => $ln['amount'],
+                ]);
+                if (($ln['product'] ?? null) === null) {
+                    continue;
+                }
+                $moveType = $isSale ? 'in' : 'out'; // sale_return brings goods back in; purchase_return sends them out
+                $current  = (float) $ln['product']['current_stock'];
+                $newStock = $moveType === 'in' ? $current + $ln['qty'] : $current - $ln['qty'];
+                $moves->insert([
+                    'company_id' => $cid, 'product_id' => $ln['product_id'], 'type' => $moveType, 'qty' => $ln['qty'],
+                    'rate' => (float) $ln['product']['purchase_price'], 'note' => $invNo, 'created_by' => $uid,
+                ]);
+                $products->skipValidation(true)->update($ln['product_id'], ['current_stock' => round($newStock, 3)]);
+            }
+
+            $inv = $invoices->find($invId);
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            if ($uuid !== null) {
+                $won = $invoices->where('company_id', $cid)->where('client_uuid', $uuid)->first();
+                if ($won) {
+                    return ['invoice' => $won, 'items' => $items->forInvoice((int) $won['id']), 'duplicate' => true];
+                }
+            }
+            throw new \RuntimeException('Return posting failed: ' . $e->getMessage(), 0, $e);
+        }
+
+        $db->transComplete();
+        if ($db->transStatus() === false || $inv === null) {
+            log_message('error', '[LedgerPosting] return post failed: ' . ($db->error()['message'] ?? 'unknown'));
+            throw new \RuntimeException('Could not save the return. Please try again.');
+        }
+        if (function_exists('dash_bust')) {
+            dash_bust($cid);
+        }
+        return ['invoice' => $inv, 'items' => $items->forInvoice((int) $inv['id']), 'duplicate' => false];
+    }
+
+    /**
+     * Void a bill/return: reverse its stock, and soft-delete its ledger + cash
+     * entries and the document itself — all in one DB transaction, so the books
+     * return exactly to their pre-bill state (audit C5/§27).
+     *
+     * @throws \RuntimeException if not found, already void, or referenced by a return
+     */
+    public function voidInvoice(int $invoiceId, int $cid, int $uid, string $reason = ''): array
+    {
+        $invoices = new InvoiceModel();
+        $inv = $invoices->scoped($cid)->find($invoiceId);
+        if (! $inv) {
+            throw new \RuntimeException('Bill not found.');
+        }
+        // Block voiding an original that still has (non-deleted) returns against it.
+        $openReturns = $invoices->where('company_id', $cid)->where('ref_invoice_id', $invoiceId)->countAllResults();
+        if ($openReturns > 0) {
+            throw new \RuntimeException('Cancel the linked return(s) first.');
+        }
+
+        // Original stock direction per document type → we reverse it.
+        $origOut = in_array($inv['type'], ['sale', 'purchase_return'], true); // these reduced stock
+        $items   = (new InvoiceItemModel())->forInvoice($invoiceId);
+
+        $db  = Database::connect();
+        $db->transStart();
+        try {
+            $products = new ProductModel();
+            $moves    = new StockMovementModel();
+            foreach ($items as $it) {
+                if ($it['product_id'] === null) {
+                    continue;
+                }
+                $p = $products->find((int) $it['product_id']);
+                if (! $p) {
+                    continue;
+                }
+                $revType  = $origOut ? 'in' : 'out';               // reverse of the original move
+                $current  = (float) $p['current_stock'];
+                $newStock = $revType === 'in' ? $current + (float) $it['qty'] : $current - (float) $it['qty'];
+                $moves->insert([
+                    'company_id' => $cid, 'product_id' => (int) $it['product_id'], 'type' => $revType,
+                    'qty' => (float) $it['qty'], 'rate' => (float) $p['purchase_price'],
+                    'note' => 'VOID ' . $inv['invoice_no'], 'created_by' => $uid,
+                ]);
+                $products->skipValidation(true)->update((int) $it['product_id'], ['current_stock' => round($newStock, 3)]);
+            }
+
+            // Soft-delete the linked ledger + cash entries (removes them from every
+            // aggregation) with an audit reason.
+            $txn = new TransactionModel();
+            foreach (['txn_id', 'pay_txn_id'] as $k) {
+                if (! empty($inv[$k])) {
+                    $txn->update((int) $inv[$k], ['delete_reason' => 'VOID ' . $inv['invoice_no'] . ($reason ? ' — ' . $reason : '')]);
+                    $txn->delete((int) $inv[$k]);
+                }
+            }
+
+            $invoices->update($invoiceId, ['status' => 'void', 'notes' => trim(($inv['notes'] ?? '') . ' [VOID ' . $reason . ']')]);
+            $invoices->delete($invoiceId); // soft delete
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            throw new \RuntimeException('Void failed: ' . $e->getMessage(), 0, $e);
+        }
+        $db->transComplete();
+        if ($db->transStatus() === false) {
+            log_message('error', '[LedgerPosting] void failed: ' . ($db->error()['message'] ?? 'unknown'));
+            throw new \RuntimeException('Could not void the bill. Please try again.');
+        }
+        if (function_exists('dash_bust')) {
+            dash_bust($cid);
+        }
+        return ['ok' => true, 'invoice_no' => $inv['invoice_no']];
+    }
+
     /** Best-effort party-master id for the name (nullable; name stays the join key). */
     private function resolvePartyId(int $cid, string $name): ?int
     {

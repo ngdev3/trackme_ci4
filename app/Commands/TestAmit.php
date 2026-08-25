@@ -122,6 +122,30 @@ class TestAmit extends BaseCommand
         $c6 = ($dup['duplicate'] === true) && abs($after - $before) < 0.001;
         $pass &= $c6; $line($c6, 'Idempotent re-post (no dup)', ($dup['duplicate'] ? 'dup' : 'new') . '/stock ' . $after, 'dup/stock 400');
 
+        // 5) Amit returns Rice worth ₹5,000 (10 bags @ 500), no refund.
+        CLI::newLine();
+        CLI::write(CLI::color('Returns + Void', 'yellow'));
+        $rice2 = $products->find($riceId);
+        $ret = (new LedgerPostingService())->postReturn([
+            'company_id' => $cid, 'user_id' => $uid, 'type' => 'sale_return',
+            'party_name' => 'Amit', 'party_type' => 'Trader', 'payment_mode' => 'cash',
+            'invoice_date' => date('Y-m-d'), 'notes' => null, 'discount' => 0,
+            'subtotal' => 5000, 'tax_total' => 0, 'total' => 5000, 'received' => 0,
+            'client_uuid' => 'test-amit-return-1',
+            'lines' => [['product_id' => $riceId, 'product' => $rice2, 'name' => 'Rice', 'qty' => 10, 'rate' => 500, 'tax_rate' => 0, 'amount' => 5000]],
+        ]);
+        $stock2 = (float) $products->find($riceId)['current_stock'];
+        $bal2   = 0.0; foreach ((new PartyDirectory())->list($cid, 'Amit') as $p) { if ($p['name'] === 'Amit') { $bal2 = (float) $p['balance']; } }
+        $r1 = abs($stock2 - 410) < 0.001;      $pass &= $r1; $line($r1, 'After return: stock', $stock2, 410);
+        $r2 = abs($bal2 - 25000) < 0.01;       $pass &= $r2; $line($r2, 'After return: Amit receivable', $bal2, 25000);
+
+        // 6) Void the return → stock + receivable restored.
+        (new LedgerPostingService())->voidInvoice((int) $ret['invoice']['id'], $cid, $uid, 'test void');
+        $stock3 = (float) $products->find($riceId)['current_stock'];
+        $bal3   = 0.0; foreach ((new PartyDirectory())->list($cid, 'Amit') as $p) { if ($p['name'] === 'Amit') { $bal3 = (float) $p['balance']; } }
+        $v1 = abs($stock3 - 400) < 0.001;      $pass &= $v1; $line($v1, 'After void return: stock', $stock3, 400);
+        $v2 = abs($bal3 - 30000) < 0.01;       $pass &= $v2; $line($v2, 'After void return: Amit receivable', $bal3, 30000);
+
         $wipe(); // discard ALL test data
         $db->table('companies')->where('id', $cid)->delete(); // remove throwaway company last
 

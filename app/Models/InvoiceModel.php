@@ -18,7 +18,7 @@ class InvoiceModel extends Model
     protected $useTimestamps  = true;
 
     protected $allowedFields = [
-        'company_id', 'client_uuid', 'created_by', 'type', 'invoice_no', 'party_name', 'party_type', 'party_id',
+        'company_id', 'client_uuid', 'created_by', 'type', 'ref_invoice_id', 'invoice_no', 'party_name', 'party_type', 'party_id',
         'invoice_date', 'subtotal', 'tax_total', 'discount', 'total', 'received',
         'payment_mode', 'status', 'txn_id', 'pay_txn_id', 'notes',
     ];
@@ -35,7 +35,7 @@ class InvoiceModel extends Model
      */
     public function nextInvoiceNo(?int $companyId, string $type): string
     {
-        $prefix = $type === 'purchase' ? 'PUR' : 'INV';
+        $prefix = ['sale' => 'INV', 'purchase' => 'PUR', 'sale_return' => 'SRT', 'purchase_return' => 'PRT'][$type] ?? 'INV';
         $n = $this->withDeleted()
             ->where('company_id', (int) $companyId)
             ->where('type', $type)

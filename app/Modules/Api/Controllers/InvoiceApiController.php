@@ -195,6 +195,142 @@ class InvoiceApiController extends BaseApiController
         ]);
     }
 
+    /**
+     * POST invoices/return — a sale/purchase return. Reverses stock + party
+     * ledger; an optional `received` is the refund paid/collected now.
+     * {type: sale_return|purchase_return, ref_invoice_id?, party_name, items[], received?}
+     */
+    public function returnBill()
+    {
+        [$user, $cid] = $this->scope();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        if (! $cid) {
+            return $this->failValidationErrors('No company for this user.');
+        }
+
+        $type = $this->input('type') === 'purchase_return' ? 'purchase_return' : 'sale_return';
+        $mode = (string) ($this->input('payment_mode') ?? 'cash');
+        if (! in_array($mode, TransactionModel::MODES, true)) {
+            $mode = 'cash';
+        }
+        $ts      = strtotime((string) ($this->input('invoice_date') ?? ''));
+        $invDate = $ts !== false ? date('Y-m-d', $ts) : date('Y-m-d');
+
+        $parsed = $this->parseLines($this->input('items'), $cid);
+        if (isset($parsed['error'])) {
+            return $this->failValidationErrors($parsed['error']);
+        }
+        $total   = round($parsed['subtotal'] + $parsed['taxTotal'] - round((float) ($this->input('discount') ?? 0), 2), 2);
+        $total   = max(0.0, $total);
+        $refRaw  = $this->input('received');
+        $refund  = ($refRaw === null || $refRaw === '') ? 0.0 : round((float) $refRaw, 2);
+
+        try {
+            $result = (new \App\Services\LedgerPostingService())->postReturn([
+                'company_id'   => $cid,
+                'user_id'      => (int) $user['id'],
+                'type'         => $type,
+                'ref_invoice_id' => (int) ($this->input('ref_invoice_id') ?? 0) ?: null,
+                'party_name'   => trim((string) ($this->input('party_name') ?? '')),
+                'party_type'   => trim((string) ($this->input('party_type') ?? '')),
+                'payment_mode' => $mode,
+                'invoice_date' => $invDate,
+                'notes'        => trim((string) ($this->input('notes') ?? '')) ?: null,
+                'discount'     => round((float) ($this->input('discount') ?? 0), 2),
+                'subtotal'     => $parsed['subtotal'],
+                'tax_total'    => $parsed['taxTotal'],
+                'total'        => $total,
+                'received'     => $refund,
+                'client_uuid'  => trim((string) ($this->input('client_uuid') ?? '')) ?: null,
+                'lines'        => $parsed['lines'],
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', '[Invoice] return failed: ' . $e->getMessage());
+            return $this->fail('Could not save the return. Please try again.', 500);
+        }
+
+        $saved = $result['invoice'];
+        if (! $result['duplicate'] && function_exists('activity_log')) {
+            activity_log('Invoices', 'Add', str_replace('_', ' ', $type) . " {$saved['invoice_no']} created (mobile)");
+        }
+        return $this->respondCreated([
+            'status'    => 'ok',
+            'duplicate' => $result['duplicate'],
+            'message'   => ($type === 'sale_return' ? 'Sale return ' : 'Purchase return ') . $saved['invoice_no'] . ($result['duplicate'] ? ' was already saved.' : ' saved.'),
+            'invoice'   => $this->shapeHeader($saved) + ['items' => array_map([$this, 'shapeItem'], $result['items'])],
+        ]);
+    }
+
+    /** POST invoices/(:num)/void — reverse a bill/return's stock + ledger + cash. */
+    public function void($id = null)
+    {
+        [$user, $cid] = $this->scope();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        $reason = trim((string) ($this->input('reason') ?? ''));
+        try {
+            $res = (new \App\Services\LedgerPostingService())->voidInvoice((int) $id, (int) $cid, (int) $user['id'], $reason);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage(), 400);
+        }
+        if (function_exists('activity_log')) {
+            activity_log('Invoices', 'Delete', "Bill {$res['invoice_no']} voided (mobile)" . ($reason ? " — {$reason}" : ''));
+        }
+        return $this->respond(['status' => 'ok', 'message' => 'Bill ' . $res['invoice_no'] . ' voided.']);
+    }
+
+    /**
+     * Validate + normalise raw line items against the catalogue. Returns
+     * ['lines'=>[], 'subtotal'=>float, 'taxTotal'=>float] or ['error'=>...].
+     */
+    private function parseLines($rawItems, int $cid): array
+    {
+        if (! is_array($rawItems) || count($rawItems) === 0) {
+            return ['error' => ['items' => 'Add at least one product line.']];
+        }
+        $products = new ProductModel();
+        $lines = [];
+        $subtotal = 0.0;
+        $taxTotal = 0.0;
+        foreach ($rawItems as $it) {
+            $pid  = (int) ($it['product_id'] ?? 0) ?: null;
+            $qty  = round((float) ($it['qty'] ?? 0), 3);
+            $rate = round((float) ($it['rate'] ?? 0), 2);
+            $tax  = round((float) ($it['tax_rate'] ?? 0), 2);
+            $name = trim((string) ($it['name'] ?? ''));
+            if ($qty <= 0) {
+                continue;
+            }
+            $product = null;
+            if ($pid) {
+                $product = $products->scoped($cid)->find($pid);
+                if (! $product) {
+                    return ['error' => ['items' => 'A product on this document was not found.']];
+                }
+                if ($name === '') {
+                    $name = $product['name'];
+                }
+            }
+            if ($name === '') {
+                $name = 'Item';
+            }
+            $lineAmt   = round($qty * $rate, 2);
+            $subtotal += $lineAmt;
+            $taxTotal += round($lineAmt * $tax / 100, 2);
+            $lines[] = [
+                'product_id' => $pid, 'product' => $product, 'name' => mb_substr($name, 0, 191),
+                'qty' => $qty, 'rate' => $rate, 'tax_rate' => $tax, 'amount' => $lineAmt,
+            ];
+        }
+        if (count($lines) === 0) {
+            return ['error' => ['items' => 'Every line needs a quantity greater than zero.']];
+        }
+        return ['lines' => $lines, 'subtotal' => round($subtotal, 2), 'taxTotal' => round($taxTotal, 2)];
+    }
+
     // ---- Shapers -----------------------------------------------------------
 
     private function shapeHeader(array $r): array
@@ -202,6 +338,7 @@ class InvoiceApiController extends BaseApiController
         return [
             'id'           => (int) $r['id'],
             'type'         => $r['type'],
+            'ref_invoice_id' => isset($r['ref_invoice_id']) && $r['ref_invoice_id'] !== null ? (int) $r['ref_invoice_id'] : null,
             'invoice_no'   => $r['invoice_no'],
             'party_name'   => $r['party_name'],
             'party_type'   => $r['party_type'],
