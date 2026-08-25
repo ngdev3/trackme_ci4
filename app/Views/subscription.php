@@ -162,12 +162,20 @@ foreach ($plans as $p) {
                 <p>Redeem a gift or promo code to add free plan time to your account instantly.</p>
             </div>
         </div>
-        <form method="post" action="<?= site_url('subscription/redeem') ?>" class="sub-redeem-form">
+        <form method="post" action="<?= site_url('subscription/redeem') ?>" class="sub-redeem-form" id="redeemForm">
             <?= csrf_field() ?>
             <input type="text" name="coupon" class="form-control" placeholder="Enter code (e.g. WELCOME30)" autocomplete="off" required maxlength="40" style="text-transform:uppercase;">
-            <button type="submit" class="btn btn-primary"><i class="bi bi-unlock"></i> Redeem</button>
+            <button type="submit" class="btn btn-primary" id="redeemBtn"><i class="bi bi-unlock"></i> Redeem</button>
         </form>
     </section>
+
+<!-- Blocking loader shown while a redeem code is being activated. -->
+<div class="sub-loading" id="redeemLoading" hidden>
+    <div class="sub-loading-card">
+        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading…</span></div>
+        <p>Activating your code…</p>
+    </div>
+</div>
 
     <?php if (! $isPro && ! empty($locked)): ?>
         <section class="sub-panel sub-locked">
@@ -376,6 +384,10 @@ foreach ($plans as $p) {
 .sub-redeem { margin-bottom: 16px; }
 .sub-redeem-form { display: flex; gap: 9px; flex-wrap: wrap; }
 .sub-redeem-form input { max-width: 320px; }
+.sub-loading { position: fixed; inset: 0; z-index: 20000; display: flex; align-items: center; justify-content: center; background: rgba(11, 35, 80, 0.42); backdrop-filter: blur(2px); }
+.sub-loading[hidden] { display: none; }
+.sub-loading-card { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px 30px; border-radius: 16px; background: #fff; box-shadow: 0 18px 50px rgba(0,0,0,.3); }
+.sub-loading-card p { margin: 0; font-size: 13.5px; font-weight: 700; color: #18243c; }
 .sub-coupon { margin: 4px 0 14px; padding: 12px; border: 1px dashed rgba(37,99,235,.30); border-radius: 8px; background: rgba(255,255,255,.6); }
 .sub-coupon-label { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 850; text-transform: uppercase; color: #1d4ed8; margin-bottom: 7px; }
 .sub-coupon-row { display: flex; gap: 8px; }
@@ -666,6 +678,21 @@ foreach ($plans as $p) {
                 showErr('Network error. Please try again.');
                 resetBtn(original);
               });
+        });
+    }
+
+    // Redeem: show a blocking loader while the code is validated + activated
+    // (this is a full-page POST, so the loader stays until the page reloads).
+    var redeemForm = document.getElementById('redeemForm');
+    if (redeemForm) {
+        redeemForm.addEventListener('submit', function () {
+            var btn = document.getElementById('redeemBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Activating…';
+            }
+            var ov = document.getElementById('redeemLoading');
+            if (ov) { ov.hidden = false; }
         });
     }
 })();

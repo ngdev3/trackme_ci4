@@ -163,6 +163,13 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->post('reminders/(:num)/snooze', 'RemindersApiController::snooze/$1');
     $routes->delete('reminders/(:num)', 'RemindersApiController::delete/$1');
 
+    // Stock / Inventory — Product Master (company-scoped CRUD + dashboard summary).
+    $routes->get('products', 'ProductApiController::index');
+    $routes->get('products/summary', 'ProductApiController::summary');
+    $routes->post('products', 'ProductApiController::create');
+    $routes->post('products/update/(:num)', 'ProductApiController::update/$1');
+    $routes->post('products/delete/(:num)', 'ProductApiController::remove/$1');
+
     // Calendar (feature-gated: calendar). A month view over reminders.
     $routes->get('calendar', 'CalendarApiController::month');
 
