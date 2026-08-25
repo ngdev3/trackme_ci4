@@ -9,7 +9,7 @@ use CodeIgniter\Config\BaseConfig;
  * the environment — never commit the service-account key. Add to your `.env`:
  *
  *   googleplay.enabled            = true
- *   googleplay.packageName        = 'com.crindustries.erp'
+ *   googleplay.packageName        = 'com.crind.hissabkitaab'
  *   # Path to the GCP service-account JSON key (with Android Publisher access),
  *   # relative to the project root or absolute:
  *   googleplay.serviceAccountPath = 'writable/keys/play-service-account.json'
@@ -26,7 +26,7 @@ class GooglePlay extends BaseConfig
 {
     public bool $enabled = false;
 
-    public string $packageName = 'com.crindustries.erp';
+    public string $packageName = 'com.crind.hissabkitaab';
 
     /** Path to the service-account JSON key (absolute, or relative to ROOTPATH). */
     public string $serviceAccountPath = '';
