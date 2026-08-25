@@ -145,91 +145,53 @@ class InvoiceApiController extends BaseApiController
             $total = 0.0;
         }
 
-        // ---- Post the linked cash-book transaction ---------------------------
-        // Sale  -> Jama  (money received).  Purchase -> Naam (money paid).
-        $txnModel = new TransactionModel();
-        $txnType  = $type === 'sale' ? 'jama' : 'naam';
-        $txnName  = $partyName !== '' ? $partyName : ($type === 'sale' ? 'Cash Sale' : 'Cash Purchase');
-        $txnId    = null;
-        if ($total > 0) {
-            $txnId = $txnModel->insert([
-                'user_id'      => (int) $user['id'],
+        // "Received now": the amount actually collected/paid at billing time.
+        // 0 = fully on credit (party owes the whole bill); >= total = fully paid.
+        // When the field is omitted we default to the full total (a paid bill) so
+        // older clients keep their previous behaviour.
+        $receivedRaw = $this->input('received');
+        $received    = ($receivedRaw === null || $receivedRaw === '')
+            ? $total
+            : round((float) $receivedRaw, 2);
+
+        // ---- Post everything through the central engine (one DB transaction,
+        //      idempotent, splits ledger vs cash vs stock) -----------------------
+        try {
+            $result = (new \App\Services\LedgerPostingService())->postInvoice([
                 'company_id'   => $cid,
-                'txn_no'       => $txnModel->nextTxnNo($cid),
-                'txn_date'     => $invDate,
-                'name'         => mb_substr($txnName, 0, 191),
-                'party_type'   => $partyType !== '' ? mb_substr($partyType, 0, 32) : null,
-                'type'         => $txnType,
-                'amount'       => $total,
+                'user_id'      => (int) $user['id'],
+                'type'         => $type,
+                'party_name'   => $partyName,
+                'party_type'   => $partyType,
                 'payment_mode' => $mode,
-                'status'       => $type === 'sale' ? 'received' : 'paid',
-                'notes'        => 'Bill ' . $type,
-                'source'       => 'invoice',
+                'invoice_date' => $invDate,
+                'notes'        => $notes,
+                'discount'     => $discount,
+                'subtotal'     => $subtotal,
+                'tax_total'    => $taxTotal,
+                'total'        => $total,
+                'received'     => $received,
+                'client_uuid'  => trim((string) ($this->input('client_uuid') ?? '')) ?: null,
+                'lines'        => $lines,
             ]);
-            $txnId = $txnId ? (int) $txnId : null;
+        } catch (\Throwable $e) {
+            log_message('error', '[Invoice] post failed: ' . $e->getMessage());
+            return $this->fail('Could not save the bill. Please try again.', 500);
         }
 
-        // ---- Save the invoice header + items --------------------------------
-        $invoices = new InvoiceModel();
-        $invNo    = $invoices->nextInvoiceNo($cid, $type);
-        $invId    = (int) $invoices->insert([
-            'company_id'   => $cid,
-            'created_by'   => (int) $user['id'],
-            'type'         => $type,
-            'invoice_no'   => $invNo,
-            'party_name'   => $partyName !== '' ? mb_substr($partyName, 0, 191) : null,
-            'party_type'   => $partyType !== '' ? mb_substr($partyType, 0, 32) : null,
-            'invoice_date' => $invDate,
-            'subtotal'     => $subtotal,
-            'tax_total'    => $taxTotal,
-            'discount'     => $discount,
-            'total'        => $total,
-            'payment_mode' => $mode,
-            'status'       => 'paid',
-            'txn_id'       => $txnId,
-            'notes'        => $notes,
-        ]);
-
-        $itemModel = new InvoiceItemModel();
-        $moves     = new StockMovementModel();
-        foreach ($lines as $ln) {
-            $itemModel->insert([
-                'invoice_id' => $invId,
-                'product_id' => $ln['product_id'],
-                'name'       => $ln['name'],
-                'qty'        => $ln['qty'],
-                'rate'       => $ln['rate'],
-                'tax_rate'   => $ln['tax_rate'],
-                'amount'     => $ln['amount'],
-            ]);
-            // ---- Adjust stock for catalogued lines --------------------------
-            if ($ln['product'] !== null) {
-                $moveType = $type === 'sale' ? 'out' : 'in';
-                $current  = (float) $ln['product']['current_stock'];
-                $newStock = $moveType === 'in' ? $current + $ln['qty'] : $current - $ln['qty'];
-                $moves->insert([
-                    'company_id' => $cid,
-                    'product_id' => $ln['product_id'],
-                    'type'       => $moveType,
-                    'qty'        => $ln['qty'],
-                    'rate'       => $ln['rate'],
-                    'note'       => $invNo,
-                    'created_by' => (int) $user['id'],
-                ]);
-                $products->update($ln['product_id'], ['current_stock' => round($newStock, 3)]);
-            }
-        }
-
-        if (function_exists('activity_log')) {
+        $saved = $result['invoice'];
+        $invNo = $saved['invoice_no'];
+        if (! $result['duplicate'] && function_exists('activity_log')) {
             activity_log('Invoices', 'Add', ucfirst($type) . " bill {$invNo} created (mobile)");
         }
 
-        $saved = $invoices->find($invId);
-        $items = $itemModel->forInvoice($invId);
         return $this->respondCreated([
-            'status'  => 'ok',
-            'message' => ($type === 'sale' ? 'Sale' : 'Purchase') . ' bill ' . $invNo . ' saved.',
-            'invoice' => $this->shapeHeader($saved) + ['items' => array_map([$this, 'shapeItem'], $items)],
+            'status'    => 'ok',
+            'duplicate' => $result['duplicate'],
+            'message'   => $result['duplicate']
+                ? ('Bill ' . $invNo . ' was already saved.')
+                : (($type === 'sale' ? 'Sale' : 'Purchase') . ' bill ' . $invNo . ' saved.'),
+            'invoice'   => $this->shapeHeader($saved) + ['items' => array_map([$this, 'shapeItem'], $result['items'])],
         ]);
     }
 
@@ -248,9 +210,12 @@ class InvoiceApiController extends BaseApiController
             'tax_total'    => (float) $r['tax_total'],
             'discount'     => (float) $r['discount'],
             'total'        => (float) $r['total'],
+            'received'     => isset($r['received']) ? (float) $r['received'] : (float) $r['total'],
+            'balance_due'  => round((float) $r['total'] - (float) ($r['received'] ?? $r['total']), 2),
             'payment_mode' => $r['payment_mode'],
             'status'       => $r['status'],
             'txn_id'       => $r['txn_id'] !== null ? (int) $r['txn_id'] : null,
+            'pay_txn_id'   => isset($r['pay_txn_id']) && $r['pay_txn_id'] !== null ? (int) $r['pay_txn_id'] : null,
             'notes'        => $r['notes'],
             'created_at'   => $r['created_at'] ?? null,
         ];

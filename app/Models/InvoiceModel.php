@@ -18,9 +18,9 @@ class InvoiceModel extends Model
     protected $useTimestamps  = true;
 
     protected $allowedFields = [
-        'company_id', 'created_by', 'type', 'invoice_no', 'party_name', 'party_type',
-        'invoice_date', 'subtotal', 'tax_total', 'discount', 'total',
-        'payment_mode', 'status', 'txn_id', 'notes',
+        'company_id', 'client_uuid', 'created_by', 'type', 'invoice_no', 'party_name', 'party_type', 'party_id',
+        'invoice_date', 'subtotal', 'tax_total', 'discount', 'total', 'received',
+        'payment_mode', 'status', 'txn_id', 'pay_txn_id', 'notes',
     ];
 
     /** Company-scoped builder (never query invoices without it). */

@@ -316,10 +316,13 @@ class TransactionApiController extends BaseApiController
         $priorNet   = $from !== '' ? round($model->partyNetBefore($cid, $party, $from), 2) : 0.0;
         $opening    = round($masterOpen + $priorNet, 2);
 
+        // Party ledger runs on the receivable convention: Naam (debit) increases
+        // what the party owes us, Jama (credit) reduces it. (Cash-in-hand, computed
+        // elsewhere, still uses Jama − Naam — the two books are intentionally separate.)
         $running = $opening;
         $out     = [];
         foreach ($rows as $r) {
-            $running += ($r['type'] === 'jama' ? (float) $r['amount'] : -(float) $r['amount']);
+            $running += ($r['type'] === 'naam' ? (float) $r['amount'] : -(float) $r['amount']);
             $out[]    = [
                 'id'           => (int) $r['id'],
                 'txn_no'       => $r['txn_no'],
@@ -346,7 +349,7 @@ class TransactionApiController extends BaseApiController
             'rows'       => $out,
             'total_jama' => round((float) $jama, 2),
             'total_naam' => round((float) $naam, 2),
-            'closing'    => round($opening + (float) $jama - (float) $naam, 2),
+            'closing'    => round($opening + (float) $naam - (float) $jama, 2),
             'count'      => count($out),
         ]);
     }

@@ -22,7 +22,7 @@ class TransactionModel extends Model
     protected $useSoftDeletes = true;
     protected $useTimestamps  = true;
 
-    protected $allowedFields = ['user_id', 'company_id', 'client_uuid', 'txn_no', 'txn_date', 'name', 'party_type', 'type', 'amount', 'payment_mode', 'source', 'status', 'notes', 'delete_reason'];
+    protected $allowedFields = ['user_id', 'company_id', 'client_uuid', 'txn_no', 'txn_date', 'name', 'party_id', 'party_type', 'type', 'amount', 'payment_mode', 'source', 'status', 'ledger_only', 'notes', 'delete_reason'];
 
     // Any write invalidates the cached firm dashboard for that company, so a new
     // entry / edit / delete shows up immediately instead of after the cache TTL.
@@ -101,6 +101,25 @@ class TransactionModel extends Model
             $b->where('company_id', $companyId);
         }
         return $b;
+    }
+
+    /** Cached: does the ledger_only column exist yet (migration run)? */
+    private ?bool $hasLedgerOnly = null;
+
+    /**
+     * Restrict a builder to CASH rows only (ledger_only = 0). Applied by the
+     * cash-book listings, cash summaries and cash-in-hand carry-forward, so a
+     * party-ledger-only row (a credit sale's receivable) is never counted as
+     * cash. No-op until the migration adds the column, so it degrades safely.
+     */
+    private function excludeLedgerOnly($b): void
+    {
+        if ($this->hasLedgerOnly === null) {
+            $this->hasLedgerOnly = $this->db->fieldExists('ledger_only', $this->table);
+        }
+        if ($this->hasLedgerOnly) {
+            $b->where('ledger_only', 0);
+        }
     }
 
     /**
@@ -195,6 +214,9 @@ class TransactionModel extends Model
     /** Apply search + date range + status/type/mode filters to a builder. */
     private function applyFilters($b, array $f)
     {
+        // Cash book only: exclude party-ledger-only rows (e.g. a credit sale's
+        // receivable), which move a party balance but never touch cash-in-hand.
+        $this->excludeLedgerOnly($b);
         if (($f['q'] ?? '') !== '') {
             $b->groupStart()
                 ->like('name', $f['q'])
@@ -296,6 +318,7 @@ class TransactionModel extends Model
     public function netBefore(?int $userId, string $date, ?string $since = null): float
     {
         $b = $this->scopedBuilder($userId)->where('txn_date <', $date);
+        $this->excludeLedgerOnly($b);
         if ($since) {
             $b->where('txn_date >=', $since);
         }
@@ -306,19 +329,18 @@ class TransactionModel extends Model
     /** All rows within an inclusive date range, oldest first (for a cash-book run). */
     public function rangeRows(?int $userId, string $from, string $to): array
     {
-        return $this->scoped($userId)
-            ->where('txn_date >=', $from)->where('txn_date <=', $to)
-            ->orderBy('txn_date', 'ASC')->orderBy('id', 'ASC')
-            ->findAll();
+        $b = $this->scoped($userId)
+            ->where('txn_date >=', $from)->where('txn_date <=', $to);
+        $this->excludeLedgerOnly($b);
+        return $b->orderBy('txn_date', 'ASC')->orderBy('id', 'ASC')->findAll();
     }
 
     /** All rows on a single date, oldest first (for the daily Rokad Parcha). */
     public function dayEntries(?int $userId, string $date): array
     {
-        return $this->scoped($userId)
-            ->where('txn_date', $date)
-            ->orderBy('id', 'ASC')
-            ->findAll();
+        $b = $this->scoped($userId)->where('txn_date', $date);
+        $this->excludeLedgerOnly($b);
+        return $b->orderBy('id', 'ASC')->findAll();
     }
 
     /** Soft-deleted rows on a single date (for the "Deleted Entries" view). */
@@ -335,6 +357,7 @@ class TransactionModel extends Model
     public function rangeTotals(?int $userId, string $from, string $to, array $f = []): array
     {
         $b = $this->scopedBuilder($userId)->where('txn_date >=', $from)->where('txn_date <=', $to);
+        $this->excludeLedgerOnly($b);
         self::applyClassFilters($b, '', $f);
 
         $row = $b->select("COALESCE(SUM(CASE WHEN type='jama' THEN amount ELSE 0 END),0) AS j, COALESCE(SUM(CASE WHEN type='naam' THEN amount ELSE 0 END),0) AS n")
@@ -349,8 +372,10 @@ class TransactionModel extends Model
      */
     public function dailyBuckets(?int $userId, string $from, string $to): array
     {
-        $rows = $this->scopedBuilder($userId)
-            ->where('txn_date >=', $from)->where('txn_date <=', $to)
+        $bd = $this->scopedBuilder($userId)
+            ->where('txn_date >=', $from)->where('txn_date <=', $to);
+        $this->excludeLedgerOnly($bd);
+        $rows = $bd
             ->select("txn_date AS d, COALESCE(SUM(CASE WHEN type='jama' THEN amount ELSE 0 END),0) AS jama, COALESCE(SUM(CASE WHEN type='naam' THEN amount ELSE 0 END),0) AS naam")
             ->groupBy('txn_date')->orderBy('txn_date', 'ASC')
             ->get()->getResultArray();
@@ -433,7 +458,7 @@ class TransactionModel extends Model
             'count' => (int) $r['cnt'],
             'jama'  => (float) $r['jama'],
             'naam'  => (float) $r['naam'],
-            'net'   => (float) $r['jama'] - (float) $r['naam'],
+            'net'   => (float) $r['naam'] - (float) $r['jama'], // receivable = Naam − Jama (bahi-khata)
         ], $rows);
 
         usort($out, static fn ($a, $b) => ($b['jama'] + $b['naam']) <=> ($a['jama'] + $a['naam']));
@@ -511,7 +536,7 @@ class TransactionModel extends Model
             'count'     => (int) $r['cnt'],
             'jama'      => (float) $r['jama'],
             'naam'      => (float) $r['naam'],
-            'net'       => (float) $r['jama'] - (float) $r['naam'],
+            'net'       => (float) $r['naam'] - (float) $r['jama'], // receivable = Naam − Jama (bahi-khata)
             'last_date' => $r['last_date'] ?: null,
         ], $rows);
     }
@@ -546,7 +571,7 @@ class TransactionModel extends Model
         return array_map(static fn ($r) => [
             'name'      => (string) $r['name'],
             'count'     => (int) $r['cnt'],
-            'net'       => (float) $r['jama'] - (float) $r['naam'],
+            'net'       => (float) $r['naam'] - (float) $r['jama'], // receivable = Naam − Jama (bahi-khata)
             'last_date' => $r['last_date'] ?: null,
         ], $rows);
     }
@@ -575,7 +600,7 @@ class TransactionModel extends Model
             'count'      => (int) $r['cnt'],
             'jama'       => (float) $r['jama'],
             'naam'       => (float) $r['naam'],
-            'net'        => (float) $r['jama'] - (float) $r['naam'],
+            'net'        => (float) $r['naam'] - (float) $r['jama'], // receivable = Naam − Jama (bahi-khata)
             'last_date'  => $r['last_date'] ?: null,
         ], $rows);
     }
@@ -623,8 +648,9 @@ class TransactionModel extends Model
     /** Running (jama−naam) balance for a party strictly before a date (opening). */
     public function partyNetBefore(?int $userId, string $name, string $date): float
     {
+        // Party ledger convention: receivable = Naam − Jama (Naam = debit = owes us).
         $row = $this->scopedBuilder($userId)->where('name', $name)->where('txn_date <', $date)
-            ->select("COALESCE(SUM(CASE WHEN type='jama' THEN amount ELSE -amount END),0) AS net")
+            ->select("COALESCE(SUM(CASE WHEN type='naam' THEN amount ELSE -amount END),0) AS net")
             ->get()->getRowArray();
         return (float) ($row['net'] ?? 0);
     }

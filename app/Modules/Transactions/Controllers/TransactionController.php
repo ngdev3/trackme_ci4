@@ -199,9 +199,10 @@ class TransactionController extends BaseController
             $priorNet   = $from !== '' ? round($this->txns->partyNetBefore($scope, $party, $from), 2) : 0.0;
             $opening    = round($masterOpen + $priorNet, 2);
 
+            // Party ledger: receivable = Naam (debit, owes us) − Jama (credit).
             $running = $opening;
             foreach ($rows as &$r) {
-                $running += ($r['type'] === 'jama' ? (float) $r['amount'] : -(float) $r['amount']);
+                $running += ($r['type'] === 'naam' ? (float) $r['amount'] : -(float) $r['amount']);
                 $r['balance'] = round($running, 2);
             }
             unset($r);
@@ -215,7 +216,7 @@ class TransactionController extends BaseController
                 'masterOpenType'=> $master['opening_type'] ?? 'dr',
                 'totalJama'     => $jama,
                 'totalNaam'     => $naam,
-                'closing'       => round($opening + $jama - $naam, 2),
+                'closing'       => round($opening + $naam - $jama, 2),
                 'count'         => count($rows),
             ]);
         }
