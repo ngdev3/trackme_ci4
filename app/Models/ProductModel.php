@@ -17,7 +17,7 @@ class ProductModel extends Model
     protected $useTimestamps  = true;
 
     protected $allowedFields = [
-        'company_id', 'created_by', 'name', 'sku', 'category', 'unit', 'hsn',
+        'company_id', 'created_by', 'name', 'sku', 'category', 'image_path', 'unit', 'hsn',
         'sale_price', 'purchase_price', 'opening_stock', 'current_stock',
         'low_stock', 'tax_rate', 'description', 'status',
     ];
