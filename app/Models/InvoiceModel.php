@@ -30,6 +30,38 @@ class InvoiceModel extends Model
     }
 
     /**
+     * Billed totals per document type within a date range (voided/soft-deleted
+     * excluded). Powers the accrual dashboard: net sales = sale − sale_return,
+     * net purchases = purchase − purchase_return.
+     *
+     * @return array{sale:float, purchase:float, sale_return:float, purchase_return:float,
+     *               net_sales:float, net_purchases:float, count:int}
+     */
+    public function periodTotals(?int $companyId, string $from, string $to): array
+    {
+        $rows = $this->builder()
+            ->select("type, COALESCE(SUM(total),0) AS t, COUNT(*) AS c", false)
+            ->where('company_id', (int) $companyId)
+            ->where('deleted_at', null)
+            ->where('invoice_date >=', $from)
+            ->where('invoice_date <=', $to)
+            ->groupBy('type')
+            ->get()->getResultArray();
+
+        $out = ['sale' => 0.0, 'purchase' => 0.0, 'sale_return' => 0.0, 'purchase_return' => 0.0, 'count' => 0];
+        foreach ($rows as $r) {
+            $t = (string) $r['type'];
+            if (array_key_exists($t, $out)) {
+                $out[$t] = (float) $r['t'];
+            }
+            $out['count'] += (int) $r['c'];
+        }
+        $out['net_sales']     = round($out['sale'] - $out['sale_return'], 2);
+        $out['net_purchases'] = round($out['purchase'] - $out['purchase_return'], 2);
+        return $out;
+    }
+
+    /**
      * Next invoice number for a company + type, e.g. INV-000123 / PUR-000045.
      * Sequence is per company and per type.
      */

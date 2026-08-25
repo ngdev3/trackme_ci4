@@ -166,6 +166,25 @@ class TestAmit extends BaseCommand
         $v1 = abs($stock3 - 400) < 0.001;      $pass &= $v1; $line($v1, 'After void return: stock', $stock3, 400);
         $v2 = abs($bal3 - 30000) < 0.01;       $pass &= $v2; $line($v2, 'After void return: Amit receivable', $bal3, 30000);
 
+        // 7) Accrual dashboard: a credit sale (50k, active) + a paid purchase (30k)
+        //    must show Profit = Sales − Purchases = +20,000 (not the cash net).
+        $rice3 = $products->find($riceId);
+        (new LedgerPostingService())->postInvoice([
+            'company_id' => $cid, 'user_id' => $uid, 'type' => 'purchase',
+            'party_name' => 'Supplier Co', 'party_type' => 'Firm', 'payment_mode' => 'cash',
+            'invoice_date' => date('Y-m-d'), 'notes' => null, 'discount' => 0,
+            'subtotal' => 30000, 'tax_total' => 0, 'total' => 30000, 'received' => 30000,
+            'client_uuid' => 'test-purchase-1',
+            'lines' => [['product_id' => $riceId, 'product' => $rice3, 'name' => 'Rice', 'qty' => 60, 'rate' => 500, 'tax_rate' => 0, 'amount' => 30000]],
+        ]);
+        $bills = (new \App\Models\InvoiceModel())->periodTotals($cid, date('Y-m-01'), date('Y-m-t'));
+        $profit = round($bills['net_sales'] - $bills['net_purchases'], 2);
+        CLI::newLine();
+        CLI::write(CLI::color('Accrual dashboard', 'yellow'));
+        $a1 = abs($bills['net_sales'] - 50000) < 0.01;    $pass &= $a1; $line($a1, 'Billed Sales (incl. credit)', $bills['net_sales'], 50000);
+        $a2 = abs($bills['net_purchases'] - 30000) < 0.01; $pass &= $a2; $line($a2, 'Billed Purchases', $bills['net_purchases'], 30000);
+        $a3 = abs($profit - 20000) < 0.01;                 $pass &= $a3; $line($a3, 'Profit = Sales − Purchases', $profit, 20000);
+
         $wipe(); // discard ALL test data
         $db->table('companies')->where('id', $cid)->delete(); // remove throwaway company last
 

@@ -73,15 +73,41 @@ class DashboardApiController extends BaseApiController
             $periodNet = $this->shapeSummary($txn->summary($cid, ['from' => $periodFrom, 'to' => $balanceTo]))['net'];
             $closing   = round($opening + $periodNet, 2);
 
-            // Headline cards (money-in framed as "sales", money-out as "expenses";
-            // this is a cash book, so the 4th card shows the running balance).
-            $metrics = [
-                'sales'    => ['value' => $periodSum['deposits'], 'delta' => $this->percentDelta($periodSum['deposits'], $prevSum['deposits'])],
-                'expenses' => ['value' => $periodSum['expenses'], 'delta' => $this->percentDelta($periodSum['expenses'], $prevSum['expenses'])],
-                'profit'   => ['value' => $periodSum['net'],      'delta' => $this->percentDelta($periodSum['net'],      $prevSum['net'])],
-                'opening'  => ['value' => $opening,               'delta' => null],
-                'balance'  => ['value' => $closing,               'delta' => null],
-            ];
+            // Headline cards. When the firm uses the billing module we report on an
+            // ACCRUAL basis — Sales = net sale bills, Purchases = net purchase bills,
+            // Profit = Sales − Purchases — so a credit sale counts the moment it is
+            // billed (not only when the cash arrives). Firms that keep a pure cash
+            // book (no bills) fall back to the cash figures unchanged.
+            $inv      = new \App\Models\InvoiceModel();
+            $bills    = $inv->periodTotals($cid, $periodFrom, $periodTo);
+            $prevBill = $inv->periodTotals($cid, $p['prevFrom'], $p['prevTo']);
+            $accrual  = $bills['count'] > 0;
+
+            if ($accrual) {
+                $sales    = $bills['net_sales'];
+                $purch    = $bills['net_purchases'];
+                $profit   = round($sales - $purch, 2);
+                $pSales   = $prevBill['net_sales'];
+                $pPurch   = $prevBill['net_purchases'];
+                $metrics  = [
+                    'sales'    => ['value' => $sales,  'delta' => $this->percentDelta($sales,  $pSales)],
+                    'expenses' => ['value' => $purch,  'delta' => $this->percentDelta($purch,  $pPurch)],
+                    'profit'   => ['value' => $profit, 'delta' => $this->percentDelta($profit, round($pSales - $pPurch, 2))],
+                    'opening'  => ['value' => $opening, 'delta' => null],
+                    'balance'  => ['value' => $closing, 'delta' => null],
+                    'basis'    => 'accrual',
+                ];
+            } else {
+                // Pure cash book: money-in framed as "sales", money-out as "expenses".
+                $metrics = [
+                    'sales'    => ['value' => $periodSum['deposits'], 'delta' => $this->percentDelta($periodSum['deposits'], $prevSum['deposits'])],
+                    'expenses' => ['value' => $periodSum['expenses'], 'delta' => $this->percentDelta($periodSum['expenses'], $prevSum['expenses'])],
+                    'profit'   => ['value' => $periodSum['net'],      'delta' => $this->percentDelta($periodSum['net'],      $prevSum['net'])],
+                    'opening'  => ['value' => $opening,               'delta' => null],
+                    'balance'  => ['value' => $closing,               'delta' => null],
+                    'basis'    => 'cash',
+                ];
+            }
 
             $series = $this->monthlySeries($txn, $cid, $p['seriesMonths'], $p['seriesAnchor']);
 
