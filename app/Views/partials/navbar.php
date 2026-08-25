@@ -8,7 +8,7 @@ $erpRoleLabel = session('account_type') === 'super_admin'
     ? 'Super Admin'
     : ucwords(str_replace('_', ' ', (string) (session('company_role') ?: session('account_type') ?: 'User')));
 
-/* 12 most-spoken languages for the in-app UI translator (shared helper). */
+/* App languages (India-first) for the in-app UI translator (shared helper). */
 $erpLanguages = erp_languages();
 
 $topNotifications = [];

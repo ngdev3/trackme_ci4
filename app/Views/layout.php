@@ -142,13 +142,14 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
     <?= $this->include('partials/footer') ?>
 </div>
 
-<!-- In-app language translator (whole-UI, 12 languages) -->
+<!-- In-app language translator (whole-UI) — India-first, aligned with the mobile
+     app's languages (see erp_languages() + i18n.js). -->
 <div id="google_translate_element" aria-hidden="true"></div>
 <script>
     function googleTranslateElementInit() {
         new google.translate.TranslateElement({
             pageLanguage: 'en',
-            includedLanguages: 'en,hi,zh-CN,es,ar,fr,bn,pt,ru,ur,de,ja',
+            includedLanguages: 'en,hi,mr,gu,pa,ta,te,kn,bn',
             autoDisplay: false
         }, 'google_translate_element');
     }

@@ -153,19 +153,20 @@ if (! function_exists('erp_languages')) {
      */
     function erp_languages(): array
     {
+        // Aligned with the mobile app's supported languages (India-first). Every
+        // code is a valid Google-Translate locale so the whole web UI translates
+        // client-side via the googtrans cookie (see i18n.js + layout.php). Hinglish
+        // has no Google-Translate locale, so it is mobile-only.
         return [
-            'en'    => ['native' => 'English',   'name' => 'English',    'flag' => '🇬🇧'],
-            'hi'    => ['native' => 'हिन्दी',      'name' => 'Hindi',      'flag' => '🇮🇳'],
-            'zh-CN' => ['native' => '中文',        'name' => 'Chinese',    'flag' => '🇨🇳'],
-            'es'    => ['native' => 'Español',    'name' => 'Spanish',    'flag' => '🇪🇸'],
-            'ar'    => ['native' => 'العربية',     'name' => 'Arabic',     'flag' => '🇸🇦'],
-            'fr'    => ['native' => 'Français',   'name' => 'French',     'flag' => '🇫🇷'],
-            'bn'    => ['native' => 'বাংলা',       'name' => 'Bengali',    'flag' => '🇧🇩'],
-            'pt'    => ['native' => 'Português',  'name' => 'Portuguese', 'flag' => '🇵🇹'],
-            'ru'    => ['native' => 'Русский',    'name' => 'Russian',    'flag' => '🇷🇺'],
-            'ur'    => ['native' => 'اردو',        'name' => 'Urdu',       'flag' => '🇵🇰'],
-            'de'    => ['native' => 'Deutsch',    'name' => 'German',     'flag' => '🇩🇪'],
-            'ja'    => ['native' => '日本語',      'name' => 'Japanese',   'flag' => '🇯🇵'],
+            'en' => ['native' => 'English',   'name' => 'English',   'flag' => '🇬🇧'],
+            'hi' => ['native' => 'हिन्दी',      'name' => 'Hindi',     'flag' => '🇮🇳'],
+            'mr' => ['native' => 'मराठी',       'name' => 'Marathi',   'flag' => '🇮🇳'],
+            'gu' => ['native' => 'ગુજરાતી',    'name' => 'Gujarati',  'flag' => '🇮🇳'],
+            'pa' => ['native' => 'ਪੰਜਾਬੀ',      'name' => 'Punjabi',   'flag' => '🇮🇳'],
+            'ta' => ['native' => 'தமிழ்',       'name' => 'Tamil',     'flag' => '🇮🇳'],
+            'te' => ['native' => 'తెలుగు',      'name' => 'Telugu',    'flag' => '🇮🇳'],
+            'kn' => ['native' => 'ಕನ್ನಡ',       'name' => 'Kannada',   'flag' => '🇮🇳'],
+            'bn' => ['native' => 'বাংলা',       'name' => 'Bengali',   'flag' => '🇮🇳'],
         ];
     }
 }

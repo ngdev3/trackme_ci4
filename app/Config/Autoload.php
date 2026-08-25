@@ -67,6 +67,7 @@ class Autoload extends AutoloadConfig
         'Modules\Transactions' => APPPATH . 'Modules/Transactions',
         'Modules\Passwords'    => APPPATH . 'Modules/Passwords',
         'Modules\Help'         => APPPATH . 'Modules/Help',
+        'Modules\UpiQr'        => APPPATH . 'Modules/UpiQr',
         'Modules\Inventory'    => APPPATH . 'Modules/Inventory',
         'Modules\ApiMonitor'   => APPPATH . 'Modules/ApiMonitor',
     ];
