@@ -200,6 +200,27 @@ class TestAmit extends BaseCommand
         $amitRole2 = (new \App\Models\PartyModel())->forName($cid, 'Amit')['party_role'] ?? '';
         $pr2 = $amitRole2 === 'both'; $pass &= $pr2; $line($pr2, 'Amit role after also buying', $amitRole2 ?: '(none)', 'both');
 
+        // 9) Rokadh Parcha OPENING balance = cash only (Shri Rokad Nagad + cash
+        //    net before the day); a credit-sale receivable must NOT inflate it.
+        CLI::newLine();
+        CLI::write(CLI::color('Rokadh Parcha opening balance', 'yellow'));
+        $ob       = new \App\Libraries\OpeningBalance($cid, $cid);
+        $fy       = $ob->fyStartFor(date('Y-m-d'));
+        (new \App\Models\CompanySettingModel())->put($cid, 'transactions', 'shri_rokad_nagad_' . $fy, 5000);
+        $yst = date('Y-m-d', strtotime('-1 day'));
+        $mkY = fn (string $type, float $amt, int $lo) => $txn->insert([
+            'user_id' => $uid, 'company_id' => $cid, 'txn_no' => $txn->nextTxnNo($cid), 'txn_date' => $yst,
+            'name' => 'OB Test', 'type' => $type, 'amount' => $amt, 'payment_mode' => 'cash', 'status' => 'paid',
+            'ledger_only' => $lo, 'notes' => 'ob', 'source' => 'mobile',
+        ]);
+        $mkY('jama', 2000, 0);   // cash received yesterday
+        $mkY('naam', 500, 0);    // cash paid yesterday
+        $mkY('naam', 9999, 1);   // a credit-sale receivable yesterday (ledger_only) — must be ignored
+        $opening = round($ob->carryInto(date('Y-m-d')), 2); // opening cash carried into today
+        $ob1 = abs($opening - 6500) < 0.01; $pass &= $ob1;
+        $line($ob1, 'Opening = 5000 shri + (2000−500) cash', $opening, 6500);
+        $line($opening !== 16499.0, 'Credit sale (9999) excluded from opening', ($opening === 16499.0 ? 'INCLUDED' : 'excluded'), 'excluded');
+
         $wipe(); // discard ALL test data
         $db->table('companies')->where('id', $cid)->delete(); // remove throwaway company last
 
