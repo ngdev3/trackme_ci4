@@ -169,9 +169,14 @@ $routes->group('api/v1', ['namespace' => 'Modules\Api\Controllers'], static func
     $routes->post('products', 'ProductApiController::create');
     $routes->post('products/update/(:num)', 'ProductApiController::update/$1');
     $routes->post('products/delete/(:num)', 'ProductApiController::remove/$1');
+    // Offline-first inventory sync (batch push / incremental pull).
+    $routes->post('products/sync', 'ProductApiController::sync');
+    $routes->get('products/changes', 'ProductApiController::changes');
     // Stock In / Out — records a movement + adjusts current_stock.
     $routes->post('stock/move', 'StockApiController::move');
     $routes->get('stock/movements', 'StockApiController::movements');
+    $routes->post('stock/sync', 'StockApiController::sync');
+    $routes->get('stock/changes', 'StockApiController::changes');
     // Sales / Purchase invoices (bills). A sale issues stock + posts a Jama
     // entry; a purchase receives stock + posts a Naam entry — all in one call.
     $routes->get('invoices', 'InvoiceApiController::index');

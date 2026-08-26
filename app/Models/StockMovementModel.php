@@ -15,7 +15,7 @@ class StockMovementModel extends Model
     protected $useTimestamps = true;
 
     protected $allowedFields = [
-        'company_id', 'product_id', 'type', 'qty', 'rate', 'note', 'created_by',
+        'company_id', 'client_uuid', 'product_id', 'type', 'qty', 'rate', 'note', 'created_by',
     ];
 
     /** Recent movements for a company (optionally one product), newest first. */

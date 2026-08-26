@@ -56,6 +56,94 @@ class ProductApiController extends BaseApiController
         return $this->respond(['status' => 'ok', 'summary' => (new ProductModel())->summary($cid)]);
     }
 
+    /**
+     * Offline-first PUSH. Applies a batch of local creates/updates/deletes from
+     * the mobile outbox and returns the server ids so the app can link its rows.
+     * Idempotent per (company, client_uuid). current_stock is movement-owned, so
+     * a create seeds it from opening_stock and updates never touch it.
+     */
+    public function sync()
+    {
+        [$user, $cid] = $this->scope();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        if (! $cid) {
+            return $this->failValidationErrors('Select a company first.');
+        }
+        $model  = new ProductModel();
+        $mapped = [];
+
+        foreach ((array) ($this->input('creates') ?? []) as $c) {
+            $uuid = isset($c['client_uuid']) ? trim((string) $c['client_uuid']) : '';
+            if ($uuid !== '') {
+                $existing = $model->withDeleted()->where('company_id', $cid)->where('client_uuid', $uuid)->first();
+                if ($existing) {
+                    $mapped[] = ['local_id' => $c['local_id'] ?? null, 'server_id' => (int) $existing['id'], 'image_path' => $existing['image_path'] ?? null, 'updated_at' => $existing['updated_at'] ?? date('Y-m-d H:i:s')];
+                    continue;
+                }
+            }
+            $data = $this->payloadFrom($c, $cid, (int) $user['id']);
+            if ($data['name'] === '') {
+                continue;
+            }
+            $data['client_uuid']   = $uuid ?: null;
+            $data['current_stock'] = $data['opening_stock']; // seed; movements adjust later
+            $model->skipValidation(true)->insert($data);
+            $id  = (int) $model->getInsertID();
+            $row = $model->find($id);
+            $mapped[] = ['local_id' => $c['local_id'] ?? null, 'server_id' => $id, 'image_path' => $row['image_path'] ?? null, 'updated_at' => $row['updated_at'] ?? date('Y-m-d H:i:s')];
+        }
+
+        foreach (array_merge((array) ($this->input('updates') ?? []), (array) ($this->input('deletes') ?? [])) as $u) {
+            $sid = (int) ($u['server_id'] ?? 0);
+            if ($sid <= 0) {
+                continue;
+            }
+            $row = $model->withDeleted()->where('company_id', $cid)->find($sid);
+            if (! $row) {
+                continue;
+            }
+            if (! empty($u['is_deleted'])) {
+                if (empty($row['deleted_at'])) {
+                    $this->deleteImageFile($row['image_path'] ?? null);
+                    $model->delete($sid);
+                }
+            } else {
+                $data = $this->payloadFrom($u, $cid, (int) $user['id']);
+                unset($data['created_by']); // keep original author; never touch current_stock
+                if ($data['name'] !== '') {
+                    $model->skipValidation(true)->update($sid, $data);
+                }
+            }
+            $fresh    = $model->withDeleted()->find($sid);
+            $mapped[] = ['local_id' => $u['local_id'] ?? null, 'server_id' => $sid, 'image_path' => $fresh['image_path'] ?? null, 'updated_at' => $fresh['updated_at'] ?? date('Y-m-d H:i:s')];
+        }
+
+        return $this->respond(['status' => 'ok', 'server_time' => date('Y-m-d H:i:s'), 'mapped' => $mapped]);
+    }
+
+    /** Offline-first PULL. Products changed since the cursor (incl. soft-deleted). */
+    public function changes()
+    {
+        [$user, $cid] = $this->scope();
+        if (! $user) {
+            return $this->failUnauthorized('Invalid or missing token.');
+        }
+        helper('url');
+        $since = trim((string) ($this->request->getGet('since') ?? ''));
+        $b     = (new ProductModel())->withDeleted()->where('company_id', $cid);
+        if ($since !== '') {
+            $b->where('updated_at >=', $since);
+        }
+        $rows = $b->orderBy('updated_at', 'ASC')->orderBy('id', 'ASC')->findAll();
+        return $this->respond([
+            'status'      => 'ok',
+            'server_time' => date('Y-m-d H:i:s'),
+            'changes'     => array_map([$this, 'shapeSync'], $rows),
+        ]);
+    }
+
     public function create()
     {
         [$user, $cid] = $this->scope();
@@ -187,6 +275,51 @@ class ProductApiController extends BaseApiController
             return null;
         }
         return 'uploads/products/' . $cid . '/' . $name;
+    }
+
+    /** Like payload() but reads from a sync-batch array item (no current_stock —
+     *  that is movement-owned and never overwritten by a master update). */
+    private function payloadFrom(array $item, int $cid, int $userId): array
+    {
+        $num  = fn ($k) => (float) ($item[$k] ?? 0);
+        $data = [
+            'company_id'     => $cid,
+            'created_by'     => $userId,
+            'name'           => trim((string) ($item['name'] ?? '')),
+            'sku'            => trim((string) ($item['sku'] ?? '')) ?: null,
+            'category'       => trim((string) ($item['category'] ?? '')) ?: null,
+            'unit'           => trim((string) ($item['unit'] ?? '')) ?: null,
+            'hsn'            => trim((string) ($item['hsn'] ?? '')) ?: null,
+            'sale_price'     => round($num('sale_price'), 2),
+            'purchase_price' => round($num('purchase_price'), 2),
+            'opening_stock'  => round($num('opening_stock'), 3),
+            'low_stock'      => round($num('low_stock'), 3),
+            'tax_rate'       => round($num('tax_rate'), 2),
+            'description'    => trim((string) ($item['description'] ?? '')) ?: null,
+            'status'         => (int) ($item['status'] ?? 1) === 0 ? 0 : 1,
+        ];
+        $img = (string) ($item['image'] ?? '');
+        if ($img !== '') {
+            $stored = $this->storeImage($cid, $img);
+            if ($stored !== null) {
+                $data['image_path'] = $stored;
+            }
+        } elseif (! empty($item['remove_image'])) {
+            $data['image_path'] = null;
+        }
+        return $data;
+    }
+
+    /** shape() + the fields the offline client needs to reconcile (sync feed). */
+    private function shapeSync(array $r): array
+    {
+        return $this->shape($r) + [
+            'client_uuid' => $r['client_uuid'] ?? null,
+            'is_deleted'  => ! empty($r['deleted_at']) ? 1 : 0,
+            'created_at'  => $r['created_at'] ?? null,
+            'updated_at'  => $r['updated_at'] ?? null,
+            'deleted_at'  => $r['deleted_at'] ?? null,
+        ];
     }
 
     /** Public shape of a product row for the app. */

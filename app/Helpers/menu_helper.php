@@ -156,6 +156,12 @@ if (! function_exists('render_firm_sidebar')) {
                 ['Add Password', 'passwords/add'],
             ]],
             ['calculator', 'Calculator', 'bi bi-calculator-fill', 'calculator', []],
+            ['inventory', 'Stock / Inventory', 'bi bi-boxes', null, [
+                ['Inventory Dashboard', 'inventory'],
+                ['Product Master', 'inventory/products'],
+                ['Stock In / Out', 'inventory/stock'],
+                ['Report', 'inventory/reports'],
+            ]],
             ['invoices', 'Sales & Purchase', 'bi bi-receipt', null, [
                 ['All Bills', 'invoices'],
                 ['New Sale', 'invoices/new/sale'],
@@ -186,7 +192,6 @@ if (! function_exists('render_firm_sidebar')) {
             // Subscription page with an "upgrade required" message (same hasFeature()
             // rule the routes/views enforce). "Trash" is the company recycle bin.
             $featMap = [
-                'inventory'  => 'inventory',
                 'notes'      => 'notes',
                 'reminders'  => 'reminder',
                 'passwords'  => 'password_manager',
@@ -198,10 +203,6 @@ if (! function_exists('render_firm_sidebar')) {
             // Password Manager access is governed by app RBAC (its routes use a
             // permission filter), so mirror that here to avoid a dead menu link.
             if ($code === 'passwords' && function_exists('can') && ! can('passwords', 'view')) {
-                continue;
-            }
-            // Inventory is likewise app-RBAC gated — mirror it in the menu.
-            if ($code === 'inventory' && function_exists('can') && ! can('inventory', 'view')) {
                 continue;
             }
             // Settings route is permission-gated too — only show if reachable.
