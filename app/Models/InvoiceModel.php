@@ -122,6 +122,42 @@ class InvoiceModel extends Model
     }
 
     /**
+     * GST captured on the bills for a period, from the tax ALREADY stored on each
+     * invoice (invoices.tax_total) — no separate tax ledger/schema (audit F-07,
+     * no-schema variant). Output GST = tax charged on Sales (Sale Returns reverse);
+     * Input GST = tax paid on Purchases (Purchase Returns reverse); Net = output −
+     * input = GST payable (negative = input-tax credit in hand). This SURFACES the
+     * liability the bills collected; it does NOT post GST as its own ledger entry
+     * (that would need a schema change).
+     *
+     * @return array{output:float, input:float, net:float}
+     */
+    public function gstSummary(?int $companyId, string $from, string $to): array
+    {
+        $out = ['output' => 0.0, 'input' => 0.0, 'net' => 0.0];
+        if (! $this->db->tableExists('invoices')) {
+            return $out;
+        }
+        $rows = $this->builder()
+            ->select('type, COALESCE(SUM(tax_total), 0) AS t', false)
+            ->where('company_id', (int) $companyId)
+            ->where('deleted_at', null)
+            ->where('invoice_date >=', $from)
+            ->where('invoice_date <=', $to)
+            ->groupBy('type')
+            ->get()->getResultArray();
+
+        $by = [];
+        foreach ($rows as $r) {
+            $by[(string) $r['type']] = (float) $r['t'];
+        }
+        $out['output'] = round(($by['sale'] ?? 0) - ($by['sale_return'] ?? 0), 2);
+        $out['input']  = round(($by['purchase'] ?? 0) - ($by['purchase_return'] ?? 0), 2);
+        $out['net']    = round($out['output'] - $out['input'], 2);
+        return $out;
+    }
+
+    /**
      * Next invoice number for a company + type, e.g. INV-000123 / PUR-000045.
      * Sequence is per company and per type.
      */

@@ -149,6 +149,10 @@ class TransactionApiController extends BaseApiController
             // so we surface profit alongside it so the report isn't read as a loss.
             $profit = (new \App\Models\InvoiceModel())->salesProfit($cid, $from, $to);
 
+            // GST captured on the bills for this range (output − input = payable),
+            // straight from invoices.tax_total — no tax ledger/schema (audit F-07).
+            $gst = (new \App\Models\InvoiceModel())->gstSummary($cid, $from, $to);
+
             $byMode = [];
             foreach ($model->byMode($cid, $f) as $mode => $v) {
                 $byMode[] = [
@@ -187,6 +191,9 @@ class TransactionApiController extends BaseApiController
                     'opening' => $opening,
                     'closing' => $closing,
                     'profit'  => round((float) $profit, 2),
+                    'gst_output' => $gst['output'],
+                    'gst_input'  => $gst['input'],
+                    'gst_net'    => $gst['net'],
                 ],
                 'by_mode'       => $byMode,
                 'by_party_type' => $byParty,
