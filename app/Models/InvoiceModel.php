@@ -62,32 +62,63 @@ class InvoiceModel extends Model
     }
 
     /**
-     * TRUE gross profit for a period = Σ line qty × (sale rate − product cost),
-     * over Sale bills (Sale Returns subtract back out). This is revenue minus the
-     * COST OF GOODS SOLD — NOT sales − total purchases (buying stock is an asset,
-     * not an expense, so it must not drive profit negative). Uses the product's
-     * current cost; 0 when the billing tables/products aren't present.
+     * TRUE gross profit for a period = revenue − COST OF GOODS SOLD, over Sale
+     * bills (Sale Returns subtract back out). Revenue is the sale-line total;
+     * COGS is the cost captured AT SALE TIME, read from stock_movements.rate
+     * (stamped when the bill posted) — NOT the product's current cost, so editing
+     * a product's cost later can't retroactively rewrite past profit (audit F-04).
+     *
+     * Buying stock is an asset swap, so purchases never appear here. Pass $party
+     * to scope the profit to one account (used by the Account Statement); 0 when
+     * the billing tables aren't present.
      */
-    public function salesProfit(?int $companyId, string $from, string $to): float
+    public function salesProfit(?int $companyId, ?string $from, ?string $to, ?string $party = null): float
     {
-        if (! $this->db->tableExists('invoice_items') || ! $this->db->tableExists('products')) {
+        $db = $this->db;
+        if (! $db->tableExists('invoices') || ! $db->tableExists('invoice_items') || ! $db->tableExists('stock_movements')) {
             return 0.0;
         }
-        $row = $this->db->table('invoices inv')
-            ->select("COALESCE(SUM("
-                . "(CASE inv.type WHEN 'sale' THEN 1 WHEN 'sale_return' THEN -1 ELSE 0 END)"
-                . " * ii.qty * (ii.rate - COALESCE(p.purchase_price, 0))"
-                . "), 0) AS profit", false)
-            ->join('invoice_items ii', 'ii.invoice_id = inv.id')
-            ->join('products p', 'p.id = ii.product_id', 'left')
-            ->where('inv.company_id', (int) $companyId)
-            ->where('inv.deleted_at', null)
-            ->whereIn('inv.type', ['sale', 'sale_return'])
-            ->where('inv.invoice_date >=', $from)
-            ->where('inv.invoice_date <=', $to)
-            ->get()->getRowArray();
+        $sale   = $this->typeRevenueCogs($db, 'sale', $companyId, $from, $to, $party);
+        $return = $this->typeRevenueCogs($db, 'sale_return', $companyId, $from, $to, $party);
+        // (sale revenue − sale COGS) − (return revenue − return COGS)
+        return round(($sale['rev'] - $sale['cogs']) - ($return['rev'] - $return['cogs']), 2);
+    }
 
-        return round((float) ($row['profit'] ?? 0), 2);
+    /**
+     * Revenue (Σ line amount) and COGS (Σ movement qty × cost-at-sale) for one
+     * invoice type over a range, optionally scoped to a party. COGS joins the
+     * stock movements by note = invoice_no (how the posting engine links them);
+     * a free-text line has no movement, so it contributes revenue but no cost.
+     *
+     * @return array{rev:float, cogs:float}
+     */
+    private function typeRevenueCogs($db, string $type, ?int $companyId, ?string $from, ?string $to, ?string $party): array
+    {
+        // A sale line took goods OUT (its cost basis lives on the OUT movement); a
+        // sale-return brought them back IN. Literal, never user input.
+        $dir = $type === 'sale' ? 'out' : 'in';
+
+        // Per-LINE cost lookup: the unit cost stamped on THIS invoice's own movement
+        // for THIS product. Scoping by product_id keeps a movement that merely shares
+        // an invoice_no (e.g. a reused number) from leaking in, and a free-text line
+        // with no movement contributes revenue but NULL → 0 cost.
+        $cogsExpr = "SUM(ii.qty * (SELECT sm.rate FROM stock_movements sm"
+            . " WHERE sm.note = inv.invoice_no AND sm.company_id = inv.company_id"
+            . "   AND sm.product_id = ii.product_id AND sm.type = '{$dir}'"
+            . " ORDER BY sm.id LIMIT 1))";
+
+        $b = $db->table('invoices inv')
+            ->select("COALESCE(SUM(ii.amount), 0) AS rev, COALESCE({$cogsExpr}, 0) AS cogs", false)
+            ->join('invoice_items ii', 'ii.invoice_id = inv.id')
+            ->where('inv.company_id', (int) $companyId)
+            ->where('inv.type', $type)
+            ->where('inv.deleted_at', null);
+        if ($from !== null && $from !== '') { $b->where('inv.invoice_date >=', $from); }
+        if ($to !== null && $to !== '')     { $b->where('inv.invoice_date <=', $to); }
+        if ($party !== null && $party !== '') { $b->where('inv.party_name', $party); }
+
+        $row = $b->get()->getRowArray();
+        return ['rev' => (float) ($row['rev'] ?? 0), 'cogs' => (float) ($row['cogs'] ?? 0)];
     }
 
     /**

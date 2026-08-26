@@ -441,22 +441,37 @@ class TransactionApiController extends BaseApiController
      */
     private function classifyStatementRow(array $r, array $invMap): array
     {
-        $id = (int) $r['id'];
-        if (isset($invMap[$id])) {
-            $role = $invMap[$id]['role'];
-            switch ($invMap[$id]['type']) {
-                case 'sale':            return [$role === 'ledger' ? 'sale' : 'sale_receipt', 'sales'];
-                case 'purchase':        return [$role === 'ledger' ? 'purchase' : 'purchase_payment', 'purchases'];
-                case 'sale_return':     return [$role === 'ledger' ? 'sale_return' : 'sale_return_refund', 'sales'];
-                case 'purchase_return': return [$role === 'ledger' ? 'purchase_return' : 'purchase_return_refund', 'purchases'];
-            }
+        // Delegated to the single source of truth so web + mobile classify a row
+        // (and know its effects on ledger/cash/stock/sales/loan/GST/profit)
+        // identically. See App\Services\TransactionMap.
+        return \App\Services\TransactionMap::classify($r, $invMap);
+    }
+
+    /**
+     * Is this transaction row one leg of a Sale/Purchase bill (or return)? Such
+     * rows are posted by LedgerPostingService with source='invoice' and are linked
+     * from an invoice's txn_id / pay_txn_id. They must NOT be edited or deleted
+     * on their own — only the bill's own edit / Void / Return may touch them, so
+     * the invoice, its paired posting and the stock movement stay in sync (F-02).
+     */
+    private function isBillRow(int $cid, array $row): bool
+    {
+        if (($row['source'] ?? '') === 'invoice') {
+            return true;
         }
-        // Loan detection from the note (English + common Hindi/Hinglish terms).
-        $notes = (string) ($r['notes'] ?? '');
-        if ($notes !== '' && preg_match('/loan|udh?aar|udhar|karz|कर्ज|कर्ज़|उधार|ऋण/iu', $notes)) {
-            return [$r['type'] === 'naam' ? 'loan_given' : 'loan_returned', 'loans'];
+        $db = \Config\Database::connect();
+        if (! $db->tableExists('invoices')) {
+            return false;
         }
-        return [$r['type'] === 'naam' ? 'payment' : 'receipt', 'payments'];
+        $id = (int) ($row['id'] ?? 0);
+        if ($id <= 0) {
+            return false;
+        }
+        return (bool) $db->table('invoices')
+            ->where('company_id', $cid)
+            ->where('deleted_at', null)
+            ->groupStart()->where('txn_id', $id)->orWhere('pay_txn_id', $id)->groupEnd()
+            ->countAllResults();
     }
 
     /**
@@ -502,26 +517,10 @@ class TransactionApiController extends BaseApiController
      */
     private function partySaleProfit(int $cid, string $party, ?string $from, ?string $to): float
     {
-        $db = \Config\Database::connect();
-        if (! $db->tableExists('invoices') || ! $db->tableExists('invoice_items') || ! $db->tableExists('products')) {
-            return 0.0;
-        }
-        $b = $db->table('invoices inv')
-            ->select('COALESCE(SUM(ii.qty * (ii.rate - COALESCE(p.purchase_price, 0))), 0) AS profit', false)
-            ->join('invoice_items ii', 'ii.invoice_id = inv.id')
-            ->join('products p', 'p.id = ii.product_id', 'left')
-            ->where('inv.company_id', $cid)
-            ->where('inv.type', 'sale')
-            ->where('inv.deleted_at', null)
-            ->where('inv.party_name', $party);
-        if ($from !== null && $from !== '') {
-            $b->where('inv.invoice_date >=', $from);
-        }
-        if ($to !== null && $to !== '') {
-            $b->where('inv.invoice_date <=', $to);
-        }
-        $row = $b->get()->getRowArray();
-        return (float) ($row['profit'] ?? 0);
+        // One profit definition for the whole app: revenue − cost-at-sale
+        // (stock_movements.rate), scoped to this party. See InvoiceModel::salesProfit
+        // and audit F-04 (was using the product's CURRENT cost here).
+        return (new \App\Models\InvoiceModel())->salesProfit($cid, $from, $to, $party);
     }
 
     /**
@@ -684,6 +683,12 @@ class TransactionApiController extends BaseApiController
         if (! $row) {
             return $this->failNotFound('Entry not found.');
         }
+        // A Sale/Purchase bill is an atomic unit — its ledger + cash + stock legs
+        // move together. Editing one leg here would desync the invoice and stock
+        // (audit F-02). Route the user to the bill's own edit / Void / Return.
+        if ($this->isBillRow($cid, $row)) {
+            return $this->failForbidden('This entry belongs to a Sale/Purchase bill. Edit the bill itself, or Void/Return it — it can’t be changed directly.');
+        }
 
         $txnDate = (string) ($this->input('txn_date') ?? '');
         $ts      = strtotime($txnDate);
@@ -741,6 +746,12 @@ class TransactionApiController extends BaseApiController
         $row   = $model->findScoped((int) $id, $cid);
         if (! $row) {
             return $this->failNotFound('Entry not found.');
+        }
+        // Deleting one leg of a bill would leave the invoice + stock + the paired
+        // posting orphaned (audit F-02). Voiding the bill reverses all of them
+        // atomically — that is the only correct way to remove it.
+        if ($this->isBillRow($cid, $row)) {
+            return $this->failForbidden('This entry belongs to a Sale/Purchase bill. Void or Return the bill to remove it — deleting this line alone would corrupt the bill and stock.');
         }
 
         $reason = trim((string) ($this->input('reason') ?? ''));
@@ -1099,6 +1110,27 @@ class TransactionApiController extends BaseApiController
 
         $txnDateNorm = date('Y-m-d', $ts);
         $notesNorm   = $notes !== '' ? $notes : null;
+        $uuid        = trim((string) ($this->input('client_uuid') ?? '')) ?: null;
+
+        // Exact idempotency: when the client sends a client_uuid (as the sync path
+        // does), a retry maps to the SAME row — no time window, no field-matching
+        // heuristic (audit F-10). This is precise where the 120s guard below is a
+        // best-effort fallback for clients that don't send one.
+        if ($uuid !== null) {
+            $byUuid = (new TransactionModel())->withDeleted()
+                ->where('company_id', $cid)->where('client_uuid', $uuid)->first();
+            if ($byUuid) {
+                return $this->respond([
+                    'status'    => 'ok',
+                    'duplicate' => true,
+                    'message'   => 'This entry was already saved — not added again.',
+                    'id'        => (int) $byUuid['id'],
+                    'txn_no'    => $byUuid['txn_no'],
+                    'type'      => $byUuid['type'],
+                    'amount'    => (float) $byUuid['amount'],
+                ]);
+            }
+        }
 
         // Idempotency guard: a double-tap on Save, a slow-network retry, or a
         // resubmit can POST the same entry twice. If an identical, non-deleted
@@ -1141,6 +1173,7 @@ class TransactionApiController extends BaseApiController
             'payment_mode' => $mode,
             'status'       => $status,
             'notes'        => $notesNorm,
+            'client_uuid'  => $uuid,
             'source'       => 'mobile',
         ];
 

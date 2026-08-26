@@ -546,18 +546,58 @@ class TransactionModel extends Model
                 . 'MAX(txn_date) AS last_date')
             ->where('name IS NOT NULL')->where('name !=', '')
             ->groupBy('name')
-            ->orderBy('cnt', 'DESC')->orderBy('name', 'ASC')
-            ->limit($limit)
             ->get()->getResultArray();
 
-        return array_map(static fn ($r) => [
-            'name'      => (string) $r['name'],
-            'count'     => (int) $r['cnt'],
-            'jama'      => (float) $r['jama'],
-            'naam'      => (float) $r['naam'],
-            'net'       => (float) $r['naam'] - (float) $r['jama'], // receivable = Naam − Jama (bahi-khata)
-            'last_date' => $r['last_date'] ?: null,
-        ], $rows);
+        $byName = [];
+        foreach ($rows as $r) {
+            $byName[(string) $r['name']] = [
+                'name'      => (string) $r['name'],
+                'count'     => (int) $r['cnt'],
+                'jama'      => (float) $r['jama'],
+                'naam'      => (float) $r['naam'],
+                'opening'   => 0.0,
+                'last_date' => $r['last_date'] ?: null,
+            ];
+        }
+
+        // Merge the party MASTER records so a party with an opening balance shows in
+        // the statement picker even before it has any transactions — and so the
+        // listed balance includes that opening. Without this, opening-only parties
+        // were invisible here and every party's balance ignored its opening.
+        if ($userId !== null && $this->db->tableExists('parties')) {
+            $masters = (new \App\Models\PartyModel())
+                ->where('company_id', (int) $userId)
+                ->where('name IS NOT NULL')->where('name !=', '')
+                ->findAll();
+            foreach ($masters as $m) {
+                $name   = (string) $m['name'];
+                $signed = (($m['opening_type'] ?? 'dr') === 'cr' ? -1 : 1) * (float) ($m['opening_balance'] ?? 0);
+                if (isset($byName[$name])) {
+                    $byName[$name]['opening'] = $signed;           // fold opening into an existing party
+                } elseif (abs($signed) > 0.0001) {
+                    $byName[$name] = [                             // opening-only party (no txns yet)
+                        'name' => $name, 'count' => 0, 'jama' => 0.0, 'naam' => 0.0,
+                        'opening' => $signed, 'last_date' => null,
+                    ];
+                }
+            }
+        }
+
+        $out = array_map(static fn ($v) => [
+            'name'      => $v['name'],
+            'count'     => $v['count'],
+            'jama'      => $v['jama'],
+            'naam'      => $v['naam'],
+            // Receivable balance = opening + (Naam − Jama), matching the statement's
+            // opening + naam − jama closing so the picker figure ties out.
+            'net'       => round($v['opening'] + (float) $v['naam'] - (float) $v['jama'], 2),
+            'last_date' => $v['last_date'],
+        ], array_values($byName));
+
+        // Busiest accounts first, then alphabetical (unchanged ordering intent).
+        usort($out, static fn ($a, $b) => ($b['count'] <=> $a['count']) ?: strcmp($a['name'], $b['name']));
+
+        return array_slice($out, 0, $limit);
     }
 
     /**

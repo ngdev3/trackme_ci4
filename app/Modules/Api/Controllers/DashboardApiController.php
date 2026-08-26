@@ -134,6 +134,9 @@ class DashboardApiController extends BaseApiController
                 'amount'       => (float) $r['amount'],
                 'payment_mode' => $r['payment_mode'],
                 'status'       => $r['status'],
+                // source/notes let the app badge a Sale/Purchase in the recent feed.
+                'source'       => $r['source'] ?? null,
+                'notes'        => $r['notes'] ?? null,
             ], $txn->limitedFiltered($cid, ['from' => $periodFrom, 'to' => $periodTo], 6, 0));
 
             return [
