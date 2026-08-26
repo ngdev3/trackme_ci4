@@ -62,6 +62,35 @@ class InvoiceModel extends Model
     }
 
     /**
+     * TRUE gross profit for a period = Σ line qty × (sale rate − product cost),
+     * over Sale bills (Sale Returns subtract back out). This is revenue minus the
+     * COST OF GOODS SOLD — NOT sales − total purchases (buying stock is an asset,
+     * not an expense, so it must not drive profit negative). Uses the product's
+     * current cost; 0 when the billing tables/products aren't present.
+     */
+    public function salesProfit(?int $companyId, string $from, string $to): float
+    {
+        if (! $this->db->tableExists('invoice_items') || ! $this->db->tableExists('products')) {
+            return 0.0;
+        }
+        $row = $this->db->table('invoices inv')
+            ->select("COALESCE(SUM("
+                . "(CASE inv.type WHEN 'sale' THEN 1 WHEN 'sale_return' THEN -1 ELSE 0 END)"
+                . " * ii.qty * (ii.rate - COALESCE(p.purchase_price, 0))"
+                . "), 0) AS profit", false)
+            ->join('invoice_items ii', 'ii.invoice_id = inv.id')
+            ->join('products p', 'p.id = ii.product_id', 'left')
+            ->where('inv.company_id', (int) $companyId)
+            ->where('inv.deleted_at', null)
+            ->whereIn('inv.type', ['sale', 'sale_return'])
+            ->where('inv.invoice_date >=', $from)
+            ->where('inv.invoice_date <=', $to)
+            ->get()->getRowArray();
+
+        return round((float) ($row['profit'] ?? 0), 2);
+    }
+
+    /**
      * Next invoice number for a company + type, e.g. INV-000123 / PUR-000045.
      * Sequence is per company and per type.
      */

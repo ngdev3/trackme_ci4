@@ -86,15 +86,27 @@ class DashboardApiController extends BaseApiController
             if ($accrual) {
                 $sales    = $bills['net_sales'];
                 $purch    = $bills['net_purchases'];
-                $profit   = round($sales - $purch, 2);
+                // TRUE profit = revenue − COST OF GOODS SOLD (Σ qty×(rate−cost)),
+                // NOT sales − purchases: buying stock is an asset, so a big stock
+                // purchase must never make "profit" go negative on a profitable sale.
+                $profit   = $inv->salesProfit($cid, $periodFrom, $periodTo);
                 $pSales   = $prevBill['net_sales'];
                 $pPurch   = $prevBill['net_purchases'];
+                $pProfit  = $inv->salesProfit($cid, $p['prevFrom'], $p['prevTo']);
+                // Net position for an inventory business = cash-in-hand + stock value
+                // (at cost). Cash spent buying stock isn't lost — it moved into
+                // inventory — so the headline shouldn't go negative just because the
+                // firm stocked up. `cash` is still returned separately.
+                $stockValue = (float) ((new \App\Models\ProductModel())->summary($cid)['stock_value'] ?? 0);
+                $netWorth   = round($closing + $stockValue, 2);
                 $metrics  = [
                     'sales'    => ['value' => $sales,  'delta' => $this->percentDelta($sales,  $pSales)],
                     'expenses' => ['value' => $purch,  'delta' => $this->percentDelta($purch,  $pPurch)],
-                    'profit'   => ['value' => $profit, 'delta' => $this->percentDelta($profit, round($pSales - $pPurch, 2))],
+                    'profit'   => ['value' => $profit, 'delta' => $this->percentDelta($profit, $pProfit)],
                     'opening'  => ['value' => $opening, 'delta' => null],
-                    'balance'  => ['value' => $closing, 'delta' => null],
+                    'balance'  => ['value' => $netWorth, 'delta' => null],
+                    'cash'     => ['value' => $closing, 'delta' => null],
+                    'stock'    => ['value' => round($stockValue, 2), 'delta' => null],
                     'basis'    => 'accrual',
                 ];
             } else {

@@ -439,29 +439,48 @@ class TransactionModel extends Model
 
         $b = $this->scopedBuilder($companyId)->where('txn_date >=', $from)->where('txn_date <=', $to);
         self::applyClassFilters($b, '', $f);
+        // CASH rows only — a sale/purchase bill posts BOTH a ledger_only receivable
+        // /payable AND a cash payment; counting both makes Jama == Naam so every
+        // account nets to ₹0. Excluding the ledger_only postings (as the cash
+        // summary does) yields the true cash Jama/Naam per account.
+        $this->excludeLedgerOnly($b);
 
         $rows = $b
             ->select("COALESCE({$column}, '') AS label, COUNT(*) AS cnt,"
                 . "COALESCE(SUM(CASE WHEN type='jama' THEN amount ELSE 0 END),0) AS jama,"
-                . "COALESCE(SUM(CASE WHEN type='naam' THEN amount ELSE 0 END),0) AS naam", false)
+                . "COALESCE(SUM(CASE WHEN type='naam' THEN amount ELSE 0 END),0) AS naam,"
+                . 'COALESCE(SUM(amount),0) AS turnover', false)
             ->groupBy('label')
             ->get()->getResultArray();
 
         return self::shapeGroups($rows);
     }
 
-    /** Turn raw label/cnt/jama/naam rows into the report's shape, busiest group first. */
+    /**
+     * Turn raw group rows into the report's shape, busiest first. `net` is the
+     * receivable balance (Naam − Jama); `turnover` is the billed business volume
+     * (sum of the ledger entries — sale/purchase bill values), so a fully-paid
+     * account still shows its turnover even though its balance is 0.
+     */
     public static function shapeGroups(array $rows): array
     {
-        $out = array_map(static fn ($r) => [
-            'label' => (string) $r['label'],
-            'count' => (int) $r['cnt'],
-            'jama'  => (float) $r['jama'],
-            'naam'  => (float) $r['naam'],
-            'net'   => (float) $r['naam'] - (float) $r['jama'], // receivable = Naam − Jama (bahi-khata)
-        ], $rows);
+        $out = array_map(static function ($r) {
+            $turnover = (float) ($r['turnover'] ?? 0);
+            // Cash-book-only accounts (no bills) fall back to gross Jama+Naam volume.
+            if ($turnover <= 0) {
+                $turnover = (float) $r['jama'] + (float) $r['naam'];
+            }
+            return [
+                'label'    => (string) $r['label'],
+                'count'    => (int) $r['cnt'],
+                'jama'     => (float) $r['jama'],
+                'naam'     => (float) $r['naam'],
+                'net'      => (float) $r['naam'] - (float) $r['jama'], // receivable = Naam − Jama
+                'turnover' => round($turnover, 2),
+            ];
+        }, $rows);
 
-        usort($out, static fn ($a, $b) => ($b['jama'] + $b['naam']) <=> ($a['jama'] + $a['naam']));
+        usort($out, static fn ($a, $b) => $b['turnover'] <=> $a['turnover']);
 
         return $out;
     }

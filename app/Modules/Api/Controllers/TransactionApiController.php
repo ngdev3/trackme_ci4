@@ -143,6 +143,12 @@ class TransactionApiController extends BaseApiController
             $opening = round((new OpeningBalance($cid, $cid))->carryInto($from), 2);
             $closing = round($opening + (float) $summary['net'], 2);
 
+            // TRUE profit for the range = revenue − COST OF GOODS SOLD (from sale
+            // bills). Net Flow above is CASH movement — it goes negative when the
+            // firm stocks up (buys more than it sells) even on a profitable period —
+            // so we surface profit alongside it so the report isn't read as a loss.
+            $profit = (new \App\Models\InvoiceModel())->salesProfit($cid, $from, $to);
+
             $byMode = [];
             foreach ($model->byMode($cid, $f) as $mode => $v) {
                 $byMode[] = [
@@ -180,6 +186,7 @@ class TransactionApiController extends BaseApiController
                     'count'   => (int) $summary['count'],
                     'opening' => $opening,
                     'closing' => $closing,
+                    'profit'  => round((float) $profit, 2),
                 ],
                 'by_mode'       => $byMode,
                 'by_party_type' => $byParty,
@@ -319,39 +326,202 @@ class TransactionApiController extends BaseApiController
         // Party ledger runs on the receivable convention: Naam (debit) increases
         // what the party owes us, Jama (credit) reduces it. (Cash-in-hand, computed
         // elsewhere, still uses Jama − Naam — the two books are intentionally separate.)
-        $running = $opening;
-        $out     = [];
+        // Classify each row into ONE economic event so the app can filter
+        // (Sales / Purchases / Loans / Payments) and break the summary down. A
+        // Sale/Purchase BILL posts two rows — a ledger receivable/payable and its
+        // cash receipt/payment; both map back to the invoice here.
+        $invMap = $this->partyInvoiceMap($cid, $party);
+
+        $running       = $opening;
+        $out           = [];
+        $loanGiven     = 0.0;
+        $loanReturned  = 0.0;
         foreach ($rows as $r) {
-            $running += ($r['type'] === 'naam' ? (float) $r['amount'] : -(float) $r['amount']);
-            $out[]    = [
+            $amt      = (float) $r['amount'];
+            $running += ($r['type'] === 'naam' ? $amt : -$amt);
+            [$kind, $category] = $this->classifyStatementRow($r, $invMap);
+            if ($kind === 'loan_given') {
+                $loanGiven += $amt;
+            } elseif ($kind === 'loan_returned') {
+                $loanReturned += $amt;
+            }
+            $out[] = [
                 'id'           => (int) $r['id'],
                 'txn_no'       => $r['txn_no'],
                 'date'         => $r['txn_date'],
+                'created_at'   => $r['created_at'] ?? null,
                 'type'         => $r['type'],
-                'amount'       => (float) $r['amount'],
+                'amount'       => $amt,
                 'payment_mode' => $r['payment_mode'],
                 'status'       => $r['status'],
                 'notes'        => $r['notes'],
+                'kind'         => $kind,       // sale | sale_receipt | purchase | purchase_payment | sale_return | purchase_return | loan_given | loan_returned | payment | receipt
+                'category'     => $category,   // sales | purchases | loans | payments  (the filter bucket)
                 'balance'      => round($running, 2),
             ];
         }
 
         [$jama, $naam] = $model->partyTotals($cid, $party, $from ?: null, $to ?: null);
+        $closing       = round($opening + (float) $naam - (float) $jama, 2);
+
+        // Sale profit earned FROM this party over the range = Σ qty × (sale rate −
+        // product cost), across the party's Sale bills. Purchases/loans carry no
+        // profit. 0 when the inventory billing isn't used.
+        $profit = $this->partySaleProfit($cid, $party, $from ?: null, $to ?: null);
+
+        // Sale/Purchase turnover from the bills themselves (authoritative — returns
+        // net out). Loan principal is tracked separately above and never counts as
+        // sales/purchases, so it can't touch profit or inventory.
+        $bill = $this->partyBillTotals($cid, $party, $from ?: null, $to ?: null);
 
         return $this->respond([
-            'status'     => 'ok',
-            'has_party'  => true,
-            'party'      => $party,
-            'from'       => $from,
-            'to'         => $to,
-            'opening'    => $opening,
-            'master_opening' => round($masterOpen, 2),
-            'rows'       => $out,
-            'total_jama' => round((float) $jama, 2),
-            'total_naam' => round((float) $naam, 2),
-            'closing'    => round($opening + (float) $naam - (float) $jama, 2),
-            'count'      => count($out),
+            'status'          => 'ok',
+            'has_party'       => true,
+            'party'           => $party,
+            'from'            => $from,
+            'to'              => $to,
+            'opening'         => $opening,
+            'master_opening'  => round($masterOpen, 2),
+            'rows'            => $out,
+            'total_jama'      => round((float) $jama, 2),
+            'total_naam'      => round((float) $naam, 2),
+            'closing'         => $closing,
+            'net_balance'     => $closing,
+            // A ₹0 balance with entries present is SETTLED — the app must show this,
+            // never an "empty account" state.
+            'settled'         => abs($closing) < 0.005 && count($out) > 0,
+            'total_sales'     => round((float) $bill['sales'], 2),
+            'total_purchases' => round((float) $bill['purchases'], 2),
+            'loan_given'      => round($loanGiven, 2),
+            'loan_returned'   => round($loanReturned, 2),
+            'profit'          => round($profit, 2),
+            'count'           => count($out),
         ]);
+    }
+
+    /**
+     * Map every ledger transaction id that belongs to one of this party's bills to
+     * its invoice {type, role}. `role` = 'ledger' (the receivable/payable posting)
+     * or 'cash' (the receipt/payment posting). Lets the statement label each row as
+     * a Sale / Purchase / Return without guessing from free-text notes.
+     *
+     * @return array<int, array{type:string, role:string}>
+     */
+    private function partyInvoiceMap(int $cid, string $party): array
+    {
+        $db  = \Config\Database::connect();
+        $map = [];
+        if (! $db->tableExists('invoices')) {
+            return $map;
+        }
+        $rows = $db->table('invoices')
+            ->select('id, type, txn_id, pay_txn_id')
+            ->where('company_id', $cid)
+            ->where('party_name', $party)
+            ->where('deleted_at', null)
+            ->get()->getResultArray();
+        foreach ($rows as $r) {
+            $t = (string) $r['type'];
+            if (! empty($r['txn_id'])) {
+                $map[(int) $r['txn_id']] = ['type' => $t, 'role' => 'ledger'];
+            }
+            if (! empty($r['pay_txn_id'])) {
+                $map[(int) $r['pay_txn_id']] = ['type' => $t, 'role' => 'cash'];
+            }
+        }
+        return $map;
+    }
+
+    /**
+     * Classify one statement row → [kind, filterCategory]. Bill rows are resolved
+     * from the invoice map (authoritative); a plain cash-book entry is a Loan when
+     * its note says so, else a generic Payment (Naam) / Receipt (Jama).
+     *
+     * @return array{0:string,1:string}
+     */
+    private function classifyStatementRow(array $r, array $invMap): array
+    {
+        $id = (int) $r['id'];
+        if (isset($invMap[$id])) {
+            $role = $invMap[$id]['role'];
+            switch ($invMap[$id]['type']) {
+                case 'sale':            return [$role === 'ledger' ? 'sale' : 'sale_receipt', 'sales'];
+                case 'purchase':        return [$role === 'ledger' ? 'purchase' : 'purchase_payment', 'purchases'];
+                case 'sale_return':     return [$role === 'ledger' ? 'sale_return' : 'sale_return_refund', 'sales'];
+                case 'purchase_return': return [$role === 'ledger' ? 'purchase_return' : 'purchase_return_refund', 'purchases'];
+            }
+        }
+        // Loan detection from the note (English + common Hindi/Hinglish terms).
+        $notes = (string) ($r['notes'] ?? '');
+        if ($notes !== '' && preg_match('/loan|udh?aar|udhar|karz|कर्ज|कर्ज़|उधार|ऋण/iu', $notes)) {
+            return [$r['type'] === 'naam' ? 'loan_given' : 'loan_returned', 'loans'];
+        }
+        return [$r['type'] === 'naam' ? 'payment' : 'receipt', 'payments'];
+    }
+
+    /**
+     * Sale / purchase turnover with a party over a range, straight from the bills
+     * (sale/purchase minus their returns). Loan principal is never billed, so it
+     * cannot leak into these figures. 0 when billing isn't in use.
+     *
+     * @return array{sales:float, purchases:float}
+     */
+    private function partyBillTotals(int $cid, string $party, ?string $from, ?string $to): array
+    {
+        $db  = \Config\Database::connect();
+        $out = ['sales' => 0.0, 'purchases' => 0.0];
+        if (! $db->tableExists('invoices')) {
+            return $out;
+        }
+        $b = $db->table('invoices')
+            ->select('type, COALESCE(SUM(total), 0) AS t', false)
+            ->where('company_id', $cid)
+            ->where('party_name', $party)
+            ->where('deleted_at', null)
+            ->groupBy('type');
+        if ($from !== null && $from !== '') {
+            $b->where('invoice_date >=', $from);
+        }
+        if ($to !== null && $to !== '') {
+            $b->where('invoice_date <=', $to);
+        }
+        $byType = [];
+        foreach ($b->get()->getResultArray() as $r) {
+            $byType[(string) $r['type']] = (float) $r['t'];
+        }
+        $out['sales']     = ($byType['sale'] ?? 0) - ($byType['sale_return'] ?? 0);
+        $out['purchases'] = ($byType['purchase'] ?? 0) - ($byType['purchase_return'] ?? 0);
+        return $out;
+    }
+
+    /**
+     * Total profit earned on Sale bills to a party over a date range:
+     * Σ line qty × (sale rate − product purchase cost). Uses the product's
+     * current cost (the bill line stores only the sale rate). Returns 0 when the
+     * invoices/invoice_items tables aren't present (billing not in use).
+     */
+    private function partySaleProfit(int $cid, string $party, ?string $from, ?string $to): float
+    {
+        $db = \Config\Database::connect();
+        if (! $db->tableExists('invoices') || ! $db->tableExists('invoice_items') || ! $db->tableExists('products')) {
+            return 0.0;
+        }
+        $b = $db->table('invoices inv')
+            ->select('COALESCE(SUM(ii.qty * (ii.rate - COALESCE(p.purchase_price, 0))), 0) AS profit', false)
+            ->join('invoice_items ii', 'ii.invoice_id = inv.id')
+            ->join('products p', 'p.id = ii.product_id', 'left')
+            ->where('inv.company_id', $cid)
+            ->where('inv.type', 'sale')
+            ->where('inv.deleted_at', null)
+            ->where('inv.party_name', $party);
+        if ($from !== null && $from !== '') {
+            $b->where('inv.invoice_date >=', $from);
+        }
+        if ($to !== null && $to !== '') {
+            $b->where('inv.invoice_date <=', $to);
+        }
+        $row = $b->get()->getRowArray();
+        return (float) ($row['profit'] ?? 0);
     }
 
     /**
@@ -410,6 +580,11 @@ class TransactionApiController extends BaseApiController
                 return $this->failValidationErrors('Please provide a name (max 60 characters).');
             }
             $settings->put($cid, 'transactions', 'shri_rokad_label', $clean);
+            // Opening label feeds the Dashboard / Rokad / Report headers — bust their
+            // cached aggregates so the rename shows everywhere immediately.
+            if (function_exists('dash_bust')) {
+                dash_bust($cid);
+            }
             return $this->respond(['status' => 'ok', 'message' => 'Name updated.', 'label' => $clean]);
         }
 
@@ -449,6 +624,14 @@ class TransactionApiController extends BaseApiController
         }
         if ($staleIds !== []) {
             $settings->builder()->whereIn('id', $staleIds)->delete();
+        }
+
+        // The opening feeds every cash aggregate — Dashboard opening/balance, Rokad
+        // running balance, Report opening/closing. Bust this firm's cached
+        // aggregates so all three reflect the new opening the instant it's saved
+        // (otherwise they serve the previous value for up to the cache TTL).
+        if (function_exists('dash_bust')) {
+            dash_bust($cid);
         }
 
         if (function_exists('activity_log')) {
@@ -1001,6 +1184,7 @@ class TransactionApiController extends BaseApiController
             'amount'       => (float) $r['amount'],
             'payment_mode' => $r['payment_mode'],
             'status'       => $r['status'],
+            'ledger_only'  => (int) ($r['ledger_only'] ?? 0),
             'notes'        => $r['notes'],
             'source'       => $r['source'] ?? null,
             'is_deleted'   => empty($r['deleted_at']) ? 0 : 1,
