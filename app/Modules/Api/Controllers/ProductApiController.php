@@ -71,6 +71,8 @@ class ProductApiController extends BaseApiController
         if (! $cid) {
             return $this->failValidationErrors('Select a company first.');
         }
+        helper('url');
+        $imgUrl = static fn (?string $p) => ! empty($p) ? base_url($p) : null;
         $model  = new ProductModel();
         $mapped = [];
 
@@ -79,7 +81,7 @@ class ProductApiController extends BaseApiController
             if ($uuid !== '') {
                 $existing = $model->withDeleted()->where('company_id', $cid)->where('client_uuid', $uuid)->first();
                 if ($existing) {
-                    $mapped[] = ['local_id' => $c['local_id'] ?? null, 'server_id' => (int) $existing['id'], 'image_path' => $existing['image_path'] ?? null, 'updated_at' => $existing['updated_at'] ?? date('Y-m-d H:i:s')];
+                    $mapped[] = ['local_id' => $c['local_id'] ?? null, 'server_id' => (int) $existing['id'], 'image_path' => $existing['image_path'] ?? null, 'image_url' => $imgUrl($existing['image_path'] ?? null), 'updated_at' => $existing['updated_at'] ?? date('Y-m-d H:i:s')];
                     continue;
                 }
             }
@@ -92,7 +94,7 @@ class ProductApiController extends BaseApiController
             $model->skipValidation(true)->insert($data);
             $id  = (int) $model->getInsertID();
             $row = $model->find($id);
-            $mapped[] = ['local_id' => $c['local_id'] ?? null, 'server_id' => $id, 'image_path' => $row['image_path'] ?? null, 'updated_at' => $row['updated_at'] ?? date('Y-m-d H:i:s')];
+            $mapped[] = ['local_id' => $c['local_id'] ?? null, 'server_id' => $id, 'image_path' => $row['image_path'] ?? null, 'image_url' => $imgUrl($row['image_path'] ?? null), 'updated_at' => $row['updated_at'] ?? date('Y-m-d H:i:s')];
         }
 
         foreach (array_merge((array) ($this->input('updates') ?? []), (array) ($this->input('deletes') ?? [])) as $u) {
@@ -117,7 +119,7 @@ class ProductApiController extends BaseApiController
                 }
             }
             $fresh    = $model->withDeleted()->find($sid);
-            $mapped[] = ['local_id' => $u['local_id'] ?? null, 'server_id' => $sid, 'image_path' => $fresh['image_path'] ?? null, 'updated_at' => $fresh['updated_at'] ?? date('Y-m-d H:i:s')];
+            $mapped[] = ['local_id' => $u['local_id'] ?? null, 'server_id' => $sid, 'image_path' => $fresh['image_path'] ?? null, 'image_url' => $imgUrl($fresh['image_path'] ?? null), 'updated_at' => $fresh['updated_at'] ?? date('Y-m-d H:i:s')];
         }
 
         return $this->respond(['status' => 'ok', 'server_time' => date('Y-m-d H:i:s'), 'mapped' => $mapped]);
