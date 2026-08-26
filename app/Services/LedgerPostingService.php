@@ -77,6 +77,11 @@ class LedgerPostingService
         $partyTyp = trim((string) ($ctx['party_type'] ?? '')) ?: null;
         $mode     = in_array($ctx['payment_mode'] ?? 'cash', TransactionModel::MODES, true) ? $ctx['payment_mode'] : 'cash';
         $date     = $ctx['invoice_date'];
+        // Tag the party's role (new party gets customer/supplier; a party used on
+        // both sides becomes 'both'), then resolve its master id.
+        if ($party !== '') {
+            (new PartyModel())->assignRole($cid, $party, $type === 'sale' ? 'customer' : 'supplier');
+        }
         $partyId  = $this->resolvePartyId($cid, $party);
 
         $db  = Database::connect();
@@ -265,6 +270,9 @@ class LedgerPostingService
         $partyTyp = trim((string) ($ctx['party_type'] ?? '')) ?: null;
         $mode   = in_array($ctx['payment_mode'] ?? 'cash', TransactionModel::MODES, true) ? $ctx['payment_mode'] : 'cash';
         $date   = $ctx['invoice_date'];
+        if ($party !== '') {
+            (new PartyModel())->assignRole($cid, $party, $isSale ? 'customer' : 'supplier');
+        }
         $partyId = $this->resolvePartyId($cid, $party);
         $refId  = isset($ctx['ref_invoice_id']) ? ((int) $ctx['ref_invoice_id'] ?: null) : null;
 

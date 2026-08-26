@@ -185,6 +185,21 @@ class TestAmit extends BaseCommand
         $a2 = abs($bills['net_purchases'] - 30000) < 0.01; $pass &= $a2; $line($a2, 'Billed Purchases', $bills['net_purchases'], 30000);
         $a3 = abs($profit - 20000) < 0.01;                 $pass &= $a3; $line($a3, 'Profit = Sales − Purchases', $profit, 20000);
 
+        // 8) Party roles: Amit (sales only) = customer; buy from Amit too → both.
+        CLI::newLine();
+        CLI::write(CLI::color('Party roles', 'yellow'));
+        $amitRole1 = (new \App\Models\PartyModel())->forName($cid, 'Amit')['party_role'] ?? '';
+        $pr1 = $amitRole1 === 'customer'; $pass &= $pr1; $line($pr1, 'Amit role after sales', $amitRole1 ?: '(none)', 'customer');
+        $riceP = $products->find($riceId);
+        (new LedgerPostingService())->postInvoice([
+            'company_id' => $cid, 'user_id' => $uid, 'type' => 'purchase', 'party_name' => 'Amit',
+            'party_type' => 'Trader', 'payment_mode' => 'cash', 'invoice_date' => date('Y-m-d'), 'notes' => null,
+            'discount' => 0, 'subtotal' => 1000, 'tax_total' => 0, 'total' => 1000, 'received' => 1000,
+            'client_uuid' => 'test-amit-buy', 'lines' => [['product_id' => $riceId, 'product' => $riceP, 'name' => 'Rice', 'qty' => 2, 'rate' => 500, 'tax_rate' => 0, 'amount' => 1000]],
+        ]);
+        $amitRole2 = (new \App\Models\PartyModel())->forName($cid, 'Amit')['party_role'] ?? '';
+        $pr2 = $amitRole2 === 'both'; $pass &= $pr2; $line($pr2, 'Amit role after also buying', $amitRole2 ?: '(none)', 'both');
+
         $wipe(); // discard ALL test data
         $db->table('companies')->where('id', $cid)->delete(); // remove throwaway company last
 

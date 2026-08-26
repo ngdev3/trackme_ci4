@@ -35,6 +35,30 @@ class PartyModel extends Model
     }
 
     /**
+     * Tag a party with a transaction role, auto-promoting to 'both' when the
+     * party is used on the opposite side. Called when a bill is posted so a new
+     * customer/supplier gets a role, and a party that both sells and buys becomes
+     * 'both'. Creates the master row on first use. `$role` is 'customer' or 'supplier'.
+     */
+    public function assignRole(int $companyId, string $name, string $role): void
+    {
+        $name = trim($name);
+        if ($name === '' || ! in_array($role, ['customer', 'supplier'], true)) {
+            return;
+        }
+        $existing = $this->forName($companyId, $name);
+        if (! $existing) {
+            $this->insert(['company_id' => $companyId, 'name' => $name, 'party_role' => $role]);
+            return;
+        }
+        $current = (string) ($existing['party_role'] ?? '');
+        $next    = $current === '' ? $role : ($current === 'both' || $current === $role ? $current : 'both');
+        if ($next !== $current) {
+            $this->update((int) $existing['id'], ['party_role' => $next]);
+        }
+    }
+
+    /**
      * Create or update a party's master details. If the party is renamed, the
      * old master row is moved to the new name (merging into an existing one).
      */
