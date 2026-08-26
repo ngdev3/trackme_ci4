@@ -498,8 +498,11 @@ class TransactionApiController extends BaseApiController
         if (! $db->tableExists('invoices')) {
             return $out;
         }
+        // Sales/Purchase turnover = TAXABLE value (subtotal), ex-GST — revenue is
+        // the goods value, GST is collected for the government, not turnover. The
+        // party BALANCE still uses the tax-inclusive total (they owe the full bill).
         $b = $db->table('invoices')
-            ->select('type, COALESCE(SUM(total), 0) AS t', false)
+            ->select('type, COALESCE(SUM(subtotal), 0) AS t', false)
             ->where('company_id', $cid)
             ->where('party_name', $party)
             ->where('deleted_at', null)

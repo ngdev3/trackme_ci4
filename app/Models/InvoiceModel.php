@@ -39,8 +39,10 @@ class InvoiceModel extends Model
      */
     public function periodTotals(?int $companyId, string $from, string $to): array
     {
+        // Turnover on the TAXABLE value (subtotal), ex-GST — so the dashboard's
+        // Sales/Purchases match the tax-exclusive revenue that drives profit.
         $rows = $this->builder()
-            ->select("type, COALESCE(SUM(total),0) AS t, COUNT(*) AS c", false)
+            ->select("type, COALESCE(SUM(subtotal),0) AS t, COUNT(*) AS c", false)
             ->where('company_id', (int) $companyId)
             ->where('deleted_at', null)
             ->where('invoice_date >=', $from)
