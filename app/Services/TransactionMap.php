@@ -95,6 +95,18 @@ final class TransactionMap
             'inventory' => 'none', 'cash_bank' => 'in', 'sales' => false, 'purchase' => false,
             'loan' => true, 'gst' => 'none', 'cogs_profit' => false,
         ],
+        // ---- Advance: money moved BEFORE the bill. Sits as a party credit/debit;
+        //      cash moves now, but no stock/sales/profit until it's adjusted.
+        'advance_received' => [
+            'category' => 'payments', 'party_ledger' => true, 'direction' => 'jama',
+            'inventory' => 'none', 'cash_bank' => 'in', 'sales' => false, 'purchase' => false,
+            'loan' => false, 'gst' => 'none', 'cogs_profit' => false,
+        ],
+        'advance_paid' => [
+            'category' => 'payments', 'party_ledger' => true, 'direction' => 'naam',
+            'inventory' => 'none', 'cash_bank' => 'out', 'sales' => false, 'purchase' => false,
+            'loan' => false, 'gst' => 'none', 'cogs_profit' => false,
+        ],
         // ---- Plain cash-book entries against a party (or cash) with no bill.
         'payment' => [
             'category' => 'payments', 'party_ledger' => true, 'direction' => 'naam',
@@ -114,8 +126,11 @@ final class TransactionMap
         ],
     ];
 
-    /** Loan / advance detection on a free-text note (English + Hindi/Hinglish). */
+    /** Loan detection on a free-text note (English + Hindi/Hinglish). */
     public const LOAN_NOTE_RE = '/loan|udh?aar|udhar|karz|कर्ज|कर्ज़|उधार|ऋण/iu';
+
+    /** Advance detection on a free-text note (English + Hindi/Hinglish). */
+    public const ADVANCE_NOTE_RE = '/advance|peshgi|peshagi|agrim|अग्रिम|पेशगी/iu';
 
     /**
      * Classify one transaction row into [kind, category].
@@ -149,6 +164,9 @@ final class TransactionMap
         $notes = (string) ($row['notes'] ?? '');
         if ($notes !== '' && preg_match(self::LOAN_NOTE_RE, $notes)) {
             return [$type === 'naam' ? 'loan_given' : 'loan_returned', 'loans'];
+        }
+        if ($notes !== '' && preg_match(self::ADVANCE_NOTE_RE, $notes)) {
+            return [$type === 'naam' ? 'advance_paid' : 'advance_received', 'payments'];
         }
         return [$type === 'naam' ? 'payment' : 'receipt', 'payments'];
     }
