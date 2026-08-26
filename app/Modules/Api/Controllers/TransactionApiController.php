@@ -151,7 +151,9 @@ class TransactionApiController extends BaseApiController
 
             // GST captured on the bills for this range (output − input = payable),
             // straight from invoices.tax_total — no tax ledger/schema (audit F-07).
-            $gst = (new \App\Models\InvoiceModel())->gstSummary($cid, $from, $to);
+            $invModel    = new \App\Models\InvoiceModel();
+            $gst         = $invModel->gstSummary($cid, $from, $to);
+            $gstRegister = $invModel->gstRegister($cid, $from, $to);
 
             $byMode = [];
             foreach ($model->byMode($cid, $f) as $mode => $v) {
@@ -198,6 +200,7 @@ class TransactionApiController extends BaseApiController
                 'by_mode'       => $byMode,
                 'by_party_type' => $byParty,
                 'by_account'    => $byAccount,
+                'gst_register'  => $gstRegister,
             ];
         });
 

@@ -158,6 +158,39 @@ class InvoiceModel extends Model
     }
 
     /**
+     * GST register for a period — one row per TAXED bill (output for sales, input
+     * for purchases), newest first, for a filing-ready listing. Derived straight
+     * from `invoices` (the model's soft-delete scope drops voided bills), so it
+     * covers every bill with no separate ledger to keep in sync (audit F-07).
+     *
+     * @return array<int, array<string,mixed>>
+     */
+    public function gstRegister(?int $companyId, string $from, string $to, int $limit = 200): array
+    {
+        if (! $this->db->tableExists('invoices')) {
+            return [];
+        }
+        $rows = $this->select('invoice_no, type, party_name, invoice_date, subtotal, tax_total')
+            ->where('company_id', (int) $companyId)
+            ->where('tax_total >', 0)
+            ->where('invoice_date >=', $from)
+            ->where('invoice_date <=', $to)
+            ->orderBy('invoice_date', 'DESC')
+            ->orderBy('id', 'DESC')
+            ->findAll($limit);
+
+        return array_map(static fn (array $r): array => [
+            'invoice_no'   => $r['invoice_no'],
+            'type'         => $r['type'],
+            'direction'    => in_array($r['type'], ['sale', 'sale_return'], true) ? 'output' : 'input',
+            'party_name'   => $r['party_name'],
+            'invoice_date' => $r['invoice_date'],
+            'taxable'      => round((float) $r['subtotal'], 2),
+            'tax'          => round((float) $r['tax_total'], 2),
+        ], $rows);
+    }
+
+    /**
      * Next invoice number for a company + type, e.g. INV-000123 / PUR-000045.
      * Sequence is per company and per type.
      */
