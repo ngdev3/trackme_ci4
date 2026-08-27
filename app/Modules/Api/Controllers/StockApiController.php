@@ -36,6 +36,12 @@ class StockApiController extends BaseApiController
         if ($qty <= 0) {
             return $this->failValidationErrors(['qty' => 'Enter a quantity greater than zero.']);
         }
+        if ($qty > InvoiceApiController::MAX_QTY) {
+            return $this->failValidationErrors(['qty' => 'Quantity is too large (max ' . number_format(InvoiceApiController::MAX_QTY) . ').']);
+        }
+        if ($rate < 0 || $rate > \App\Models\TransactionModel::MAX_AMOUNT) {
+            return $this->failValidationErrors(['rate' => 'Rate is out of range.']);
+        }
         $products = new ProductModel();
         $product  = $products->scoped($cid)->find($productId);
         if (! $product) {

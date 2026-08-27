@@ -21,6 +21,9 @@ use App\Models\TransactionModel;
  */
 class InvoiceApiController extends BaseApiController
 {
+    /** Max quantity for a bill line / stock figure — fits the DECIMAL(12,3) columns. */
+    public const MAX_QTY = 99999999.999;
+
     private function scope(): array
     {
         $user = $this->currentApiUser();
@@ -271,6 +274,18 @@ class InvoiceApiController extends BaseApiController
             $name = trim((string) ($it['name'] ?? ''));
             if ($qty <= 0) {
                 continue;
+            }
+            // Bounds — reject nonsense values (fat-finger / abuse). Qty fits the
+            // DECIMAL(12,3) stock columns; rate/amount share the ₹ ceiling; tax is
+            // a percentage.
+            if ($qty > self::MAX_QTY) {
+                return ['error' => ['items' => 'A quantity is too large (max ' . number_format(self::MAX_QTY) . ').']];
+            }
+            if ($rate < 0 || $rate > TransactionModel::MAX_AMOUNT) {
+                return ['error' => ['items' => 'A rate is out of range (₹0 – ₹9,99,99,99,999.99).']];
+            }
+            if ($tax < 0 || $tax > 100) {
+                return ['error' => ['items' => 'Tax % must be between 0 and 100.']];
             }
             $product = null;
             if ($pid) {

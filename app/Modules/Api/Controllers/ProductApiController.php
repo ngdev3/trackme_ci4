@@ -222,7 +222,11 @@ class ProductApiController extends BaseApiController
     /** Assemble a validated write payload from the request. */
     private function payload(int $cid, int $userId): array
     {
-        $num = fn ($k) => (float) ($this->input($k) ?? 0);
+        // Clamp every number into a sane range so no nonsense value is ever stored
+        // (money ≤ ₹9.99B, qty fits DECIMAL(12,3), tax 0–100%). Negatives floor to 0.
+        $money = fn ($k) => max(0.0, min(round((float) ($this->input($k) ?? 0), 2), \App\Models\TransactionModel::MAX_AMOUNT));
+        $qty   = fn ($k) => max(0.0, min(round((float) ($this->input($k) ?? 0), 3), InvoiceApiController::MAX_QTY));
+        $pct   = fn ($k) => max(0.0, min(round((float) ($this->input($k) ?? 0), 2), 100.0));
         $data = [
             'company_id'     => $cid,
             'created_by'     => $userId,
@@ -231,12 +235,12 @@ class ProductApiController extends BaseApiController
             'category'       => trim((string) ($this->input('category') ?? '')) ?: null,
             'unit'           => trim((string) ($this->input('unit') ?? '')) ?: null,
             'hsn'            => trim((string) ($this->input('hsn') ?? '')) ?: null,
-            'sale_price'     => round($num('sale_price'), 2),
-            'purchase_price' => round($num('purchase_price'), 2),
-            'opening_stock'  => round($num('opening_stock'), 3),
-            'current_stock'  => round($num('current_stock'), 3),
-            'low_stock'      => round($num('low_stock'), 3),
-            'tax_rate'       => round($num('tax_rate'), 2),
+            'sale_price'     => $money('sale_price'),
+            'purchase_price' => $money('purchase_price'),
+            'opening_stock'  => $qty('opening_stock'),
+            'current_stock'  => $qty('current_stock'),
+            'low_stock'      => $qty('low_stock'),
+            'tax_rate'       => $pct('tax_rate'),
             'description'    => trim((string) ($this->input('description') ?? '')) ?: null,
             'status'         => (int) ($this->input('status') ?? 1) === 0 ? 0 : 1,
         ];
@@ -283,7 +287,10 @@ class ProductApiController extends BaseApiController
      *  that is movement-owned and never overwritten by a master update). */
     private function payloadFrom(array $item, int $cid, int $userId): array
     {
-        $num  = fn ($k) => (float) ($item[$k] ?? 0);
+        // Same clamps as payload() — no nonsense value survives the sync path either.
+        $money = fn ($k) => max(0.0, min(round((float) ($item[$k] ?? 0), 2), \App\Models\TransactionModel::MAX_AMOUNT));
+        $qty   = fn ($k) => max(0.0, min(round((float) ($item[$k] ?? 0), 3), InvoiceApiController::MAX_QTY));
+        $pct   = fn ($k) => max(0.0, min(round((float) ($item[$k] ?? 0), 2), 100.0));
         $data = [
             'company_id'     => $cid,
             'created_by'     => $userId,
@@ -292,11 +299,11 @@ class ProductApiController extends BaseApiController
             'category'       => trim((string) ($item['category'] ?? '')) ?: null,
             'unit'           => trim((string) ($item['unit'] ?? '')) ?: null,
             'hsn'            => trim((string) ($item['hsn'] ?? '')) ?: null,
-            'sale_price'     => round($num('sale_price'), 2),
-            'purchase_price' => round($num('purchase_price'), 2),
-            'opening_stock'  => round($num('opening_stock'), 3),
-            'low_stock'      => round($num('low_stock'), 3),
-            'tax_rate'       => round($num('tax_rate'), 2),
+            'sale_price'     => $money('sale_price'),
+            'purchase_price' => $money('purchase_price'),
+            'opening_stock'  => $qty('opening_stock'),
+            'low_stock'      => $qty('low_stock'),
+            'tax_rate'       => $pct('tax_rate'),
             'description'    => trim((string) ($item['description'] ?? '')) ?: null,
             'status'         => (int) ($item['status'] ?? 1) === 0 ? 0 : 1,
         ];
