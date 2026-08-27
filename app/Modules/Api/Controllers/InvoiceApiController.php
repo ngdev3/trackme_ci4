@@ -152,6 +152,11 @@ class InvoiceApiController extends BaseApiController
         if (! $result['duplicate'] && function_exists('activity_log')) {
             activity_log('Invoices', 'Add', ucfirst($type) . " bill {$invNo} created (mobile)");
         }
+        // A bill posts a Jama/Naam cash entry + stock — bust the cached
+        // Dashboard/Report aggregates so it shows immediately.
+        if (! $result['duplicate'] && function_exists('dash_bust')) {
+            dash_bust($cid);
+        }
 
         return $this->respondCreated([
             'status'    => 'ok',
@@ -226,6 +231,10 @@ class InvoiceApiController extends BaseApiController
         if (! $result['duplicate'] && function_exists('activity_log')) {
             activity_log('Invoices', 'Add', str_replace('_', ' ', $type) . " {$saved['invoice_no']} created (mobile)");
         }
+        // A return reverses stock + party ledger — bust the cached aggregates.
+        if (! $result['duplicate'] && function_exists('dash_bust')) {
+            dash_bust($cid);
+        }
         return $this->respondCreated([
             'status'    => 'ok',
             'duplicate' => $result['duplicate'],
@@ -249,6 +258,10 @@ class InvoiceApiController extends BaseApiController
         }
         if (function_exists('activity_log')) {
             activity_log('Invoices', 'Delete', "Bill {$res['invoice_no']} voided (mobile)" . ($reason ? " — {$reason}" : ''));
+        }
+        // Voiding reverses the cash entry + stock — bust the cached aggregates.
+        if (function_exists('dash_bust')) {
+            dash_bust($cid);
         }
         return $this->respond(['status' => 'ok', 'message' => 'Bill ' . $res['invoice_no'] . ' voided.']);
     }
@@ -349,7 +362,7 @@ class InvoiceApiController extends BaseApiController
         }
         $part = explode('INSUFFICIENT_STOCK:', $e->getMessage(), 2)[1] ?? '';
         [$name, $have] = array_pad(explode(':', $part, 2), 2, '0');
-        return 'Not enough stock for ' . trim($name) . ' (available ' . rtrim(rtrim($have, '0'), '.') . ').';
+        return 'Not enough stock for ' . trim($name) . ' (available ' . rtrim(rtrim(number_format((float) $have, 3, '.', ''), '0'), '.') . ').';
     }
 
     // ---- Shapers -----------------------------------------------------------

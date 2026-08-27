@@ -159,6 +159,11 @@ class ProductApiController extends BaseApiController
         if ($data['name'] === '') {
             return $this->failValidationErrors(['name' => 'Product name is required.']);
         }
+        // Seed the new product's current_stock: the value the caller sent, else the
+        // opening stock. After creation it is movement-owned and updates never reset it.
+        if (! array_key_exists('current_stock', $data)) {
+            $data['current_stock'] = $data['opening_stock'];
+        }
         $model = new ProductModel();
         $model->skipValidation(true)->insert($data);
         return $this->respondCreated(['status' => 'ok', 'message' => 'Product saved.', 'id' => (int) $model->getInsertID()]);
@@ -238,12 +243,18 @@ class ProductApiController extends BaseApiController
             'sale_price'     => $money('sale_price'),
             'purchase_price' => $money('purchase_price'),
             'opening_stock'  => $qty('opening_stock'),
-            'current_stock'  => $qty('current_stock'),
             'low_stock'      => $qty('low_stock'),
             'tax_rate'       => $pct('tax_rate'),
             'description'    => trim((string) ($this->input('description') ?? '')) ?: null,
             'status'         => (int) ($this->input('status') ?? 1) === 0 ? 0 : 1,
         ];
+
+        // current_stock is movement-owned: only write it when the caller EXPLICITLY
+        // sends it (a create seeds it — see create(); an update that omits it must
+        // NOT reset the live stock to 0). Stock is otherwise changed via movements.
+        if ($this->input('current_stock') !== null) {
+            $data['current_stock'] = $qty('current_stock');
+        }
 
         // Product photo: a new base64 data URL replaces the image; `remove_image`
         // clears it. When neither is sent, image_path is left untouched (so an

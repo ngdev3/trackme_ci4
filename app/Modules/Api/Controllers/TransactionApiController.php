@@ -736,6 +736,11 @@ class TransactionApiController extends BaseApiController
         if (function_exists('activity_log')) {
             activity_log('Transactions', 'Edit', "Transaction {$row['txn_no']} updated (mobile)");
         }
+        // Bust the cached Dashboard/Report aggregates so the edit shows immediately
+        // (a create + saveOpening already do this; an edit must too).
+        if (function_exists('dash_bust')) {
+            dash_bust($cid);
+        }
 
         return $this->respond([
             'status'  => 'ok',
@@ -776,6 +781,11 @@ class TransactionApiController extends BaseApiController
         $model->delete((int) $id);
         if (function_exists('activity_log')) {
             activity_log('Transactions', 'Delete', "Transaction {$row['txn_no']} deleted (mobile) — reason: {$reason}");
+        }
+        // Bust the cached Dashboard/Report aggregates so the removed entry drops
+        // out of the totals immediately instead of lingering for up to 60s.
+        if (function_exists('dash_bust')) {
+            dash_bust($cid);
         }
 
         return $this->respond([
@@ -827,6 +837,11 @@ class TransactionApiController extends BaseApiController
 
         if (function_exists('activity_log')) {
             activity_log('Transactions', 'Edit', "Transaction {$row['txn_no']} restored (mobile)");
+        }
+        // Bust the cached Dashboard/Report aggregates so the restored entry is
+        // counted again immediately.
+        if (function_exists('dash_bust')) {
+            dash_bust($cid);
         }
 
         return $this->respond(['status' => 'ok', 'message' => 'Entry restored.', 'txn_no' => $row['txn_no']]);

@@ -51,7 +51,7 @@ class StockApiController extends BaseApiController
         $current = (float) $product['current_stock'];
         $newStock = $type === 'in' ? $current + $qty : $current - $qty;
         if ($newStock < 0) {
-            return $this->failValidationErrors(['qty' => 'Not enough stock. Available: ' . rtrim(rtrim((string) $current, '0'), '.') . '.']);
+            return $this->failValidationErrors(['qty' => 'Not enough stock. Available: ' . rtrim(rtrim(number_format($current, 3, '.', ''), '0'), '.') . '.']);
         }
 
         (new StockMovementModel())->insert([
