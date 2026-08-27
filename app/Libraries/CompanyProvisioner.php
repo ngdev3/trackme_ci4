@@ -6,6 +6,7 @@ use App\Models\AccountingGroupModel;
 use App\Models\CompanyModel;
 use App\Models\CompanySettingModel;
 use App\Models\CompanyUserModel;
+use App\Models\LedgerModel;
 use Config\Database;
 
 /**
@@ -41,6 +42,24 @@ class CompanyProvisioner
     ];
 
     /**
+     * The core ledgers every simple business needs from day one, so accounting
+     * works out of the box without the user having to build a chart of accounts.
+     * [ledger name, group name (from DEFAULT_GROUPS), opening side Dr|Cr].
+     * All open at ₹0 — the firm's opening cash is set separately (Shri Rokad).
+     */
+    private const DEFAULT_LEDGERS = [
+        ['Cash', 'Cash-in-Hand', 'Dr'],
+        ['Bank', 'Bank Accounts', 'Dr'],
+        ["Owner's Capital", 'Capital Account', 'Cr'],
+        ['Sales', 'Sales Accounts', 'Cr'],
+        ['Purchase', 'Purchase Accounts', 'Dr'],
+        ['Salary & Wages', 'Indirect Expenses', 'Dr'],
+        ['Rent', 'Indirect Expenses', 'Dr'],
+        ['Electricity', 'Indirect Expenses', 'Dr'],
+        ['Miscellaneous Expenses', 'Indirect Expenses', 'Dr'],
+    ];
+
+    /**
      * @param array<string,mixed> $data validated company fields
      * @return int|null new company id, or null on failure
      */
@@ -63,6 +82,7 @@ class CompanyProvisioner
             ]);
 
             $this->seedAccountingGroups($companyId);
+            $this->seedCoreLedgers($companyId);
             $this->seedSettings($companyId, $data);
             $this->ensureSubscription($ownerId);
         }
@@ -86,6 +106,37 @@ class CompanyProvisioner
             $rows[] = ['company_id' => $companyId, 'name' => $name, 'nature' => $nature, 'is_default' => 1];
         }
         (new AccountingGroupModel())->insertBatch($rows);
+    }
+
+    /**
+     * Seed the core ledgers (Cash, Bank, Sales, Purchase, Capital + common
+     * expense heads) under the just-created default groups, so a new firm has a
+     * ready chart of accounts for simple accounting from day one.
+     */
+    private function seedCoreLedgers(int $companyId): void
+    {
+        // Map each default group's name → its new id for this company.
+        $groupId = [];
+        foreach ((new AccountingGroupModel())->where('company_id', $companyId)->findAll() as $g) {
+            $groupId[$g['name']] = (int) $g['id'];
+        }
+
+        $rows = [];
+        foreach (self::DEFAULT_LEDGERS as [$name, $group, $type]) {
+            if (! isset($groupId[$group])) {
+                continue; // group missing (shouldn't happen) — skip rather than orphan
+            }
+            $rows[] = [
+                'company_id'      => $companyId,
+                'group_id'        => $groupId[$group],
+                'name'            => $name,
+                'opening_balance' => 0,
+                'opening_type'    => $type,
+            ];
+        }
+        if ($rows) {
+            (new LedgerModel())->insertBatch($rows);
+        }
     }
 
     private function seedSettings(int $companyId, array $data): void
