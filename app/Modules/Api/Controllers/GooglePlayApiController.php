@@ -70,6 +70,13 @@ class GooglePlayApiController extends BaseApiController
         if ($cfg->trustClient) {
             $expiry  = $this->cycleExpiry($plan);
             $orderId = 'play_' . substr(hash('sha256', $token), 0, 24);
+
+            // Even in trust-client mode we MUST acknowledge the purchase with
+            // Google, or it auto-refunds after 3 days. Best-effort: needs a live
+            // service account. The grant stands regardless, and the Android client
+            // also acknowledges on-device, so this is defense-in-depth.
+            $acked = $verifier->isConfigured() && $verifier->acknowledge($productId, $token);
+
             $purchases->upsertByToken($token, [
                 'customer_id'   => $ownerId,
                 'user_id'       => (int) $user['id'],
@@ -79,9 +86,9 @@ class GooglePlayApiController extends BaseApiController
                 'expiry_time'   => $expiry,
                 'status'        => 'active',
                 'auto_renewing' => 1,
-                'acknowledged'  => 1,
+                'acknowledged'  => $acked ? 1 : 0,
                 'activated'     => 1,
-                'raw'           => json_encode(['trusted_client' => true]),
+                'raw'           => json_encode(['trusted_client' => true, 'server_acked' => $acked]),
             ]);
             (new SubscriptionModel())->activateWithExpiry($ownerId, (int) $plan['id'], $expiry, $orderId);
             $this->recordTransaction($ownerId, $plan, $orderId);
