@@ -7,6 +7,7 @@ use App\Models\CompanyModel;
 use App\Models\CompanySettingModel;
 use App\Models\CompanyUserModel;
 use App\Models\LedgerModel;
+use App\Models\PartyModel;
 use Config\Database;
 
 /**
@@ -60,6 +61,23 @@ class CompanyProvisioner
     ];
 
     /**
+     * The core accounts a simple cash-book user records entries against, seeded as
+     * Party Accounts so they show in the mobile "Party Accounts" screen from day
+     * one (the mobile app has no ledger view). Pure payment modes (Cash / Bank)
+     * are intentionally left out — those are payment methods, not accounts to
+     * keep a khata with. Each opens at ₹0.
+     */
+    private const DEFAULT_PARTIES = [
+        'Sales',
+        'Purchase',
+        "Owner's Capital",
+        'Salary & Wages',
+        'Rent',
+        'Electricity',
+        'Miscellaneous Expenses',
+    ];
+
+    /**
      * @param array<string,mixed> $data validated company fields
      * @return int|null new company id, or null on failure
      */
@@ -83,6 +101,7 @@ class CompanyProvisioner
 
             $this->seedAccountingGroups($companyId);
             $this->seedCoreLedgers($companyId);
+            $this->seedCoreParties($companyId);
             $this->seedSettings($companyId, $data);
             $this->ensureSubscription($ownerId);
         }
@@ -136,6 +155,27 @@ class CompanyProvisioner
         }
         if ($rows) {
             (new LedgerModel())->insertBatch($rows);
+        }
+    }
+
+    /**
+     * Seed the core Party Accounts so they appear in the mobile app's Party
+     * Accounts list (and are pickable when recording Jama/Naam) out of the box.
+     */
+    private function seedCoreParties(int $companyId): void
+    {
+        $rows = [];
+        foreach (self::DEFAULT_PARTIES as $name) {
+            $rows[] = [
+                'company_id'      => $companyId,
+                'name'            => $name,
+                'party_type'      => 'Other',
+                'opening_balance' => 0,
+                'opening_type'    => 'dr',
+            ];
+        }
+        if ($rows) {
+            (new PartyModel())->insertBatch($rows);
         }
     }
 

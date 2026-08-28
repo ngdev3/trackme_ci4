@@ -236,6 +236,22 @@ class TransactionApiController extends BaseApiController
             'last_date' => $r['last_date'] ?? null,
         ], $rows);
 
+        // Also surface master Party Accounts that have no transactions yet — e.g.
+        // the default core accounts (Sales, Purchase, Rent, Salary…) — so they're
+        // pickable the first time you record an entry, not only after they've been
+        // used once (transaction-derived rows come first as they're more relevant).
+        $have = array_column($parties, 'name');
+        foreach ((new \App\Models\PartyModel())->mapForCompany($cid) as $name => $m) {
+            if (in_array($name, $have, true)) {
+                continue;
+            }
+            if ($q !== '' && stripos((string) $name, $q) === false) {
+                continue;
+            }
+            $parties[] = ['name' => (string) $name, 'count' => 0, 'net' => 0.0, 'last_date' => null];
+        }
+        $parties = array_slice($parties, 0, $limit);
+
         return $this->respond(['status' => 'ok', 'parties' => $parties]);
     }
 
