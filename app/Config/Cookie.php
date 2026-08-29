@@ -53,8 +53,12 @@ class Cookie extends BaseConfig
      * --------------------------------------------------------------------------
      *
      * Cookie will only be set if a secure HTTPS connection exists.
+     *
+     * Gated on the environment so production (served over HTTPS) marks the
+     * session + CSRF cookies `Secure` — they are never sent over cleartext HTTP —
+     * while local `development` over plain HTTP still receives them. (F-2)
      */
-    public bool $secure = false;
+    public bool $secure = (ENVIRONMENT === 'production');
 
     /**
      * --------------------------------------------------------------------------

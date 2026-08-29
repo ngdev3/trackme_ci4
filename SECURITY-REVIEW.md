@@ -19,7 +19,7 @@ its section for the resolution.
 | # | Risk | Finding | Area |
 |---|------|---------|------|
 | F-1 | **Fixed** | ~~Stored XSS via web attachment preview (no upload allowlist + inline client MIME, no `nosniff`)~~ — remediated (see below) | XSS / Upload |
-| F-2 | **Medium** | Session/CSRF cookies not marked `Secure` | Session |
+| F-2 | **Fixed** | ~~Session/CSRF cookies not marked `Secure`~~ — now `Secure` in production (env-gated) | Session |
 | F-3 | **Medium** | `CI_ENVIRONMENT=development` on this box (fine locally; dangerous if ever public) | Prod config |
 | F-4 | **Fixed** | ~~CSRF token not randomized~~ — `tokenRandomize=true` set (safe on HTTP+HTTPS) | CSRF |
 | F-5 | **Low** | No Content-Security-Policy (defense-in-depth for XSS) | Prod config |
@@ -80,7 +80,12 @@ so this is reflected-through-preview, not RCE.
 
 ---
 
-## F-2 — Session & CSRF cookies not `Secure`  **(Medium)**
+## F-2 — Session & CSRF cookies not `Secure`  **(Medium → FIXED)**
+
+> **Resolved (2026-08-29).** `app/Config/Cookie.php` → `$secure = (ENVIRONMENT === 'production')`.
+> Production (HTTPS) now marks `ci_session` + the CSRF cookie `Secure`, so they are
+> never sent over cleartext HTTP; local `development` over plain HTTP is unchanged
+> (evaluates to `false`). Verified: the local session stays valid after the change.
 
 **Affected:** `app/Config/Cookie.php` → `public bool $secure = false;` (applies to `ci_session` and the CSRF cookie).
 
@@ -201,11 +206,15 @@ HTTPS; this is a config-verify item.)
 ## Suggested priority order
 
 1. ~~**F-1** (High) — close the stored-XSS~~ — **done** (see F-1 resolution note).
-2. **F-2** (Medium) — `Secure` cookies in prod.
+2. ~~**F-2** (Medium) — `Secure` cookies in prod~~ — **done** (env-gated).
 3. **F-3** (Medium) — confirm no public host runs `development`.
 4. ~~**F-4**~~ (done — `tokenRandomize=true`) / **F-5 / F-6** (Low) — CSP, HTTPS-forced verification.
 
-The remaining items (F-2, F-3, F-5, F-6) are **prod-config** changes (cookie `Secure`,
-environment, CSP, forced HTTPS) rather than application-code bugs — deploy-time settings
-best applied against the production `.env` / config, and needing prod-vs-local gating
-(e.g. cookie `Secure` would break localhost HTTP), so they are left for a deploy pass.
+**Applied this pass:** F-1, F-2, F-4. The remaining items (F-3, F-5, F-6) are **deploy-time**
+decisions on the production host, not application-code bugs:
+- **F-3** — set `CI_ENVIRONMENT=production` on any internet-reachable host (a `.env` value,
+  per-host; production was separately confirmed correct).
+- **F-5** — a Content-Security-Policy needs tuning against the app's inline scripts/styles,
+  so it should be rolled out report-only first rather than flipped blind.
+- **F-6** — verify `app.forceGlobalSecureRequests = true` in the production `.env` (a
+  per-environment value; must stay `false` locally for plain-HTTP dev).
