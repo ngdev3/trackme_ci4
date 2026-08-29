@@ -45,6 +45,22 @@ class FirmUserController extends BaseController
         return (new CompanyModel())->find(company_id());
     }
 
+    /**
+     * The firm owner account can only be changed by the owner. Without this an
+     * admin could demote (role → viewer), disable (status = 0) or delete the
+     * account holder and lock them out of their own firm. Returns a redirect to
+     * block the action, or null to allow it.
+     */
+    private function protectOwner(int $targetUserId)
+    {
+        $ownerId = (int) ($this->firm()['owner_id'] ?? 0);
+        if ($ownerId === $targetUserId && company_role() !== 'owner') {
+            return redirect()->to(site_url('firm-users'))
+                ->with('error', 'Only the firm owner can change the owner account.');
+        }
+        return null;
+    }
+
     public function index()
     {
         if ($r = $this->guard()) {
@@ -162,6 +178,9 @@ class FirmUserController extends BaseController
         if (! $membership) {
             return redirect()->to(site_url('firm-users'))->with('error', 'Firm user not found.');
         }
+        if ($r = $this->protectOwner($id)) {
+            return $r;
+        }
 
         $rules = [
             'name'     => 'required|min_length[2]|max_length[150]',
@@ -203,6 +222,9 @@ class FirmUserController extends BaseController
         $membership = $this->members->where('company_id', company_id())->where('user_id', $id)->first();
         if (! $membership) {
             return redirect()->to(site_url('firm-users'))->with('error', 'Firm user not found.');
+        }
+        if ($r = $this->protectOwner($id)) {
+            return $r;
         }
         $this->members->delete($membership['id']);
         // Deactivate the login if they belong to no other firm.

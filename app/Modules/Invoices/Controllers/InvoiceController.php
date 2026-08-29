@@ -111,25 +111,38 @@ class InvoiceController extends BaseController
             $lineAmt   = round($qty * $rate, 2);
             $subtotal += $lineAmt;
             $taxTotal += round($lineAmt * $tax / 100, 2);
-            $lines[] = compact('pid', 'product', 'name', 'qty', 'rate', 'tax') + ['amount' => $lineAmt];
+            // Shape expected by LedgerPostingService (product_id / tax_rate keys).
+            $lines[] = [
+                'product_id' => $pid,
+                'product'    => $product,
+                'name'       => $name,
+                'qty'        => $qty,
+                'rate'       => $rate,
+                'tax_rate'   => $tax,
+                'amount'     => $lineAmt,
+            ];
         }
         if (count($lines) === 0) {
             return redirect()->back()->withInput()->with('error', 'Every line needs a quantity greater than zero.');
         }
 
-        // Block overselling before we touch the books — same rule the manual
-        // Stock Out and the mobile bill already enforce, so a sale can't drive a
-        // tracked product's stock negative. Quantities are summed per product so
-        // two lines of the same item are checked together.
+        $subtotal = round($subtotal, 2);
+        $taxTotal = round($taxTotal, 2);
+        $total    = max(0, round($subtotal + $taxTotal - $discount, 2));
+
+        // Block overselling BEFORE calling the engine (as the mobile API does):
+        // the engine also guards, but it creates/updates the party master before
+        // its transaction, so a failure there would leave an orphan party. Summed
+        // per product so two lines of the same item are checked together.
         if ($type === 'sale') {
             $wanted = [];
             foreach ($lines as $ln) {
                 if ($ln['product'] !== null) {
-                    $wanted[$ln['pid']] = ($wanted[$ln['pid']] ?? 0) + $ln['qty'];
+                    $wanted[$ln['product_id']] = ($wanted[$ln['product_id']] ?? 0) + $ln['qty'];
                 }
             }
             foreach ($lines as $ln) {
-                if ($ln['product'] !== null && ($wanted[$ln['pid']] ?? 0) > (float) $ln['product']['current_stock']) {
+                if ($ln['product'] !== null && ($wanted[$ln['product_id']] ?? 0) > (float) $ln['product']['current_stock']) {
                     $have = rtrim(rtrim(number_format((float) $ln['product']['current_stock'], 3, '.', ''), '0'), '.');
                     return redirect()->back()->withInput()->with(
                         'error',
@@ -139,112 +152,58 @@ class InvoiceController extends BaseController
             }
         }
 
-        $subtotal = round($subtotal, 2);
-        $taxTotal = round($taxTotal, 2);
-        $total    = max(0, round($subtotal + $taxTotal - $discount, 2));
-
-        // A bill spans several writes — a cash-book entry, the header, its item
-        // rows, and a stock movement + level update per product. Wrap them in one
-        // DB transaction so a mid-way failure rolls the whole bill back instead of
-        // leaving half of it saved (an orphan header, a cash entry with no bill,
-        // or stock decremented for only some lines). All models share the default
-        // connection, so this transaction spans every insert/update below.
-        $invoices = new InvoiceModel();
-        $invNo    = $invoices->nextInvoiceNo($cid, $type);
-        $invId    = 0;
-
-        $db = \Config\Database::connect();
-        $db->transBegin();
+        // Post through the SAME central engine the mobile app uses, so web and
+        // mobile bills can never drift: one DB transaction, idempotent on
+        // client_uuid, blocks overselling, splits the party-ledger receivable from
+        // the cash entry, and stamps each stock movement with the COST basis (so
+        // COGS/profit stay correct — the old inline path stamped the sale price).
+        // The web form has no "received" field, so a bill is treated as fully paid.
         try {
-            // ---- Linked cash-book entry (sale=Jama, purchase=Naam) ----------
-            $txnModel = new TransactionModel();
-            $txnId    = null;
-            if ($total > 0) {
-                $txnName = $partyName !== '' ? $partyName : ($type === 'sale' ? 'Cash Sale' : 'Cash Purchase');
-                $txnId   = $txnModel->insert([
-                    'user_id'      => (int) user_id(),
-                    'company_id'   => $cid,
-                    'txn_no'       => $txnModel->nextTxnNo($cid),
-                    'txn_date'     => $invDate,
-                    'name'         => mb_substr($txnName, 0, 191),
-                    'party_type'   => $partyType !== '' ? mb_substr($partyType, 0, 32) : null,
-                    'type'         => $type === 'sale' ? 'jama' : 'naam',
-                    'amount'       => $total,
-                    'payment_mode' => $mode,
-                    'status'       => $type === 'sale' ? 'received' : 'paid',
-                    'notes'        => 'Bill ' . $type,
-                    'source'       => 'invoice',
-                ]);
-                $txnId = $txnId ? (int) $txnId : null;
-            }
-
-            // ---- Header + items + stock -------------------------------------
-            $invId = (int) $invoices->insert([
+            $result = (new \App\Services\LedgerPostingService())->postInvoice([
                 'company_id'   => $cid,
-                'created_by'   => (int) user_id(),
+                'user_id'      => (int) user_id(),
                 'type'         => $type,
-                'invoice_no'   => $invNo,
-                'party_name'   => $partyName !== '' ? mb_substr($partyName, 0, 191) : null,
-                'party_type'   => $partyType !== '' ? mb_substr($partyType, 0, 32) : null,
+                'party_name'   => $partyName,
+                'party_type'   => $partyType,
+                'payment_mode' => $mode,
                 'invoice_date' => $invDate,
+                'notes'        => $notes,
+                'discount'     => $discount,
                 'subtotal'     => $subtotal,
                 'tax_total'    => $taxTotal,
-                'discount'     => $discount,
                 'total'        => $total,
-                'payment_mode' => $mode,
-                'status'       => 'paid',
-                'txn_id'       => $txnId,
-                'notes'        => $notes,
+                'received'     => $total,
+                'client_uuid'  => trim((string) $req->getPost('client_uuid')) ?: null,
+                'lines'        => $lines,
             ]);
-
-            $itemModel = new InvoiceItemModel();
-            $moves     = new StockMovementModel();
-            foreach ($lines as $ln) {
-                $itemModel->insert([
-                    'invoice_id' => $invId,
-                    'product_id' => $ln['pid'],
-                    'name'       => $ln['name'],
-                    'qty'        => $ln['qty'],
-                    'rate'       => $ln['rate'],
-                    'tax_rate'   => $ln['tax'],
-                    'amount'     => $ln['amount'],
-                ]);
-                if ($ln['product'] !== null) {
-                    $moveType = $type === 'sale' ? 'out' : 'in';
-                    $current  = (float) $ln['product']['current_stock'];
-                    $newStock = $moveType === 'in' ? $current + $ln['qty'] : $current - $ln['qty'];
-                    $moves->insert([
-                        'company_id' => $cid,
-                        'product_id' => $ln['pid'],
-                        'type'       => $moveType,
-                        'qty'        => $ln['qty'],
-                        'rate'       => $ln['rate'],
-                        'note'       => $invNo,
-                        'created_by' => (int) user_id(),
-                    ]);
-                    $products->update($ln['pid'], ['current_stock' => round($newStock, 3)]);
-                }
-            }
-
-            if ($db->transStatus() === false) {
-                $db->transRollback();
-                return redirect()->back()->withInput()
-                    ->with('error', 'Could not save the bill — please try again.');
-            }
-            $db->transCommit();
         } catch (\Throwable $e) {
-            $db->transRollback();
+            if (($msg = $this->stockErrorMessage($e)) !== null) {
+                return redirect()->back()->withInput()->with('error', $msg);
+            }
             log_message('error', 'Invoice save failed: ' . $e->getMessage());
-            return redirect()->back()->withInput()
-                ->with('error', 'Could not save the bill — please try again.');
+            return redirect()->back()->withInput()->with('error', 'Could not save the bill — please try again.');
         }
 
-        if (function_exists('activity_log')) {
+        $invoice = $result['invoice'];
+        $invNo   = (string) $invoice['invoice_no'];
+        if (! $result['duplicate'] && function_exists('activity_log')) {
             activity_log('Invoices', 'Add', ucfirst($type) . " bill {$invNo} created");
         }
 
-        return redirect()->to(site_url('invoices/view/' . $invId))
+        return redirect()->to(site_url('invoices/view/' . $invoice['id']))
             ->with('success', ($type === 'sale' ? 'Sale' : 'Purchase') . ' bill ' . $invNo . ' saved.');
+    }
+
+    /** Map the posting engine's INSUFFICIENT_STOCK sentinel to a friendly message. */
+    private function stockErrorMessage(\Throwable $e): ?string
+    {
+        if (! str_contains($e->getMessage(), 'INSUFFICIENT_STOCK:')) {
+            return null;
+        }
+        $part = explode('INSUFFICIENT_STOCK:', $e->getMessage(), 2)[1] ?? '';
+        [$name, $have] = array_pad(explode(':', $part, 2), 2, '0');
+        return 'Not enough stock for "' . trim($name) . '". Available: '
+            . rtrim(rtrim(number_format((float) $have, 3, '.', ''), '0'), '.') . '.';
     }
 
     /** Printable bill. */
