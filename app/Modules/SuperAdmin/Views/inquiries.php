@@ -1,5 +1,6 @@
 <?php
-/** Super Admin — public inquiry / contact-form submissions. Rendered inside layout.php. */
+/** Super Admin — public inquiry / contact-form submissions. Rendered inside layout.php.
+ * Shared list design (cust-* — canonical Customers look). */
 $counts   = $counts ?? ['new' => 0, 'read' => 0, 'closed' => 0];
 $status   = $status ?? '';
 $subjectMeta = [
@@ -11,76 +12,98 @@ $subjectMeta = [
 ];
 $statusMeta = ['new' => ['New', 'danger'], 'read' => ['Read', 'primary'], 'closed' => ['Closed', 'secondary']];
 $filters = ['' => 'All', 'new' => 'New', 'read' => 'Read', 'closed' => 'Closed'];
+$total   = (int) $counts['new'] + (int) $counts['read'] + (int) $counts['closed'];
 ?>
-<div class="row g-3">
-    <div class="col-12">
-        <div class="row g-2">
-            <?php foreach ([['New', $counts['new'], 'bi-envelope-exclamation', 'danger'], ['Read', $counts['read'], 'bi-envelope-open', 'primary'], ['Closed', $counts['closed'], 'bi-check2-circle', 'secondary']] as [$l, $v, $ic, $col]): ?>
-                <div class="col-6 col-md-4">
-                    <div class="card h-100"><div class="card-body py-2 px-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge text-bg-<?= $col ?>"><i class="bi <?= $ic ?>"></i></span>
-                            <div><div class="small text-muted"><?= $l ?></div><div class="fw-bold fs-6"><?= number_format((int) $v) ?></div></div>
-                        </div>
-                    </div></div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
+<div class="cust-page">
 
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                <h3 class="card-title mb-0"><i class="bi bi-chat-left-text me-1"></i> Inquiries</h3>
-                <form class="d-flex gap-2" method="get">
-                    <select name="status" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
-                        <?php foreach ($filters as $k => $v): ?>
-                            <option value="<?= esc($k, 'attr') ?>" <?= $status === $k ? 'selected' : '' ?>><?= esc($v) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </form>
+    <!-- Hero -->
+    <section class="cust-hero">
+        <div>
+            <h4 class="cust-title">Inquiries</h4>
+            <p class="cust-subtitle">Contact-form submissions from the public site — reply, mark read, or close.</p>
+        </div>
+        <div class="cust-hero-actions">
+            <form method="get" role="search" class="cust-len">
+                <label for="inqStatus">Status</label>
+                <select name="status" id="inqStatus" class="cust-len-select" data-autosubmit>
+                    <?php foreach ($filters as $k => $v): ?>
+                        <option value="<?= esc($k, 'attr') ?>" <?= $status === $k ? 'selected' : '' ?>><?= esc($v) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </form>
+        </div>
+    </section>
+
+    <!-- Snapshot stat cards -->
+    <section class="cust-snap-grid">
+        <div class="cust-snap"><span class="cust-snap-ic ic-blue"><i class="bi bi-chat-left-text-fill"></i></span>
+            <div><p class="cust-snap-label">Total</p><p class="cust-snap-value"><?= number_format($total) ?></p></div></div>
+        <div class="cust-snap"><span class="cust-snap-ic ic-red"><i class="bi bi-envelope-exclamation-fill"></i></span>
+            <div><p class="cust-snap-label">New</p><p class="cust-snap-value"><?= number_format((int) $counts['new']) ?></p></div></div>
+        <div class="cust-snap"><span class="cust-snap-ic ic-blue"><i class="bi bi-envelope-open-fill"></i></span>
+            <div><p class="cust-snap-label">Read</p><p class="cust-snap-value"><?= number_format((int) $counts['read']) ?></p></div></div>
+        <div class="cust-snap"><span class="cust-snap-ic ic-gray"><i class="bi bi-check2-circle"></i></span>
+            <div><p class="cust-snap-label">Closed</p><p class="cust-snap-value"><?= number_format((int) $counts['closed']) ?></p></div></div>
+    </section>
+
+    <!-- Table panel -->
+    <section class="cust-panel cust-table-panel">
+        <div class="cust-toolbar">
+            <div>
+                <h5 class="cust-table-title">Inquiry Records</h5>
+                <p class="cust-table-note">Newest first. Reply opens the full thread; status controls mark read or close.</p>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
-                        <thead><tr>
-                            <th>When</th><th>From</th><th>Subject</th><th>Message</th><th>Status</th><th class="text-end">Actions</th>
-                        </tr></thead>
-                        <tbody>
-                        <?php if (empty($rows)): ?>
-                            <tr><td colspan="6" class="text-center text-secondary py-4"><i class="bi bi-inbox fs-4 d-block mb-1"></i>No inquiries yet.</td></tr>
-                        <?php else: foreach ($rows as $r):
-                            [$sLabel, $sColor] = $subjectMeta[$r['subject']] ?? ['—', 'secondary'];
-                            [$stLabel, $stColor] = $statusMeta[$r['status']] ?? ['—', 'secondary'];
-                        ?>
-                            <tr>
-                                <td class="text-nowrap small"><?= esc(date('d M Y, H:i', strtotime($r['created_at']))) ?></td>
-                                <td>
-                                    <strong><?= esc($r['name']) ?></strong>
-                                    <div class="small"><a href="mailto:<?= esc($r['email'], 'attr') ?>"><?= esc($r['email']) ?></a></div>
-                                    <?php if (! empty($r['phone'])): ?><div class="small text-muted"><i class="bi bi-telephone"></i> <?= esc($r['phone']) ?></div><?php endif; ?>
-                                    <?php if (! empty($r['company'])): ?><div class="small text-muted"><i class="bi bi-building"></i> <?= esc($r['company']) ?></div><?php endif; ?>
-                                </td>
-                                <td><span class="badge text-bg-<?= esc($sColor) ?>"><?= esc($sLabel) ?></span></td>
-                                <td style="max-width:360px"><div class="small" style="white-space:pre-wrap"><?= esc($r['message']) ?></div></td>
-                                <td><span class="badge text-bg-<?= esc($stColor) ?>"><?= esc($stLabel) ?></span></td>
-                                <td class="text-end text-nowrap">
-                                    <a href="<?= site_url('admin/inquiries/' . $r['id']) ?>" class="btn btn-sm btn-primary" title="View & reply"><i class="bi bi-chat-dots me-1"></i>Reply</a>
-                                    <?php foreach ([['read', 'Mark read', 'bi-envelope-open', 'outline-secondary'], ['closed', 'Close', 'bi-check2', 'outline-success']] as [$st, $t, $ic, $cls]): ?>
-                                        <?php if ($r['status'] !== $st): ?>
-                                            <form action="<?= site_url('admin/inquiries/status/' . $r['id']) ?>" method="post" class="d-inline">
-                                                <?= csrf_field() ?><input type="hidden" name="status" value="<?= $st ?>">
-                                                <button class="btn btn-sm btn-<?= $cls ?>" title="<?= $t ?>"><i class="bi <?= $ic ?>"></i></button>
-                                            </form>
-                                        <?php endif; ?>
-                                    <?php endforeach; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; endif; ?>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="d-flex align-items-center gap-2">
+                <?php if ($status !== ''): ?><span class="cust-search-tag"><i class="bi bi-funnel"></i> <?= esc($filters[$status] ?? $status) ?></span><?php endif; ?>
+                <span class="cust-total-tag"><i class="bi bi-chat-left-text"></i> <?= number_format($total) ?> total</span>
             </div>
         </div>
-    </div>
+
+        <div class="cust-table-wrap">
+            <table class="cust-table">
+                <thead><tr>
+                    <th class="text-start" style="width:150px">When</th>
+                    <th class="text-start" style="width:240px">From</th>
+                    <th class="text-start" style="width:120px">Subject</th>
+                    <th class="text-start">Message</th>
+                    <th class="text-center" style="width:110px">Status</th>
+                    <th class="text-end" style="width:170px">Actions</th>
+                </tr></thead>
+                <tbody>
+                <?php if (empty($rows)): ?>
+                    <tr><td colspan="6" class="cust-empty"><i class="bi bi-inbox"></i><div>No inquiries yet<?= $status !== '' ? ' with status “' . esc($filters[$status] ?? $status) . '”' : '' ?>.</div></td></tr>
+                <?php else: foreach ($rows as $r):
+                    [$sLabel, $sColor] = $subjectMeta[$r['subject']] ?? ['—', 'secondary'];
+                    [$stLabel, $stColor] = $statusMeta[$r['status']] ?? ['—', 'secondary'];
+                ?>
+                    <tr>
+                        <td class="text-start"><span class="cust-muted text-nowrap"><?= esc(date('d M Y, H:i', strtotime($r['created_at']))) ?></span></td>
+                        <td class="text-start">
+                            <strong><?= esc($r['name']) ?></strong>
+                            <div class="small"><a href="mailto:<?= esc($r['email'], 'attr') ?>"><?= esc($r['email']) ?></a></div>
+                            <?php if (! empty($r['phone'])): ?><div class="small cust-muted"><i class="bi bi-telephone"></i> <?= esc($r['phone']) ?></div><?php endif; ?>
+                            <?php if (! empty($r['company'])): ?><div class="small cust-muted"><i class="bi bi-building"></i> <?= esc($r['company']) ?></div><?php endif; ?>
+                        </td>
+                        <td class="text-start"><span class="badge text-bg-<?= esc($sColor) ?>"><?= esc($sLabel) ?></span></td>
+                        <td class="text-start" style="max-width:360px"><div class="small" style="white-space:pre-wrap"><?= esc($r['message']) ?></div></td>
+                        <td class="text-center"><span class="badge text-bg-<?= esc($stColor) ?>"><?= esc($stLabel) ?></span></td>
+                        <td class="text-end">
+                            <div class="cust-row-actions">
+                                <a href="<?= site_url('admin/inquiries/' . $r['id']) ?>" class="cust-act act-sub" title="View & reply"><i class="bi bi-chat-dots"></i></a>
+                                <?php foreach ([['read', 'Mark read', 'bi-envelope-open', 'act-mail'], ['closed', 'Close', 'bi-check2', 'act-login']] as [$st, $t, $ic, $cls]): ?>
+                                    <?php if ($r['status'] !== $st): ?>
+                                        <form action="<?= site_url('admin/inquiries/status/' . $r['id']) ?>" method="post">
+                                            <?= csrf_field() ?><input type="hidden" name="status" value="<?= $st ?>">
+                                            <button class="cust-act <?= $cls ?>" title="<?= $t ?>"><i class="bi <?= $ic ?>"></i></button>
+                                        </form>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </section>
 </div>

@@ -6,81 +6,83 @@ $fmtDate = static fn ($d) => $d ? date('d M Y', strtotime($d)) : '-';
 $totalRows = (int) ($stats['total'] ?? 0);
 ?>
 
-<section class="password-workspace">
-    <div class="password-toolbar">
+<div class="cust-page">
+
+    <!-- Hero -->
+    <section class="cust-hero">
         <div>
-            <div class="password-kicker"><i class="bi bi-shield-lock"></i> Password vault</div>
-            <h2>Password Manager</h2>
+            <h4 class="cust-title">Password Manager</h4>
+            <p class="cust-subtitle">Your company's encrypted credential vault — reveal, copy and manage secrets securely.</p>
         </div>
-        <div class="password-toolbar-actions">
-            <a href="<?= site_url('passwords/list') ?>" class="btn btn-outline-secondary btn-sm" title="Password List">
-                <i class="bi bi-list-check"></i>
-            </a>
+        <div class="cust-hero-actions">
+            <a href="<?= site_url('passwords/list') ?>" class="cust-btn cust-btn-ghost" title="Password List"><i class="bi bi-list-check"></i> List</a>
             <?php if (! empty($canAdd)): ?>
-                <a href="<?= site_url('passwords/add') ?>" class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-lg me-1"></i>Add Password
-                </a>
+                <a href="<?= site_url('passwords/add') ?>" class="cust-btn cust-btn-primary"><i class="bi bi-plus-lg"></i> Add Password</a>
             <?php endif; ?>
         </div>
-    </div>
+    </section>
 
-    <div class="password-stats">
-        <div class="password-stat">
-            <span>Total</span>
-            <strong><?= number_format($totalRows) ?></strong>
-        </div>
-        <div class="password-stat">
-            <span>Categories</span>
-            <strong><?= number_format((int) ($stats['categories'] ?? 0)) ?></strong>
-        </div>
-        <div class="password-stat">
-            <span>With Website</span>
-            <strong><?= number_format((int) ($stats['websites'] ?? 0)) ?></strong>
-        </div>
-        <div class="password-stat">
-            <span>Last Updated</span>
-            <strong><?= esc($fmtDate($stats['last_updated'] ?? null)) ?></strong>
-        </div>
-    </div>
+    <!-- Snapshot stat cards -->
+    <section class="cust-snap-grid">
+        <div class="cust-snap"><span class="cust-snap-ic ic-blue"><i class="bi bi-shield-lock-fill"></i></span>
+            <div><p class="cust-snap-label">Total</p><p class="cust-snap-value"><?= number_format($totalRows) ?></p></div></div>
+        <div class="cust-snap"><span class="cust-snap-ic ic-violet"><i class="bi bi-tags-fill"></i></span>
+            <div><p class="cust-snap-label">Categories</p><p class="cust-snap-value"><?= number_format((int) ($stats['categories'] ?? 0)) ?></p></div></div>
+        <div class="cust-snap"><span class="cust-snap-ic ic-green"><i class="bi bi-globe"></i></span>
+            <div><p class="cust-snap-label">With Website</p><p class="cust-snap-value"><?= number_format((int) ($stats['websites'] ?? 0)) ?></p></div></div>
+        <div class="cust-snap"><span class="cust-snap-ic ic-gray"><i class="bi bi-clock-history"></i></span>
+            <div><p class="cust-snap-label">Last Updated</p><p class="cust-snap-value" style="font-size:15px"><?= esc($fmtDate($stats['last_updated'] ?? null)) ?></p></div></div>
+    </section>
 
-    <div class="password-panel password-list-panel">
-        <form method="get" action="<?= site_url('passwords/list') ?>" class="password-filter">
-            <label class="password-search">
-                <i class="bi bi-search"></i>
-                <input type="search" name="q" placeholder="Search credentials"
-                       value="<?= esc($search, 'attr') ?>">
-            </label>
-            <select name="category" class="form-select form-select-sm">
-                <option value="">All categories</option>
-                <?php foreach ($categories as $c): ?>
-                    <option value="<?= esc($c, 'attr') ?>" <?= $category === $c ? 'selected' : '' ?>><?= esc($c) ?></option>
-                <?php endforeach; ?>
-            </select>
-            <button class="btn btn-primary btn-sm" type="submit" title="Apply filters"><i class="bi bi-funnel"></i></button>
-            <?php if ($hasFilters): ?>
-                <a href="<?= site_url('passwords/list') ?>" class="btn btn-outline-secondary btn-sm" title="Clear filters"><i class="bi bi-x-lg"></i></a>
-            <?php endif; ?>
-        </form>
+    <!-- Table panel -->
+    <section class="cust-panel cust-table-panel">
+        <div class="cust-toolbar">
+            <div>
+                <h5 class="cust-table-title">Credentials</h5>
+                <p class="cust-table-note">Passwords are encrypted at rest; reveal or copy only when you need them.</p>
+            </div>
+            <span class="cust-total-tag"><i class="bi bi-key"></i> <?= number_format($totalRows) ?> total</span>
+        </div>
+
+        <div class="cust-tabletools">
+            <form method="get" action="<?= site_url('passwords/list') ?>" class="cust-find" role="search">
+                <label for="pwSearch">Search:</label>
+                <div class="cust-find-box">
+                    <i class="bi bi-search"></i>
+                    <input type="search" id="pwSearch" name="q" placeholder="Search credentials…" value="<?= esc($search, 'attr') ?>" autocomplete="off">
+                </div>
+            </form>
+            <form method="get" action="<?= site_url('passwords/list') ?>" class="cust-len">
+                <?php if ($search !== ''): ?><input type="hidden" name="q" value="<?= esc($search, 'attr') ?>"><?php endif; ?>
+                <label for="pwCat">Category</label>
+                <select name="category" id="pwCat" class="cust-len-select" data-autosubmit>
+                    <option value="">All categories</option>
+                    <?php foreach ($categories as $c): ?>
+                        <option value="<?= esc($c, 'attr') ?>" <?= $category === $c ? 'selected' : '' ?>><?= esc($c) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <?php if ($hasFilters): ?><a href="<?= site_url('passwords/list') ?>" class="cust-find-clear" title="Clear filters"><i class="bi bi-x-lg"></i></a><?php endif; ?>
+            </form>
+        </div>
 
         <?php if (empty($rows)): ?>
-            <div class="password-empty">
-                <span><i class="bi bi-shield-lock"></i></span>
-                <h3>No password entries<?= $hasFilters ? ' found' : ' yet' ?></h3>
-                <p><?= $hasFilters ? 'Try a different search or clear the filters.' : 'Add your first company credential to start building the vault.' ?></p>
-                <?php if (! empty($canAdd)): ?>
-                    <a href="<?= site_url('passwords/add') ?>" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Password</a>
-                <?php endif; ?>
-            </div>
+            <div class="cust-table-wrap"><table class="cust-table"><tbody>
+                <tr><td class="cust-empty"><i class="bi bi-shield-lock"></i>
+                    <div>No password entries<?= $hasFilters ? ' found' : ' yet' ?>.</div>
+                    <div class="mt-1 small"><?= $hasFilters ? 'Try a different search or clear the filters.' : 'Add your first company credential to start building the vault.' ?></div>
+                    <?php if (! empty($canAdd) && ! $hasFilters): ?><div class="mt-2"><a href="<?= site_url('passwords/add') ?>" class="cust-btn cust-btn-primary"><i class="bi bi-plus-lg"></i> Add Password</a></div><?php endif; ?>
+                </td></tr>
+            </tbody></table></div>
         <?php else: ?>
-            <div class="table-responsive password-table-wrap">
-                <table class="table align-middle password-table">
+            <div class="cust-table-wrap">
+                <table class="cust-table">
                     <thead>
                         <tr>
-                            <th>Credential</th>
-                            <th>Website / App</th>
-                            <th>Username</th>
-                            <th>Password</th>
-                            <th>Category</th>
+                            <th class="text-start">Credential</th>
+                            <th class="text-start">Website / App</th>
+                            <th class="text-start">Username</th>
+                            <th class="text-start">Password</th>
+                            <th class="text-start">Category</th>
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>
@@ -92,47 +94,41 @@ $totalRows = (int) ($stats['total'] ?? 0);
                             $username = trim((string) (isset($r['username']) ? $r['username'] : ''));
                             ?>
                             <tr>
-                                <td class="password-credential-cell">
-                                    <span class="password-row-icon"><i class="bi bi-key"></i></span>
-                                    <span>
-                                        <a href="<?= site_url('passwords/view/' . $token) ?>" class="password-title"><?= esc($r['title']) ?></a>
-                                        <small>ID <?= esc($token) ?></small>
-                                    </span>
-                                </td>
-                                <td>
-                                    <?php if ($website !== ''): ?>
-                                        <span class="password-url"><?= esc($website) ?></span>
-                                    <?php else: ?><span class="text-muted">-</span><?php endif; ?>
-                                </td>
-                                <td>
-                                    <?= $username !== '' ? esc($username) : '<span class="text-muted">-</span>' ?>
-                                </td>
-                                <td>
-                                    <div class="password-secret">
-                                        <code data-pw-field="<?= esc($token, 'attr') ?>">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</code>
-                                        <button type="button" class="btn btn-sm btn-icon pw-toggle" data-id="<?= esc($token, 'attr') ?>" title="Show / hide password">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-icon pw-copy" data-id="<?= esc($token, 'attr') ?>" title="Copy password">
-                                            <i class="bi bi-clipboard"></i>
-                                        </button>
+                                <td class="text-start">
+                                    <div class="cust-name">
+                                        <span class="cust-snap-ic ic-blue" style="width:32px;height:32px;font-size:14px;border-radius:8px"><i class="bi bi-key"></i></span>
+                                        <span>
+                                            <a href="<?= site_url('passwords/view/' . $token) ?>" class="fw-semibold text-decoration-none"><?= esc($r['title']) ?></a>
+                                            <small class="d-block cust-muted">ID <?= esc($token) ?></small>
+                                        </span>
                                     </div>
                                 </td>
-                                <td>
-                                    <?php if (! empty($r['category'])): ?>
-                                        <span class="password-badge"><?= esc($r['category']) ?></span>
-                                    <?php else: ?><span class="text-muted">-</span><?php endif; ?>
+                                <td class="text-start">
+                                    <?php if ($website !== ''): ?><span class="cust-muted"><?= esc($website) ?></span><?php else: ?><span class="cust-muted">—</span><?php endif; ?>
+                                </td>
+                                <td class="text-start">
+                                    <?= $username !== '' ? esc($username) : '<span class="cust-muted">—</span>' ?>
+                                </td>
+                                <td class="text-start">
+                                    <div class="cust-row-actions" style="justify-content:flex-start">
+                                        <code data-pw-field="<?= esc($token, 'attr') ?>">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</code>
+                                        <button type="button" class="cust-act act-view pw-toggle" data-id="<?= esc($token, 'attr') ?>" title="Show / hide password"><i class="bi bi-eye"></i></button>
+                                        <button type="button" class="cust-act act-mail pw-copy" data-id="<?= esc($token, 'attr') ?>" title="Copy password"><i class="bi bi-clipboard"></i></button>
+                                    </div>
+                                </td>
+                                <td class="text-start">
+                                    <?php if (! empty($r['category'])): ?><span class="cust-planpill"><?= esc($r['category']) ?></span><?php else: ?><span class="cust-muted">—</span><?php endif; ?>
                                 </td>
                                 <td class="text-end">
-                                    <div class="password-actions">
-                                        <a href="<?= site_url('passwords/view/' . $token) ?>" class="btn btn-sm btn-icon" title="View"><i class="bi bi-eye"></i></a>
+                                    <div class="cust-row-actions">
+                                        <a href="<?= site_url('passwords/view/' . $token) ?>" class="cust-act act-view" title="View"><i class="bi bi-eye"></i></a>
                                         <?php if (! empty($canEdit)): ?>
-                                            <a href="<?= site_url('passwords/edit/' . $token) ?>" class="btn btn-sm btn-icon" title="Edit"><i class="bi bi-pencil"></i></a>
+                                            <a href="<?= site_url('passwords/edit/' . $token) ?>" class="cust-act act-edit" title="Edit"><i class="bi bi-pencil"></i></a>
                                         <?php endif; ?>
                                         <?php if (! empty($canDelete)): ?>
                                             <form action="<?= site_url('passwords/delete/' . $token) ?>" method="post" data-no-validate data-confirm="This password entry will be deleted. This cannot be undone." data-confirm-title="Delete password?" data-confirm-btn="Yes, delete" data-confirm-icon="error">
                                                 <?= csrf_field() ?>
-                                                <button class="btn btn-sm btn-icon text-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                                <button class="cust-act act-del" title="Delete"><i class="bi bi-trash"></i></button>
                                             </form>
                                         <?php endif; ?>
                                     </div>
@@ -143,12 +139,10 @@ $totalRows = (int) ($stats['total'] ?? 0);
                 </table>
             </div>
 
-            <?php if (isset($pager)): ?>
-                <div class="password-pager"><?= $pager->links() ?></div>
-            <?php endif; ?>
+            <?php if (isset($pager)): ?><div class="cust-pager-bar"><?= $pager->links() ?></div><?php endif; ?>
         <?php endif; ?>
-    </div>
-</section>
+    </section>
+</div>
 
 <script>
 (function () {

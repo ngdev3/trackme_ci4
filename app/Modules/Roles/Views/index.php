@@ -1,16 +1,33 @@
 <?php /** Sliced content — rendered inside app/Views/layout.php via BaseController::render(). */ ?>
-<div class="card">
-    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <h3 class="card-title mb-0"><i class="bi bi-person-gear me-1"></i> Roles</h3>
-        <form class="d-flex gap-2" method="get">
-            <input type="search" name="q" value="<?= esc($search) ?>" class="form-control form-control-sm" placeholder="Search...">
-            <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i></button>
+<?php $total = isset($pager) ? (int) $pager->getTotal() : count($rows ?? []); ?>
+<div class="cust-page">
+    <section class="cust-hero">
+        <div>
+            <h4 class="cust-title">Roles</h4>
+            <p class="cust-subtitle">User roles and their access level across the application.</p>
+        </div>
+        <div class="cust-hero-actions">
+            <form class="cust-search" method="get" role="search">
+                <i class="bi bi-search cust-search-ic"></i>
+                <input type="search" name="q" value="<?= esc($search) ?>" placeholder="Search roles…" autocomplete="off">
+                <?php if ($search !== ''): ?><a href="<?= site_url($baseRoute) ?>" class="cust-search-clear" title="Clear"><i class="bi bi-x-lg"></i></a><?php endif; ?>
+            </form>
             <?php if (can($moduleCode, 'add')): ?>
-                <a href="<?= site_url($baseRoute . '/create') ?>" class="btn btn-sm btn-primary text-nowrap"><i class="bi bi-plus-lg"></i> Add</a>
+                <a href="<?= site_url($baseRoute . '/create') ?>" class="cust-btn cust-btn-primary text-nowrap"><i class="bi bi-plus-lg"></i> Add Role</a>
             <?php endif; ?>
-        </form>
-    </div>
-    <div class="card-body p-0">
+        </div>
+    </section>
+    <section class="cust-panel cust-table-panel">
+        <div class="cust-toolbar">
+            <div>
+                <h5 class="cust-table-title">Role Records</h5>
+                <p class="cust-table-note">Toggle a role's status, edit its permissions, or add a new role.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <?php if ($search !== ''): ?><span class="cust-search-tag"><i class="bi bi-search"></i> “<?= esc($search) ?>”</span><?php endif; ?>
+                <span class="cust-total-tag"><i class="bi bi-person-gear"></i> <?= number_format($total) ?> total</span>
+            </div>
+        </div>
         <div class="erp-tbl-wrap">
             <table class="erp-tbl">
                 <thead><tr>
@@ -45,7 +62,7 @@
                 </tbody>
             </table>
         </div>
-    </div>
-    <?php if (isset($pager)): ?><div class="card-footer d-flex justify-content-end"><?= $pager->links() ?></div><?php endif; ?>
+        <?php if (isset($pager)): ?><div class="cust-pager-bar"><?= $pager->links() ?></div><?php endif; ?>
+    </section>
 </div>
 

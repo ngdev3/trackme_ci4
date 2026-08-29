@@ -44,7 +44,7 @@ window.DL_LIVE = <?= json_encode([
             </div>
         </div>
         <form class="dl-hero-filter d-flex flex-wrap gap-2 mt-3" method="get" autocomplete="off">
-            <select name="period" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+            <select name="period" class="form-select form-select-sm w-auto" data-autosubmit>
                 <?php foreach ($periods as $k => $l): ?>
                     <option value="<?= esc($k) ?>" <?= ($period ?? 'month') === $k ? 'selected' : '' ?>><?= esc($l) ?></option>
                 <?php endforeach; ?>

@@ -1,10 +1,22 @@
 <?php /** Firm users list. Rendered inside layout.php. */ ?>
-<div class="card">
-    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <h3 class="card-title mb-0"><i class="bi bi-people me-1"></i> Firm Users — <?= esc($firm['name'] ?? '') ?></h3>
-        <a href="<?= site_url('firm-users/create') ?>" class="btn btn-sm btn-primary"><i class="bi bi-person-plus"></i> Add User</a>
-    </div>
-    <div class="card-body p-0">
+<div class="cust-page">
+    <section class="cust-hero">
+        <div>
+            <h4 class="cust-title">Firm Users</h4>
+            <p class="cust-subtitle">Team members with access to <strong><?= esc($firm['name'] ?? 'this firm') ?></strong> — roles, status and last login.</p>
+        </div>
+        <div class="cust-hero-actions">
+            <a href="<?= site_url('firm-users/create') ?>" class="cust-btn cust-btn-primary"><i class="bi bi-person-plus"></i> Add User</a>
+        </div>
+    </section>
+    <section class="cust-panel cust-table-panel">
+        <div class="cust-toolbar">
+            <div>
+                <h5 class="cust-table-title">User Records</h5>
+                <p class="cust-table-note">Edit a user's role and access, or remove them from the firm.</p>
+            </div>
+            <span class="cust-total-tag"><i class="bi bi-people"></i> <?= number_format(count($rows ?? [])) ?> total</span>
+        </div>
         <div class="erp-tbl-wrap">
             <table class="erp-tbl">
                 <thead><tr>
@@ -48,5 +60,5 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </div>

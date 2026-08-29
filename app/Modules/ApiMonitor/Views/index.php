@@ -19,6 +19,14 @@ $healthMeta = [
 ];
 ?>
 
+<div class="cust-page">
+<section class="cust-hero">
+    <div>
+        <h4 class="cust-title">API Monitor</h4>
+        <p class="cust-subtitle">Mobile-app API endpoints — reachability, auth, and the live on/off kill-switch.</p>
+    </div>
+</section>
+
 <!-- Summary -->
 <div class="row g-3 mb-3" id="apimSummary">
     <div class="col-6 col-lg"><div class="apim-stat"><div class="apim-stat-num" data-k="total"><?= (int) $summary['total'] ?></div><div class="apim-stat-lbl">Total Endpoints</div></div></div>
@@ -128,6 +136,7 @@ $healthMeta = [
             </div>
         <?php endif; ?>
     </div>
+</div>
 </div>
 
 <style>

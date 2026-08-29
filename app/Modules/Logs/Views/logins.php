@@ -12,17 +12,29 @@ $duration = static function ($seconds): string {
     return sprintf('%02d:%02d:%02d', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
 };
 ?>
-<div class="card">
-    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <h3 class="card-title mb-0"><i class="bi bi-box-arrow-in-right me-1"></i> <?= $mine ? 'My Login History' : 'Login Logs' ?></h3>
-        <div class="d-flex flex-wrap gap-2">
+<?php $total = isset($pager) ? (int) $pager->getTotal() : count($rows ?? []); ?>
+<div class="cust-page">
+    <section class="cust-hero">
+        <div>
+            <h4 class="cust-title"><?= $mine ? 'My Login History' : 'Login Logs' ?></h4>
+            <p class="cust-subtitle">Every sign-in with device, location and risk — filter, sort, and export.</p>
+        </div>
+        <div class="cust-hero-actions">
             <a class="btn btn-sm btn-outline-success" href="<?= site_url($base . '/export/csv') . $exportSuffix ?>"><i class="bi bi-filetype-csv me-1"></i>CSV</a>
             <a class="btn btn-sm btn-outline-success" href="<?= site_url($base . '/export/xls') . $exportSuffix ?>"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel</a>
             <a class="btn btn-sm btn-outline-danger" href="<?= site_url($base . '/export/pdf') . $exportSuffix ?>" target="_blank"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
-            <button class="btn btn-sm btn-outline-secondary" onclick="window.print()" type="button"><i class="bi bi-printer me-1"></i>Print</button>
+            <button class="btn btn-sm btn-outline-secondary" data-window="print" type="button"><i class="bi bi-printer me-1"></i>Print</button>
         </div>
-    </div>
-    <div class="card-body border-bottom">
+    </section>
+    <section class="cust-panel cust-table-panel">
+        <div class="cust-toolbar">
+            <div>
+                <h5 class="cust-table-title">Login Records</h5>
+                <p class="cust-table-note">Suspicious sign-ins are highlighted; click a location to open it in Maps.</p>
+            </div>
+            <span class="cust-total-tag"><i class="bi bi-box-arrow-in-right"></i> <?= number_format($total) ?> total</span>
+        </div>
+        <div class="cust-filterbar">
         <form class="row g-2 align-items-end" method="get">
             <div class="col-12 col-md-3">
                 <label class="form-label small mb-1">Search</label>
@@ -81,8 +93,7 @@ $duration = static function ($seconds): string {
                 <a href="<?= site_url($base) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
             </div>
         </form>
-    </div>
-    <div class="card-body p-0">
+        </div>
         <div class="erp-tbl-wrap">
             <table class="erp-tbl auto">
                 <thead>
@@ -172,6 +183,6 @@ $duration = static function ($seconds): string {
                 </tbody>
             </table>
         </div>
-    </div>
-    <?php if (isset($pager)): ?><div class="card-footer d-flex justify-content-end"><?= $pager->links() ?></div><?php endif; ?>
+        <?php if (isset($pager)): ?><div class="cust-pager-bar"><?= $pager->links() ?></div><?php endif; ?>
+    </section>
 </div>

@@ -10,14 +10,24 @@ $ago  = static function ($ts): string {
     return floor($d / 2592000) . ' mo ago';
 };
 ?>
-<div class="card">
-    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <h3 class="card-title mb-0"><i class="bi bi-trash3 me-1"></i> Deleted Customers
-            <?php if (! empty($rows)): ?><span class="erp-pill gray ms-1"><?= count($rows) ?></span><?php endif; ?>
-        </h3>
-        <a href="<?= site_url('admin/customers') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back to Customers</a>
-    </div>
-    <div class="card-body p-0">
+<div class="cust-page">
+    <section class="cust-hero">
+        <div>
+            <h4 class="cust-title">Deleted Customers</h4>
+            <p class="cust-subtitle">Soft-deleted customer accounts — restore them, or delete forever to erase all data.</p>
+        </div>
+        <div class="cust-hero-actions">
+            <a href="<?= site_url('admin/customers') ?>" class="cust-btn cust-btn-ghost"><i class="bi bi-arrow-left"></i> Back to Customers</a>
+        </div>
+    </section>
+    <section class="cust-panel cust-table-panel">
+        <div class="cust-toolbar">
+            <div>
+                <h5 class="cust-table-title">Trash</h5>
+                <p class="cust-table-note">Restoring reactivates the customer and their firms; deleting forever cannot be undone.</p>
+            </div>
+            <span class="cust-total-tag"><i class="bi bi-trash3"></i> <?= number_format(count($rows)) ?> in trash</span>
+        </div>
         <div class="erp-tbl-wrap">
             <table class="erp-tbl auto">
                 <thead><tr>
@@ -61,7 +71,7 @@ $ago  = static function ($ts): string {
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </div>
 
 <!-- Permanent-delete modal (type-to-confirm) -->

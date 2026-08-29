@@ -1,19 +1,42 @@
 <?php
 /**
  * Super Admin — all firms. Rendered inside layout.php.
- * Uses the shared ERP data-table design system (assets/css/erp-table.css) +
- * the hover-card engine (assets/js/erp-table.js) — same look as every listing.
+ * Shared list design: cust-* page shell (hero + panel, assets/css/erp-list.css)
+ * over the shared ERP data-table (assets/css/erp-table.css) + hover-card engine
+ * (assets/js/erp-table.js) — same look as the canonical Customers listing.
  */
+$total = isset($pager) ? (int) $pager->getTotal() : count($rows ?? []);
 ?>
-<div class="card">
-    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <h3 class="card-title mb-0"><i class="bi bi-building me-1"></i> Firms / Companies</h3>
-        <form class="d-flex gap-2" method="get">
-            <input type="search" name="q" value="<?= esc($search) ?>" class="form-control form-control-sm" placeholder="Search firm or owner...">
-            <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i></button>
-        </form>
-    </div>
-    <div class="card-body p-0">
+<div class="cust-page">
+
+    <!-- Hero -->
+    <section class="cust-hero">
+        <div>
+            <h4 class="cust-title">Firms / Companies</h4>
+            <p class="cust-subtitle">Every firm across all customer accounts — owners, states and financial years.</p>
+        </div>
+        <div class="cust-hero-actions">
+            <form class="cust-search" method="get" role="search">
+                <i class="bi bi-search cust-search-ic"></i>
+                <input type="search" name="q" value="<?= esc($search) ?>" placeholder="Search firm or owner…" autocomplete="off">
+                <?php if ($search !== ''): ?><a href="<?= site_url('admin/firms') ?>" class="cust-search-clear" title="Clear"><i class="bi bi-x-lg"></i></a><?php endif; ?>
+            </form>
+        </div>
+    </section>
+
+    <!-- Table panel -->
+    <section class="cust-panel cust-table-panel">
+        <div class="cust-toolbar">
+            <div>
+                <h5 class="cust-table-title">Firm Records</h5>
+                <p class="cust-table-note">Firms are owner-managed; toggle a firm's active status from here.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <?php if ($search !== ''): ?><span class="cust-search-tag"><i class="bi bi-search"></i> “<?= esc($search) ?>”</span><?php endif; ?>
+                <span class="cust-total-tag"><i class="bi bi-building"></i> <?= number_format($total) ?> total</span>
+            </div>
+        </div>
+
         <div class="erp-tbl-wrap">
             <table class="erp-tbl">
                 <thead>
@@ -90,6 +113,7 @@
                 </tbody>
             </table>
         </div>
-    </div>
-    <?php if (isset($pager)): ?><div class="card-footer"><?= $pager->only(['q'])->links('default', 'modern') ?></div><?php endif; ?>
+
+        <?php if (isset($pager)): ?><div class="cust-pager-bar"><?= $pager->only(['q'])->links('default', 'modern') ?></div><?php endif; ?>
+    </section>
 </div>

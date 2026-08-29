@@ -35,6 +35,8 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
     <?= $this->include('partials/head') ?>
     <!-- Shared data-table + hover-card design system (used by every module's listing) -->
     <link rel="stylesheet" href="<?= erp_asset('assets/css/erp-table.css') ?>">
+    <!-- Shared list/index design system (cust-* components — canonical Customers look) -->
+    <link rel="stylesheet" href="<?= erp_asset('assets/css/erp-list.css') ?>">
     <?php foreach (($css ?? []) as $href): ?>
         <link rel="stylesheet" href="<?= erp_asset($href) ?>">
     <?php endforeach; ?>

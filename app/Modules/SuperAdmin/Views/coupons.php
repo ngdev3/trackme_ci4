@@ -4,6 +4,16 @@ $rows  = $rows ?? [];
 $plans = $plans ?? [];
 $money = static fn ($n) => '₹' . number_format((float) $n, 2);
 ?>
+<div class="cust-page">
+<section class="cust-hero">
+    <div>
+        <h4 class="cust-title">Coupons</h4>
+        <p class="cust-subtitle">Discount and redeem codes customers apply at checkout — create, edit and track usage.</p>
+    </div>
+    <div class="cust-hero-actions">
+        <a href="<?= site_url('admin/coupons/log') ?>" class="cust-btn cust-btn-ghost"><i class="bi bi-clock-history"></i> Usage log</a>
+    </div>
+</section>
 <div class="row g-3">
     <!-- Create / edit coupon -->
     <div class="col-lg-5">
@@ -106,12 +116,14 @@ $money = static fn ($n) => '₹' . number_format((float) $n, 2);
 
     <!-- Existing coupons -->
     <div class="col-lg-7">
-        <div class="card h-100">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <h3 class="card-title mb-0"><i class="bi bi-card-list me-1"></i> Coupons (<?= count($rows) ?>)</h3>
-                <a href="<?= site_url('admin/coupons/log') ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-clock-history me-1"></i> Usage log</a>
+        <div class="cust-panel cust-table-panel h-100">
+            <div class="cust-toolbar">
+                <div>
+                    <h5 class="cust-table-title">Coupons</h5>
+                    <p class="cust-table-note">Edit, pause/resume, or delete a code; click a usage count to see who redeemed it.</p>
+                </div>
+                <span class="cust-total-tag"><i class="bi bi-ticket-perforated"></i> <?= number_format(count($rows)) ?> total</span>
             </div>
-            <div class="card-body p-0">
                 <div class="erp-tbl-wrap">
                     <table class="erp-tbl auto">
                         <thead>
@@ -175,7 +187,7 @@ $money = static fn ($n) => '₹' . number_format((float) $n, 2);
                                         <a href="<?= site_url('admin/coupons/toggle/' . (int) $c['id']) ?>" class="erp-act <?= (int) $c['status'] === 1 ? 'amber' : 'green' ?>" title="Toggle">
                                             <i class="bi bi-<?= (int) $c['status'] === 1 ? 'pause' : 'play' ?>"></i>
                                         </a>
-                                        <form action="<?= site_url('admin/coupons/delete/' . (int) $c['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Delete coupon <?= esc($c['code'], 'attr') ?>?');">
+                                        <form action="<?= site_url('admin/coupons/delete/' . (int) $c['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="Delete coupon <?= esc($c['code'], 'attr') ?>?" data-confirm-title="Delete coupon?" data-confirm-btn="Yes, delete">
                                             <?= csrf_field() ?>
                                             <button class="erp-act red" title="Delete"><i class="bi bi-trash"></i></button>
                                         </form>
@@ -186,9 +198,9 @@ $money = static fn ($n) => '₹' . number_format((float) $n, 2);
                         </tbody>
                     </table>
                 </div>
-            </div>
         </div>
     </div>
+</div>
 </div>
 
 <script>

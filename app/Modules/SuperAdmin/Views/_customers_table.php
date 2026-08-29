@@ -133,7 +133,7 @@ $ago = static function ($ts): string {
                     <form action="<?= site_url('admin/customers/payment/' . $r['id']) ?>" method="post" class="m-0">
                         <?= csrf_field() ?>
                         <?php $pstat = $sub['payment_status'] ?? 'trial'; ?>
-                        <select name="payment_status" class="cust-select pay-<?= esc($pstat, 'attr') ?>" title="Payment status — change to update" onchange="this.form.submit()">
+                        <select name="payment_status" class="cust-select pay-<?= esc($pstat, 'attr') ?>" title="Payment status — change to update" data-autosubmit>
                             <?php foreach (['trial', 'paid', 'unpaid'] as $ps): ?>
                                 <option value="<?= $ps ?>" <?= $pstat === $ps ? 'selected' : '' ?>><?= ucfirst($ps) ?></option>
                             <?php endforeach; ?>

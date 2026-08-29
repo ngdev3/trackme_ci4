@@ -19,13 +19,25 @@ $statusMap = [
     'cancelled'=> ['Cancelled', 'inactive'],
 ];
 ?>
-<div class="card">
-    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <h3 class="card-title mb-0"><i class="bi bi-person-x me-1"></i> Account Deletion Requests
-            <?php if ($pending > 0): ?><span class="erp-pill red ms-1"><?= (int) $pending ?> pending</span><?php endif; ?>
-        </h3>
-    </div>
-    <div class="card-body p-0">
+<?php $total = count($rows); ?>
+<div class="cust-page">
+    <section class="cust-hero">
+        <div>
+            <h4 class="cust-title">Account Deletion Requests</h4>
+            <p class="cust-subtitle">Self-service deletion requests from the app and web portal — approve (permanent) or reject to keep the account.</p>
+        </div>
+    </section>
+    <section class="cust-panel cust-table-panel">
+        <div class="cust-toolbar">
+            <div>
+                <h5 class="cust-table-title">Requests</h5>
+                <p class="cust-table-note">Approving a request permanently deletes the account and everything tied to it.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <?php if ($pending > 0): ?><span class="cust-search-tag"><i class="bi bi-hourglass-split"></i> <?= (int) $pending ?> pending</span><?php endif; ?>
+                <span class="cust-total-tag"><i class="bi bi-person-x"></i> <?= number_format($total) ?> total</span>
+            </div>
+        </div>
         <div class="erp-tbl-wrap">
             <table class="erp-tbl auto">
                 <thead><tr>
@@ -86,7 +98,7 @@ $statusMap = [
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </div>
 
 <!-- Approve (permanent delete) — type-to-confirm -->

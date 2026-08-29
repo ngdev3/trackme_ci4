@@ -1,4 +1,16 @@
 <?php /** Notes landing = mini dashboard + notes list. Rendered inside layout.php. */ ?>
+<div class="cust-page">
+<section class="cust-hero">
+    <div>
+        <h4 class="cust-title">Notes</h4>
+        <p class="cust-subtitle">Quick notes and reminders for your firm — pin, categorise, and track what's due.</p>
+    </div>
+    <div class="cust-hero-actions">
+        <button type="button" class="cust-btn cust-btn-ghost" data-bs-toggle="modal" data-bs-target="#categoriesModal"><i class="bi bi-tags"></i> Categories</button>
+        <a href="<?= site_url('notes/recycle-bin') ?>" class="cust-btn cust-btn-ghost"><i class="bi bi-trash"></i> Recycle Bin <span class="cust-pill"><?= (int) $binCount ?></span></a>
+        <?php if (can($moduleCode, 'add')): ?><a href="<?= site_url('notes/create') ?>" class="cust-btn cust-btn-primary"><i class="bi bi-plus-lg"></i> Add Note</a><?php endif; ?>
+    </div>
+</section>
 
 <!-- ===== Mini dashboard ===== -->
 <div class="row g-3 mb-3">
@@ -74,13 +86,13 @@
     <div class="card-body d-flex flex-wrap gap-2 justify-content-between align-items-center">
         <form class="d-flex flex-wrap gap-2 align-items-center" method="get">
             <input type="search" name="q" value="<?= esc($search) ?>" class="form-control form-control-sm" style="max-width:220px" placeholder="Search title, content, tags...">
-            <select name="category" class="form-select form-select-sm" style="max-width:170px" onchange="this.form.submit()">
+            <select name="category" class="form-select form-select-sm" style="max-width:170px" data-autosubmit>
                 <option value="">All categories</option>
                 <?php foreach ($categories as $c): ?>
                     <option value="<?= $c['id'] ?>" <?= $category === (int) $c['id'] ? 'selected' : '' ?>><?= esc($c['name']) ?></option>
                 <?php endforeach; ?>
             </select>
-            <select name="filter" class="form-select form-select-sm" style="max-width:150px" onchange="this.form.submit()">
+            <select name="filter" class="form-select form-select-sm" style="max-width:150px" data-autosubmit>
                 <option value="">All notes</option>
                 <option value="pinned" <?= $filter === 'pinned' ? 'selected' : '' ?>>Pinned</option>
                 <option value="important" <?= $filter === 'important' ? 'selected' : '' ?>>Important</option>

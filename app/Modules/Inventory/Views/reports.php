@@ -35,7 +35,7 @@ $stats = [
     </div>
 
     <div class="d-flex justify-content-end gap-2 d-print-none">
-        <button class="inv-btn primary" onclick="window.print()"><i class="bi bi-printer"></i> Print / Save PDF</button>
+        <button class="inv-btn primary" data-window="print"><i class="bi bi-printer"></i> Print / Save PDF</button>
     </div>
 
     <div class="inv-panel">

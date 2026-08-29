@@ -36,7 +36,7 @@
         <form class="d-flex flex-wrap gap-2 mb-3" method="get">
             <input type="hidden" name="view" value="<?= esc($view) ?>">
             <input type="search" name="q" value="<?= esc($search) ?>" class="form-control form-control-sm" style="max-width:220px" placeholder="Search reminders...">
-            <select name="priority" class="form-select form-select-sm" style="max-width:150px" onchange="this.form.submit()">
+            <select name="priority" class="form-select form-select-sm" style="max-width:150px" data-autosubmit>
                 <option value="">All priorities</option>
                 <?php foreach (['high', 'medium', 'low'] as $p): ?>
                     <option value="<?= $p ?>" <?= $priority === $p ? 'selected' : '' ?>><?= ucfirst($p) ?></option>

@@ -9,7 +9,7 @@ $fmt     = fn ($n) => number_format((float) $n, 2);
         <div class="d-flex gap-1 align-items-center">
             <a href="<?= site_url('rokad?date=' . $prevDate) ?>" class="btn btn-sm btn-outline-secondary" title="Previous day"><i class="bi bi-chevron-left"></i></a>
             <form method="get" class="d-flex gap-1 align-items-center">
-                <input type="date" name="date" value="<?= esc($date) ?>" class="form-control form-control-sm" style="width:auto" onchange="this.form.submit()">
+                <input type="date" name="date" value="<?= esc($date) ?>" class="form-control form-control-sm" style="width:auto" data-autosubmit>
             </form>
             <a href="<?= site_url('rokad?date=' . $nextDate) ?>" class="btn btn-sm btn-outline-secondary" title="Next day"><i class="bi bi-chevron-right"></i></a>
             <a href="<?= site_url('rokad') ?>" class="btn btn-sm btn-outline-secondary">Today</a>

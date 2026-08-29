@@ -183,102 +183,8 @@ $perOpts = [25, 35, 50, 100];
 </div>
 
 <style>
-/* ---- Customers listing — TrackmeNew-inspired table design ------------------ */
-.cust-page{--c-primary:#1769c2;--c-primary-d:#0c5aaa;--c-ink:#18243c;--c-text:#26374f;
-    --c-muted:#718096;--c-soft:#516174;--c-border:#dce6f2;--c-line:#edf2f7;--c-bg:#fbfdff;
-    color:var(--c-text)}
-.cust-page .cust-panel{border:1px solid var(--c-border);border-radius:8px;background:#fff;box-shadow:0 16px 38px rgba(24,36,60,.08)}
-
-/* Hero */
-.cust-hero{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
-    margin-bottom:18px;padding:22px 24px;border:1px solid var(--c-border);border-radius:8px;
-    background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(255,255,255,.92)),
-        radial-gradient(circle at 94% 0,rgba(23,105,194,.13),transparent 34%);
-    box-shadow:0 16px 38px rgba(24,36,60,.08)}
-.cust-title{margin:0;color:var(--c-ink);font-size:25px;font-weight:900}
-.cust-subtitle{margin:6px 0 0;color:var(--c-muted);font-size:13px;font-weight:700;line-height:1.55}
-.cust-hero-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.cust-search{position:relative;display:flex;align-items:center}
-.cust-search input{min-height:42px;width:250px;max-width:60vw;padding:8px 34px 8px 36px;border:1px solid var(--c-border);
-    border-radius:8px;background:var(--c-bg);color:var(--c-ink);font-weight:700;box-shadow:none;outline:none}
-.cust-search input:focus{border-color:var(--c-primary);background:#fff;box-shadow:0 0 0 4px rgba(23,105,194,.12)}
-.cust-search-ic{position:absolute;left:12px;color:var(--c-muted);font-size:14px;pointer-events:none}
-.cust-search-clear{position:absolute;right:11px;color:var(--c-muted);font-size:12px;text-decoration:none}
-.cust-search-clear:hover{color:#c53030}
-.cust-btn{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:10px 16px;border-radius:8px;
-    font-weight:900;font-size:14px;text-decoration:none;transition:all .18s ease;border:0}
-.cust-btn-primary{background:var(--c-primary);color:#fff;box-shadow:0 10px 22px rgba(23,105,194,.2)}
-.cust-btn-primary:hover{background:var(--c-primary-d);color:#fff}
-
-/* Snapshot cards */
-.cust-snap-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
-.cust-snap{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--c-border);border-radius:8px;
-    background:#fff;box-shadow:0 12px 26px rgba(24,36,60,.06)}
-.cust-snap-ic{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:12px;
-    font-size:20px;flex:0 0 auto}
-.cust-snap-ic.ic-blue{background:#e9f1fc;color:#1769c2}
-.cust-snap-ic.ic-green{background:#e8f7ef;color:#1f9d70}
-.cust-snap-ic.ic-gray{background:#eef1f6;color:#64748b}
-.cust-snap-ic.ic-violet{background:#f1ecfe;color:#7c4dff}
-.cust-snap-label{margin:0;color:var(--c-muted);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.02em}
-.cust-snap-value{margin:3px 0 0;color:var(--c-ink);font-size:22px;font-weight:900;line-height:1}
-
-/* Table panel + toolbar */
-.cust-table-panel{overflow:hidden}
-.cust-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px;border-bottom:1px solid var(--c-line)}
-.cust-table-title{margin:0;color:var(--c-ink);font-size:17px;font-weight:900}
-.cust-table-note{margin:4px 0 0;color:var(--c-muted);font-size:12px;font-weight:700}
-.cust-search-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#eef6ff;
-    color:#1769c2;font-size:12px;font-weight:800;border:1px solid #cfe3fb}
-.cust-total-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#f1f5f9;
-    color:var(--c-soft);font-size:12px;font-weight:800;border:1px solid #e2e8f0;white-space:nowrap}
-
-/* DataTables-style controls bar (page-size + search) */
-.cust-tabletools{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
-    padding:14px 20px;border-bottom:1px solid var(--c-line);background:#fcfdff}
-.cust-len,.cust-find{display:flex;align-items:center;gap:8px;margin:0}
-.cust-len label,.cust-find label{margin:0;color:var(--c-soft);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.02em}
-.cust-len-select{min-height:38px;padding:6px 30px 6px 12px;border:1px solid var(--c-border);border-radius:8px;
-    background:var(--c-bg);color:var(--c-ink);font-size:13px;font-weight:800;cursor:pointer}
-.cust-len-select:focus{border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(23,105,194,.12);outline:none}
-.cust-find-box{position:relative;display:flex;align-items:center}
-.cust-find-box>.bi{position:absolute;left:12px;color:var(--c-muted);font-size:14px;pointer-events:none}
-.cust-find-box input{min-height:38px;width:240px;max-width:60vw;padding:7px 32px 7px 34px;border:1px solid var(--c-border);
-    border-radius:8px;background:var(--c-bg);color:var(--c-ink);font-weight:700;outline:none}
-.cust-find-box input:focus{border-color:var(--c-primary);background:#fff;box-shadow:0 0 0 4px rgba(23,105,194,.12)}
-.cust-find-clear{position:absolute;right:11px;color:var(--c-muted);font-size:11px;text-decoration:none}
-.cust-find-clear:hover{color:#c53030}
-
-/* Sortable headers */
-.cust-th-sort{cursor:pointer}
-.cust-table th.cust-th-sort{padding:0}
-.cust-sort{display:inline-flex;align-items:center;gap:6px;width:100%;padding:12px 16px;color:var(--c-soft);
-    text-decoration:none;font:inherit;font-weight:900;text-transform:uppercase;letter-spacing:.02em;font-size:12px}
-.cust-th-sort.text-center .cust-sort{justify-content:center}
-.cust-th-sort.text-end .cust-sort{justify-content:flex-end}
-.cust-sort .bi{font-size:11px;opacity:.45;transition:opacity .15s ease,color .15s ease}
-.cust-sort:hover{color:var(--c-primary)}
-.cust-sort:hover .bi{opacity:.9}
-.cust-sort.is-sorted{color:var(--c-primary)}
-.cust-sort.is-sorted .bi{opacity:1;color:var(--c-primary)}
-
-/* Table */
-.cust-table-wrap{overflow-x:auto}
-.cust-table{width:100%;margin:0;border-collapse:separate;border-spacing:0}
-.cust-table thead th{padding:12px 16px;background:#f7fafc;color:var(--c-soft);font-size:12px;font-weight:900;
-    text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;border-bottom:1px solid var(--c-border)}
-.cust-table tbody td{padding:12px 16px;border-top:1px solid var(--c-line);color:var(--c-text);font-size:13px;
-    font-weight:700;vertical-align:middle}
-.cust-table tbody tr:first-child td{border-top:0}
-.cust-table tbody tr:hover td{background:var(--c-bg)}
-/* Alignment helpers scoped to the table so header + cells always match. */
-.cust-table th.text-center,.cust-table td.text-center{text-align:center}
-.cust-table th.text-start,.cust-table td.text-start{text-align:left}
-.cust-table th.text-end,.cust-table td.text-end{text-align:right}
-.cust-table .col-id{white-space:nowrap}
-.cust-idchip{display:inline-block;padding:3px 9px;border-radius:6px;background:#eef2f8;border:1px solid #e0e7f1;
-    color:#516174;font-size:11.5px;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums}
-.cust-muted{color:var(--c-soft);font-weight:600}
+/* ---- Customers listing — page-specific rules (shared cust-* components live
+   in assets/css/erp-list.css, loaded globally from layout.php) -------------- */
 .cust-name{display:flex;align-items:center;gap:10px}
 .cust-avatar{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;
     background:linear-gradient(135deg,#1769c2,#3b82f6);color:#fff;font-size:13px;font-weight:900;flex:0 0 auto}
@@ -297,14 +203,7 @@ $perOpts = [25, 35, 50, 100];
 .cust-table th:nth-child(7),.cust-table td:nth-child(7){width:264px}   /* Actions (6 icon buttons) */
 /* Name (col 2) + Email (col 3) truncate within their fixed width. */
 .cust-name-txt{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cust-firmbadge{display:inline-flex;align-items:center;gap:3px;flex:0 0 auto;padding:2px 7px;border-radius:999px;
-    background:#eef2f8;color:#5b6b7f;font-size:11px;font-weight:800;text-decoration:none}
-.cust-firmbadge .bi{font-size:11px}
 .cust-email .cust-muted{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cust-planpill{display:inline-block;max-width:100%;padding:4px 11px;border-radius:999px;background:#eef4ff;
-    border:1px solid #d7e6fb;color:#1769c2;font-size:12px;font-weight:800;text-decoration:none;vertical-align:middle;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cust-planpill:hover{background:#e0edff;border-color:#b9d5f7}
 /* ===== Rich customer hover card (hover a name) — adapted from the TrackMe
    account preview, re-skinned to the ERP blue theme + Bootstrap Icons. ===== */
 #custTip{position:fixed;z-index:12000;width:360px;max-width:94vw;pointer-events:none;opacity:0;
@@ -346,69 +245,9 @@ $perOpts = [25, 35, 50, 100];
 .cust-hover-name{cursor:default;border-bottom:1px dashed transparent}
 .cust-hover-name:hover{border-bottom-color:#c7d7ea}
 @media (max-width:480px){#custTip{width:300px}.cust-tip-stats{grid-template-columns:repeat(2,1fr)}}
-.cust-pill{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:24px;padding:0 8px;
-    border-radius:7px;background:#eef1f6;color:var(--c-soft);font-size:12px;font-weight:900}
 .cust-sub-link{display:inline-flex;flex-direction:column;line-height:1.25;text-decoration:none}
 .cust-sub-plan{color:var(--c-ink);font-weight:800;font-size:13px}
 .cust-sub-status{color:var(--c-muted);font-size:11px;font-weight:700;text-transform:capitalize}
-.cust-select{min-height:34px;padding:5px 26px 5px 10px;border:1px solid var(--c-border);border-radius:8px;
-    background:var(--c-bg);color:var(--c-ink);font-size:12px;font-weight:800;cursor:pointer}
-.cust-select:focus{border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(23,105,194,.12);outline:none}
-.cust-select.pay-paid{border-color:#bbe7cf;background:#f0fbf5;color:#137a4c}
-.cust-select.pay-unpaid{border-color:#f6c6c9;background:#fdf4f4;color:#c53030}
-.cust-select.pay-trial{border-color:#f6dcae;background:#fdf8ef;color:#b7791f}
-.cust-badge{display:inline-flex;align-items:center;gap:0;padding:4px 11px 4px 6px;border-radius:20px;font-size:12px;font-weight:800}
-.cust-badge .bi{font-size:18px;margin:-4px -2px -4px -4px}
-.cust-badge.is-active{background:#e8f7ef;color:#1f9d70}
-.cust-badge.is-inactive{background:#f1f5f9;color:#94a3b8}
-
-/* Row action icons */
-.cust-row-actions{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
-.cust-row-actions form{margin:0}
-.cust-act{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;
-    border:1px solid transparent;font-size:13px;line-height:1;text-decoration:none;cursor:pointer;background:transparent;
-    transition:transform .12s ease,box-shadow .15s ease,background .15s ease,color .15s ease,border-color .15s ease}
-.cust-act:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(16,24,40,.14)}
-.cust-act.act-sub{background:#e9f1fc;color:#1769c2;border-color:#cbe0f7}
-.cust-act.act-sub:hover{background:#1769c2;color:#fff;border-color:#1769c2}
-.cust-act.act-login{background:#e8f7ef;color:#1f9d70;border-color:#c6ecd8}
-.cust-act.act-login:hover{background:#1f9d70;color:#fff;border-color:#1f9d70}
-.cust-act.act-pwd{background:#f1ecfe;color:#7c4dff;border-color:#ddd0fb}
-.cust-act.act-pwd:hover{background:#7c4dff;color:#fff;border-color:#7c4dff}
-.cust-act.act-mail{background:#eef1f6;color:#26374f;border-color:#d7deea}
-.cust-act.act-mail:hover{background:#26374f;color:#fff;border-color:#26374f}
-.cust-act.act-reset{background:#fff4ed;color:#c2410c;border-color:#fdd6bb}
-.cust-act.act-reset:hover{background:#c2410c;color:#fff;border-color:#c2410c}
-.cust-act.act-purge{background:#fdecec;color:#c53030;border-color:#f6c6c9}
-.cust-act.act-purge:hover{background:#c53030;color:#fff;border-color:#c53030}
-.cust-act.act-reset:hover{background:#c2410c;color:#fff;border-color:#c2410c}
-
-/* Empty state */
-.cust-empty{text-align:center;padding:44px 16px !important;color:var(--c-muted);font-weight:700}
-.cust-empty .bi{font-size:34px;display:block;margin-bottom:8px;opacity:.6}
-
-/* Pager bar — match the reference blue/8px, override the generic modern pager */
-.cust-pager-bar{padding:14px 20px;border-top:1px solid var(--c-line)}
-.cust-pager-bar .erp-pager__btn{border-radius:8px;border-color:var(--c-border)}
-.cust-pager-bar .erp-pager__btn:hover{border-color:#b9d5f5;color:var(--c-primary);background:#edf6ff}
-.cust-pager-bar .erp-pager__btn.is-active{background:var(--c-primary);border-color:var(--c-primary);
-    box-shadow:0 6px 14px -3px rgba(23,105,194,.5)}
-.cust-pager-bar .erp-pager__info b{color:var(--c-ink)}
-
-/* AJAX loading state for the table host */
-.cust-host{position:relative;transition:opacity .12s ease;min-height:120px}
-.cust-host.is-loading{opacity:.5;pointer-events:none}
-.cust-host.is-loading:after{content:"";position:absolute;top:26px;left:50%;width:26px;height:26px;margin-left:-13px;
-    border:3px solid #cbd8ea;border-top-color:var(--c-primary);border-radius:50%;animation:custSpin .8s linear infinite;z-index:3}
-@keyframes custSpin{to{transform:rotate(360deg)}}
-
-@media (max-width:1100px){.cust-snap-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:767px){
-    .cust-hero{align-items:stretch;flex-direction:column}
-    .cust-hero-actions,.cust-search,.cust-search input,.cust-btn{width:100%}
-    .cust-snap-grid{grid-template-columns:1fr}
-    .cust-toolbar{align-items:stretch;flex-direction:column}
-}
 </style>
 
 <script>

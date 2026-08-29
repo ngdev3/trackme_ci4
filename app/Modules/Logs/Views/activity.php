@@ -1,13 +1,30 @@
 <?php /** Sliced content — rendered inside app/Views/layout.php via BaseController::render(). */ ?>
-<div class="card">
-    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <h3 class="card-title mb-0"><i class="bi bi-list-check me-1"></i> Activity Logs</h3>
-        <form class="d-flex gap-2" method="get">
-            <input type="search" name="q" value="<?= esc($search) ?>" class="form-control form-control-sm" placeholder="Search user, module, action...">
-            <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i></button>
-        </form>
-    </div>
-    <div class="card-body p-0">
+<?php $total = isset($pager) ? (int) $pager->getTotal() : count($rows ?? []); ?>
+<div class="cust-page">
+    <section class="cust-hero">
+        <div>
+            <h4 class="cust-title">Activity Logs</h4>
+            <p class="cust-subtitle">Audit trail of every user action across the application.</p>
+        </div>
+        <div class="cust-hero-actions">
+            <form class="cust-search" method="get" role="search">
+                <i class="bi bi-search cust-search-ic"></i>
+                <input type="search" name="q" value="<?= esc($search) ?>" placeholder="User, module, action…" autocomplete="off">
+                <?php if ($search !== ''): ?><a href="<?= site_url('activity-logs') ?>" class="cust-search-clear" title="Clear"><i class="bi bi-x-lg"></i></a><?php endif; ?>
+            </form>
+        </div>
+    </section>
+    <section class="cust-panel cust-table-panel">
+        <div class="cust-toolbar">
+            <div>
+                <h5 class="cust-table-title">Activity Records</h5>
+                <p class="cust-table-note">Newest first. Hover a user to preview the full log entry.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <?php if ($search !== ''): ?><span class="cust-search-tag"><i class="bi bi-search"></i> “<?= esc($search) ?>”</span><?php endif; ?>
+                <span class="cust-total-tag"><i class="bi bi-list-check"></i> <?= number_format($total) ?> total</span>
+            </div>
+        </div>
         <div class="erp-tbl-wrap">
             <table class="erp-tbl auto">
                 <thead><tr>
@@ -56,7 +73,7 @@
                 </tbody>
             </table>
         </div>
-    </div>
-    <?php if (isset($pager)): ?><div class="card-footer d-flex justify-content-end"><?= $pager->links() ?></div><?php endif; ?>
+        <?php if (isset($pager)): ?><div class="cust-pager-bar"><?= $pager->links() ?></div><?php endif; ?>
+    </section>
 </div>
 

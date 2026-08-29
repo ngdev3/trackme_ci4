@@ -16,17 +16,36 @@
      */
     document.addEventListener('change', function (e) {
         var t = e.target;
-        if (t && t.matches && t.matches('[data-fresh-submit]') && t.form && typeof window.erpFreshSubmit === 'function') {
+        if (! t || ! t.matches) { return; }
+        // Re-submit with a fresh CSRF token (POST forms).
+        if (t.matches('[data-fresh-submit]') && t.form && typeof window.erpFreshSubmit === 'function') {
             window.erpFreshSubmit(t.form);
+        }
+        // Plain submit on change — filter dropdowns on GET forms.
+        else if (t.matches('[data-autosubmit]') && t.form) {
+            t.form.submit();
         }
     });
     document.addEventListener('click', function (e) {
-        var t = e.target.closest ? e.target.closest('[data-window]') : null;
-        if (! t) { return; }
-        var action = t.getAttribute('data-window');
-        if (action === 'print') { window.print(); }
-        else if (action === 'close') { window.close(); }
+        // Print / close buttons.
+        var w = e.target.closest ? e.target.closest('[data-window]') : null;
+        if (w) {
+            var action = w.getAttribute('data-window');
+            if (action === 'print') { window.print(); }
+            else if (action === 'close') { window.close(); }
+            return;
+        }
+        // Copy a target element's text to the clipboard: data-copy="<element id>".
+        var c = e.target.closest ? e.target.closest('[data-copy]') : null;
+        if (c) {
+            var src = document.getElementById(c.getAttribute('data-copy'));
+            if (src && navigator.clipboard) { navigator.clipboard.writeText(src.innerText); }
+        }
     });
+    // NOTE: [data-confirm] on forms/links/buttons is handled by the richer
+    // in-app confirm (erpConfirm / SweetAlert2, with a native confirm() fallback)
+    // further down — see "In-app confirm (data-confirm)". Don't add a second
+    // submit handler here or every confirm fires twice.
 
     /* ---------------- Dropdown fallback ---------------- */
     (function () {

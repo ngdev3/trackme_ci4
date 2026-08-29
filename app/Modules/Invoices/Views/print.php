@@ -9,7 +9,7 @@ $modes  = ['cash' => 'Cash', 'bank' => 'Bank', 'upi' => 'UPI', 'cheque' => 'Cheq
 ?>
 <div class="d-flex justify-content-end gap-2 mb-3 d-print-none">
     <a href="<?= site_url('invoices') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
-    <button class="btn btn-sm btn-primary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print / Save PDF</button>
+    <button class="btn btn-sm btn-primary" data-window="print"><i class="bi bi-printer me-1"></i>Print / Save PDF</button>
 </div>
 
 <div class="card">
