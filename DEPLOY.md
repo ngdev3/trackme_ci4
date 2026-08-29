@@ -110,3 +110,41 @@ server secrets, uploads, logs, or DB dumps.
 
 For schema changes, add a migration and either import an updated
 `deploy/database.sql` or run `php spark migrate` on the server.
+
+> **After this deploy, run migrations** so the invoice-number unique key lands:
+> `php spark migrate` (adds `uq_invoice_no` on `invoices`). It is guarded/idempotent.
+
+## 6. Production Security Hardening
+
+Findings from `SECURITY-REVIEW.md`. The **code-level** ones are already fixed in the
+repo and apply automatically in production — no action needed:
+
+- **F-1 (High)** stored-XSS via attachment preview — fixed (upload allowlist + safe,
+  `nosniff` serving).
+- **F-2 (Medium)** `Secure` session/CSRF cookies — auto-on because `Cookie::$secure`
+  is now `(ENVIRONMENT === 'production')`. Requires the site to actually be served
+  over HTTPS (it is).
+- **F-4 (Low)** CSRF token randomization — on globally.
+
+The remaining items are **`.env` / config settings on the production host** — set them
+once, per environment:
+
+1. **F-3 — environment.** `CI_ENVIRONMENT = production` (already in the checklist above).
+   This hides stack traces, the debug toolbar, and detailed DB errors.
+2. **F-6 — force HTTPS.** In the production `.env`:
+   ```
+   app.forceGlobalSecureRequests = true
+   ```
+   Redirects HTTP→HTTPS and enables HSTS. **Keep this `false` in local dev** (plain HTTP).
+3. **F-5 — Content-Security-Policy** (defense-in-depth). Roll out in **report-only**
+   first so nothing breaks while you find violations:
+   - `app/Config/App.php` → `$CSPEnabled = true`
+   - `app/Config/ContentSecurityPolicy.php` → `$reportOnly = true`, then allow the app's
+     real sources (`'self'`, Google Fonts, Google Translate, inline styles/scripts the
+     views rely on).
+   - Watch the browser console / report endpoint for violations across the main pages,
+     tighten the directives, and only then set `$reportOnly = false` to enforce.
+
+**Verify after deploy:** a bad route shows a generic error page (no stack trace);
+`Set-Cookie` for `ci_session` carries `Secure; HttpOnly; SameSite=Lax`; an `http://`
+request 301-redirects to `https://`.
