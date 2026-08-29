@@ -60,7 +60,7 @@ $typeBadge = static fn (string $t): string => $t === 'naam'
         <form method="get" class="row g-2 align-items-end">
             <div class="col-6 col-md-3">
                 <label class="tx-flabel">Period</label>
-                <select name="period" class="form-select form-select-sm" onchange="txPeriod(this.value)">
+                <select name="period" class="form-select form-select-sm" data-tx-period>
                     <?php foreach (['day' => 'Daily', 'month' => 'Monthly', 'quarter' => 'Quarterly', 'fy' => 'Financial Year', 'custom' => 'Custom Range'] as $val => $lbl): ?>
                         <option value="<?= $val ?>" <?= $p->period === $val ? 'selected' : '' ?>><?= $lbl ?></option>
                     <?php endforeach; ?>
@@ -194,4 +194,8 @@ function txPeriod(v) {
     document.querySelectorAll('.tx-pf').forEach(function (el) { el.hidden = true; });
     document.querySelectorAll('.tx-pf-' + v).forEach(function (el) { el.hidden = false; });
 }
+// Wire the period selector without an inline on* attribute (CSP-clean).
+document.querySelectorAll('[data-tx-period]').forEach(function (sel) {
+    sel.addEventListener('change', function () { txPeriod(this.value); });
+});
 </script>

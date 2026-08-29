@@ -6,6 +6,28 @@
 (function () {
     'use strict';
 
+    /* ---------------- CSP-clean delegated handlers ----------------
+     * Replaces inline on* attributes (which a strict Content-Security-Policy
+     * cannot nonce) with delegated listeners on this external, allow-listed file.
+     *   - [data-fresh-submit]  : re-submit the element's form with a fresh CSRF
+     *                            token (was onchange="erpFreshSubmit(this.form)")
+     *   - [data-window="print"]: window.print()   (was onclick="window.print()")
+     *   - [data-window="close"]: window.close()   (was onclick="window.close()")
+     */
+    document.addEventListener('change', function (e) {
+        var t = e.target;
+        if (t && t.matches && t.matches('[data-fresh-submit]') && t.form && typeof window.erpFreshSubmit === 'function') {
+            window.erpFreshSubmit(t.form);
+        }
+    });
+    document.addEventListener('click', function (e) {
+        var t = e.target.closest ? e.target.closest('[data-window]') : null;
+        if (! t) { return; }
+        var action = t.getAttribute('data-window');
+        if (action === 'print') { window.print(); }
+        else if (action === 'close') { window.close(); }
+    });
+
     /* ---------------- Dropdown fallback ---------------- */
     (function () {
         if (window.bootstrap && window.bootstrap.Dropdown) { return; }

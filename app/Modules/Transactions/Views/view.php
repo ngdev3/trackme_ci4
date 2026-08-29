@@ -64,13 +64,13 @@ $human = function ($b) { $b = (int) $b; if ($b < 1024) return $b . ' B'; if ($b 
                         </div>
                         <div class="d-flex gap-2 mt-2 flex-wrap">
                             <label class="btn btn-sm btn-outline-secondary mb-0"><i class="bi bi-camera"></i>
-                                <input type="file" name="attachments[]" accept="image/*" capture="environment" class="d-none" onchange="erpFreshSubmit(this.form)">
+                                <input type="file" name="attachments[]" accept="image/*" capture="environment" class="d-none" data-fresh-submit>
                             </label>
                             <label class="btn btn-sm btn-outline-secondary mb-0"><i class="bi bi-mic"></i>
-                                <input type="file" name="attachments[]" accept="audio/*" capture class="d-none" onchange="erpFreshSubmit(this.form)">
+                                <input type="file" name="attachments[]" accept="audio/*" capture class="d-none" data-fresh-submit>
                             </label>
                             <label class="btn btn-sm btn-outline-secondary mb-0"><i class="bi bi-camera-video"></i>
-                                <input type="file" name="attachments[]" accept="video/*" capture="environment" class="d-none" onchange="erpFreshSubmit(this.form)">
+                                <input type="file" name="attachments[]" accept="video/*" capture="environment" class="d-none" data-fresh-submit>
                             </label>
                         </div>
                     </form>
@@ -104,7 +104,7 @@ $human = function ($b) { $b = (int) $b; if ($b < 1024) return $b . ' B'; if ($b 
                                             <i class="bi bi-arrow-repeat"></i>
                                             <form action="<?= site_url('transactions/file/' . hid($a['id']) . '/replace') ?>" method="post" enctype="multipart/form-data" class="d-none tx-replace-form">
                                                 <?= csrf_field() ?>
-                                                <input type="file" name="replacement" onchange="erpFreshSubmit(this.form)">
+                                                <input type="file" name="replacement" data-fresh-submit>
                                             </form>
                                         </label>
                                     <?php endif; ?>

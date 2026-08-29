@@ -78,9 +78,18 @@ $cur = $noPrint ? 'Rs ' : '₹ ';
 
     <?php if (! $noPrint): ?>
     <p class="noprint" style="text-align:center;margin-top:20px">
-        <button onclick="window.print()">Print</button>
-        <button onclick="window.close()">Close</button>
+        <button type="button" data-window="print">Print</button>
+        <button type="button" data-window="close">Close</button>
     </p>
+    <script>
+        // CSP-clean: no inline on* attributes on the buttons above.
+        document.querySelectorAll('[data-window]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                if (this.getAttribute('data-window') === 'print') { window.print(); }
+                else { window.close(); }
+            });
+        });
+    </script>
     <?php endif; ?>
 </body>
 </html>
