@@ -785,16 +785,39 @@ class TransactionController extends BaseController
         if (! $att) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
-        $path = $this->uploadDir((int) $att['user_id']) . $att['stored_name'];
+        // basename() defends against any path-traversal in stored_name.
+        $path = $this->uploadDir((int) $att['user_id']) . basename((string) $att['stored_name']);
         if (! is_file($path)) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
         if ($forceDownload) {
             return $this->response->download($path, null)->setFileName($att['original_name']);
         }
+
+        // Content-Type is derived from the SERVER-controlled stored extension, never
+        // the client-supplied mime, and paired with nosniff — otherwise a same-company
+        // user could upload an .html/.svg attachment that runs as script when another
+        // user previews it (stored XSS). Only images, PDFs and audio render INLINE;
+        // anything else (incl. SVG) is forced to download. Mirrors the mobile API.
+        $ext   = strtolower(pathinfo((string) $att['stored_name'], PATHINFO_EXTENSION));
+        $types = [
+            'csv'  => 'text/csv',
+            'xls'  => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'pdf'  => 'application/pdf',
+            'jpg'  => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png',
+            'gif'  => 'image/gif', 'webp' => 'image/webp', 'bmp' => 'image/bmp', 'heic' => 'image/heic',
+            'm4a'  => 'audio/mp4', 'mp3' => 'audio/mpeg', 'aac' => 'audio/aac',
+            'ogg'  => 'audio/ogg', 'wav' => 'audio/wav', 'webm' => 'audio/webm',
+        ];
+        $mime     = $types[$ext] ?? 'application/octet-stream';
+        $inline   = str_starts_with($mime, 'image/') || str_starts_with($mime, 'audio/') || $mime === 'application/pdf';
+        $safeName = preg_replace('/[^A-Za-z0-9._-]+/', '_', (string) $att['original_name']) ?: 'attachment';
+
         return $this->response
-            ->setHeader('Content-Type', $att['mime'] ?: 'application/octet-stream')
-            ->setHeader('Content-Disposition', 'inline; filename="' . rawurlencode($att['original_name']) . '"')
+            ->setHeader('Content-Type', $mime)
+            ->setHeader('X-Content-Type-Options', 'nosniff')
+            ->setHeader('Content-Disposition', ($inline ? 'inline' : 'attachment') . '; filename="' . $safeName . '"')
             ->setBody(file_get_contents($path));
     }
 

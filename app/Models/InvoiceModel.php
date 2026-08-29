@@ -195,14 +195,32 @@ class InvoiceModel extends Model
     /**
      * Next invoice number for a company + type, e.g. INV-000123 / PUR-000045.
      * Sequence is per company and per type.
+     *
+     * Derived from the HIGHEST existing number (incl. soft-deleted), not a row
+     * count: a count reuses a number whenever a bill is hard-deleted or a gap
+     * exists, which would collide with a surviving bill. Matches the safer
+     * scheme in {@see TransactionModel::nextTxnNo()}. The uq_invoice_no unique key
+     * is the final backstop — a race that still produces a duplicate is rejected
+     * by the DB and rolled back by the caller's transaction.
      */
     public function nextInvoiceNo(?int $companyId, string $type): string
     {
         $prefix = ['sale' => 'INV', 'purchase' => 'PUR', 'sale_return' => 'SRT', 'purchase_return' => 'PRT'][$type] ?? 'INV';
-        $n = $this->withDeleted()
+        $rows = $this->withDeleted()
+            ->select('invoice_no')
             ->where('company_id', (int) $companyId)
             ->where('type', $type)
-            ->countAllResults();
-        return $prefix . '-' . str_pad((string) ($n + 1), 6, '0', STR_PAD_LEFT);
+            ->where('invoice_no IS NOT NULL')
+            ->orderBy('id', 'DESC')
+            ->limit(200)
+            ->findAll();
+
+        $max = 0;
+        foreach ($rows as $r) {
+            if (preg_match('/(\d+)\s*$/', (string) $r['invoice_no'], $m)) {
+                $max = max($max, (int) $m[1]);
+            }
+        }
+        return $prefix . '-' . str_pad((string) ($max + 1), 6, '0', STR_PAD_LEFT);
     }
 }
