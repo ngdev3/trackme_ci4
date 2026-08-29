@@ -194,6 +194,33 @@ class Coupon
             return ['ok' => false, 'message' => 'The plan for this code is unavailable.'];
         }
 
+        // validate() already checked the global + per-user limits, but between that
+        // read and the insert below two concurrent redeems of the same code could
+        // both pass (TOCTOU) and each stack free days. Lock the coupon row and
+        // re-check the limits inside a transaction so only one request at a time
+        // crosses the threshold. per_user_limit may be > 1, so a plain unique index
+        // on (coupon_id, customer_id) would be wrong — the lock is the right tool.
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        $locked = $db->query(
+            'SELECT redeemed_count, max_redemptions, per_user_limit FROM coupons WHERE id = ? FOR UPDATE',
+            [(int) $coupon['id']],
+        )->getRowArray();
+        if ($locked !== null) {
+            if ($locked['max_redemptions'] !== null
+                && (int) $locked['redeemed_count'] >= (int) $locked['max_redemptions']) {
+                $db->transComplete();
+                return ['ok' => false, 'message' => 'This code has reached its redemption limit.'];
+            }
+            $perUser = (int) ($locked['per_user_limit'] ?? 1);
+            if ($perUser > 0
+                && $this->redemptions->countForCustomer((int) $coupon['id'], $customerId) >= $perUser) {
+                $db->transComplete();
+                return ['ok' => false, 'message' => 'You have already used this code.'];
+            }
+        }
+
         // Extend from the later of "now" and any current unexpired window, so a
         // redeem code stacks on top of remaining paid/trial time rather than
         // shortening it.
@@ -215,6 +242,11 @@ class Coupon
             'days_granted'      => $days,
         ]);
         $this->coupons->bumpRedeemed((int) $coupon['id']);
+
+        $db->transComplete();
+        if ($db->transStatus() === false) {
+            return ['ok' => false, 'message' => 'Could not redeem the code — please try again.'];
+        }
 
         // Best-effort audit line — never let a logging hiccup (e.g. no session in
         // the API / webhook / CLI context) undo an already-recorded redemption.
