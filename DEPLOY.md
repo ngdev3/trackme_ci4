@@ -136,14 +136,19 @@ once, per environment:
    app.forceGlobalSecureRequests = true
    ```
    Redirects HTTP→HTTPS and enables HSTS. **Keep this `false` in local dev** (plain HTTP).
-3. **F-5 — Content-Security-Policy** (defense-in-depth). Roll out in **report-only**
-   first so nothing breaks while you find violations:
-   - `app/Config/App.php` → `$CSPEnabled = true`
-   - `app/Config/ContentSecurityPolicy.php` → `$reportOnly = true`, then allow the app's
-     real sources (`'self'`, Google Fonts, Google Translate, inline styles/scripts the
-     views rely on).
-   - Watch the browser console / report endpoint for violations across the main pages,
-     tighten the directives, and only then set `$reportOnly = false` to enforce.
+3. **F-5 — Content-Security-Policy** (defense-in-depth). **Already enabled in the repo
+   in report-only mode** (`App::$CSPEnabled = true`, `ContentSecurityPolicy::$reportOnly
+   = true`, with host allowlists for Cashfree / Google Fonts+Translate / weather / IFSC /
+   QR). Report-only sends the policy but blocks nothing, so it is safe in production as-is
+   and will collect violation reports. **To move to enforcement later:**
+   - Address the inline `<script>` / `style="…"` / `onclick=` violations the browser
+     console reports (nonce or hash the inline scripts; move inline `onclick` handlers to
+     `addEventListener`), and confirm the Google Translate widget's injected scripts are
+     covered.
+   - Note the CI4 gotcha: it auto-adds a `nonce-…` to `script-src-elem`, which per spec
+     **negates `'unsafe-inline'`** — so enforcement needs `$autoNonce = true` (rewrites
+     each inline tag) rather than relying on `'unsafe-inline'`.
+   - Only then set `$reportOnly = false`. See `SECURITY-REVIEW.md` F-5 for detail.
 
 **Verify after deploy:** a bad route shows a generic error page (no stack trace);
 `Set-Cookie` for `ci_session` carries `Secure; HttpOnly; SameSite=Lax`; an `http://`

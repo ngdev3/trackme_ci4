@@ -22,7 +22,7 @@ its section for the resolution.
 | F-2 | **Fixed** | ~~Session/CSRF cookies not marked `Secure`~~ — now `Secure` in production (env-gated) | Session |
 | F-3 | **Medium** | `CI_ENVIRONMENT=development` on this box (fine locally; dangerous if ever public) | Prod config |
 | F-4 | **Fixed** | ~~CSRF token not randomized~~ — `tokenRandomize=true` set (safe on HTTP+HTTPS) | CSRF |
-| F-5 | **Low** | No Content-Security-Policy (defense-in-depth for XSS) | Prod config |
+| F-5 | **In progress** | Content-Security-Policy enabled **report-only** (enforcement pending inline-code tuning) | Prod config |
 | F-6 | **Low** | `forceGlobalSecureRequests=false` — verify it is `true` in prod | Prod config |
 | — | Fixed | Reset-token log leak, auth rate-limiting, plaintext long-lived tokens (remediated earlier this session) | Auth |
 
@@ -142,16 +142,29 @@ still validates.
 
 ---
 
-## F-5 — No Content-Security-Policy  **(Low, defense-in-depth)**
+## F-5 — Content-Security-Policy  **(Low → REPORT-ONLY enabled)**
 
-**Affected:** `Config\App::$CSPEnabled` not enabled.
+> **In progress (2026-08-29).** A CSP is now **enabled in report-only mode**
+> (`App::$CSPEnabled = true`, `ContentSecurityPolicy::$reportOnly = true`), with
+> host allowlists for the app's real resources (Cashfree SDK, Google Fonts/Translate,
+> open-meteo/geojs/razorpay-IFSC/qrserver APIs). Report-only **cannot block anything**
+> — verified the dashboard (charts, Translate widget) and other pages render normally
+> and the `Content-Security-Policy-Report-Only` header is sent.
+>
+> **Before it can be ENFORCED** (`reportOnly = false`), the app's inline code needs
+> tuning — the console currently reports inline `<script>`, inline `style="…"`, and
+> inline `onclick=` violations, plus Google Translate's dynamically-injected scripts.
+> Note the CI4 gotcha: it auto-adds a `nonce-…` to `script-src-elem`, and per spec a
+> nonce **negates `'unsafe-inline'`**. So enforcement means one of:
+> - set `$autoNonce = true` (CI4 rewrites each inline tag with the nonce) **and**
+>   move inline `onclick=` handlers to addEventListener (attributes can't be nonced), or
+> - compute per-script hashes.
+>
+> This is app-code refactoring best done page-by-page against the report-only logs,
+> so it is left in report-only until then.
 
-**Impact:** No second line of defense if an XSS sink (e.g. F-1) is ever introduced.
-
-**Fix:** Enable a CSP (start report-only) restricting `script-src`/`object-src`; pair with
-the `secureheaders` filter already registered.
-
-**Regression test:** Response carries `Content-Security-Policy`; app functions under it.
+**Impact (when unmitigated):** No second line of defense if an XSS sink (e.g. F-1) is
+ever introduced.
 
 ---
 
