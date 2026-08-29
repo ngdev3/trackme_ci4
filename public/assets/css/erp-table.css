@@ -9,15 +9,16 @@
    erp-table.js renders #erpTip. Colours are self-contained (no page vars).
    ========================================================================== */
 .erp-tbl-wrap { overflow-x: auto; }
+.cust-page .erp-tbl-wrap { overflow-x: auto; }
 .erp-tbl { width: 100%; margin: 0; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
 /* Wide / variable-column listings (logs, transactions) opt out of fixed layout
    so columns size to their content and the wrapper scrolls horizontally. */
 .erp-tbl.auto { table-layout: auto; }
 .erp-tbl.auto thead th, .erp-tbl.auto tbody td { white-space: nowrap; }
 .erp-tbl th, .erp-tbl td { box-sizing: border-box; }
-.erp-tbl thead th { padding: 12px 16px; background: #f7fafc; color: #64748b; font-size: 12px; font-weight: 900;
-    text-transform: uppercase; letter-spacing: .02em; border-bottom: 1px solid #e6edf5; white-space: nowrap; text-align: left; }
-.erp-tbl tbody td { padding: 12px 16px; border-top: 1px solid #eef2f7; color: #26374f; font-size: 13px; vertical-align: middle; }
+.erp-tbl thead th { padding: 12px 16px; background: #f7fafc; color: #516174; font-size: 12px; font-weight: 900;
+    text-transform: uppercase; letter-spacing: .02em; border-bottom: 1px solid #dce6f2; white-space: nowrap; text-align: left; }
+.erp-tbl tbody td { padding: 12px 16px; border-top: 1px solid #edf2f7; color: #26374f; font-size: 13px; font-weight: 700; vertical-align: middle; }
 .erp-tbl tbody tr:first-child td { border-top: 0; }
 .erp-tbl tbody tr:hover td { background: #fbfdff; }
 .erp-tbl tfoot td { padding: 12px 16px; border-top: 2px solid #dbe6f3; color: #18243c; font-size: 13px; }
@@ -91,6 +92,16 @@
 
 .erp-empty { text-align: center; color: #8a97a8; padding: 40px 16px; font-weight: 700; }
 .erp-empty .bi { display: block; font-size: 28px; margin-bottom: 8px; opacity: .6; }
+.cust-page .card {
+    border: 1px solid #dce6f2;
+    border-radius: 8px;
+    box-shadow: 0 16px 38px rgba(24,36,60,.08);
+}
+.cust-page .card-header,
+.cust-page .tm-table-head {
+    border-bottom: 1px solid #edf2f7;
+    background: #fff;
+}
 
 /* ===== Rich hover card (rendered by erp-table.js into #erpTip) ===== */
 #erpTip { position: fixed; z-index: 12000; width: 360px; max-width: 94vw; pointer-events: none; opacity: 0;

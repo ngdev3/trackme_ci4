@@ -1,14 +1,32 @@
 <?php /** Sliced content — rendered inside app/Views/layout.php via BaseController::render(). */ ?>
-<form action="<?= site_url('permissions/save/' . $role['id']) ?>" method="post">
-    <?= csrf_field() ?>
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title mb-0"><i class="bi bi-key me-1"></i> Permissions — <?= esc($role['name']) ?></h3>
+<div class="cust-page">
+    <div class="cust-hero">
+        <div>
+            <p class="cust-subtitle mb-1"><i class="bi bi-key"></i> Access Control</p>
+            <h1 class="cust-title">Permissions - <?= esc($role['name']) ?></h1>
+            <p class="cust-subtitle">Manage module permissions in one compact matrix.</p>
+        </div>
+        <div class="cust-hero-actions">
+            <a href="<?= site_url('permissions') ?>" class="cust-btn cust-btn-ghost"><i class="bi bi-arrow-left"></i> Back</a>
             <?php if (can('permissions', 'edit')): ?>
-                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-save me-1"></i> Save Permissions</button>
+                <button type="submit" form="permMatrixForm" class="cust-btn cust-btn-primary"><i class="bi bi-save"></i> Save Permissions</button>
             <?php endif; ?>
         </div>
-        <div class="card-body">
+    </div>
+
+    <form id="permMatrixForm" action="<?= site_url('permissions/save/' . $role['id']) ?>" method="post">
+    <?= csrf_field() ?>
+    <section class="cust-panel cust-table-panel">
+        <div class="cust-toolbar">
+            <div>
+                <h3 class="cust-table-title"><i class="bi bi-shield-lock"></i> Permission Matrix</h3>
+                <p class="cust-table-note">Toggle permission access by module.</p>
+            </div>
+            <?php if (can('permissions', 'edit')): ?>
+                <button type="submit" class="cust-btn cust-btn-primary"><i class="bi bi-save"></i> Save Permissions</button>
+            <?php endif; ?>
+        </div>
+        <div class="p-3">
             <?php if ((int) $role['is_superadmin'] === 1): ?>
                 <div class="alert alert-dark"><i class="bi bi-info-circle me-1"></i>
                     This is a <strong>Super Admin</strong> role — it bypasses all permission checks automatically.
@@ -16,9 +34,9 @@
                 </div>
             <?php endif; ?>
 
-            <div class="table-responsive">
-                <table class="table table-bordered perm-matrix align-middle">
-                    <thead class="table-light">
+            <div class="cust-table-wrap">
+                <table class="cust-table perm-matrix align-middle">
+                    <thead>
                         <tr>
                             <th>Module</th>
                             <?php foreach ($permissions as $p): ?>
@@ -51,14 +69,15 @@
                 </table>
             </div>
         </div>
-        <div class="card-footer d-flex gap-2">
+        <div class="cust-pager-bar">
             <?php if (can('permissions', 'edit')): ?>
-                <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save Permissions</button>
+                <button type="submit" class="cust-btn cust-btn-primary"><i class="bi bi-save"></i> Save Permissions</button>
             <?php endif; ?>
-            <a href="<?= site_url('permissions') ?>" class="btn btn-outline-secondary">Back</a>
+            <a href="<?= site_url('permissions') ?>" class="cust-btn cust-btn-ghost">Back</a>
         </div>
-    </div>
-</form>
+    </section>
+    </form>
+</div>
 
 
 

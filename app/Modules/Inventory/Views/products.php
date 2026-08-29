@@ -11,19 +11,22 @@ $navTabs = [
     ['reports', 'Report', 'bi-bar-chart', 'inventory/reports'],
 ];
 ?>
-<div class="inv-wrap">
+<div class="cust-page inv-wrap">
     <div class="inv-tabs">
         <?php foreach ($navTabs as [$k, $lbl, $ic, $url]): ?>
         <a href="<?= site_url($url) ?>" class="inv-tab <?= $tab === $k ? 'active' : '' ?>"><i class="bi <?= $ic ?>"></i><span><?= esc($lbl) ?></span></a>
         <?php endforeach; ?>
     </div>
 
-    <div class="inv-panel">
-        <div class="inv-panel-head">
-            <h3 class="inv-panel-title"><i class="bi bi-box-seam"></i> Product Master <span class="inv-pill gray"><?= count($rows) ?></span></h3>
+    <section class="cust-panel cust-table-panel inv-panel">
+        <div class="cust-toolbar">
+            <div>
+                <h5 class="cust-table-title">Product Master</h5>
+                <p class="cust-table-note">Search, add, edit, or delete inventory products.</p>
+            </div>
             <div class="d-flex gap-2 flex-wrap">
                 <div class="inv-search"><i class="bi bi-search"></i><input type="search" id="pmSearch" placeholder="Search name, SKU, category…"></div>
-                <button class="inv-btn primary" id="pmAdd"><i class="bi bi-plus-lg"></i> Add Product</button>
+                <button class="cust-btn cust-btn-primary" id="pmAdd"><i class="bi bi-plus-lg"></i> Add Product</button>
             </div>
         </div>
         <div class="inv-panel-body">
@@ -31,11 +34,11 @@ $navTabs = [
                 <div class="inv-empty">
                     <i class="bi bi-box-seam"></i>
                     <p>No products yet. Add your first item to start billing and tracking stock.</p>
-                    <button class="inv-btn primary mt-3" id="pmAdd2"><i class="bi bi-plus-lg"></i> Add Product</button>
+                    <button class="cust-btn cust-btn-primary mt-3" id="pmAdd2"><i class="bi bi-plus-lg"></i> Add Product</button>
                 </div>
             <?php else: ?>
-                <div class="table-responsive">
-                    <table class="inv-table" id="pmTable">
+                <div class="cust-table-wrap">
+                    <table class="cust-table" id="pmTable">
                         <thead><tr>
                             <th>Product</th><th>Category</th><th class="r">Stock</th>
                             <th class="r">Purchase</th><th class="r">Sale</th><th class="r">Tax</th><th class="c">Action</th>
@@ -69,10 +72,10 @@ $navTabs = [
                                 <td class="r"><?= $money($p['sale_price']) ?></td>
                                 <td class="r"><?= ((float) $p['tax_rate']) ? $p['tax_rate'] . '%' : '—' ?></td>
                                 <td class="c text-nowrap">
-                                    <button class="inv-icon-btn pm-edit" title="Edit"><i class="bi bi-pencil"></i></button>
+                                    <button class="cust-act act-edit pm-edit" title="Edit"><i class="bi bi-pencil"></i></button>
                                     <form method="post" action="<?= site_url('inventory/products/delete/' . (int) $p['id']) ?>" class="d-inline" onsubmit="return confirm('Remove this product?');">
                                         <?= csrf_field() ?>
-                                        <button class="inv-icon-btn danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                        <button class="cust-act act-del" title="Delete"><i class="bi bi-trash"></i></button>
                                     </form>
                                 </td>
                             </tr>
@@ -82,7 +85,7 @@ $navTabs = [
                 </div>
             <?php endif; ?>
         </div>
-    </div>
+    </section>
 </div>
 
 <!-- Add / Edit modal -->

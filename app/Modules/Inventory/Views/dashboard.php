@@ -30,19 +30,19 @@ $tools = [
     ['All Bills', 'Sales & purchase', 'bi-receipt', 's', 'invoices'],
 ];
 ?>
-<div class="inv-wrap">
+<div class="cust-page inv-wrap">
 
     <!-- Hero -->
-    <div class="inv-hero">
-        <div class="inv-hero-l">
-            <div class="inv-hero-eyebrow"><i class="bi bi-boxes"></i> Stock &amp; Inventory</div>
-            <div class="inv-hero-title">Inventory Control Center</div>
-            <div class="inv-hero-sub">Track products, move stock and raise bills — all synced live with your mobile app and cash book.</div>
+    <div class="cust-hero">
+        <div>
+            <p class="cust-subtitle mb-1"><i class="bi bi-boxes"></i> Stock &amp; Inventory</p>
+            <h1 class="cust-title">Inventory Control Center</h1>
+            <p class="cust-subtitle">Track products, move stock and raise bills from one compact workspace.</p>
         </div>
-        <div class="inv-hero-actions">
-            <a href="<?= site_url('inventory/products') ?>" class="inv-hero-btn solid"><i class="bi bi-plus-lg"></i> Add Product</a>
-            <a href="<?= site_url('invoices/new/sale') ?>" class="inv-hero-btn"><i class="bi bi-cart-plus"></i> New Sale</a>
-            <a href="<?= site_url('inventory/stock') ?>" class="inv-hero-btn"><i class="bi bi-arrow-down-up"></i> Move Stock</a>
+        <div class="cust-hero-actions">
+            <a href="<?= site_url('inventory/products') ?>" class="cust-btn cust-btn-primary"><i class="bi bi-plus-lg"></i> Add Product</a>
+            <a href="<?= site_url('invoices/new/sale') ?>" class="cust-btn cust-btn-ghost"><i class="bi bi-cart-plus"></i> New Sale</a>
+            <a href="<?= site_url('inventory/stock') ?>" class="cust-btn cust-btn-ghost"><i class="bi bi-arrow-down-up"></i> Move Stock</a>
         </div>
     </div>
 
@@ -54,21 +54,21 @@ $tools = [
     </div>
 
     <!-- Stat cards -->
-    <div class="inv-stats">
+    <div class="cust-snap-grid">
         <?php foreach ($stats as [$label, $val, $tone, $icon]): ?>
-        <div class="inv-stat">
-            <div class="inv-stat-ic <?= $tone ?>"><i class="bi <?= $icon ?>"></i></div>
-            <div class="inv-stat-body">
-                <div class="inv-stat-label"><?= esc($label) ?></div>
-                <div class="inv-stat-value"><?= esc($val) ?></div>
+        <div class="cust-snap">
+            <span class="cust-snap-ic ic-blue"><i class="bi <?= $icon ?>"></i></span>
+            <div>
+                <div class="cust-snap-label"><?= esc($label) ?></div>
+                <div class="cust-snap-value"><?= esc($val) ?></div>
             </div>
         </div>
         <?php endforeach; ?>
     </div>
 
     <!-- Tools -->
-    <div class="inv-panel">
-        <div class="inv-panel-head"><h3 class="inv-panel-title"><i class="bi bi-grid-1x2"></i> Quick Actions</h3></div>
+    <section class="cust-panel inv-panel">
+        <div class="cust-toolbar"><h3 class="cust-table-title"><i class="bi bi-grid-1x2"></i> Quick Actions</h3></div>
         <div class="inv-panel-body">
             <div class="inv-tools">
                 <?php foreach ($tools as [$label, $sub, $icon, $tone, $url]): ?>
@@ -82,24 +82,24 @@ $tools = [
                 <?php endforeach; ?>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Recent products -->
-    <div class="inv-panel">
-        <div class="inv-panel-head">
-            <h3 class="inv-panel-title"><i class="bi bi-clock-history"></i> Recent Products</h3>
-            <a href="<?= site_url('inventory/products') ?>" class="inv-btn ghost sm"><i class="bi bi-box-seam"></i> Manage</a>
+    <section class="cust-panel cust-table-panel inv-panel">
+        <div class="cust-toolbar">
+            <h3 class="cust-table-title"><i class="bi bi-clock-history"></i> Recent Products</h3>
+            <a href="<?= site_url('inventory/products') ?>" class="cust-btn cust-btn-ghost"><i class="bi bi-box-seam"></i> Manage</a>
         </div>
         <div class="inv-panel-body">
             <?php if (empty($recent)): ?>
-                <div class="inv-empty">
+                <div class="cust-empty">
                     <i class="bi bi-box-seam"></i>
                     <p>No products yet. Add your first item in the Product Master.</p>
-                    <a class="inv-btn primary mt-3" href="<?= site_url('inventory/products') ?>"><i class="bi bi-plus-lg"></i> Add Product</a>
+                    <a class="cust-btn cust-btn-primary mt-3" href="<?= site_url('inventory/products') ?>"><i class="bi bi-plus-lg"></i> Add Product</a>
                 </div>
             <?php else: ?>
-                <div class="table-responsive">
-                    <table class="inv-table">
+                <div class="cust-table-wrap">
+                    <table class="cust-table">
                         <thead><tr><th>Product</th><th class="r">Stock</th><th class="r">Sale Price</th><th class="c">Status</th></tr></thead>
                         <tbody>
                             <?php foreach ($recent as $p):
@@ -119,7 +119,7 @@ $tools = [
                                 </td>
                                 <td class="r"><?= rtrim(rtrim((string) $stk, '0'), '.') ?> <span class="inv-prod-sub"><?= esc($p['unit'] ?: '') ?></span></td>
                                 <td class="r"><?= $money($p['sale_price']) ?></td>
-                                <td class="c"><span class="inv-pill <?= $cls ?>"><?= $badge ?></span></td>
+                                <td class="c"><span class="erp-status <?= $cls === 'ok' ? 'active' : 'inactive' ?>"><?= $badge ?></span></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -127,5 +127,5 @@ $tools = [
                 </div>
             <?php endif; ?>
         </div>
-    </div>
+    </section>
 </div>

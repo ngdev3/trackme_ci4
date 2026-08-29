@@ -27,18 +27,24 @@ $stats = [
     ['Out', $out, 'r', 'bi-x-octagon'],
 ];
 ?>
-<div class="inv-wrap">
+<div class="cust-page inv-wrap">
     <div class="inv-tabs d-print-none">
         <?php foreach ($navTabs as [$k, $lbl, $ic, $url]): ?>
         <a href="<?= site_url($url) ?>" class="inv-tab <?= $tab === $k ? 'active' : '' ?>"><i class="bi <?= $ic ?>"></i><span><?= esc($lbl) ?></span></a>
         <?php endforeach; ?>
     </div>
 
-    <div class="d-flex justify-content-end gap-2 d-print-none">
-        <button class="inv-btn primary" data-window="print"><i class="bi bi-printer"></i> Print / Save PDF</button>
-    </div>
+    <section class="cust-hero d-print-none">
+        <div>
+            <h4 class="cust-title">Inventory Report</h4>
+            <p class="cust-subtitle">Stock summary and recent movement statement for <?= esc($firm) ?>.</p>
+        </div>
+        <div class="cust-hero-actions">
+            <button class="cust-btn cust-btn-primary" data-window="print"><i class="bi bi-printer"></i> Print / Save PDF</button>
+        </div>
+    </section>
 
-    <div class="inv-panel">
+    <section class="cust-panel cust-table-panel inv-panel">
         <div class="inv-panel-body" id="repArea">
             <div class="inv-report-head">
                 <div>
@@ -48,18 +54,18 @@ $stats = [
                 <div class="text-end inv-prod-sub">Generated<br><b><?= esc(date('d M Y, H:i')) ?></b></div>
             </div>
 
-            <div class="inv-stats mb-4">
+            <div class="cust-snap-grid mb-4">
                 <?php foreach ($stats as [$label, $val, $tone, $icon]): ?>
-                <div class="inv-stat">
-                    <div class="inv-stat-ic <?= $tone ?>"><i class="bi <?= $icon ?>"></i></div>
-                    <div class="inv-stat-body"><div class="inv-stat-label"><?= esc($label) ?></div><div class="inv-stat-value"><?= esc($val) ?></div></div>
+                <div class="cust-snap">
+                    <span class="cust-snap-ic <?= $tone === 'r' ? 'ic-red' : ($tone === 'a' ? 'ic-amber' : ($tone === 'g' ? 'ic-green' : ($tone === 'v' ? 'ic-violet' : 'ic-blue'))) ?>"><i class="bi <?= $icon ?>"></i></span>
+                    <div><p class="cust-snap-label"><?= esc($label) ?></p><p class="cust-snap-value"><?= esc($val) ?></p></div>
                 </div>
                 <?php endforeach; ?>
             </div>
 
-            <h6 class="inv-panel-title mb-2"><i class="bi bi-clipboard-data"></i> Stock Summary</h6>
-            <div class="table-responsive mb-4">
-                <table class="inv-table">
+            <div class="cust-toolbar px-0"><div><h5 class="cust-table-title">Stock Summary</h5><p class="cust-table-note">Current cost and retail value by product.</p></div></div>
+            <div class="cust-table-wrap mb-4">
+                <table class="cust-table">
                     <thead><tr><th>Product</th><th>SKU</th><th class="r">Stock</th><th class="r">Cost Value</th><th class="r">Retail Value</th></tr></thead>
                     <tbody>
                         <?php foreach ($products as $p): $stk = (float) $p['current_stock']; ?>
@@ -71,7 +77,7 @@ $stats = [
                             <td class="r" style="color:#0f9d58"><?= $money($stk * (float) $p['sale_price']) ?></td>
                         </tr>
                         <?php endforeach; ?>
-                        <?php if (empty($products)): ?><tr><td colspan="5" class="c inv-prod-sub" style="padding:24px">No products.</td></tr><?php endif; ?>
+                        <?php if (empty($products)): ?><tr><td colspan="5" class="cust-empty"><i class="bi bi-boxes"></i>No products.</td></tr><?php endif; ?>
                     </tbody>
                     <?php if (! empty($products)): ?>
                     <tfoot><tr>
@@ -83,9 +89,9 @@ $stats = [
                 </table>
             </div>
 
-            <h6 class="inv-panel-title mb-2"><i class="bi bi-list-columns-reverse"></i> Stock Statement</h6>
-            <div class="table-responsive">
-                <table class="inv-table">
+            <div class="cust-toolbar px-0"><div><h5 class="cust-table-title">Stock Statement</h5><p class="cust-table-note">Recent stock in and out movements.</p></div></div>
+            <div class="cust-table-wrap">
+                <table class="cust-table">
                     <thead><tr><th>Date</th><th>Product</th><th class="c">Type</th><th class="r">Qty</th><th>Note</th></tr></thead>
                     <tbody>
                         <?php foreach ($movements as $m): $in = $m['type'] === 'in'; ?>
@@ -97,12 +103,12 @@ $stats = [
                             <td class="inv-prod-sub"><?= esc($m['note'] ?: '—') ?></td>
                         </tr>
                         <?php endforeach; ?>
-                        <?php if (empty($movements)): ?><tr><td colspan="5" class="c inv-prod-sub" style="padding:24px">No movements.</td></tr><?php endif; ?>
+                        <?php if (empty($movements)): ?><tr><td colspan="5" class="cust-empty"><i class="bi bi-list-columns-reverse"></i>No movements.</td></tr><?php endif; ?>
                     </tbody>
                 </table>
             </div>
 
             <div class="text-center inv-prod-sub mt-4">Generated by Hissab-Kitaab · computer-generated report</div>
         </div>
-    </div>
+    </section>
 </div>

@@ -30,10 +30,26 @@ $statusBadge = static function (array $r): string {
         : '<span class="badge text-bg-light border">Read</span>';
 };
 ?>
-<div class="card">
-    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <h3 class="card-title mb-0"><i class="bi bi-bell me-1"></i> Notifications</h3>
-        <form class="d-flex flex-wrap gap-2 align-items-center" method="get">
+<div class="cust-page">
+    <section class="cust-hero">
+        <div>
+            <h4 class="cust-title">Notifications</h4>
+            <p class="cust-subtitle">System alerts, module messages, and user activity notifications.</p>
+        </div>
+        <div class="cust-hero-actions">
+            <span class="cust-total-tag"><i class="bi bi-bell"></i> <?= number_format(count($rows ?? [])) ?> total</span>
+        </div>
+    </section>
+
+<section class="cust-panel cust-table-panel">
+    <div class="cust-toolbar">
+        <div>
+            <h5 class="cust-table-title">Notification Records</h5>
+            <p class="cust-table-note">Filter, mark read, open actions, or remove selected notifications.</p>
+        </div>
+    </div>
+    <div class="cust-filterbar">
+        <form class="row g-2 align-items-end" method="get">
             <input type="search" name="q" value="<?= esc($search) ?>" class="form-control form-control-sm" placeholder="Search notifications...">
             <select name="type" class="form-select form-select-sm">
                 <option value="">All types</option>
@@ -54,7 +70,7 @@ $statusBadge = static function (array $r): string {
     <div class="card-body">
         <form method="post" id="notificationBulkForm">
             <?= csrf_field() ?>
-            <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center pb-3 mb-3 border-bottom">
+            <div class="cust-tabletools">
                 <div class="d-flex flex-wrap gap-2 align-items-center">
                     <label class="form-check-label small text-secondary d-flex align-items-center gap-1 me-2">
                         <input type="checkbox" class="form-check-input mt-0" data-check-all-notifications> Select all
@@ -72,7 +88,7 @@ $statusBadge = static function (array $r): string {
             </div>
 
             <?php if (empty($groups)): ?>
-                <p class="text-center text-secondary py-4 mb-0">No notifications found.</p>
+                <div class="cust-empty"><i class="bi bi-bell"></i>No notifications found.</div>
             <?php else: ?>
                 <div class="d-flex flex-column gap-2">
                 <?php foreach ($groups as $gkey => $group):
@@ -168,7 +184,8 @@ $statusBadge = static function (array $r): string {
             <?php endif; ?>
         </form>
     </div>
-    <?php if (isset($pager)): ?><div class="card-footer d-flex justify-content-end"><?= $pager->links() ?></div><?php endif; ?>
+    <?php if (isset($pager)): ?><div class="cust-pager-bar d-flex justify-content-end"><?= $pager->links() ?></div><?php endif; ?>
+</section>
 </div>
 
 <script>

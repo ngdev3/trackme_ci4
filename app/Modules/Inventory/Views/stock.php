@@ -10,7 +10,7 @@ $navTabs = [
     ['reports', 'Report', 'bi-bar-chart', 'inventory/reports'],
 ];
 ?>
-<div class="inv-wrap">
+<div class="cust-page inv-wrap">
     <div class="inv-tabs">
         <?php foreach ($navTabs as [$k, $lbl, $ic, $url]): ?>
         <a href="<?= site_url($url) ?>" class="inv-tab <?= $tab === $k ? 'active' : '' ?>"><i class="bi <?= $ic ?>"></i><span><?= esc($lbl) ?></span></a>
@@ -20,8 +20,8 @@ $navTabs = [
     <div class="row g-3">
         <!-- Movement form -->
         <div class="col-lg-5">
-            <div class="inv-panel">
-                <div class="inv-panel-head"><h3 class="inv-panel-title"><i class="bi bi-arrow-down-up"></i> Record Movement</h3></div>
+            <section class="cust-panel inv-panel">
+                <div class="cust-toolbar"><div><h5 class="cust-table-title">Record Movement</h5><p class="cust-table-note">Add stock in or out without leaving the page.</p></div></div>
                 <form method="post" action="<?= site_url('inventory/stock/move') ?>" class="inv-panel-body">
                     <?= csrf_field() ?>
                     <div class="inv-seg inv-field">
@@ -47,15 +47,18 @@ $navTabs = [
                         <div class="col-6 inv-field"><label>Rate (optional)</label><input type="number" step="0.01" min="0" name="rate" class="inv-input" value="0"></div>
                     </div>
                     <div class="inv-field"><label>Note (optional)</label><input name="note" class="inv-input" placeholder="purchase, correction, damage…"></div>
-                    <button type="submit" class="inv-btn primary w-100" style="justify-content:center;padding:12px;"><i class="bi bi-check2-circle"></i> Save Movement</button>
+                    <button type="submit" class="cust-btn cust-btn-primary w-100" style="justify-content:center;padding:12px;"><i class="bi bi-check2-circle"></i> Save Movement</button>
                 </form>
-            </div>
+            </section>
         </div>
 
         <!-- Timeline -->
         <div class="col-lg-7">
-            <div class="inv-panel">
-                <div class="inv-panel-head"><h3 class="inv-panel-title"><i class="bi bi-clock-history"></i> Recent Movements <span class="inv-pill gray"><?= count($movements) ?></span></h3></div>
+            <section class="cust-panel cust-table-panel inv-panel">
+                <div class="cust-toolbar">
+                    <div><h5 class="cust-table-title">Recent Movements</h5><p class="cust-table-note">Latest stock in and out records.</p></div>
+                    <span class="cust-total-tag"><i class="bi bi-clock-history"></i> <?= count($movements) ?> total</span>
+                </div>
                 <div class="inv-panel-body">
                     <?php if (empty($movements)): ?>
                         <div class="inv-empty"><i class="bi bi-arrow-down-up"></i><p>No stock movements yet.</p></div>
@@ -74,7 +77,7 @@ $navTabs = [
                         </div>
                     <?php endif; ?>
                 </div>
-            </div>
+            </section>
         </div>
     </div>
 </div>

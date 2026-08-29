@@ -61,7 +61,7 @@ $sortHead = static function (string $key, string $label) use ($sort, $dir, $sear
     $nextDir = ($active && $dir === 'asc') ? 'desc' : 'asc';
     $qs = http_build_query(array_filter(['q' => $search, 'sort' => $key, 'dir' => $nextDir, 'per' => $per], static fn ($v) => $v !== '' && $v !== null));
     $icon = ! $active ? 'bi-arrow-down-up opacity-25' : ($dir === 'asc' ? 'bi-caret-up-fill' : 'bi-caret-down-fill');
-    return '<a href="' . site_url('users') . '?' . $qs . '" class="sort-link' . ($active ? ' active' : '') . '">'
+    return '<a href="' . site_url('users') . '?' . $qs . '" class="cust-sort' . ($active ? ' is-sorted' : '') . '">'
         . esc($label) . ' <i class="bi ' . $icon . '"></i></a>';
 };
 
@@ -77,57 +77,62 @@ if (isset($pager)) {
 
 $actions = static function (array $r) use ($moduleCode, $baseRoute) {
     $id = (int) $r['id'];
-    $html = '<div class="act-group">';
+    $html = '<div class="cust-row-actions">';
     if (session('is_superadmin') && $id !== (int) session('user_id')) {
-        $html .= '<a href="' . site_url('admin/impersonate/' . $id) . '" class="act-btn act-access" data-tip="Access account"'
+        $html .= '<a href="' . site_url('admin/impersonate/' . $id) . '" class="cust-act act-login" title="Access account"'
             . ' data-confirm="You can return to Super Admin anytime." data-confirm-title="Sign in as ' . esc($r['name'], 'attr') . '?" data-confirm-btn="Sign in" data-confirm-icon="info"><i class="bi bi-box-arrow-in-right"></i></a>';
     }
     if (can($moduleCode, 'edit')) {
-        $html .= '<a href="' . site_url($baseRoute . '/edit/' . $id) . '" class="act-btn act-edit" data-tip="Edit"><i class="bi bi-pencil"></i></a>';
+        $html .= '<a href="' . site_url($baseRoute . '/edit/' . $id) . '" class="cust-act act-edit" title="Edit"><i class="bi bi-pencil"></i></a>';
     }
     if (can($moduleCode, 'delete')) {
         $html .= '<form action="' . site_url($baseRoute . '/delete/' . $id) . '" method="post" class="d-inline" data-no-validate data-confirm="This user will be deleted." data-confirm-title="Delete user?" data-confirm-btn="Yes, delete">'
             . csrf_field()
-            . '<button type="submit" class="act-btn act-delete" data-tip="Delete"><i class="bi bi-trash"></i></button></form>';
+            . '<button type="submit" class="cust-act act-del" title="Delete"><i class="bi bi-trash"></i></button></form>';
     }
     return $html . '</div>';
 };
 ?>
-<div class="card tm-table-card fade-up">
-    <div class="tm-table-head">
-        <h3 class="tm-table-title"><i class="bi bi-table"></i> <?= esc($scopeLabel ?? 'All Users') ?> <span class="tm-pill"><?= isset($d['total']) ? number_format($d['total']) : count($rows) ?></span></h3>
-        <div class="tm-table-tools">
-            <label class="per-picker">
+<section class="cust-panel cust-table-panel fade-up">
+    <div class="cust-toolbar">
+        <div>
+            <h5 class="cust-table-title"><?= esc($scopeLabel ?? 'All Users') ?></h5>
+            <p class="cust-table-note">Search, sort, edit, or manage access for users.</p>
+        </div>
+        <span class="cust-total-tag"><i class="bi bi-people"></i> <?= isset($d['total']) ? number_format($d['total']) : count($rows) ?> total</span>
+    </div>
+    <div class="cust-tabletools">
+            <label class="cust-len">
                 <span>Show</span>
-                <select id="perSelect" class="form-select form-select-sm">
+                <select id="perSelect" class="cust-len-select">
                     <?php foreach (['25' => '25', '35' => '35', '50' => '50', '100' => '100', '1000' => '1000', 'all' => 'All'] as $val => $lbl): ?>
                         <option value="<?= $val ?>" <?= (string) $per === $val ? 'selected' : '' ?>><?= $lbl ?></option>
                     <?php endforeach; ?>
                 </select>
+                <span>Records</span>
             </label>
             <div class="view-toggle btn-group btn-group-sm" role="group">
                 <button type="button" class="btn btn-outline-secondary active" data-view="table" title="Table view"><i class="bi bi-list-ul"></i></button>
                 <button type="button" class="btn btn-outline-secondary" data-view="grid" title="Grid view"><i class="bi bi-grid-3x3-gap"></i></button>
             </div>
-        </div>
     </div>
 
     <div class="card-body p-0" data-view-panel="table">
-        <div class="table-responsive">
-            <table class="table align-middle mb-0 tm-table">
+        <div class="cust-table-wrap">
+            <table class="cust-table">
                 <thead><tr>
-                    <th><?= $sortHead('name', 'User') ?></th>
-                    <th><?= $sortHead('username', 'Username') ?></th>
-                    <?php if ($showRoleType): ?><th><?= $sortHead('type', 'User Type') ?></th><?php endif; ?>
+                    <th class="cust-th-sort"><?= $sortHead('name', 'User') ?></th>
+                    <th class="cust-th-sort"><?= $sortHead('username', 'Username') ?></th>
+                    <?php if ($showRoleType): ?><th class="cust-th-sort"><?= $sortHead('type', 'User Type') ?></th><?php endif; ?>
                     <th>Account</th>
                     <th>Billing</th>
                     <?php if ($showRoleType): ?><th>Roles</th><?php endif; ?>
-                    <th><?= $sortHead('status', 'Status') ?></th>
+                    <th class="cust-th-sort"><?= $sortHead('status', 'Status') ?></th>
                     <th class="text-end">Actions</th>
                 </tr></thead>
                 <tbody>
                 <?php if (empty($rows)): ?>
-                    <tr><td colspan="<?= $tableCols ?>" class="text-center text-secondary py-5"><i class="bi bi-people fs-1 d-block mb-2 opacity-50"></i>No users found.</td></tr>
+                    <tr><td colspan="<?= $tableCols ?>" class="cust-empty"><i class="bi bi-people"></i>No users found.</td></tr>
                 <?php else: foreach ($rows as $i => $r): ?>
                     <tr style="animation-delay:<?= min($i, 20) * 25 ?>ms">
                         <td>
@@ -194,8 +199,8 @@ $actions = static function (array $r) use ($moduleCode, $baseRoute) {
         </div>
     </div>
 
-    <div class="tm-table-foot">
-        <span class="tm-table-count"><?= $pageInfo ?></span>
-        <?php if (isset($pager)): ?><div class="tm-pager"><?= $pager->only(['q', 'sort', 'dir', 'per'])->links('default', 'erp') ?></div><?php endif; ?>
+    <div class="cust-pager-bar">
+        <span class="erp-pager__info"><?= $pageInfo ?></span>
+        <?php if (isset($pager)): ?><div><?= $pager->only(['q', 'sort', 'dir', 'per'])->links('default', 'erp') ?></div><?php endif; ?>
     </div>
-</div>
+</section>

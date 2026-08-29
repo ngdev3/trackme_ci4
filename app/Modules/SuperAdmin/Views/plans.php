@@ -1,9 +1,20 @@
 <?php /** Super Admin — subscription plans + pricing. Rendered inside layout.php. */ ?>
+<div class="cust-page">
+    <section class="cust-hero">
+        <div>
+            <h4 class="cust-title">Plans &amp; Billing</h4>
+            <p class="cust-subtitle">Configure packages, trial duration, payment details, and invoice settings.</p>
+        </div>
+        <div class="cust-hero-actions">
+            <a href="#planForm" class="cust-btn cust-btn-primary"><i class="bi bi-plus-lg"></i> Add Package</a>
+        </div>
+    </section>
+
 <div class="row g-3">
     <!-- Free-trial length -->
     <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header"><h3 class="card-title mb-0"><i class="bi bi-hourglass-split me-1"></i> Free Trial</h3></div>
+        <div class="cust-panel h-100">
+            <div class="cust-toolbar"><div><h5 class="cust-table-title">Free Trial</h5><p class="cust-table-note">Default full-access trial for new customers.</p></div></div>
             <div class="card-body">
                 <form action="<?= site_url('admin/plans/trial') ?>" method="post" class="row g-2 align-items-end">
                     <?= csrf_field() ?>
@@ -20,8 +31,8 @@
 
     <!-- UPI payment details (shown as a QR to customers on /subscription) -->
     <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header"><h3 class="card-title mb-0"><i class="bi bi-qr-code me-1"></i> Payment (UPI)</h3></div>
+        <div class="cust-panel h-100">
+            <div class="cust-toolbar"><div><h5 class="cust-table-title">Payment (UPI)</h5><p class="cust-table-note">UPI details shown on customer payment QR.</p></div></div>
             <div class="card-body">
                 <form action="<?= site_url('admin/plans/payment') ?>" method="post" class="row g-2 align-items-end">
                     <?= csrf_field() ?>
@@ -42,8 +53,8 @@
 
     <!-- Invoice / GST seller details (printed on tax receipts) -->
     <div class="col-12">
-        <div class="card">
-            <div class="card-header"><h3 class="card-title mb-0"><i class="bi bi-receipt-cutoff me-1"></i> Tax Invoice / GST details</h3></div>
+        <div class="cust-panel">
+            <div class="cust-toolbar"><div><h5 class="cust-table-title">Tax Invoice / GST Details</h5><p class="cust-table-note">Seller details printed on tax receipts.</p></div></div>
             <div class="card-body">
                 <p class="text-muted small mb-3">These appear on the tax receipts customers download. Set your GSTIN to issue proper <strong>Tax Invoices</strong> (otherwise a plain payment receipt is issued). GST is treated as inclusive of the plan price.</p>
                 <form action="<?= site_url('admin/plans/invoice') ?>" method="post" class="row g-2">
@@ -84,8 +95,8 @@
 
     <!-- Create / edit a plan -->
     <div class="col-12">
-        <div class="card h-100">
-            <div class="card-header"><h3 class="card-title mb-0"><i class="bi bi-plus-square me-1"></i> <span data-plan-form-title>Add Package</span></h3></div>
+        <div class="cust-panel h-100">
+            <div class="cust-toolbar"><div><h5 class="cust-table-title" data-plan-form-title>Add Package</h5><p class="cust-table-note">Create or edit the package shown to customers.</p></div></div>
             <div class="card-body">
                 <form action="<?= site_url('admin/plans/save') ?>" method="post" class="row g-2" id="planForm">
                     <?= csrf_field() ?>
@@ -162,17 +173,22 @@
 
     <!-- Existing plans -->
     <div class="col-12">
-        <div class="card">
-            <div class="card-header"><h3 class="card-title mb-0"><i class="bi bi-card-checklist me-1"></i> Packages &amp; Prices</h3></div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
+        <section class="cust-panel cust-table-panel">
+            <div class="cust-toolbar">
+                <div>
+                    <h5 class="cust-table-title">Packages &amp; Prices</h5>
+                    <p class="cust-table-note">Edit, pause/resume, or delete a subscription package.</p>
+                </div>
+                <span class="cust-total-tag"><i class="bi bi-card-checklist"></i> <?= number_format(count($rows ?? [])) ?> total</span>
+            </div>
+                <div class="cust-table-wrap">
+                    <table class="cust-table">
                         <thead><tr>
                             <th>Plan</th><th>Code</th><th>Price</th><th>Cycle</th><th>Max Firms</th><th>Max Users</th><th>Extra features</th><th>Status</th><th class="text-end">Actions</th>
                         </tr></thead>
                         <tbody>
                         <?php if (empty($rows)): ?>
-                            <tr><td colspan="9" class="text-center text-secondary py-4">No plans defined.</td></tr>
+                            <tr><td colspan="9" class="cust-empty"><i class="bi bi-card-checklist"></i>No plans defined.</td></tr>
                         <?php else: foreach ($rows as $p): ?>
                             <?php
                             $planFlags = [];
@@ -190,34 +206,36 @@
                                 <td><?= $p['max_users'] === null ? 'Unlimited' : (int) $p['max_users'] ?></td>
                                 <td>
                                     <?php if ($enabled === []): ?>
-                                        <span class="text-secondary small">Baseline only</span>
+                                        <span class="cust-muted small">Baseline only</span>
                                     <?php else: foreach ($enabled as $fk): ?>
-                                        <span class="badge text-bg-light border me-1 mb-1"><?= esc($planFeatureLabels[$fk]) ?></span>
+                                        <span class="cust-planpill me-1 mb-1"><?= esc($planFeatureLabels[$fk]) ?></span>
                                     <?php endforeach; endif; ?>
                                 </td>
-                                <td><?= (int) $p['status'] === 1 ? '<span class="badge text-bg-success">Active</span>' : '<span class="badge text-bg-secondary">Off</span>' ?></td>
+                                <td><?= (int) $p['status'] === 1 ? '<span class="erp-status active">Active</span>' : '<span class="erp-status inactive">Off</span>' ?></td>
                                 <td class="text-end text-nowrap">
-                                    <button type="button" class="btn btn-sm btn-outline-primary" data-plan-edit
+                                    <div class="cust-row-actions">
+                                    <button type="button" class="cust-act act-edit" data-plan-edit title="Edit"
                                             data-plan='<?= esc(json_encode([
                                                 'id' => $p['id'], 'name' => $p['name'], 'price' => $p['price'],
                                                 'billing_cycle' => $p['billing_cycle'], 'max_firms' => $p['max_firms'],
                                                 'max_users' => $p['max_users'], 'features' => $p['features'], 'status' => $p['status'],
                                                 'feat' => $planFlags,
                                             ]), 'attr') ?>'><i class="bi bi-pencil"></i></button>
-                                    <a class="btn btn-sm btn-outline-secondary" href="<?= site_url('admin/plans/toggle/' . $p['id']) ?>" title="Toggle active"><i class="bi bi-toggle-<?= (int) $p['status'] === 1 ? 'on' : 'off' ?>"></i></a>
+                                    <a class="cust-act act-view" href="<?= site_url('admin/plans/toggle/' . $p['id']) ?>" title="Toggle active"><i class="bi bi-toggle-<?= (int) $p['status'] === 1 ? 'on' : 'off' ?>"></i></a>
                                     <form action="<?= site_url('admin/plans/delete/' . $p['id']) ?>" method="post" class="d-inline" data-no-validate data-confirm="Existing customer subscriptions are not affected." data-confirm-title="Delete plan?" data-confirm-btn="Yes, delete">
                                         <?= csrf_field() ?>
-                                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                        <button class="cust-act act-del" title="Delete"><i class="bi bi-trash"></i></button>
                                     </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; endif; ?>
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+        </section>
     </div>
+</div>
 </div>
 
 <script>

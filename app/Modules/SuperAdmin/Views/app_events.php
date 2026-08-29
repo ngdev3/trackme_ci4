@@ -20,6 +20,7 @@ $ago = static function ($ts): string {
     return floor($d / 2592000) . ' mo ago';
 };
 ?>
+<div class="cust-page">
 <?php if ($userId > 0): ?>
     <!-- Selected-user banner -->
     <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -39,17 +40,29 @@ $ago = static function ($ts): string {
     </div>
 <?php endif; ?>
 
+<section class="cust-hero">
+    <div>
+        <h4 class="cust-title">App Events</h4>
+        <p class="cust-subtitle">User-based menu taps, activity totals, and recent navigation events.</p>
+    </div>
+    <div class="cust-hero-actions">
+        <span class="cust-total-tag"><i class="bi bi-activity"></i> <?= number_format($total) ?> events</span>
+    </div>
+</section>
+
 <div class="row g-3">
     <!-- USER-BASED summary: who used the app and how much -->
     <div class="col-lg-7">
-        <div class="card h-100">
-            <div class="card-header d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                <h3 class="card-title mb-0"><i class="bi bi-people me-1"></i> Users by Activity</h3>
-                <span class="erp-pill gray"><?= count($users) ?> users · <?= number_format($total) ?> events</span>
+        <section class="cust-panel cust-table-panel h-100">
+            <div class="cust-toolbar">
+                <div>
+                    <h5 class="cust-table-title">Users by Activity</h5>
+                    <p class="cust-table-note">Users ranked by recorded app events.</p>
+                </div>
+                <span class="cust-total-tag"><i class="bi bi-people"></i> <?= count($users) ?> users</span>
             </div>
-            <div class="card-body p-0">
-                <div class="erp-tbl-wrap">
-                    <table class="erp-tbl auto">
+                <div class="cust-table-wrap">
+                    <table class="cust-table">
                         <thead><tr>
                             <th class="text-start">User</th>
                             <th class="text-end">Events</th>
@@ -80,14 +93,13 @@ $ago = static function ($ts): string {
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+        </section>
     </div>
 
     <!-- Top menus (scoped to the selected user when filtering) -->
     <div class="col-lg-5">
-        <div class="card h-100">
-            <div class="card-header"><h3 class="card-title mb-0"><i class="bi bi-bar-chart me-1"></i> Top Menus <small class="text-secondary">(30 days<?= $userId > 0 ? ', this user' : '' ?>)</small></h3></div>
+        <section class="cust-panel h-100">
+            <div class="cust-toolbar"><div><h5 class="cust-table-title">Top Menus</h5><p class="cust-table-note">30 days<?= $userId > 0 ? ', this user' : '' ?>.</p></div></div>
             <div class="card-body">
                 <?php if (empty($top)): ?>
                     <p class="text-secondary small mb-0">No taps recorded yet.</p>
@@ -98,19 +110,21 @@ $ago = static function ($ts): string {
                     </div>
                 <?php endforeach; endif; ?>
             </div>
-        </div>
+        </section>
     </div>
 
     <!-- Recent events (respects the selected user) -->
     <div class="col-12">
-        <div class="card h-100">
-            <div class="card-header d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                <h3 class="card-title mb-0"><i class="bi bi-activity me-1"></i> <?= $userId > 0 ? 'This User’s Menu Taps' : 'Recent Menu Taps' ?> <span class="erp-pill gray ms-1"><?= number_format($total) ?> total</span></h3>
+        <section class="cust-panel cust-table-panel h-100">
+            <div class="cust-toolbar">
+                <div>
+                    <h5 class="cust-table-title"><?= $userId > 0 ? 'This User’s Menu Taps' : 'Recent Menu Taps' ?></h5>
+                    <p class="cust-table-note">Menu, route, user, and timestamp.</p>
+                </div>
                 <?php if ($userId > 0): ?><a href="<?= site_url('admin/app-events') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg me-1"></i>Clear filter</a><?php endif; ?>
             </div>
-            <div class="card-body p-0">
-                <div class="erp-tbl-wrap">
-                    <table class="erp-tbl auto">
+                <div class="cust-table-wrap">
+                    <table class="cust-table">
                         <thead><tr>
                             <th class="text-start">When</th>
                             <?php if ($userId <= 0): ?><th class="text-start">User</th><?php endif; ?>
@@ -135,7 +149,7 @@ $ago = static function ($ts): string {
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+        </section>
     </div>
+</div>
 </div>

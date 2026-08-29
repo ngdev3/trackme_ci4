@@ -49,9 +49,22 @@ $orderMeta = [
 $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
 ?>
 
+<div class="cust-page">
+<section class="cust-hero">
+    <div>
+        <h4 class="cust-title"><?= esc($user['name']) ?></h4>
+        <p class="cust-subtitle"><?= esc($user['email']) ?> · Customer #<?= (int) $user['id'] ?> · subscription and billing controls.</p>
+    </div>
+    <div class="cust-hero-actions">
+        <a href="<?= site_url('admin/customers') ?>" class="cust-btn cust-btn-ghost"><i class="bi bi-arrow-left"></i> Customers</a>
+        <a href="<?= site_url('admin/impersonate/' . (int) $user['id']) ?>" class="cust-btn cust-btn-primary"
+           data-confirm="You can return to Super Admin anytime." data-confirm-title="Sign in as <?= esc($user['name'], 'attr') ?>?" data-confirm-btn="Sign in" data-confirm-icon="info"><i class="bi bi-box-arrow-in-right"></i> Access</a>
+    </div>
+</section>
+
 <div class="row g-3">
     <!-- Customer header -->
-    <div class="col-12">
+    <div class="col-12 d-none">
         <div class="card">
             <div class="card-body d-flex flex-wrap align-items-center gap-3">
                 <span class="badge text-bg-primary rounded-circle p-3 fs-5"><i class="bi bi-person-fill"></i></span>
@@ -68,10 +81,10 @@ $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
 
     <!-- Current plan + controls -->
     <div class="col-lg-5">
-        <div class="card h-100 border-<?= esc($stateColor) ?>">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <h3 class="card-title mb-0"><i class="bi bi-gem me-1"></i> Current Plan</h3>
-                <span class="badge text-bg-<?= esc($stateColor) ?>"><i class="bi <?= esc($stateIcon) ?> me-1"></i><?= esc($stateLabel) ?></span>
+        <section class="cust-panel h-100">
+            <div class="cust-toolbar">
+                <div><h5 class="cust-table-title">Current Plan</h5><p class="cust-table-note">Activate, correct expiry, or deactivate the customer subscription.</p></div>
+                <span class="erp-status <?= $stateColor === 'success' || $stateColor === 'info' ? 'active' : ($stateColor === 'danger' ? 'delete' : 'inactive') ?>"><?= esc($stateLabel) ?></span>
             </div>
             <div class="card-body">
                 <div class="fs-4 fw-bold mb-1"><?= esc($sub['plan_name'] ?? 'No plan') ?></div>
@@ -142,13 +155,13 @@ $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
                     <div class="alert alert-light border small mb-0"><i class="bi bi-info-circle me-1"></i> This customer has no active subscription. Activate a plan above to grant access.</div>
                 <?php endif; ?>
             </div>
-        </div>
+        </section>
     </div>
 
     <!-- Payment chain / flow -->
     <div class="col-lg-7">
-        <div class="card h-100">
-            <div class="card-header"><h3 class="card-title mb-0"><i class="bi bi-diagram-3 me-1"></i> Payment Chain &amp; Flow</h3></div>
+        <section class="cust-panel h-100">
+            <div class="cust-toolbar"><div><h5 class="cust-table-title">Payment Chain &amp; Flow</h5><p class="cust-table-note">Payment order status and activation path.</p></div></div>
             <div class="card-body">
                 <?php if (empty($orders)): ?>
                     <div class="text-center text-secondary py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No payment orders yet for this customer.</div>
@@ -196,16 +209,20 @@ $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
                     </div>
                 <?php endforeach; endif; ?>
             </div>
-        </div>
+        </section>
     </div>
 
     <!-- Subscription activity log -->
     <div class="col-12">
-        <div class="card">
-            <div class="card-header"><h3 class="card-title mb-0"><i class="bi bi-clock-history me-1"></i> Subscription Activity Log</h3></div>
-            <div class="card-body p-0">
-                <div class="erp-tbl-wrap">
-                    <table class="erp-tbl auto">
+        <section class="cust-panel cust-table-panel">
+            <div class="cust-toolbar">
+                <div>
+                    <h5 class="cust-table-title">Subscription Activity Log</h5>
+                    <p class="cust-table-note">Admin actions and subscription changes for this customer.</p>
+                </div>
+            </div>
+                <div class="cust-table-wrap">
+                    <table class="cust-table">
                         <thead><tr><th class="text-start">When</th><th class="text-start">By</th><th class="text-start">Module</th><th class="text-start">Action</th><th class="text-start">Detail</th></tr></thead>
                         <tbody>
                         <?php if (empty($logs)): ?>
@@ -232,9 +249,9 @@ $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+        </section>
     </div>
+</div>
 </div>
 
 <style>
