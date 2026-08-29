@@ -517,8 +517,20 @@ class CompanyController extends BaseController
         send_company_deletion_report($company);
 
         $db = \Config\Database::connect();
+        // Atomic purge: if any step fails the whole thing rolls back, so a company
+        // is never left half-erased. FK checks are off so the many per-table deletes
+        // can run in any order; that also means cascades DON'T fire, so a child row
+        // scoped only THROUGH a parent (no company_id of its own) must be deleted
+        // explicitly or it is orphaned — invoice_items is scoped via its invoice.
+        $db->transStart();
         $db->query('SET FOREIGN_KEY_CHECKS=0');
-        // Purge every table scoped by company_id, then memberships, then the row.
+
+        $db->query(
+            'DELETE ii FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id WHERE i.company_id = ?',
+            [$id]
+        );
+
+        // Purge every table scoped directly by company_id, then memberships, then the row.
         $tables = $db->query(
             'SELECT DISTINCT TABLE_NAME AS t FROM information_schema.COLUMNS
              WHERE TABLE_SCHEMA = DATABASE() AND COLUMN_NAME = "company_id"'
@@ -528,7 +540,14 @@ class CompanyController extends BaseController
         }
         $db->table('company_users')->where('company_id', $id)->delete();
         $this->companies->delete($id, true); // hard delete (purge)
+
         $db->query('SET FOREIGN_KEY_CHECKS=1');
+        $db->transComplete();
+        if ($db->transStatus() === false) {
+            log_message('error', "Company purge #{$id} failed and was rolled back.");
+            return redirect()->to(site_url('company/trash'))
+                ->with('error', 'Could not permanently delete the company — please try again.');
+        }
 
         activity_log('Company', 'Delete', "Company #{$id} ({$company['name']}) permanently deleted");
         return redirect()->to(site_url('company/trash'))
