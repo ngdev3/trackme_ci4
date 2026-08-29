@@ -707,6 +707,18 @@ class TransactionController extends BaseController
         }
     }
 
+    /**
+     * Allowed attachment extensions (documents, photos, voice notes) — mirrors the
+     * mobile API's ATTACH_EXT. Anything else (.html, .svg, .js, .php, …) is rejected
+     * at upload so a script/markup file is never stored, layered on top of the safe
+     * server-derived serving in stream().
+     */
+    private const ALLOWED_ATTACH_EXT = [
+        'pdf', 'csv', 'xls', 'xlsx',
+        'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic',
+        'm4a', 'mp3', 'aac', 'ogg', 'wav', 'webm',
+    ];
+
     /** Move any uploaded files (input name="attachments[]") onto a transaction. */
     private function saveUploads(int $txnId, int $ownerId): void
     {
@@ -722,7 +734,10 @@ class TransactionController extends BaseController
             if ($file->getSizeByUnit('mb') > 25) {
                 continue; // skip oversized (25 MB cap)
             }
-            $ext    = strtolower($file->getExtension() ?: pathinfo($file->getName(), PATHINFO_EXTENSION));
+            $ext = strtolower(pathinfo((string) $file->getClientName(), PATHINFO_EXTENSION));
+            if (! in_array($ext, self::ALLOWED_ATTACH_EXT, true)) {
+                continue; // reject script/markup uploads (.html/.svg/.js/.php/…)
+            }
             $stored = $file->getRandomName();
             try {
                 $file->move($dir, $stored);
@@ -831,9 +846,12 @@ class TransactionController extends BaseController
         if (! $file || ! $file->isValid()) {
             return redirect()->back()->with('error', 'Please choose a valid file.');
         }
+        $ext = strtolower(pathinfo((string) $file->getClientName(), PATHINFO_EXTENSION));
+        if (! in_array($ext, self::ALLOWED_ATTACH_EXT, true)) {
+            return redirect()->back()->with('error', 'That file type is not allowed. Use an image, PDF, audio or CSV/Excel file.');
+        }
         $ownerId = (int) $att['user_id'];
         $dir     = $this->uploadDir($ownerId);
-        $ext     = strtolower($file->getExtension() ?: pathinfo($file->getName(), PATHINFO_EXTENSION));
         $stored  = $file->getRandomName();
         try {
             $file->move($dir, $stored);

@@ -8,8 +8,9 @@ against the local server.
 
 **Overall posture: good.** Access control is consistently enforced (ownership checks on
 every company-scoped resource), queries use the query builder, the public webroot is
-clean, and secrets are not web-served. The findings below are mostly hardening, with
-**one new High** (stored XSS via web attachment preview) worth fixing promptly.
+clean, and secrets are not web-served. The findings below are mostly hardening. The
+**one High** (stored XSS via web attachment preview, F-1) has since been **fixed** — see
+its section for the resolution.
 
 ---
 
@@ -17,7 +18,7 @@ clean, and secrets are not web-served. The findings below are mostly hardening, 
 
 | # | Risk | Finding | Area |
 |---|------|---------|------|
-| F-1 | **High** | Stored XSS via web/inventory attachment preview (no upload allowlist + inline client MIME, no `nosniff`) | XSS / Upload |
+| F-1 | **Fixed** | ~~Stored XSS via web attachment preview (no upload allowlist + inline client MIME, no `nosniff`)~~ — remediated (see below) | XSS / Upload |
 | F-2 | **Medium** | Session/CSRF cookies not marked `Secure` | Session |
 | F-3 | **Medium** | `CI_ENVIRONMENT=development` on this box (fine locally; dangerous if ever public) | Prod config |
 | F-4 | **Low** | CSRF token not randomized (`tokenRandomize=false`) | CSRF |
@@ -31,11 +32,28 @@ listing.
 
 ---
 
-## F-1 — Stored XSS via attachment preview  **(High)**
+## F-1 — Stored XSS via attachment preview  **(High → FIXED)**
 
-**Affected:**
-- `app/Modules/Transactions/Controllers/TransactionController.php` — `saveUploads()` (~L643) and `stream()`/`preview()` (~L715)
-- `app/Modules/Inventory/Controllers/InventoryController.php` — upload (~L903) and `attachment()` (~L834)
+> **Resolved (2026-08-29).** Both halves of the recommended fix landed in
+> `TransactionController.php`:
+> - **Serve path** — `stream()` now derives `Content-Type` from the server-stored
+>   extension (never the client MIME), sets `X-Content-Type-Options: nosniff`, and
+>   serves only image/audio/pdf inline (everything else is a forced download).
+> - **Upload path** — `saveUploads()` and `replaceAttachment()` enforce an extension
+>   allowlist (`ALLOWED_ATTACH_EXT`, mirroring the API's `ATTACH_EXT`), so `.html` /
+>   `.svg` / `.js` / `.php` are rejected before storage.
+>
+> Verified live: an `evil.html` upload is rejected (not stored) while a real PNG is
+> accepted; a stored file with a spoofed `text/html` client MIME is served back as
+> `application/octet-stream` + `attachment` + `nosniff` (not `text/html`, not inline).
+> The `InventoryController` paths referenced below no longer exist (that module was
+> refactored to 204 lines with no attachment handling; product images now come only
+> via the type-restricted API `storeImage`, png/jpg/webp only), so the only live
+> instance was the Transactions one now fixed.
+
+**Originally affected:**
+- `app/Modules/Transactions/Controllers/TransactionController.php` — `saveUploads()` and `stream()`/`preview()`
+- `app/Modules/Inventory/Controllers/InventoryController.php` — upload and `attachment()` *(no longer present)*
 
 **Root cause (two gaps that combine):**
 1. The **web** upload path validates only file size — **no extension allowlist**. `getRandomName()` preserves the original extension, so `evil.html` / `evil.svg` are accepted and stored. (The **API** path, `TransactionApiController::attachment`, does have an allowlist — this is a web-only regression.)
@@ -177,7 +195,11 @@ HTTPS; this is a config-verify item.)
 
 ## Suggested priority order
 
-1. **F-1** (High) — close the stored-XSS by aligning web/inventory uploads + serving with the API path.
+1. ~~**F-1** (High) — close the stored-XSS~~ — **done** (see F-1 resolution note).
 2. **F-2** (Medium) — `Secure` cookies in prod.
 3. **F-3** (Medium) — confirm no public host runs `development`.
 4. **F-4 / F-5 / F-6** (Low) — CSRF randomize, CSP, HTTPS-forced verification.
+
+The remaining items (F-2…F-6) are **prod-config** changes (cookie `Secure`, environment,
+CSRF randomize, CSP, forced HTTPS) rather than application-code bugs — deploy-time settings
+best applied against the production `.env` / config, out of scope for this code pass.
