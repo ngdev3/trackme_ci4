@@ -21,7 +21,7 @@ its section for the resolution.
 | F-1 | **Fixed** | ~~Stored XSS via web attachment preview (no upload allowlist + inline client MIME, no `nosniff`)~~ — remediated (see below) | XSS / Upload |
 | F-2 | **Medium** | Session/CSRF cookies not marked `Secure` | Session |
 | F-3 | **Medium** | `CI_ENVIRONMENT=development` on this box (fine locally; dangerous if ever public) | Prod config |
-| F-4 | **Low** | CSRF token not randomized (`tokenRandomize=false`) | CSRF |
+| F-4 | **Fixed** | ~~CSRF token not randomized~~ — `tokenRandomize=true` set (safe on HTTP+HTTPS) | CSRF |
 | F-5 | **Low** | No Content-Security-Policy (defense-in-depth for XSS) | Prod config |
 | F-6 | **Low** | `forceGlobalSecureRequests=false` — verify it is `true` in prod | Prod config |
 | — | Fixed | Reset-token log leak, auth rate-limiting, plaintext long-lived tokens (remediated earlier this session) | Auth |
@@ -115,7 +115,12 @@ page (no stack trace, no toolbar).
 
 ---
 
-## F-4 — CSRF token not randomized  **(Low)**
+## F-4 — CSRF token not randomized  **(Low → FIXED)**
+
+> **Resolved (2026-08-29).** `app/Config/Security.php` → `tokenRandomize = true`.
+> Applied globally (safe on both HTTP and HTTPS). Verified live: the app's own
+> forms still submit (a real Rokadh entry saved with the randomized token) — token
+> masking does not break validation.
 
 **Affected:** `app/Config/Security.php` → `tokenRandomize = false`.
 
@@ -198,8 +203,9 @@ HTTPS; this is a config-verify item.)
 1. ~~**F-1** (High) — close the stored-XSS~~ — **done** (see F-1 resolution note).
 2. **F-2** (Medium) — `Secure` cookies in prod.
 3. **F-3** (Medium) — confirm no public host runs `development`.
-4. **F-4 / F-5 / F-6** (Low) — CSRF randomize, CSP, HTTPS-forced verification.
+4. ~~**F-4**~~ (done — `tokenRandomize=true`) / **F-5 / F-6** (Low) — CSP, HTTPS-forced verification.
 
-The remaining items (F-2…F-6) are **prod-config** changes (cookie `Secure`, environment,
-CSRF randomize, CSP, forced HTTPS) rather than application-code bugs — deploy-time settings
-best applied against the production `.env` / config, out of scope for this code pass.
+The remaining items (F-2, F-3, F-5, F-6) are **prod-config** changes (cookie `Secure`,
+environment, CSP, forced HTTPS) rather than application-code bugs — deploy-time settings
+best applied against the production `.env` / config, and needing prod-vs-local gating
+(e.g. cookie `Secure` would break localhost HTTP), so they are left for a deploy pass.
