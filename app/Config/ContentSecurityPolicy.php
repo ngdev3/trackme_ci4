@@ -58,9 +58,9 @@ class ContentSecurityPolicy extends BaseConfig
     public $defaultSrc;
 
     /**
-     * Lists allowed scripts' URLs. 'unsafe-inline'/'unsafe-eval' keep the app's
-     * existing inline scripts working while report-only (tighten later with nonces).
-     * External: Cashfree checkout SDK + Google Translate widget.
+     * Lists allowed scripts' URLs. Inline scripts are allowed by nonce (autoNonce);
+     * 'unsafe-eval' is kept for libraries that need it. Only external script host is
+     * the Cashfree checkout SDK. ('unsafe-inline' is ignored when a nonce is present.)
      *
      * @var list<string>|string
      */
@@ -69,10 +69,6 @@ class ContentSecurityPolicy extends BaseConfig
         "'unsafe-inline'",
         "'unsafe-eval'",
         'https://sdk.cashfree.com',
-        'https://translate.google.com',
-        'https://translate.googleapis.com',
-        'https://www.google.com',
-        'https://www.gstatic.com',
     ];
 
     /**
@@ -85,10 +81,6 @@ class ContentSecurityPolicy extends BaseConfig
         'self',
         "'unsafe-inline'",
         'https://sdk.cashfree.com',
-        'https://translate.google.com',
-        'https://translate.googleapis.com',
-        'https://www.google.com',
-        'https://www.gstatic.com',
     ];
 
     /**
@@ -109,7 +101,6 @@ class ContentSecurityPolicy extends BaseConfig
         'self',
         "'unsafe-inline'",
         'https://fonts.googleapis.com',
-        'https://www.gstatic.com',
     ];
 
     /**
@@ -121,7 +112,6 @@ class ContentSecurityPolicy extends BaseConfig
         'self',
         "'unsafe-inline'",
         'https://fonts.googleapis.com',
-        'https://www.gstatic.com',
     ];
 
     /**
@@ -133,8 +123,7 @@ class ContentSecurityPolicy extends BaseConfig
 
     /**
      * Defines the origins from which images can be loaded. data: covers inline
-     * avatars/QR previews; api.qrserver.com renders payee QR codes; the Google
-     * hosts serve the Translate widget's flag icons.
+     * avatars/QR previews; api.qrserver.com renders payee QR codes.
      *
      * @var list<string>|string
      */
@@ -143,9 +132,6 @@ class ContentSecurityPolicy extends BaseConfig
         'data:',
         'https://api.qrserver.com',
         'https://fonts.gstatic.com',
-        'https://www.google.com',
-        'https://www.gstatic.com',
-        'https://translate.googleapis.com',
     ];
 
     /**
@@ -179,7 +165,6 @@ class ContentSecurityPolicy extends BaseConfig
         'https://ifsc.razorpay.com',
         'https://api.qrserver.com',
         'https://sdk.cashfree.com',
-        'https://translate.googleapis.com',
     ];
 
     /**
@@ -213,16 +198,13 @@ class ContentSecurityPolicy extends BaseConfig
 
     /**
      * The frame-src directive restricts the URLs which may be loaded into nested
-     * browsing contexts — the Cashfree checkout iframe and the Google Translate
-     * widget.
+     * browsing contexts — the Cashfree checkout iframe.
      *
      * @var list<string>|string|null
      */
     public $frameSrc = [
         'self',
         'https://sdk.cashfree.com',
-        'https://translate.google.com',
-        'https://www.google.com',
     ];
 
     /**

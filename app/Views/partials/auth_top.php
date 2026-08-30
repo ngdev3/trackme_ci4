@@ -35,9 +35,6 @@ $appName = brand_name();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= erp_asset('assets/css/i18n.css') ?>">
-    <!-- Gate the screen until the chosen UI language has been applied -->
-    <?= $this->include('partials/lang_boot') ?>
 <style nonce="{csp-style-nonce}">
 :root{
   --ink:#0b1220;--ink2:#1e293b;--muted:#64748b;--line:#e6ebf3;
@@ -160,30 +157,6 @@ a{text-decoration:none}
 </head>
 <body class="auth-body">
     <div id="authLoader"><span class="auth-spin"></span></div>
-
-    <!-- Language loader + first-visit chooser -->
-    <?= $this->include('partials/lang_widgets') ?>
-
-    <!-- Language switcher -->
-    <div class="auth-lang" id="authLang">
-        <button type="button" class="auth-lang-btn" data-lang-toggle translate="no">
-            <i class="bi bi-translate"></i>
-            <span data-lang-current>English</span>
-            <i class="bi bi-chevron-down auth-lang-caret"></i>
-        </button>
-        <div class="auth-lang-menu">
-            <?php foreach (erp_languages() as $code => $lang): ?>
-                <button type="button" class="lang-option auth-lang-item" data-lang="<?= esc($code, 'attr') ?>" data-lang-label="<?= esc($lang['native'], 'attr') ?>" translate="no">
-                    <span class="lang-flag"><?= $lang['flag'] ?></span>
-                    <span class="auth-lang-text">
-                        <strong><?= esc($lang['native']) ?></strong>
-                        <small><?= esc($lang['name']) ?></small>
-                    </span>
-                    <i class="bi bi-check2 lang-check"></i>
-                </button>
-            <?php endforeach; ?>
-        </div>
-    </div>
 
     <main class="login-page">
         <section class="login-shell" aria-label="<?= esc($appName) ?> authentication">

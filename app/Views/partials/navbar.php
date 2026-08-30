@@ -8,9 +8,6 @@ $erpRoleLabel = session('account_type') === 'super_admin'
     ? 'Super Admin'
     : ucwords(str_replace('_', ' ', (string) (session('company_role') ?: session('account_type') ?: 'User')));
 
-/* App languages (India-first) for the in-app UI translator (shared helper). */
-$erpLanguages = erp_languages();
-
 $topNotifications = [];
 $unreadNotifications = 0;
 try {
@@ -194,30 +191,6 @@ $notificationIconMap = [
                         <button class="btn btn-sm btn-outline-primary w-100" type="submit"><i class="bi bi-check-all me-1"></i>Mark all as read</button>
                     </form>
                     <a href="<?= site_url('notifications') ?>" class="dropdown-item text-center fw-semibold">View all notifications</a>
-                </div>
-            </li>
-
-            <li class="nav-item dropdown topbar-lang">
-                <a class="nav-link nav-square topbar-trigger" href="#" data-bs-toggle="dropdown" aria-expanded="false" title="Language">
-                    <i class="bi bi-translate"></i>
-                </a>
-                <div class="dropdown-menu dropdown-menu-end topbar-dropdown lang-dropdown">
-                    <div class="dropdown-head">
-                        <strong>Language</strong>
-                        <span class="badge text-bg-light border" data-lang-current translate="no">English</span>
-                    </div>
-                    <div class="lang-list">
-                        <?php foreach ($erpLanguages as $code => $lang): ?>
-                            <button type="button" class="dropdown-item lang-option" data-lang="<?= esc($code, 'attr') ?>" data-lang-label="<?= esc($lang['native'], 'attr') ?>" translate="no">
-                                <span class="lang-flag"><?= $lang['flag'] ?></span>
-                                <span>
-                                    <strong><?= esc($lang['native']) ?></strong>
-                                    <small><?= esc($lang['name']) ?></small>
-                                </span>
-                                <i class="bi bi-check2 lang-check"></i>
-                            </button>
-                        <?php endforeach; ?>
-                    </div>
                 </div>
             </li>
 

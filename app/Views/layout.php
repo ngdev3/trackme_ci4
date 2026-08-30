@@ -42,8 +42,6 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
     <?php endforeach; ?>
 </head>
 <body class="layout-fixed sidebar-expand-lg">
-<!-- Language loader (hides the page until the chosen language applies) + first-visit chooser -->
-<?= $this->include('partials/lang_widgets') ?>
 
 <!-- Top page-loading progress bar -->
 <div id="pageLoader" class="page-loader"><div class="page-loader-bar"></div></div>
@@ -144,33 +142,6 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
     <?= $this->include('partials/footer') ?>
 </div>
 
-<!-- In-app language translator (whole-UI) — India-first, aligned with the mobile
-     app's languages (see erp_languages() + i18n.js). -->
-<div id="google_translate_element" aria-hidden="true"></div>
-<script nonce="{csp-script-nonce}">
-    function googleTranslateElementInit() {
-        new google.translate.TranslateElement({
-            pageLanguage: 'en',
-            includedLanguages: 'en,hi,mr,gu,pa,ta,te,kn,bn',
-            autoDisplay: false
-        }, 'google_translate_element');
-    }
-</script>
-<!-- Load the Google Translate widget lazily (after first paint) so its external
-     round-trips never block the page. It applies the saved language once ready. -->
-<script nonce="{csp-script-nonce}">
-  (function () {
-    function loadGT() {
-      var s = document.createElement('script');
-      s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-      s.async = true;
-      document.body.appendChild(s);
-    }
-    if (document.readyState === 'complete') { setTimeout(loadGT, 200); }
-    else { window.addEventListener('load', function () { setTimeout(loadGT, 200); }); }
-  })();
-</script>
-<script src="<?= erp_asset('assets/js/i18n.js') ?>"></script>
 
 <script src="<?= erp_asset('assets/vendor/jquery/jquery.min.js') ?>"></script>
 <script src="<?= erp_asset('assets/vendor/bootstrap/bootstrap.bundle.min.js') ?>"></script>
