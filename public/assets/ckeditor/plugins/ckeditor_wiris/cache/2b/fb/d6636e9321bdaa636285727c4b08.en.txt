@@ -1,0 +1,1 @@
+fraction numerator begin display style blank over blank end style over denominator blank end fraction

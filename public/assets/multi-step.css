@@ -1,0 +1,109 @@
+.breadcrumb>li{padding-right: 23px;position:relative;}
+.breadcrumb>li:after {content: "\f105"; font-family:FontAwesome; font-size:36px;}
+.breadcrumb>li:after {
+    content: "\f105";
+    font-family: FontAwesome;
+    font-size: 24px;
+    position: absolute;
+    line-height: 20px;
+    padding: 0 5px 0 8px;
+    right: 0;
+    top: -2px;
+}
+.breadcrumb>li:last-child:after {content: "";}
+.breadcrumb>li a{color:#a6a9a9;}
+.breadcrumb>li:last-child{color:#027cba}
+.slide-form-outer{width:100%; padding:0 70px;}
+.ms-left{text-align:left;}
+#msform {width: 100%;margin:0px auto;text-align: left;position: relative;z-index: 1;}
+#msform fieldset {background: white;border: 0 none;padding: 20px 30px;box-sizing: border-box;width: 90%;margin: 0 5%;/*stacking fieldsets above each other
+  position: absolute;*/}
+/*Hide all except first fieldset*/
+#msform fieldset:not(:first-of-type) {display: none;}
+/*inputs*/
+#msform input,#msform textarea {/*padding: 15px;border: 1px solid #ccc;border-radius: 3px;margin-bottom: 10px;width: 100%;
+  box-sizing: border-box;font-family: montserrat;color: #2C3E50;font-size: 13px;*/}
+/*buttons*/
+#msform .action-button {
+    width: auto;
+    background: #c8202d;
+    color: white;
+    border: 0 none;
+    cursor: pointer;
+    padding: 8px 30px;
+    font-size: 16px;
+    height: 40px !important;
+    margin: 40px 10px;
+    box-shadow: 0px 10px 10px 0px #dcdcdc;
+}
+
+#msform .action-button:hover,#msform .action-button:focus {/*box-shadow: 0 0 0 2px white, 0 0 0 3px #67d5bf;*/}
+/*headings*/
+.fs-title {font-size: 16px;text-transform: uppercase;color: #63a2cb;margin-bottom: 10px;}
+.fs-subtitle {font-weight: normal; font-size: 14px;  color: #666;  margin-bottom: 20px;}
+/*progressbar*/
+#progressbar { margin:30px 0; overflow: hidden;/*CSS counters to number the steps*/ counter-reset: step;}
+#progressbar li {list-style-type: none;color: #373737;font-size: 12px;width: 20%;float: left;
+  position: relative; text-align: center; font-weight: 600;}
+#progressbar li:before {content: counter(step);counter-increment: step;width: 50px; line-height: 50px; height: 50px;
+    display: block; font-size: 16px; color: #fff;background: #dcdcdc; border-radius: 50%;margin: 0 auto 5px auto;border: 1px solid #dcdcdc;}
+/*progressbar connectors*/
+#progressbar li:after {content: '';width: 100%;height: 10px;background: white;position: absolute;left: -50%;top: 20px;z-index: -1;
+  background-image: url(step-line.png);background-repeat: repeat-x;/*put it behind the numbers*/}
+#progressbar li:first-child:after {/*connector not needed before the first step*/  content: none;}
+/*marking active/completed steps green*/
+/*The number of the step and the connector before it = green*/
+#progressbar li.active:before,#progressbar li.active:after {background: #c8202d;color: white;border: 1px solid #9e0d18;}
+.help-block {
+    font-size: 12px;
+    color: #c8202d;
+    text-align: left;
+    margin-bottom: .5em;
+}
+.wizard-col{float:left; width: 30%; height: auto;     margin-right: 3%;margin-bottom: 0%;}
+.wizard-col h1{float:left; font-family: Roboto-Regular; color:#71ba3f;font-size: 16px;margin: 0px 0px 20px 0px;}
+.wizard-col .style-checkbox {
+  position: relative;
+  height: 25px;
+  font-family: sans-serif;
+  line-height: 27px;
+  vertical-align: bottom;
+  margin-bottom: 10px;
+}
+.wizard-col .style-checkbox input[type="checkbox"] {
+  margin-right: 20px;
+}
+.wizard-col .style-checkbox label {
+  cursor: pointer;
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  top: 0;
+  left: 0;
+  background: white;
+  border: 1px solid #267cc8;
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+.wizard-col .style-checkbox label:after {
+  opacity: 0;
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 5px;
+  background: transparent;
+  top: 5px;
+  left: 6px;
+  border: 3px solid #4c7820;
+  border-top: none;
+  border-right: none;
+  transform: rotate(-45deg) scale(1.3);
+}
+.wizard-col .style-checkbox label:hover::after {
+  opacity: 0.5;
+}
+.wizard-col .style-checkbox input[type="checkbox"]:checked + label:after {
+  opacity: 1;
+}
+

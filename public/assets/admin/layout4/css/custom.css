@@ -1,0 +1,283 @@
+/* here you can put your own css to customize and override the theme */
+
+/***
+Rounded Portlets
+***/
+/*
+.portlet {
+	border-radius: 4px !important;
+}
+
+.portlet .portlet-title {
+	border-radius: 4px 4px 0px 0px !important;
+}
+
+.portlet .portlet-body,
+.portlet .portlet-body .form-actions  {
+	border-radius: 0px 0px 4px 4px !important;
+}
+*/
+
+
+.reveal-file p {
+  margin: 0 auto;
+  margin-top: 1em;
+  color: #fff;
+  text-align: center;
+  width: 20em;
+  background: #4B77BE;
+  padding: 1.2em;
+}
+.reveal-file p:hover {
+  background: #1b327e;
+  cursor: pointer;
+}
+
+.file-upload .controls {
+  display: none;
+}
+.file-upload .image-box {
+    
+    margin-top: 0;
+    height: 66px;
+    width: 150px;
+	float:left;
+    background: #ffffff;
+    cursor: pointer;
+    overflow: hidden;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+}
+.file-upload .image-box img {
+  height: 100%;
+  display: none;
+}
+.file-upload .image-box p {
+  position: relative;
+  top: 25%;
+  color: #ccc;
+}
+
+.file-upload .image-box .fa {
+    color: #45bd41;
+    font-size: 30px;
+}
+
+
+.select-style {}
+.select-style select {
+    padding: 0px 8px;
+    width: 100%;
+    box-shadow: none;
+    background: transparent;
+    background-image: none;
+    background-position: right;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    line-height: 37px;
+	height:37px;
+	outline:0;
+}
+.select-style select {
+    appearance:none;
+    -moz-appearance:none; /* Firefox */
+    -webkit-appearance:none; /* Safari and Chrome */
+		background-image: url(../img/select-arrow.png) !important;
+	background-repeat:no-repeat;
+	background-position: right;
+	    padding-right: 30px;
+}
+select::-ms-expand {
+    display: none;
+}
+.backbtn55{display:block; margin:20px auto;}
+
+.padding-left-0{padding-left:0 !important;}
+
+.padding-right-0{padding-right:0 !important;}
+
+.form-heading {
+    float: left;
+    padding: 5px 0;
+    font-size: 18px;
+    width: 100%;
+    margin-bottom: 15px;
+    color: #c8202d;
+    border-bottom: 1px solid #c8202d;
+}
+.table-condensed>tbody>tr>td, .table-condensed>tbody>tr>th, .table-condensed>tfoot>tr>td, .table-condensed>tfoot>tr>th, .table-condensed>thead>tr>td, .table-condensed>thead>tr>th {
+    padding: 5px 7.5px; text-align:center;
+}
+.datepicker .active:hover {
+    background-color: #c8202d !important;
+    background-image: none !important;
+    filter: none !important;
+    border-radius: 100%;
+	color:#fff;
+}
+
+.datepicker .active {
+    background-color: #c8202d !important;
+    background-image: none !important;
+    filter: none !important;
+    border-radius: 100% !important;
+	color:#fff;
+}
+.dropdown-menu { margin: -2px 0px 0px 0px;}
+.form-group-custom{position: absolute;right: 242px; z-index:9;width: 230px; background:#fff;}
+.form-group-custom label {
+    line-height: 33px;
+    position: absolute;
+    right: -8px;
+}
+
+
+
+
+/******************Gallery Start******************/
+
+
+.imageuploadify{border: 0px solid #d2d2d2; position: relative; min-height: auto; min-width: auto; max-width: auto; margin: auto; display: flex; padding: 0; flex-direction: column;    text-align: center; background-color: #fff; color: #45bd41; padding: 0px; height: 10%;}
+
+
+.imageuploadify .imageuploadify-overlay{z-index:10;width:100%;height:100%;position:absolute;flex-direction:column;top:0;left:0;display:none;font-size:7em;background-color:rgba(242,242,242,.7);text-align:center;pointer-events:none}
+
+.imageuploadify .imageuploadify-overlay i{z-index:10;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+
+.imageuploadify .imageuploadify-images-list{display:inline-block}
+
+.imageuploadify .imageuploadify-images-list i{display: block; text-align: center; padding-bottom: 12px; font-size: 50px; margin:20px 0px 0px 0px;color:#45bd41;}
+
+.imageuploadify .imageuploadify-images-list span.imageuploadify-message{font-size:15px;border-top:1px solid #c8202d;border-bottom:1px solid #c8202d;padding:10px;display:inline-block}
+.imageuploadify .imageuploadify-images-list button.btn-default{display:block;color:#ccc;border-color:#fff;margin:0px auto;width:auto;max-width:100%;}
+.imageuploadify .imageuploadify-images-list button .image-box {margin-top: 0; height: auto; width: 150px; float: left; background: #ffffff; cursor: pointer; overflow: hidden; border: 1px solid #e5e5e5; border-radius: 8px;}
+
+.imageuploadify .imageuploadify-images-list button .image-box p {
+    position: relative;
+    top: 25%;
+    color: #ccc;
+}
+
+.imageuploadify .imageuploadify-images-list button .image-box .fa {
+    color: #45bd41;
+    font-size: 30px;
+}
+
+.imageuploadify .imageuploadify-images-list button .btn-default.active:hover {
+    background-color: none;
+}
+
+.imageuploadify .imageuploadify-images-list .btn-default:active:hover, .btn-default.active:hover {
+    background-color: #fff !important;
+}
+.none_hov{}
+.none_hov:hover{ background:none;}
+
+.imageuploadify .imageuploadify-images-list .imageuploadify-container{width:100px;height:100px;position:relative;overflow:hidden;margin-bottom:1em;float:left;border-radius:12px;box-shadow:0 0 4px 0 #888}
+
+.imageuploadify .imageuploadify-images-list .imageuploadify-container button.btn-danger{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:15px;font-size:10px;line-height:1.42;padding:2px 0;text-align:center;z-index:3}
+
+.imageuploadify .imageuploadify-images-list .imageuploadify-container img{height:100px;left:50%;position:absolute;top:50%;transform:translate(-50%,-50%);width:auto}
+
+.imageuploadify .imageuploadify-images-list .imageuploadify-container .imageuploadify-details{position:absolute;top:0;padding-top:20px;width:100%;height:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:rgba(255,255,255,.5);z-index:2;opacity:0}
+
+.imageuploadify .imageuploadify-images-list .imageuploadify-container .imageuploadify-details span{display:block}
+
+
+/******************Gallery End********************/
+
+
+
+.mr_36{ margin-top:36px;}
+.gallery_list{float:left;width:100%;}
+.gallery_list ul{margin:0;padding:0;float:left;width:100%;}
+.gallery_list ul li {
+    margin: 0 0 20px 0;
+    padding: 0;
+    float: left;
+    padding-right: 30px;
+    list-style: none;
+    position: relative;
+}
+.gallery_list ul li img {
+    border: 2px solid #bdbaba;
+    border-radius: 5px;
+}
+
+.remove {
+    position: absolute;
+    right: 20px;
+    top: -8px;
+    color: #fff;
+    font-size: 14px;
+    background: #c8202d;
+    border-radius: 50%;
+    height: 25px;
+    width: 25px;
+    line-height: 25px;
+    text-align: center;
+    cursor: pointer;
+}
+.remove_db {
+    position: absolute;
+    right: 20px;
+    top: -8px;
+    color: #fff;
+    font-size: 14px;
+    background: #c8202d;
+    border-radius: 50%;
+    height: 25px;
+    width: 25px;
+    line-height: 25px;
+    text-align: center;
+    cursor: pointer;
+}
+.col-ting1{
+	float:none;display:inline-block;width:150px;border:1px solid #e5e5e5;cursor:pointer;border-radius:5px;color: #45bd41;
+}
+.file-box .image-box .fa {
+    color: #45bd41;
+    font-size: 30px;
+}
+.file-box .image-box p {
+    position: relative;
+    top: 25%;
+    color: #ccc;
+	    margin-top: 20px;
+}
+
+.file-text {
+    float: left;
+    margin: 9px 0px !important;
+    color: #afafaf;
+}
+th.table-checkbox , sorting_asc,sorting_desc { background-image: none !important; }
+th.table-checkbox , sorting_asc::after, sorting_desc::after { cursor:default !important; }
+
+.order-detail-container{float: left;width: 100%;height: auto;background-color: #fff;padding: 25px;margin-bottom: 10px;}
+.order-detail-container h1{font-family: OpenSans-Regular;font-size: 18px;color: #373737;padding: 0px 0px;margin: 0px 0px;}
+.detail-order-full{width: 100%; height: auto; text-align: center; display: inline-block;}
+.order-detail-top{width:65%; height: auto; border: 1px solid #e8e8e8;margin-top: 10px;border-bottom: 4px solid #e8e8e8;text-align: center; display: inline-block;}
+.order-detail-int{float:left;width:50%; height: auto;border-right: 1px solid #e8e8e8;padding: 10px 20px;}
+.order-detail-int:last-child{border-right: none;}
+.order-detail-int p{float:left;font-family: OpenSans-Regular;font-size: 14px;color: #373737;padding: 0px 0px;margin: 0px 0px;line-height: 30px;}
+.order-detail-int p b{font-weight: bold;}
+.order-ddotted-box{width:65%;height: auto;border:2px dashed #928f8f;margin: 10px 0px; padding: 10px; text-align: center;display: inline-block;}
+.order-ddotted-box p{font-family: OpenSans-Semibold;font-size: 12px;color: #000;padding: 0px 0px;margin: 0px 0px;width: 100%;line-height: 30px;font-weight:bold;text-align:center !important;}
+.order-ddotted-box span{color: #d93333;}
+.order-detailgrey-strip{float:left; width:100%; height: auto;background: #f3f3f3; padding: 5px 10px; margin:20px 0px;}
+.order-detailgrey-strip h1{font-family: OpenSans-Regular;font-size: 14px;color: #373737;padding: 0px 0px;margin: 0px 0px;line-height: 30px;font-weight: bold;}
+.order-detailgrey-strip h1 span{float:right;}
+.order-detail-int1{float:left;width:100%; height: auto;padding: 10px 20px;}
+.order-detail-container h2{font-family: OpenSans-Regular;font-size: 18px;color: #000;padding: 10px 0px;margin: 0px 0px;}
+.order-detail-container h2 span{float: right;}
+.order-detail-container h3 {font-family: OpenSans-Regular;font-size: 14px;color: #373737;padding: 10px 0px;margin: 0px 0px;}
+.order-detail-container h3 span{float: right;}
+.order-detail-container h4 {font-family: OpenSans-Regular;font-size: 14px;color: #373737;padding: 3px 0px;margin: 0px 0px;}
+.order-detail-container h4 span{float: right;}
+.order-detail-container p{float:left;font-family: OpenSans-Regular;font-size: 14px;color: #373737;padding: 0px 0px;margin: 0px 1px;line-height: 30px;}
+.order-detail-container p b{font-weight: bold;}
+.portlet-title .btn-default{border: 1px solid #fffefe !important;background: transparent;color: #fff;}
+.portlet-title .btn-default i{color:#fff;}
+.portlet-title .btn-default:hover{background:transparent;}
+.divlayout-outer{margin: 7px 0px 7px 15px;border: 1px solid #e6e8e6;padding: 10px;border-radius: 5px;}

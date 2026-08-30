@@ -1,0 +1,16 @@
+.add {
+    margin: 35px 5px 0 0;
+    border: 1px solid #45bd41;
+    padding: 4px 7px;
+    font-size: 14px;
+    float: left;
+    line-height: normal;
+}
+.minus{
+    margin: 35px 0 0 0;
+    border: 1px solid #c8202d;
+    padding: 4px 7px;
+    font-size: 14px;
+    float: left;
+    line-height: normal;
+}

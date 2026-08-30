@@ -1,0 +1,151 @@
+.profile-menu {
+    width: 190px;
+}
+
+
+/* <== My Profile Section ==> */
+
+.input-label {
+    width: 30%;
+}
+
+.input-content {
+    display: inline-block;
+    width: 65%;
+}
+
+.nxt-btn {
+    width: 160px;
+    cursor: pointer;
+}
+
+.page_title {}
+
+.bgc-white ul {
+    display: inline-block;
+    width: 100%;
+    padding-left: 0;
+    margin-bottom: 0;
+    list-style: none;
+    text-align: center;
+    margin: 1rem 0rem 2rem 0rem;
+}
+
+.bgc-white li {
+    display: inline-block;
+    padding: 5px 0;
+    transition: all .3s ease-out;
+}
+
+.btn-md {
+    font-weight: 500;
+    letter-spacing: 1px;
+    margin: .4rem .8rem !important;
+    -webkit-transition: all 0.3s ease-in-out;
+    -moz-transition: all 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
+    padding: .75rem 3rem;
+    border-radius: 3px;
+    border: 2px solid #12a5fe;
+}
+
+.btn-md:hover,
+.btn-md:focus,
+.btn-md.focus,
+.btn-md.active {
+    color: #ffffff;
+    background-color: #149dcc;
+    border-color: #149dcc;
+}
+
+.info-tab-contianer {
+    vertical-align: middle;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.info-tab-contianer:nth-child(1) p {
+    border-bottom: 2px solid #2196f3;
+}
+
+.info-tab-contianer:nth-child(2) {
+    cursor: pointer;
+}
+
+.info-tab-contianer p {
+    padding: 15px 0;
+}
+
+[class*=gap] {
+    width: auto!important;
+    overflow: initial !important;
+}
+
+.hide {
+    display: none;
+}
+
+.margin_left_0 {
+    padding-left: 0px;
+}
+
+.width_full {
+    width: 100%;
+}
+
+.header {
+    box-shadow: 0px 9px 20px 0px #ececec;
+}
+
+.my_cls {
+    font-size: 14px !important;
+    margin: 0px 0px 0px 10px;
+    line-height: 20px;
+}
+
+.peer {
+    flex: auto;
+    font-size: 20px;
+}
+
+.bgc-white,
+.bgcH-white:hover {
+    background-color: #fff!important;
+    box-shadow: 0px 10px 29px 0px #d4d4d4;
+    border-radius: 5px;
+}
+
+.my_count {
+    position: absolute;
+    -moz-transform: rotate(-90.0deg);
+    -o-transform: rotate(-90.0deg);
+    -webkit-transform: rotate(-90.0deg);
+    filter: progid: DXImageTransform.Microsoft.BasicImage(rotation=0.083);
+    -ms-filter: "progid:DXImageTransform.Microsoft.BasicImage(rotation=0.083)";
+    transform: rotate(-90.0deg);
+    left: 4px;
+    bottom: 50%;
+}
+.active{
+	background: #e8f5ff;
+}
+.inline_block{
+	display: inline-block !important;
+}
+.display_block{
+	display: block !important;
+}
+.table_bg{background-color:#f9fafb;}
+
+#chngpswd{}
+#chngpswd .input-content{
+	width:100%;
+}
+.contwith{
+	width:320px !important;
+}
+/*
+.pad-0{
+	padding:0px;
+}*/

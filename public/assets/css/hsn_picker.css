@@ -1,0 +1,19 @@
+/**
+ * hsn_picker.css — shared styles for the app-wide HSN / commodity dropdown.
+ * Mirrors the look first built on the Bill of Supply add screen so every HSN
+ * picker across the app renders identically.
+ */
+.hsn-opt { display: inline-flex; align-items: center; gap: 9px; min-width: 0; }
+.hsn-opt-img {
+    width: 26px; height: 26px; border-radius: 7px; flex: none;
+    object-fit: cover; background: #fff;
+    box-shadow: 0 1px 3px rgba(24, 36, 60, .2);
+}
+.hsn-opt-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Larger thumbnail inside the open dropdown for easier scanning. */
+.select2-drop.hsn-dd .hsn-opt-img { width: 30px; height: 30px; }
+.select2-drop.hsn-dd .select2-results li { padding: 4px 6px; }
+
+/* Keep the selected chip comfortably tall. */
+.select2-container.hsn-select .select2-choice { height: auto; min-height: 34px; line-height: 1.4; padding-top: 3px; padding-bottom: 3px; }
