@@ -142,9 +142,19 @@ still validates.
 
 ---
 
-## F-5 — Content-Security-Policy  **(Low → REPORT-ONLY enabled)**
+## F-5 — Content-Security-Policy  **(Low → REPORT-ONLY, by decision)**
 
-> **In progress (2026-08-29).** A CSP is now **enabled in report-only mode**
+> **Decision (2026-08-29): stay in report-only.** Full enforcement would block
+> Google Translate's runtime-injected inline scripts, and Google Translate powers the
+> app's entire multi-language feature (`app/Language` ships only `en`). In CI4,
+> `'unsafe-inline'` for scripts is always negated by the nonce CI4 auto-emits, so there
+> is no way to allow those injected scripts under enforcement without dropping the
+> nonce mechanism. Rather than break multi-language (or ship a pointless weakened
+> policy), the CSP is kept in **report-only**: the app's own code is fully nonce-
+> compliant (below), so the report stream is clean apart from the third-party widget.
+> Revisit only if Google Translate is replaced with native translation files.
+
+> **Enabled in report-only mode (2026-08-29).** A CSP is set to report-only
 > (`App::$CSPEnabled = true`, `ContentSecurityPolicy::$reportOnly = true`), with
 > host allowlists for the app's real resources (Cashfree SDK, Google Fonts/Translate,
 > open-meteo/geojs/razorpay-IFSC/qrserver APIs). Report-only **cannot block anything**
