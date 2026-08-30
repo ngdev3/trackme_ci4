@@ -20,6 +20,7 @@ use App\Modules\Admin\Controllers\Attachments;
 use App\Modules\Admin\Controllers\App_setting;
 use App\Modules\Admin\Controllers\Entry_trace;
 use App\Modules\Admin\Controllers\Web_push;
+use App\Modules\Admin\Controllers\Item_master;
 
 $routes->get('admin/dashboard', [Dashboard::class, 'index']);
 
@@ -92,3 +93,11 @@ $routes->get('admin/web_push/config', [Web_push::class, 'config']);
 $routes->post('admin/web_push/save_token', [Web_push::class, 'save_token']);
 $routes->post('admin/web_push/delete_token', [Web_push::class, 'delete_token']);
 $routes->get('admin/web_push/service_worker', [Web_push::class, 'service_worker']);
+
+// Item Master (P5 — master data) — CRUD over hsn_codes + unit
+$routes->get('admin/item_master/listing', [Item_master::class, 'listing']);
+$routes->get('admin/item_master', [Item_master::class, 'listing']);
+$routes->match(['get', 'post'], 'admin/item_master/add', [Item_master::class, 'add']);
+$routes->match(['get', 'post'], 'admin/item_master/edit/(:segment)', [Item_master::class, 'edit']);
+$routes->post('admin/item_master/delete', [Item_master::class, 'delete']);
+$routes->post('admin/item_master/updateStatus', [Item_master::class, 'updateStatus']);
