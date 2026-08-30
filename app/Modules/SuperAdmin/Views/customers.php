@@ -10,7 +10,7 @@
         <div>
             New password for <strong><?= esc(session()->getFlashdata('new_password_for')) ?></strong>:
             <code id="npValue" class="fs-6 user-select-all"><?= esc($np) ?></code>
-            <button type="button" class="btn btn-sm btn-outline-success ms-1" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('npValue').innerText)">
+            <button type="button" class="btn btn-sm btn-outline-success ms-1" data-copy="npValue">
                 <i class="bi bi-clipboard"></i> Copy
             </button>
             <div class="small mt-1">
@@ -30,7 +30,7 @@
         <div>
             Reset link for <strong><?= esc(session()->getFlashdata('reset_link_for')) ?></strong>:
             <code id="rlValue" class="user-select-all"><?= esc($rl) ?></code>
-            <button type="button" class="btn btn-sm btn-outline-warning ms-1" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('rlValue').innerText)">
+            <button type="button" class="btn btn-sm btn-outline-warning ms-1" data-copy="rlValue">
                 <i class="bi bi-clipboard"></i> Copy
             </button>
             <div class="small mt-1">Share privately — it expires in 1 hour.</div>

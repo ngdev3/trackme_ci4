@@ -107,7 +107,7 @@ $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
                      clicks: each activation extends the expiry by one billing cycle,
                      so the submit button disables itself on the first press. -->
                 <form action="<?= site_url('admin/customers/subscription/' . (int) $user['id'] . '/activate') ?>" method="post" class="mb-2"
-                      onsubmit="var b=this.querySelector('button[type=submit]'); if(b){setTimeout(function(){b.disabled=true;b.innerHTML='<span class=&quot;spinner-border spinner-border-sm me-1&quot;></span>Activating…';},0);}">
+                      data-submit-spinner>
                     <?= csrf_field() ?>
                     <label class="form-label small fw-semibold mb-1">Activate / change plan</label>
                     <div class="input-group">
@@ -119,7 +119,7 @@ $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i> Activate</button>
+                        <button type="submit" class="btn btn-success" data-loading-text="Activating…"><i class="bi bi-check-circle me-1"></i> Activate</button>
                     </div>
                     <div class="form-text"><i class="bi bi-info-circle me-1"></i>Each activation adds one billing cycle to the expiry. Clicked it too many times? Use “Correct expiry” below.</div>
                     <?php if (empty($plans)): ?>

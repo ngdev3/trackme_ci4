@@ -102,7 +102,7 @@ $pdfShownRows = is_array($rows ?? null) ? count($rows) : 0;
         @media print { .noprint { display: none !important; } .sheet { max-width: none; } }
     </style>
 </head>
-<body <?= $noPrint ? '' : 'onload="window.print()"' ?>>
+<body>
 <div class="sheet">
     <!-- Header -->
     <div class="stmt-head">
@@ -207,6 +207,8 @@ $pdfShownRows = is_array($rows ?? null) ? count($rows) : 0;
                 else { window.close(); }
             });
         });
+        // Auto-print once loaded (replaces the old body-load handler).
+        window.addEventListener('load', function () { window.print(); });
     </script>
     <?php endif; ?>
 </div>

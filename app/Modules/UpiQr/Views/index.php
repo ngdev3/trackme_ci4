@@ -55,7 +55,7 @@ $hue  = static fn (string $s): int => (int) (crc32($s) % 360);
                     <div class="uq-card-actions">
                         <button class="btn btn-sm btn-primary flex-fill" data-uq-show><i class="bi bi-qr-code-scan me-1"></i>Show QR</button>
                         <button class="btn btn-sm btn-outline-secondary" data-uq-edit title="Edit"><i class="bi bi-pencil"></i></button>
-                        <form method="post" action="<?= site_url('upi-qr/delete/' . (int) $r['id']) ?>" onsubmit="return confirm('Remove “<?= esc($r['label'], 'js') ?>”?');" class="d-inline">
+                        <form method="post" action="<?= site_url('upi-qr/delete/' . (int) $r['id']) ?>" data-confirm="Remove &ldquo;<?= esc($r['label'], 'attr') ?>&rdquo;?" class="d-inline">
                             <?= csrf_field() ?>
                             <button class="btn btn-sm btn-outline-danger" title="Remove"><i class="bi bi-trash3"></i></button>
                         </form>

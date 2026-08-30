@@ -24,7 +24,7 @@ $fmt = fn ($n) => number_format((float) $n, 2);
         @media print { .noprint { display: none; } body { margin: 8px; } }
     </style>
 </head>
-<body onload="window.print()">
+<body>
     <div class="head">
         <h1><?= esc($firm['name'] ?? 'Rokad Parcha') ?></h1>
         <small>Rokad Parcha (Cash Book) &middot; <?= esc(date('l, d F Y', strtotime($date))) ?></small>
@@ -76,6 +76,8 @@ $fmt = fn ($n) => number_format((float) $n, 2);
                 else { window.close(); }
             });
         });
+        // Auto-print once the page has loaded (replaces the old body-load handler).
+        window.addEventListener('load', function () { window.print(); });
     </script>
 </body>
 </html>

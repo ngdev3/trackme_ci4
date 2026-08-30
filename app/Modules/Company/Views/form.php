@@ -110,7 +110,7 @@ $popularSug  = array_slice($suggests, 10);       // common shop/firm names
                         <?= $err('name') ?>
                         <?php if (empty($hasCompany)): ?>
                             <div class="cc-hint">Don't have a name yet? You can
-                                <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="document.getElementById('quickStartBtn').click()">skip and start with a starter company</button>
+                                <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-click-target="quickStartBtn">skip and start with a starter company</button>
                                 named after your account.</div>
                         <?php endif; ?>
 

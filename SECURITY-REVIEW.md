@@ -163,13 +163,18 @@ still validates.
 > This is app-code refactoring best done page-by-page against the report-only logs,
 > so it is left in report-only until then.
 >
-> **Progress:** the **Transactions** module's views are now free of inline `on*`
-> handlers (the one class of violation that *cannot* be nonced) — they were moved to
-> delegated listeners on `app.js` and to nonce-able inline `<script>` blocks. Remaining
-> app-wide steps before enforcing: repeat this for the other modules' inline handlers
-> (`SuperAdmin`, `Rokad`, `Notes`, …), set `$autoNonce = true` so inline `<script>`
-> elements get nonced, and resolve the Google Translate widget (it injects inline
-> scripts dynamically that a nonce can't reach).
+> **Progress:** **every application module is now free of inline `on*` handlers** —
+> the one class of violation that *cannot* be nonced. They were moved to a small set of
+> delegated listeners on `app.js` (`data-autosubmit`, `data-window`, `data-copy`,
+> `data-click-target`, `data-submit-spinner`; `data-confirm` was already handled) and,
+> for the standalone print pages, to nonce-able inline `<script>` blocks. The only
+> remaining inline handlers are in CI4's built-in debug error page
+> (`app/Views/errors/html/error_exception.php`), which renders only in `development`.
+>
+> Remaining app-wide steps before enforcing: set `$autoNonce = true` so inline
+> `<script>` elements get nonced, keep `'unsafe-inline'` on `style-src-attr` (inline
+> `style="…"` attributes are low-risk and pervasive), and resolve the Google Translate
+> widget (it injects inline scripts dynamically that a nonce can't reach).
 
 **Impact (when unmitigated):** No second line of defense if an XSS sink (e.g. F-1) is
 ever introduced.

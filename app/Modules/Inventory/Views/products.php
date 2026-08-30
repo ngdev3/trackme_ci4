@@ -73,7 +73,7 @@ $navTabs = [
                                 <td class="r"><?= ((float) $p['tax_rate']) ? $p['tax_rate'] . '%' : '—' ?></td>
                                 <td class="c text-nowrap">
                                     <button class="cust-act act-edit pm-edit" title="Edit"><i class="bi bi-pencil"></i></button>
-                                    <form method="post" action="<?= site_url('inventory/products/delete/' . (int) $p['id']) ?>" class="d-inline" onsubmit="return confirm('Remove this product?');">
+                                    <form method="post" action="<?= site_url('inventory/products/delete/' . (int) $p['id']) ?>" class="d-inline" data-confirm="Remove this product?">
                                         <?= csrf_field() ?>
                                         <button class="cust-act act-del" title="Delete"><i class="bi bi-trash"></i></button>
                                     </form>

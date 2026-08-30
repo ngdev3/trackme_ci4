@@ -43,7 +43,7 @@ $shown = ($filters['ptype'] ?? '') === ''
         @media print { body { margin: 8px; } }
     </style>
 </head>
-<body <?= $noPrint ? '' : 'onload="window.print()"' ?>>
+<body>
     <div class="head">
         <h1><?= esc($firm['name'] ?? 'Breakdown Report') ?></h1>
         <small>Report — by party type and payment mode</small>
@@ -96,5 +96,11 @@ $shown = ($filters['ptype'] ?? '') === ''
         <div><b>Total Naam</b> <span class="naam"><?= $amt($summary['naam']) ?></span></div>
         <div><b>Net</b> <?= $amt($summary['net']) ?></div>
     </div>
+    <?php if (! ($noPrint ?? false)): ?>
+    <script>
+        // CSP-clean auto-print (replaces the old body-load handler).
+        window.addEventListener('load', function () { window.print(); });
+    </script>
+    <?php endif; ?>
 </body>
 </html>

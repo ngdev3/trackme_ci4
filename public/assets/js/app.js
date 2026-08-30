@@ -40,8 +40,31 @@
         if (c) {
             var src = document.getElementById(c.getAttribute('data-copy'));
             if (src && navigator.clipboard) { navigator.clipboard.writeText(src.innerText); }
+            return;
+        }
+        // Proxy a click to another control: data-click-target="<element id>".
+        var p = e.target.closest ? e.target.closest('[data-click-target]') : null;
+        if (p) {
+            var target = document.getElementById(p.getAttribute('data-click-target'));
+            if (target) { target.click(); }
         }
     });
+    // Disable the submit button + show a spinner once a form actually submits, to
+    // guard against double-submits: put [data-submit-spinner] on the form and an
+    // optional [data-loading-text] on its submit button. setTimeout(…,0) lets the
+    // submit go through first, then disables — matching the old inline handler.
+    document.addEventListener('submit', function (e) {
+        var f = e.target;
+        if (! f || ! f.matches || ! f.matches('[data-submit-spinner]')) { return; }
+        var btn = f.querySelector('button[type=submit]');
+        if (! btn) { return; }
+        setTimeout(function () {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>'
+                + (btn.getAttribute('data-loading-text') || 'Working…');
+        }, 0);
+    });
+
     // NOTE: [data-confirm] on forms/links/buttons is handled by the richer
     // in-app confirm (erpConfirm / SweetAlert2, with a native confirm() fallback)
     // further down — see "In-app confirm (data-confirm)". Don't add a second

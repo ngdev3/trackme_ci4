@@ -32,7 +32,7 @@ $cur = $noPrint ? 'Rs ' : '₹ ';
         @media print { .noprint { display: none; } body { margin: 8px; } }
     </style>
 </head>
-<body <?= $noPrint ? '' : 'onload="window.print()"' ?>>
+<body>
     <div class="head">
         <h1><?= esc($firm['name'] ?? 'Rokadh Parcha') ?></h1>
         <small>Rokadh Parcha (Cash Book)</small>
@@ -89,6 +89,8 @@ $cur = $noPrint ? 'Rs ' : '₹ ';
                 else { window.close(); }
             });
         });
+        // Auto-print once loaded (replaces the old body-load handler).
+        window.addEventListener('load', function () { window.print(); });
     </script>
     <?php endif; ?>
 </body>
