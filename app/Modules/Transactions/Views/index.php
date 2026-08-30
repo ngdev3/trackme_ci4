@@ -118,7 +118,7 @@ $hasChart = array_sum($modeVals) > 0 || ! empty($trend);
         </div>
     </div>
 </div>
-<script>
+<script nonce="{csp-script-nonce}">
 window.TX_CHARTS = {
     trend: <?= json_encode(array_map(fn ($b) => ['d' => date('d M', strtotime($b['d'])), 'jama' => $b['jama'], 'naam' => $b['naam']], $trend)) ?>,
     modeLabels: <?= json_encode($modeLabels) ?>,
@@ -262,7 +262,7 @@ window.TX_CHARTS = {
     </div>
 </div>
 
-<style>
+<style nonce="{csp-style-nonce}">
     .tx-party { display:flex; align-items:center; gap:.55rem; min-width:0; }
     .tx-ava { flex:0 0 auto; width:2rem; height:2rem; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; color:#fff; background:hsl(var(--tx-hue,210) 62% 46%); }
     .tx-party-main { min-width:0; }
@@ -275,7 +275,7 @@ window.TX_CHARTS = {
     .tx-src.is-app { color:var(--bs-info-text-emphasis,#087990); background:var(--bs-info-bg-subtle,#cff4fc); }
     .tx-row { cursor:pointer; }
 </style>
-<script>
+<script nonce="{csp-script-nonce}">
 // Hover tooltip engine — shows the styled dark detail card for any [data-rp-tip].
 (function () {
     var tip = null, current = null;
@@ -296,7 +296,7 @@ window.TX_CHARTS = {
     window.addEventListener('resize', hide);
 })();
 </script>
-<script>
+<script nonce="{csp-script-nonce}">
 // Charts render after Chart.js (loaded in the footer) — defer to DOMContentLoaded.
 document.addEventListener('DOMContentLoaded', function () {
     if (typeof Chart === 'undefined' || !window.TX_CHARTS) return;

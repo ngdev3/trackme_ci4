@@ -22,7 +22,7 @@ $dateLabel = static function ($value): string {
         Run the latest database migrations so <code>login_logs</code> has latitude, longitude, accuracy, source, and label columns.
     </div>
 <?php else: ?>
-<style>
+<style nonce="{csp-style-nonce}">
     .trend-row { display: grid; grid-template-columns: 78px 1fr 44px; gap: 10px; align-items: center; }
     .trend-bar { height: 9px; border-radius: 999px; background: #e5edf8; overflow: hidden; }
     .trend-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #0f766e, #2563eb); }

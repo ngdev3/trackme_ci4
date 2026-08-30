@@ -113,7 +113,7 @@ $updated = ! empty($row['updated_at']) ? date('d M Y, H:i', strtotime($row['upda
     </div>
 </section>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     const REVEAL = <?= json_encode($revealUrl) ?>;
     let cached = null;

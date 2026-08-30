@@ -144,7 +144,7 @@ $totalRows = (int) ($stats['total'] ?? 0);
     </section>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     const REVEAL = <?= json_encode($revealBase) ?>;
     const notify = function (type, message) {

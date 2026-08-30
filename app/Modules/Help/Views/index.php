@@ -89,7 +89,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var box = document.getElementById('faqSearch');
     if (!box) { return; }

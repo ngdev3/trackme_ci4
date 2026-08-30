@@ -28,7 +28,7 @@ $headAppearance = [
 ];
 ?>
 <!-- Prevent theme flash: apply server-backed user appearance before paint -->
-<script>
+<script nonce="{csp-script-nonce}">
     window.APP_BASE_URL = <?= json_encode(rtrim(site_url(), '/')) ?>;
     window.ERP_APPEARANCE = <?= json_encode($headAppearance) ?>;
     (function () {

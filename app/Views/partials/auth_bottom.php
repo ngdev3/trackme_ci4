@@ -8,7 +8,7 @@
 
     <!-- Honor the saved UI language on the auth screens too -->
     <div id="google_translate_element" aria-hidden="true"></div>
-    <script>
+    <script nonce="{csp-script-nonce}">
         function googleTranslateElementInit() {
             new google.translate.TranslateElement({
                 pageLanguage: 'en',

@@ -38,7 +38,7 @@ $appName = brand_name();
     <link rel="stylesheet" href="<?= erp_asset('assets/css/i18n.css') ?>">
     <!-- Gate the screen until the chosen UI language has been applied -->
     <?= $this->include('partials/lang_boot') ?>
-<style>
+<style nonce="{csp-style-nonce}">
 :root{
   --ink:#0b1220;--ink2:#1e293b;--muted:#64748b;--line:#e6ebf3;
   --brand:#2563eb;--teal:#0f766e;--violet:#7c3aed;--accent:#f59e0b;

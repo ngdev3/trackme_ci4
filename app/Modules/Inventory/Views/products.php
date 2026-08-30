@@ -121,7 +121,7 @@ $navTabs = [
     </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var modalEl = document.getElementById('pmModal');
     var modal = new bootstrap.Modal(modalEl);

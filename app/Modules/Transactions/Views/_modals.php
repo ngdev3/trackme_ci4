@@ -36,7 +36,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var entryEl = document.getElementById('txEntryModal');
     var delEl   = document.getElementById('txDeleteModal');

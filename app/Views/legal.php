@@ -24,7 +24,7 @@ $legalSections = $legalSections ?? [];
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
+<style nonce="{csp-style-nonce}">
 :root{--ink:#0b1220;--muted:#5d687c;--line:#e2e8f2;--brand:#2563eb;--teal:#0f766e;--accent:#f59e0b}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;color:#1e293b;background:linear-gradient(180deg,#eef5f7,#f8fafc 40%,#fff);font-family:Inter,system-ui,sans-serif;line-height:1.7}

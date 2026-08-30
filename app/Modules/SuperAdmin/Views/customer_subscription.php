@@ -254,7 +254,7 @@ $dt = static fn ($v) => $v ? date('d M Y, H:i', strtotime((string) $v)) : '—';
 </div>
 </div>
 
-<style>
+<style nonce="{csp-style-nonce}">
 .sub-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .sub-flow-step { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px; background: var(--bs-body-bg); border: 1px solid var(--erp-border, #e4e9f2); }
 .sub-flow-step .sub-flow-dot { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: rgba(100,116,139,.15); color: #64748b; flex: 0 0 auto; }

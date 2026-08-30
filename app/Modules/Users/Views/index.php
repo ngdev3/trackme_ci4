@@ -1,5 +1,5 @@
 <?php /** Users — creative charts view + AJAX table fragment. Rendered inside layout.php. */ ?>
-<script>window.USERS_CHARTS = <?= json_encode($charts) ?>;</script>
+<script nonce="{csp-script-nonce}">window.USERS_CHARTS = <?= json_encode($charts) ?>;</script>
 
 <div class="cust-page">
 <section class="cust-hero">

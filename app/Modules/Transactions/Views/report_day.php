@@ -375,7 +375,7 @@ $viewTip = static function (array $r) use ($authors, $fmt): string {
 </div>
 <?php endif; ?>
 
-<style>
+<style nonce="{csp-style-nonce}">
     .rp-firm { display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem; font-weight:700; font-size:1.05rem; }
     .rp-firm .bi { color: var(--bs-primary, #0d6efd); }
     .rp-firm-meta { font-weight:500; font-size:.8rem; color: var(--bs-secondary-color, #6c757d); background: var(--bs-secondary-bg, #eef0f3); padding:.1rem .5rem; border-radius:999px; }
@@ -462,7 +462,7 @@ $viewTip = static function (array $r) use ($authors, $fmt): string {
     .rp-chip-btn:hover { color: var(--bs-primary, #0d6efd); border-color: var(--bs-primary, #0d6efd); }
     .rp-chip-btn.active { color: #fff; background: var(--bs-primary, #0d6efd); border-style: solid; border-color: var(--bs-primary, #0d6efd); }
 </style>
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var TOKEN_NAME = '<?= csrf_token() ?>';
     var URL = '<?= site_url('transactions/quick-store') ?>';

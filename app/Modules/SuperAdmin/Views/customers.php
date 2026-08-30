@@ -182,7 +182,7 @@ $perOpts = [25, 35, 50, 100];
     </div>
 </div>
 
-<style>
+<style nonce="{csp-style-nonce}">
 /* ---- Customers listing — page-specific rules (shared cust-* components live
    in assets/css/erp-list.css, loaded globally from layout.php) -------------- */
 .cust-name{display:flex;align-items:center;gap:10px}
@@ -250,7 +250,7 @@ $perOpts = [25, 35, 50, 100];
 .cust-sub-status{color:var(--c-muted);font-size:11px;font-weight:700;text-transform:capitalize}
 </style>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var modal = document.getElementById('setPwdModal');
     if (!modal) return;
@@ -277,7 +277,7 @@ $perOpts = [25, 35, 50, 100];
 })();
 </script>
 
-<script>
+<script nonce="{csp-script-nonce}">
 /* Permanent-delete modal: populate from the clicked row + require typing the
    exact account name before the Delete button enables. */
 (function () {
@@ -313,7 +313,7 @@ $perOpts = [25, 35, 50, 100];
 })();
 </script>
 
-<script>
+<script nonce="{csp-script-nonce}">
 /* Live customers table — search / page-size / sort / pagination via AJAX.
    Only #custTableHost is swapped; the whole page never reloads. */
 (function () {
@@ -397,7 +397,7 @@ $perOpts = [25, 35, 50, 100];
 <!-- Rich customer hover card (mouse over a name) — data comes from each name
      cell's data-tip JSON; delegated so it keeps working after AJAX table swaps. -->
 <div id="custTip" aria-hidden="true"></div>
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var tip = document.getElementById('custTip');
     if (!tip) { return; }

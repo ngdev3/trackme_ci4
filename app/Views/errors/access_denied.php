@@ -17,7 +17,7 @@ $dashboardLoops  = $deniedModule === 'dashboard'; // the "Back to Dashboard" but
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Access Denied &middot; <?= esc($appName) ?></title>
-    <script>
+    <script nonce="{csp-script-nonce}">
         (function () {
             var mode = <?= json_encode($themeMode) ?>;
             document.documentElement.setAttribute('data-bs-theme', mode === 'system' && window.matchMedia

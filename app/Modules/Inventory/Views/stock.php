@@ -82,7 +82,7 @@ $navTabs = [
     </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var sel = document.getElementById('stProduct');
     var hint = document.getElementById('stStock');

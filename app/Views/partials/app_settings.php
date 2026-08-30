@@ -39,7 +39,7 @@ try {
     log_message('error', 'Unable to ensure VAPID keys: ' . $e->getMessage());
 }
 ?>
-<script>
+<script nonce="{csp-script-nonce}">
     window.ERP_APPEARANCE = {
         theme_mode: <?= json_encode($themeMode) ?>,
         font_color: <?= json_encode($font) ?>,
@@ -65,7 +65,7 @@ try {
         }
     };
 </script>
-<style id="erp-app-settings">
+<style nonce="{csp-style-nonce}" id="erp-app-settings">
     :root {
         --bs-primary: <?= $primary ?>;
         --bs-primary-rgb: <?= $hexToRgb($primary) ?>;

@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Load Test Console — HissabKitaab</title>
-<style>
+<style nonce="{csp-style-nonce}">
   :root{--bg:#0b1220;--panel:#131c2e;--line:#233248;--txt:#e8eefc;--dim:#8aa0c6;--cyan:#22d3ee;--grn:#34d399;--yel:#fbbf24;--red:#f87171;--mag:#a78bfa;--acc:#3b82f6}
   *{box-sizing:border-box}
   body{margin:0;background:radial-gradient(circle at 10% -10%,rgba(59,130,246,.15),transparent 40%),var(--bg);color:var(--txt);font:14px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -124,7 +124,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const rand=(a,b)=>a+Math.random()*(b-a);

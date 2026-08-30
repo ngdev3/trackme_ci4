@@ -337,7 +337,7 @@ foreach ($plans as $p) {
     </section>
 </div>
 
-<style>
+<style nonce="{csp-style-nonce}">
 .sub-wrap { max-width: 1180px; margin: 0 auto; }
 .sub-hero {
     display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: 18px; align-items: stretch;
@@ -506,7 +506,7 @@ foreach ($plans as $p) {
 <?php if ($gatewayReady): ?>
 <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 <?php endif; ?>
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var panel = document.querySelector('[data-payment-panel]');
     if (!panel) { return; }

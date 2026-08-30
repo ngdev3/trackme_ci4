@@ -55,7 +55,7 @@ $subjectMeta = [
     </div>
 </div>
 
-<style>
+<style nonce="{csp-style-nonce}">
 .erp-chat { display: flex; flex-direction: column; gap: 14px; max-height: 60vh; overflow-y: auto; background: #f7fafc; }
 .erp-msg { display: flex; gap: 10px; max-width: 78%; }
 .erp-msg-in { align-self: flex-start; }
@@ -69,6 +69,6 @@ $subjectMeta = [
 .erp-msg-out .erp-msg-meta { color: #dbeafe; opacity: .9; }
 .erp-msg-text { font-size: 13.5px; line-height: 1.5; word-break: break-word; }
 </style>
-<script>
+<script nonce="{csp-script-nonce}">
 (function () { var b = document.getElementById('erpChatBody'); if (b) { b.scrollTop = b.scrollHeight; } })();
 </script>

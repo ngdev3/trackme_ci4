@@ -108,13 +108,13 @@ $fmt = fn ($n) => number_format((float) $n, 2);
     </div>
 </div>
 
-<style>
+<style nonce="{csp-style-nonce}">
     .op-row { cursor: pointer; }
     .op-row:hover td { background: var(--bs-primary-bg-subtle, rgba(13,110,253,.10)); }
     #opForm.op-flash { animation: opFlash 1.1s ease-out; }
     @keyframes opFlash { 0% { background: var(--bs-warning-bg-subtle, #fff3cd); } 100% { background: transparent; } }
 </style>
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var form = document.getElementById('opForm');
     var fy   = document.getElementById('opFy');

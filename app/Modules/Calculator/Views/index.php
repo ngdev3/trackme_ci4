@@ -106,7 +106,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var BASE = window.APP_BASE_URL || '';
     var exprEl = document.getElementById('calcExpr');

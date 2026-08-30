@@ -103,7 +103,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var meta   = document.querySelector('meta[name="csrf-token"]');
     var csrf   = { name: meta.getAttribute('data-name'), hash: meta.getAttribute('content') };

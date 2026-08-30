@@ -232,7 +232,7 @@ $ro  = ! $canEdit; // read-only flag
     </div>
 </div>
 
-<style>
+<style nonce="{csp-style-nonce}">
 .company-emblem {
     width: 72px; height: 72px; border-radius: 16px;
     display: flex; align-items: center; justify-content: center;

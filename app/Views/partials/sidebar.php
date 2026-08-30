@@ -1,5 +1,5 @@
 <?php $u = current_user(); ?>
-<style>
+<style nonce="{csp-style-nonce}">
 /* Plan-locked menu items: shown, but visually marked. Clicking one is caught by
    the 'feature' route filter and redirected to the Subscription page. */
 .erp-sidebar .nav-link.is-locked { opacity: .72; }

@@ -238,7 +238,7 @@
 </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var form = document.getElementById('planForm');
     if (!form) { return; }

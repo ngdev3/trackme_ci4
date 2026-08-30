@@ -115,7 +115,7 @@ $curCat = old('category', isset($row['category']) ? $row['category'] : '');
     </form>
 </section>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     const input = document.getElementById('pwInput');
     const notify = function (type, message) {

@@ -4,7 +4,7 @@ $users = $users ?? [];
 $typeOptions = \App\Models\NotificationModel::TYPES;
 $priorityOptions = \App\Models\NotificationModel::PRIORITIES;
 ?>
-<style>
+<style nonce="{csp-style-nonce}">
     .push-hero { border-radius: 18px; padding: 22px; color: #fff; background: linear-gradient(135deg, #17326b, #0f766e); box-shadow: 0 14px 34px rgba(15, 23, 42, .16); }
     .template-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
     .template-option { display: block; cursor: pointer; border: 1px solid #e1e8f3; border-radius: 14px; padding: 12px; background: #fff; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
@@ -144,7 +144,7 @@ $priorityOptions = \App\Models\NotificationModel::PRIORITIES;
     </div>
 </form>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var title = document.getElementById('pushTitle');
     var message = document.getElementById('pushMessage');

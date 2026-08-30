@@ -81,7 +81,7 @@
 
 
 
-<script>
+<script nonce="{csp-script-nonce}">
     // Column select-all toggles.
     document.querySelectorAll('.col-check').forEach(function (col) {
         col.addEventListener('change', function () {

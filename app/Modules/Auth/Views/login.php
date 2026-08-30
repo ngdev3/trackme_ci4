@@ -114,7 +114,7 @@
                     <a href="<?= site_url('privacy') ?>" target="_blank" rel="noopener">Privacy Policy</a>
                 </div>
 
-                <script>
+                <script nonce="{csp-script-nonce}">
                 (function () {
                     var views = { signin: document.getElementById('view-signin'), signup: document.getElementById('view-signup') };
                     document.querySelectorAll('[data-auth-toggle]').forEach(function (el) {

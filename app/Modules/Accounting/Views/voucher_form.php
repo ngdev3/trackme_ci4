@@ -72,7 +72,7 @@ foreach ($ledgers as $id => $name) {
     </tr>
 </template>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var body = document.getElementById('lineBody');
     var tpl  = document.getElementById('lineTpl');

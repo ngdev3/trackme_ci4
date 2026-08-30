@@ -274,10 +274,14 @@ class ContentSecurityPolicy extends BaseConfig
     public string $scriptNonceTag = '{csp-script-nonce}';
 
     /**
-     * Replace nonce tag automatically? Off for the report-only rollout: the policy
-     * above allows 'unsafe-inline', so no per-request nonce rewriting of the HTML
-     * body is needed yet. Turn this back on when moving to a nonce-based enforced
-     * policy (and drop 'unsafe-inline' from script/style at the same time).
+     * Replace nonce tag automatically. ON: CI4 swaps every `{csp-script-nonce}` /
+     * `{csp-style-nonce}` placeholder in the response body for a per-request nonce and
+     * puts the same nonce in the script-src / style-src directives. The view layer's
+     * inline <script>/<style> blocks were tagged with those placeholders (dompdf/email
+     * templates excluded), so they are allowed by nonce — clearing the inline-script
+     * violations that 'unsafe-inline' can't (CI4 always emits a nonce, which negates
+     * 'unsafe-inline'). Inline `style="…"` attributes and any remaining un-tagged
+     * inline blocks still rely on style-src-attr 'unsafe-inline'.
      */
-    public bool $autoNonce = false;
+    public bool $autoNonce = true;
 }

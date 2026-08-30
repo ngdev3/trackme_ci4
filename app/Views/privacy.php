@@ -27,7 +27,7 @@ $dataCards = [
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="index, follow">
 <title>Privacy Policy - <?= esc($appName) ?></title>
-<style>
+<style nonce="{csp-style-nonce}">
     :root {
         color-scheme: light;
         --ink: #152033;

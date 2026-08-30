@@ -300,7 +300,7 @@ $notificationIconMap = [
 </nav>
 
 <!-- Top-bar quick search (client-side over the user's accessible destinations) -->
-<style>
+<style nonce="{csp-style-nonce}">
     .erp-role-badge {
         background: var(--bs-primary-bg-subtle, #e7f1ff);
         color: var(--bs-primary-text-emphasis, #0a58ca);
@@ -322,7 +322,7 @@ $notificationIconMap = [
     .nav-search-item.active, .nav-search-item:hover { background: var(--bs-primary-bg-subtle, #e7f1ff); }
     .nav-search-empty { padding: .75rem .6rem; color: var(--bs-secondary-color, #6c757d); font-size: .9rem; text-align: center; }
 </style>
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var INDEX = <?= json_encode(array_values($navSearch ?? []), JSON_UNESCAPED_SLASHES) ?>;
     var input = document.getElementById('navSearchInput');

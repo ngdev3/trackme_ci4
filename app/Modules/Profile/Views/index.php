@@ -223,7 +223,7 @@
         </form>
     </div>
 </div>
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var input = document.getElementById('deleteAccountConfirm');
     var btn = document.getElementById('deleteAccountSubmit');

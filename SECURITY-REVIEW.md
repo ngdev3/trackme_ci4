@@ -171,10 +171,21 @@ still validates.
 > remaining inline handlers are in CI4's built-in debug error page
 > (`app/Views/errors/html/error_exception.php`), which renders only in `development`.
 >
-> Remaining app-wide steps before enforcing: set `$autoNonce = true` so inline
-> `<script>` elements get nonced, keep `'unsafe-inline'` on `style-src-attr` (inline
-> `style="…"` attributes are low-risk and pervasive), and resolve the Google Translate
-> widget (it injects inline scripts dynamically that a nonce can't reach).
+> **Update — the app side is now DONE.** All inline `on*` handlers were removed
+> (above), then every inline `<script>` / `<style>` block in the view layer was tagged
+> with CI4's `{csp-script-nonce}` / `{csp-style-nonce}` placeholders (dompdf and e-mail
+> templates excluded, since CI4 never processes those bodies), and `$autoNonce = true`
+> was set so CI4 swaps in a per-request nonce and mirrors it into the directives.
+> **Verified live:** every server-rendered inline script/style now carries the response
+> nonce (0 un-nonced, 0 leftover placeholders) and pages render normally, so the app's
+> own templates no longer violate the policy.
+>
+> **The only remaining blocker for enforcement (`reportOnly = false`) is the third-party
+> Google Translate widget**, which injects its own inline `<script>`/`<style>` at runtime
+> that a server-side nonce can't reach — those still report violations. To enforce:
+> replace/remove the Google Translate widget (the app already has its own language
+> selector), or accept `'unsafe-inline'` for scripts (which defeats most of the value).
+> Inline `style="…"` ATTRIBUTES keep `style-src-attr 'unsafe-inline'` (low-risk, pervasive).
 
 **Impact (when unmitigated):** No second line of defense if an XSS sink (e.g. F-1) is
 ever introduced.

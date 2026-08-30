@@ -7,7 +7,7 @@ $suggests    = $nameSuggestions ?? [];
 $personalSug = array_slice($suggests, 0, 10);   // "{First name} …"
 $popularSug  = array_slice($suggests, 10);       // common shop/firm names
 ?>
-<style>
+<style nonce="{csp-style-nonce}">
 /* ============ Create Company — redesigned ============ */
 .cc-wrap{ --cc-brand:#0f766e; --cc-brand-2:#2563eb; --cc-ink:#152033; --cc-muted:#64748b;
           --cc-line:#e6edf6; --cc-soft:#f6f9fc; }
@@ -146,7 +146,7 @@ $popularSug  = array_slice($suggests, 10);       // common shop/firm names
                                     </div>
                                 <?php endif; ?>
                             </div>
-                            <script>
+                            <script nonce="{csp-script-nonce}">
                             (function () {
                                 var input = document.getElementById('cc-name');
                                 var chips = document.querySelectorAll('.name-suggest-chip');

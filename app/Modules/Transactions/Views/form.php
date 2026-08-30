@@ -241,7 +241,7 @@ $curStatusLabel = isset($statusMeta[$curStat][0]) ? $statusMeta[$curStat][0] : u
     </div>
 </form>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var form = document.querySelector('.tx-entry');
     if (!form) return;

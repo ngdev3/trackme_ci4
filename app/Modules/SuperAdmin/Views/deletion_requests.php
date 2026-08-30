@@ -145,7 +145,7 @@ $statusMap = [
     </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var appApprove = '<?= site_url('admin/deletion-requests/approve') ?>';
     var appReject  = '<?= site_url('admin/deletion-requests/reject') ?>';

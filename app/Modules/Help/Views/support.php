@@ -49,7 +49,7 @@ $open     = $open ?? true;
     </div>
 </div>
 
-<style>
+<style nonce="{csp-style-nonce}">
 .erp-chat { display: flex; flex-direction: column; gap: 12px; min-height: 240px; max-height: 60vh; overflow-y: auto; background: #f7fafc; }
 .erp-chat-empty { margin: auto; text-align: center; color: #94a3b8; max-width: 320px; }
 .erp-chat-empty .bi { font-size: 34px; display: block; margin-bottom: 8px; opacity: .6; }
@@ -65,4 +65,4 @@ $open     = $open ?? true;
 .erp-msg-out .erp-msg-meta { color: #dbeafe; opacity: .9; }
 .erp-msg-text { font-size: 13.5px; line-height: 1.5; word-break: break-word; }
 </style>
-<script>(function () { var b = document.getElementById('erpChatBody'); if (b) { b.scrollTop = b.scrollHeight; } })();</script>
+<script nonce="{csp-script-nonce}">(function () { var b = document.getElementById('erpChatBody'); if (b) { b.scrollTop = b.scrollHeight; } })();</script>

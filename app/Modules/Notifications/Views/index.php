@@ -188,7 +188,7 @@ $statusBadge = static function (array $r): string {
 </section>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 document.addEventListener('change', function (e) {
     if (!e.target.matches('[data-check-all-notifications]')) return;
     document.querySelectorAll('#notificationBulkForm input[name="ids[]"]').forEach(function (box) {
@@ -205,7 +205,7 @@ document.querySelectorAll('.ntf-group .collapse').forEach(function (el) {
 });
 </script>
 
-<style>
+<style nonce="{csp-style-nonce}">
 .ntf-group-toggle { cursor: pointer; }
 .ntf-group-toggle .ntf-chevron { transition: transform .2s ease; }
 .ntf-group-toggle.is-open .ntf-chevron { transform: rotate(180deg); }

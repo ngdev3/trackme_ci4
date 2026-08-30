@@ -9,7 +9,7 @@ $appName = $appName ?? 'ERP';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $ok ? 'Account activated' : 'Activation failed' ?> — <?= esc($appName) ?></title>
-    <style>
+    <style nonce="{csp-style-nonce}">
         :root { color-scheme: light dark; }
         * { box-sizing: border-box; }
         body {

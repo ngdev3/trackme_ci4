@@ -217,7 +217,7 @@ class LogController extends BaseController
     {
         $columns = $this->exportColumns();
         $html = '<!doctype html><html><head><meta charset="utf-8"><title>Login History</title>';
-        $html .= '<style>body{font-family:Arial,sans-serif;font-size:12px;color:#111}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#f1f5f9}.danger{background:#fee2e2}@media print{button{display:none}}</style>';
+        $html .= '<style nonce="{csp-style-nonce}">body{font-family:Arial,sans-serif;font-size:12px;color:#111}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#f1f5f9}.danger{background:#fee2e2}@media print{button{display:none}}</style>';
         $html .= '</head><body><button type="button" data-window="print">Print / Save as PDF</button><h2>Login History</h2><table><thead><tr>';
         foreach ($columns as $label) {
             $html .= '<th>' . esc($label) . '</th>';
@@ -233,7 +233,7 @@ class LogController extends BaseController
         // CSP-clean: standalone page (no app.js) — wire the Print button without
         // an inline on* attribute.
         $html .= '</tbody></table>'
-            . '<script>document.querySelector(\'[data-window="print"]\').addEventListener(\'click\',function(){window.print();});</script>'
+            . '<script nonce="{csp-script-nonce}">document.querySelector(\'[data-window="print"]\').addEventListener(\'click\',function(){window.print();});</script>'
             . '</body></html>';
 
         return $this->response

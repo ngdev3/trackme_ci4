@@ -142,7 +142,7 @@ $hue  = static fn (string $s): int => (int) (crc32($s) % 360);
   </div>
 </div>
 
-<style>
+<style nonce="{csp-style-nonce}">
 .uq-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
 .uq-card { position:relative; background:#fff; border:1px solid #eef2f7; border-radius:16px; padding:14px 14px 12px 18px; overflow:hidden; box-shadow:0 8px 22px -18px rgba(15,23,42,.5); }
 .uq-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:5px; background:linear-gradient(hsl(var(--h) 78% 58%),hsl(var(--h) 78% 46%)); }
@@ -174,7 +174,7 @@ $hue  = static fn (string $s): int => (int) (crc32($s) % 360);
 </style>
 
 <script src="<?= base_url('assets/vendor/qrcode/qrcode.min.js') ?>"></script>
-<script>
+<script nonce="{csp-script-nonce}">
 // Run AFTER the layout's vendor JS (bootstrap loads near </body>, i.e. after this
 // view's content) — otherwise `bootstrap` is undefined here and every handler
 // below (Add payee, Show QR) fails to bind.

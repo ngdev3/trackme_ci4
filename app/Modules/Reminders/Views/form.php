@@ -85,7 +85,7 @@ if (! empty($row['remind_at'])) {
     </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var sel  = document.getElementById('repeatType');
     var wrap = document.getElementById('customIntervalWrap');

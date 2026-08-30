@@ -13,7 +13,7 @@ $periods = [
 ];
 $net = (float) ($txn['net'] ?? 0);
 ?>
-<script>
+<script nonce="{csp-script-nonce}">
 window.FIRM_CHARTS = <?= json_encode($charts) ?>;
 window.DL_LIVE = <?= json_encode([
     'url'    => $liveUrl ?? site_url('dashboard/live'),

@@ -96,7 +96,7 @@ $catalogue = array_map(static fn ($p) => [
     </div>
 </form>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var CATALOGUE = <?= json_encode($catalogue, JSON_UNESCAPED_UNICODE) ?>;
     var IS_SALE = <?= $isSale ? 'true' : 'false' ?>;

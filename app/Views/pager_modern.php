@@ -33,7 +33,7 @@ $winLast    = end($windowNums) ?: $lastPage;
 static $cssDone = false;
 ?>
 <?php if (! $cssDone) { $cssDone = true; ?>
-<style>
+<style nonce="{csp-style-nonce}">
 .erp-pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.75rem 1rem;width:100%}
 .erp-pager__info{font-size:.82rem;color:var(--bs-secondary-color,#6b7280)}
 .erp-pager__info b{color:var(--bs-body-color,#111827);font-weight:600}

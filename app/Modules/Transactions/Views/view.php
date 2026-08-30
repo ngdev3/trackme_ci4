@@ -125,7 +125,7 @@ $human = function ($b) { $b = (int) $b; if ($b < 1024) return $b . ' B'; if ($b 
     </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 // "Replace": the label wraps a hidden form; clicking the label opens its file picker.
 document.querySelectorAll('.tx-replace-form').forEach(function (form) {
     var label = form.closest('label');

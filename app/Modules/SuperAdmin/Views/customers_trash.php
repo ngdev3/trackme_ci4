@@ -95,7 +95,7 @@ $ago  = static function ($ts): string {
         </form>
     </div>
 </div>
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var modal = document.getElementById('purgeModal');
     if (!modal) return;

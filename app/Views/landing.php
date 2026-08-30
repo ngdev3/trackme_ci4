@@ -44,7 +44,7 @@ $waUrl     = 'https://wa.me/' . $supportWa . '?text=' . rawurlencode('Hi, I woul
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
+<style nonce="{csp-style-nonce}">
 :root{
   --ink:#0b1220; --ink2:#1e293b; --muted:#64748b; --line:#e6ebf3;
   --brand:#2563eb; --teal:#0f766e; --violet:#7c3aed; --accent:#f59e0b;
@@ -383,7 +383,7 @@ textarea.control{resize:vertical;min-height:118px}
          class="showcase-img reveal" loading="lazy" decoding="async">
   </div>
 </section>
-<style>
+<style nonce="{csp-style-nonce}">
 .showcase{ padding:6px 0 46px; }
 .showcase .container{ max-width:1200px; }
 .showcase-img{ display:block; width:100%; height:auto; border-radius:22px; background:#fff;
@@ -436,7 +436,7 @@ textarea.control{resize:vertical;min-height:118px}
     </div>
   </div>
 </section>
-<style>
+<style nonce="{csp-style-nonce}">
 .adv{ padding-top:48px; }
 .adv-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:24px; align-items:stretch; }
 .adv-card{ position:relative; background:#fff; border:1px solid var(--line,#e4ebf5); border-radius:20px;
@@ -530,7 +530,7 @@ textarea.control{resize:vertical;min-height:118px}
     </div>
   </div>
 </section>
-<style>
+<style nonce="{csp-style-nonce}">
 .shots{ display:grid; grid-template-columns:repeat(2,1fr); gap:28px; }
 .shot{ margin:0; }
 .shot-frame{ border-radius:16px; overflow:hidden; background:#fff;
@@ -577,7 +577,7 @@ textarea.control{resize:vertical;min-height:118px}
     </div>
   </div>
 </section>
-<style>
+<style nonce="{csp-style-nonce}">
 .appshow{ position:relative; overflow:hidden;
   background:linear-gradient(135deg,#041B4D 0%,#0B2F73 55%,#08A64A 140%); }
 .appshow .ablob{ position:absolute; border-radius:50%; filter:blur(80px); opacity:.5; }
@@ -941,7 +941,7 @@ textarea.control{resize:vertical;min-height:118px}
 
 <a href="<?= esc($waUrl) ?>" target="_blank" rel="noopener" class="wa-fab" aria-label="Chat on WhatsApp"><i class="bi bi-whatsapp"></i></a>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function(){
   // sticky nav shadow
   var nav=document.getElementById('nav');

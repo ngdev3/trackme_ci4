@@ -65,7 +65,7 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
             <button type="submit"><i class="bi bi-arrow-repeat"></i> Resend link</button>
         </form>
     </div>
-    <style>
+    <style nonce="{csp-style-nonce}">
     .verify-bar{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:9px 16px;background:linear-gradient(90deg,#fff4e0,#ffe9c7);color:#8a5a00;font-size:13.5px;font-weight:600;border-bottom:1px solid #f6dcae}
     .verify-bar .bi{font-size:16px}
     .verify-bar form{margin:0}
@@ -147,7 +147,7 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
 <!-- In-app language translator (whole-UI) — India-first, aligned with the mobile
      app's languages (see erp_languages() + i18n.js). -->
 <div id="google_translate_element" aria-hidden="true"></div>
-<script>
+<script nonce="{csp-script-nonce}">
     function googleTranslateElementInit() {
         new google.translate.TranslateElement({
             pageLanguage: 'en',
@@ -158,7 +158,7 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
 </script>
 <!-- Load the Google Translate widget lazily (after first paint) so its external
      round-trips never block the page. It applies the saved language once ready. -->
-<script>
+<script nonce="{csp-script-nonce}">
   (function () {
     function loadGT() {
       var s = document.createElement('script');
@@ -181,7 +181,7 @@ foreach (['success', 'error', 'warning', 'info'] as $flashType) {
 <script src="<?= erp_asset('assets/js/theme.js') ?>"></script>
 <script src="<?= erp_asset('assets/js/notify.js') ?>"></script>
 <script src="<?= erp_asset('assets/js/webpush.js') ?>"></script>
-<script>
+<script nonce="{csp-script-nonce}">
 window.ERP_BASE = '<?= rtrim(site_url(), '/') ?>/';
 // Refresh a form's CSRF token from the server, then submit — so long-open or
 // stale pages (e.g. auto-submitting camera/audio capture inputs) never 403.
@@ -205,7 +205,7 @@ window.erpFreshSubmit = function (form) {
 
 <!-- Surface server flash messages as bottom-right toasts -->
 <?php if (! empty($flashToasts)): ?>
-    <script>
+    <script nonce="{csp-script-nonce}">
         (function () {
             var messages = <?= json_encode($flashToasts) ?>;
             var show = function () {
@@ -230,7 +230,7 @@ window.erpFreshSubmit = function (form) {
     <script src="<?= erp_asset($src) ?>"></script>
 <?php endforeach; ?>
 <?php if (! empty($inline_js)): ?>
-    <script><?= $inline_js ?></script>
+    <script nonce="{csp-script-nonce}"><?= $inline_js ?></script>
 <?php endif; ?>
 </body>
 </html>

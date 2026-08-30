@@ -145,7 +145,7 @@
     </div>
 </form>
 
-<script>
+<script nonce="{csp-script-nonce}">
     // Column select-all toggles for the per-user module matrix.
     document.querySelectorAll('.col-check').forEach(function (col) {
         col.addEventListener('change', function () {

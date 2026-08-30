@@ -192,7 +192,7 @@ $roleMeta   = ['customer' => ['Customer', 'green'], 'supplier' => ['Supplier', '
     </div>
 </div>
 
-<style>
+<style nonce="{csp-style-nonce}">
 .party-edit { border: 0; border-radius: 20px; overflow: hidden; box-shadow: 0 30px 80px rgba(15,30,60,.32); }
 #partyEditModal .modal-dialog { max-width: 560px; }
 /* Hero */
@@ -259,7 +259,7 @@ textarea.pe-input { resize: vertical; min-height: 62px; padding-top: 20px; }
 .pe-btn-save:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(23,105,194,.4); filter: brightness(1.05); }
 @media (max-width: 480px) { .pe-rolepick { grid-template-columns: 1fr 1fr; } .pe-openrow { grid-template-columns: 1fr; } .pe-grid .pe-col2 { grid-column: auto; } .pe-grid { grid-template-columns: 1fr; } }
 </style>
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var modal = document.getElementById('partyEditModal');
     if (!modal) return;

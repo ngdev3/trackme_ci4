@@ -9,7 +9,7 @@
  * is never revealed in untranslated English first.
  */
 ?>
-<script>
+<script nonce="{csp-script-nonce}">
     (function () {
         var m = document.cookie.match(/googtrans=\/[^/]*\/([^;]+)/);
         var lang = m ? decodeURIComponent(m[1]) : 'en';

@@ -203,7 +203,7 @@ $money = static fn ($n) => '₹' . number_format((float) $n, 2);
 </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var form = document.querySelector('[data-coupon-form]');
     if (!form) { return; }

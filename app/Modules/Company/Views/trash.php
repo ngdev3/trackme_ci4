@@ -78,7 +78,7 @@ $dmy = fn ($d) => $d ? date('d-m-Y H:i', strtotime($d)) : '—';
     </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 // Permanent company delete requires typing the exact firm name — a final,
 // deliberate confirmation for an irreversible action. The server re-checks it too.
 document.addEventListener('click', function (ev) {

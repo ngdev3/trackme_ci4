@@ -139,7 +139,7 @@ $healthMeta = [
 </div>
 </div>
 
-<style>
+<style nonce="{csp-style-nonce}">
 .apim-stat{background:#fff;border:1px solid var(--bs-border-color,#e5e7eb);border-radius:14px;padding:14px 16px;height:100%;box-shadow:0 1px 2px rgba(0,0,0,.03)}
 .apim-stat-num{font-size:1.6rem;font-weight:700;line-height:1}
 .apim-stat-lbl{font-size:.78rem;color:#6b7280;margin-top:4px}
@@ -165,7 +165,7 @@ $healthMeta = [
 .apim-health .spinner-border{width:.8rem;height:.8rem}
 </style>
 
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     var BASE = window.APP_BASE_URL || '';
     var meta = document.querySelector('meta[name="csrf-token"]');

@@ -192,12 +192,12 @@ $stmtQs = array_filter(['party' => $party, 'from' => $from, 'to' => $to]);
 
 <?= view('Modules\Transactions\Views\_modals') ?>
 
-<style>
+<style nonce="{csp-style-nonce}">
     .tx-row-view { cursor: pointer; }
     .tx-row-link { cursor: pointer; }
     .tx-row-link:hover { background: var(--bs-primary-bg-subtle, rgba(13,110,253,.08)); }
 </style>
-<script>
+<script nonce="{csp-script-nonce}">
 (function () {
     // Whole account row opens its statement; the name link and chevron still work on their own.
     document.querySelectorAll('.tx-row-link').forEach(function (row) {

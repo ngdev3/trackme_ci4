@@ -205,5 +205,5 @@ $typeBadge = fn ($t) => $t === 'jama'
     </div>
 
     <?= view('Modules\Transactions\Views\_modals') ?>
-    <style>.tx-row-view { cursor: pointer; }</style>
+    <style nonce="{csp-style-nonce}">.tx-row-view { cursor: pointer; }</style>
 <?php endif; ?>

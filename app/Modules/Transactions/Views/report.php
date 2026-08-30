@@ -21,7 +21,7 @@ $typeBadge = static fn (string $t): string => $t === 'naam'
     : '<span class="tx-type tx-income"><i class="bi bi-arrow-up-right"></i> Jama</span>';
 ?>
 
-<style>
+<style nonce="{csp-style-nonce}">
 /* Wide 15-column cash-book table: pin the row-number (#) column on the left and
    the running Balance column on the right so they never scroll away or clip.
    Opaque backgrounds (covering thead / tbody / tfoot + highlighted rows) keep
@@ -189,7 +189,7 @@ $typeBadge = static fn (string $t): string => $t === 'naam'
     </div>
 </div>
 
-<script>
+<script nonce="{csp-script-nonce}">
 function txPeriod(v) {
     document.querySelectorAll('.tx-pf').forEach(function (el) { el.hidden = true; });
     document.querySelectorAll('.tx-pf-' + v).forEach(function (el) { el.hidden = false; });
