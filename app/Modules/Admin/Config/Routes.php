@@ -21,6 +21,7 @@ use App\Modules\Admin\Controllers\App_setting;
 use App\Modules\Admin\Controllers\Entry_trace;
 use App\Modules\Admin\Controllers\Web_push;
 use App\Modules\Admin\Controllers\Item_master;
+use App\Modules\Admin\Controllers\Account_name;
 
 $routes->get('admin/dashboard', [Dashboard::class, 'index']);
 
@@ -101,3 +102,12 @@ $routes->match(['get', 'post'], 'admin/item_master/add', [Item_master::class, 'a
 $routes->match(['get', 'post'], 'admin/item_master/edit/(:segment)', [Item_master::class, 'edit']);
 $routes->post('admin/item_master/delete', [Item_master::class, 'delete']);
 $routes->post('admin/item_master/updateStatus', [Item_master::class, 'updateStatus']);
+
+// Account Master (account_name) — listing slice (P6 master)
+$routes->get('admin/account_name/listing', [Account_name::class, 'listing']);
+$routes->get('admin/account_name', [Account_name::class, 'listing']);
+$routes->post('admin/account_name/view_all', [Account_name::class, 'view_all']);
+$routes->post('admin/account_name/updateStatus', [Account_name::class, 'updateStatus']);
+$routes->post('admin/account_name/soft_delete', [Account_name::class, 'soft_delete']);
+$routes->post('admin/account_name/restore', [Account_name::class, 'restore']);
+$routes->post('admin/account_name/quick_update', [Account_name::class, 'quick_update']);

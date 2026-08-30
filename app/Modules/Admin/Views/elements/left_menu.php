@@ -23,7 +23,7 @@ $u = fn($p) => base_url('admin/' . $p);
  * Controllers already ported to CI4 → show a "NEW" badge so it's obvious which
  * modules are live in the new project. Add keys here as more controllers land.
  */
-$ready = ['dashboard', 'notification', 'users', 'role_permissions', 'user_permissions', 'invoice', 'seo', 'hsn', 'profile', 'help', 'attachments', 'app_setting', 'entry_trace', 'menu_order', 'item_master', 'web_push'];
+$ready = ['dashboard', 'notification', 'users', 'role_permissions', 'user_permissions', 'invoice', 'seo', 'hsn', 'profile', 'help', 'attachments', 'app_setting', 'entry_trace', 'menu_order', 'item_master', 'web_push', 'account_name'];
 $ctrlOf = fn($uri) => strtolower(explode('/', $uri)[0]);
 $isNew  = fn($ctrl) => in_array(strtolower($ctrl), $ready, true);
 $NEW    = '<span class="menu-new">NEW</span>';
