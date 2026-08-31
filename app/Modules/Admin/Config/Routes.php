@@ -97,6 +97,8 @@ $routes->post('admin/delivery_challan/view_all', [DeliveryChallan::class, 'viewA
 $routes->get('admin/bank_password/listing', [BankPassword::class, 'listing']);
 $routes->get('admin/bank_password', [BankPassword::class, 'listing']);
 $routes->post('admin/bank_password/view_all', [BankPassword::class, 'viewAll']);
+$routes->match(['GET', 'POST'], 'admin/bank_password/add', [BankPassword::class, 'add']);
+$routes->get('admin/bank_password/history', [BankPassword::class, 'history']);
 
 // Stock, Lot System, Paddy, Kisan Reg, Kisan Vahi — listing slices
 $routes->get('admin/stock/listing', [Stock::class, 'listing']);
@@ -322,6 +324,7 @@ $routes->get('admin/device', [Device::class, 'listing']);
 $routes->post('admin/device/view_all', [Device::class, 'view_all']);
 $routes->post('admin/device/update_status', [Device::class, 'update_status']);
 $routes->post('admin/device/delete', [Device::class, 'delete']);
+$routes->match(['GET', 'POST'], 'admin/device/send_push', [Device::class, 'send_push']);
 
 // Documents Renewal (full flow)
 $routes->get('admin/document/listing', [Document::class, 'listing']);
