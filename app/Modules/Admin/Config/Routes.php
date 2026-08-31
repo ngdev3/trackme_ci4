@@ -22,6 +22,8 @@ use App\Modules\Admin\Controllers\Entry_trace;
 use App\Modules\Admin\Controllers\Web_push;
 use App\Modules\Admin\Controllers\Item_master;
 use App\Modules\Admin\Controllers\Account_name;
+use App\Modules\Admin\Controllers\Gst_setting;
+use App\Modules\Admin\Controllers\Ricemill_inquiry;
 
 $routes->get('admin/dashboard', [Dashboard::class, 'index']);
 
@@ -111,3 +113,14 @@ $routes->post('admin/account_name/updateStatus', [Account_name::class, 'updateSt
 $routes->post('admin/account_name/soft_delete', [Account_name::class, 'soft_delete']);
 $routes->post('admin/account_name/restore', [Account_name::class, 'restore']);
 $routes->post('admin/account_name/quick_update', [Account_name::class, 'quick_update']);
+
+// GST default-rate settings (super-admin)
+$routes->match(['get', 'post'], 'admin/gst_setting', [Gst_setting::class, 'index']);
+
+// Rice Mill Website Inquiries
+$routes->get('admin/ricemill_inquiry/listing', [Ricemill_inquiry::class, 'listing']);
+$routes->get('admin/ricemill_inquiry', [Ricemill_inquiry::class, 'listing']);
+$routes->post('admin/ricemill_inquiry/view_all', [Ricemill_inquiry::class, 'view_all']);
+$routes->post('admin/ricemill_inquiry/update_status', [Ricemill_inquiry::class, 'update_status']);
+$routes->post('admin/ricemill_inquiry/add_remark', [Ricemill_inquiry::class, 'add_remark']);
+$routes->post('admin/ricemill_inquiry/delete', [Ricemill_inquiry::class, 'delete']);
