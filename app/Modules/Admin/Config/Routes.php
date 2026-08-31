@@ -27,6 +27,7 @@ use App\Modules\Admin\Controllers\Ricemill_inquiry;
 use App\Modules\Admin\Controllers\Billing_register;
 use App\Modules\Admin\Controllers\Traffic;
 use App\Modules\Admin\Controllers\Device;
+use App\Modules\Admin\Controllers\Document;
 
 $routes->get('admin/dashboard', [Dashboard::class, 'index']);
 
@@ -145,3 +146,12 @@ $routes->get('admin/device', [Device::class, 'listing']);
 $routes->post('admin/device/view_all', [Device::class, 'view_all']);
 $routes->post('admin/device/update_status', [Device::class, 'update_status']);
 $routes->post('admin/device/delete', [Device::class, 'delete']);
+
+// Documents Renewal (full flow)
+$routes->get('admin/document/listing', [Document::class, 'listing']);
+$routes->get('admin/document', [Document::class, 'listing']);
+$routes->post('admin/document/view_all', [Document::class, 'view_all']);
+$routes->match(['get', 'post'], 'admin/document/add', [Document::class, 'add']);
+$routes->match(['get', 'post'], 'admin/document/edit/(:segment)', [Document::class, 'edit']);
+$routes->get('admin/document/download/(:segment)', [Document::class, 'download']);
+$routes->post('admin/document/delete', [Document::class, 'delete']);
