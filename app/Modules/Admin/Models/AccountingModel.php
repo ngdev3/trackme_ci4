@@ -115,6 +115,43 @@ class AccountingModel
     }
 
     /**
+     * Ledger-group options for the Account Master group-override dropdown.
+     * Returns indented ($g->label) group rows for the firm, or [] when the
+     * accounting schema isn't applied. CI3 Accounting_mod::group_options() —
+     * without the ensure_chart() auto-create side effect (read-only here).
+     *
+     * @return object[]
+     */
+    public function group_options($template_id): array
+    {
+        if (! $this->schema_ready()) {
+            return [];
+        }
+        $db   = $this->db();
+        $rows = $db->table('aa_accounting_group')
+            ->select('id, parent_id, name, code, nature, classification')
+            ->where('template_id', (int) $template_id)
+            ->where('status !=', 'Delete')
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('name', 'asc')
+            ->get()->getResult();
+
+        $byParent = [];
+        foreach ($rows as $r) { $byParent[(int) $r->parent_id][] = $r; }
+        $out  = [];
+        $walk = function ($parent_id, $level) use (&$walk, &$byParent, &$out) {
+            if (empty($byParent[$parent_id])) { return; }
+            foreach ($byParent[$parent_id] as $node) {
+                $node->label = str_repeat('— ', $level) . $node->name;
+                $out[] = $node;
+                $walk((int) $node->id, $level + 1);
+            }
+        };
+        $walk(0, 0);
+        return $out;
+    }
+
+    /**
      * Every ledger's live net balance for the firm/FY, enriched with its
      * accounting-group nature/classification. The atomic dataset behind the
      * Trial Balance, Outstanding/Debtor/Creditor, Ageing, Balance Sheet and P&L.

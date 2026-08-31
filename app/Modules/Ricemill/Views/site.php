@@ -3,9 +3,7 @@ helper('url');
 $base    = base_url();
 $success = session()->getFlashdata('success');
 $error   = session()->getFlashdata('error');
-if (!function_exists('rm_old')) {
-    function rm_old($k) { return htmlspecialchars((string) service('request')->getPost($k), ENT_QUOTES); }
-}
+function rm_old($k) { return htmlspecialchars((string) service('request')->getPost($k), ENT_QUOTES); }
 
 /* ---- Real mill profile pulled from DB (firm_name), with safe fallbacks ---- */
 $m = isset($mill) ? $mill : null;
@@ -366,12 +364,20 @@ $heroPos  = $base . 'assets/ricemill/hero-poster.jpg';
                 <div style="align-items:center;background:linear-gradient(135deg,#1f9d55,#12823f);border-radius:20px;color:#fff;display:flex;font-size:40px;height:84px;justify-content:center;width:84px"><span style="font-family:sans-serif">&#129302;</span></div>
                 <div>
                     <div style="color:#8a6d2f;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">Mobile App</div>
-                    <h3 style="margin:4px 0 4px;font-size:24px"><?= esc($apk_app_name) ?></h3>
-                    <div style="color:#6b5d42;font-weight:700">Version <?= esc($apk_latest->version_name) ?></div>
+                    <h3 style="margin:4px 0 4px;font-size:24px"><?= html_escape($apk_app_name) ?></h3>
+                    <div style="color:#6b5d42;font-weight:700">Version <?= html_escape($apk_latest->version_name) ?> · <?= apk_human_size((int) $apk_latest->file_size) ?> · <?= $apk_latest->created_at ? date('d M Y', strtotime($apk_latest->created_at)) : '' ?></div>
+                    <?php if (trim((string) $apk_latest->release_notes) !== ''): ?>
+                        <div style="color:#7a6b4e;font-size:13px;font-weight:600;margin-top:8px;max-width:460px"><?= nl2br(html_escape($apk_latest->release_notes)) ?></div>
+                    <?php endif; ?>
                 </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:12px;min-width:220px">
-                <a href="<?= esc($apk_play_url) ?>" target="_blank" rel="noopener" style="align-items:center;background:#111827;border-radius:12px;color:#fff;display:flex;font-weight:800;gap:10px;justify-content:center;padding:14px 22px;text-decoration:none"><span style="font-size:16px">&#9654;</span> Get it on Google Play</a>
+                <?php if (!empty($apk_public)): ?>
+                    <a href="<?= site_url('app_download/apk/' . (int) $apk_latest->id . '?src=website') ?>" style="align-items:center;background:#1f9d55;border-radius:12px;color:#fff;display:flex;font-weight:800;gap:10px;justify-content:center;padding:14px 22px;text-decoration:none"><span style="font-size:18px">&#11015;</span> Download APK</a>
+                <?php else: ?>
+                    <a href="<?= base_url('admin/app_update/portal') ?>" style="align-items:center;background:#1f9d55;border-radius:12px;color:#fff;display:flex;font-weight:800;gap:10px;justify-content:center;padding:14px 22px;text-decoration:none"><span style="font-size:18px">&#128274;</span> Employee Login to Download</a>
+                <?php endif; ?>
+                <a href="<?= html_escape($apk_play_url) ?>" target="_blank" rel="noopener" style="align-items:center;background:#111827;border-radius:12px;color:#fff;display:flex;font-weight:800;gap:10px;justify-content:center;padding:14px 22px;text-decoration:none"><span style="font-size:16px">&#9654;</span> Get it on Google Play</a>
             </div>
         </div>
     </div>

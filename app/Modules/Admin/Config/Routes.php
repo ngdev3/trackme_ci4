@@ -276,6 +276,8 @@ $routes->post('admin/account_name/updateStatus', [Account_name::class, 'updateSt
 $routes->post('admin/account_name/soft_delete', [Account_name::class, 'soft_delete']);
 $routes->post('admin/account_name/restore', [Account_name::class, 'restore']);
 $routes->post('admin/account_name/quick_update', [Account_name::class, 'quick_update']);
+$routes->post('admin/account_name/quick_add_state', [Account_name::class, 'quick_add_state']);
+$routes->post('admin/account_name/quick_add_city', [Account_name::class, 'quick_add_city']);
 
 // Setting — firm/FY workspace switch (top-nav Change Firm modal) + settings hub
 $routes->post('admin/setting/change_fy_id', ['\App\Modules\Admin\Controllers\Setting', 'change_fy_id']);

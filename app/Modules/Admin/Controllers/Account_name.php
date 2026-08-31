@@ -91,9 +91,94 @@ class Account_name extends BaseController
             return redirect()->to(base_url('admin/account_name/listing'))->with('success', 'Account added successfully (id ' . $id . ').');
         }
 
-        return _layout('\App\Modules\Admin\Views\account_name\add', [
-            'title' => 'Track (The Rest Accounting Key) || Add Account',
-        ]);
+        $data = ['title' => 'Track (The Rest Accounting Key) || Add Account', 'result' => null];
+        $this->account_form_data($data);
+        return _layout('\App\Modules\Admin\Views\account_name\add', $data);
+    }
+
+    /**
+     * Build the full Add/Edit form dataset (account types, ledger groups, sister
+     * firms, State/City master, GST state master). CI3 account_form_data().
+     */
+    private function account_form_data(array &$data, $account_id = null): void
+    {
+        helper('app'); // gstin_state_master, acc helpers
+        $db  = \Config\Database::connect();
+        $acc = new \App\Modules\Admin\Models\AccountingModel();
+
+        $data['account_types']      = function_exists('acc_account_types') ? acc_account_types() : [];
+        $data['can_override_group'] = $this->can_override_group();
+        $data['accounting_ready']   = $acc->schema_ready();
+        $data['acc_groups']         = $data['accounting_ready'] ? $acc->group_options((int) fy()->template_id) : [];
+
+        $data['firms'] = $db->table('aa_template')
+            ->select('template_id, template_name')
+            ->where('status', 'Active')
+            ->orderBy('template_name', 'asc')
+            ->get()->getResult();
+
+        $data['states'] = $db->tableExists('am_state')
+            ? $db->table('am_state')->select('state_id, name')->where('status', 'Active')->orderBy('name', 'asc')->get()->getResult()
+            : [];
+        $data['cities'] = $db->tableExists('am_city')
+            ? $db->table('am_city')->select('city_id, name, state_id')->where('status', 'Active')->orderBy('name', 'asc')->get()->getResult()
+            : [];
+        $data['gst_states'] = function_exists('gstin_state_master') ? gstin_state_master() : [];
+
+        $data['linked_template_id'] = null;
+        if ($account_id && $data['accounting_ready'] && $db->tableExists('aa_ledger')) {
+            $led = $db->table('aa_ledger')->select('linked_template_id')
+                ->where('template_id', (int) fy()->template_id)
+                ->where('legacy_account_id', (int) $account_id)
+                ->get()->getRow();
+            if ($led) { $data['linked_template_id'] = $led->linked_template_id; }
+        }
+    }
+
+    private function can_override_group(): bool
+    {
+        return (function_exists('erp_is_super_admin') && erp_is_super_admin())
+            || (function_exists('erp_current_user_can') && erp_current_user_can('account_name', 'edit'));
+    }
+
+    /** Inline "+ New" state from the Add form (AJAX). Seeds am_state. */
+    public function quick_add_state()
+    {
+        $name = trim((string) $this->request->getPost('name'));
+        if ($name === '') { return $this->response->setJSON(['status' => 'error', 'message' => 'Name required']); }
+        $db = \Config\Database::connect();
+        if (! $db->tableExists('am_state')) { return $this->response->setJSON(['status' => 'error', 'message' => 'State master unavailable']); }
+        $row = $db->table('am_state')->where('LOWER(name)', strtolower($name))->get()->getRow();
+        if ($row) {
+            $id = (int) $row->state_id;
+        } else {
+            $db->table('am_state')->insert(['name' => $name, 'status' => 'Active']);
+            $id = (int) $db->insertID();
+        }
+        $gst  = gstin_state_master();
+        $code = '';
+        foreach ($gst as $c => $sn) { if (strcasecmp($sn, $name) === 0) { $code = $c; break; } }
+        return $this->response->setJSON(['status' => 'success', 'id' => $id, 'code' => $code]);
+    }
+
+    /** Inline "+ New" city from the Add form (AJAX). Seeds am_city. */
+    public function quick_add_city()
+    {
+        $name      = trim((string) $this->request->getPost('name'));
+        $stateName = trim((string) $this->request->getPost('state_name'));
+        $stateId   = (int) $this->request->getPost('state_id');
+        if ($name === '') { return $this->response->setJSON(['status' => 'error', 'message' => 'Name required']); }
+        $db = \Config\Database::connect();
+        if (! $db->tableExists('am_city')) { return $this->response->setJSON(['status' => 'error', 'message' => 'City master unavailable']); }
+        if (! $stateId && $stateName !== '' && $db->tableExists('am_state')) {
+            $s = $db->table('am_state')->where('LOWER(name)', strtolower($stateName))->get()->getRow();
+            if ($s) { $stateId = (int) $s->state_id; }
+        }
+        $row = $db->table('am_city')->where('LOWER(name)', strtolower($name))->where('state_id', $stateId)->get()->getRow();
+        if (! $row) {
+            $db->table('am_city')->insert(['name' => $name, 'state_id' => $stateId, 'status' => 'Active']);
+        }
+        return $this->response->setJSON(['status' => 'success', 'state_id' => $stateId]);
     }
 
     public function listing()

@@ -1,10 +1,12 @@
 <?php
 
-use CodeIgniter\Router\RouteCollection;
+/**
+ * Ricemill module routes — the public marketing website (CI3 default_controller).
+ * Public: no adminAuth/rbac filters. Preserves the CI3 URLs.
+ */
+
 use App\Modules\Ricemill\Controllers\Ricemill;
 
-/** @var RouteCollection $routes */
-// Public marketing website (no adminAuth filter). Preserves CI3 URLs.
 $routes->get('ricemill', [Ricemill::class, 'index']);
 $routes->post('ricemill/inquiry', [Ricemill::class, 'inquiry']);
-$routes->get('ricemill/inquiry', [Ricemill::class, 'index']); // GET → back to site
+$routes->get('ricemill/inquiry', [Ricemill::class, 'inquiry']); // GET falls back to redirect

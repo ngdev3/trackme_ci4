@@ -53,6 +53,7 @@ class Autoload extends AutoloadConfig
         'App\Modules\Admin'            => APPPATH . 'Modules/Admin',            // P2+ (admin/*)
         'App\Modules\Task'             => APPPATH . 'Modules/Task',             // P3 (task/*)
         'App\Modules\Master'           => APPPATH . 'Modules/Master',           // P3 (master/*)
+        'App\Modules\Ricemill'         => APPPATH . 'Modules/Ricemill',         // public landing site (/)
         'App\Modules\Task'             => APPPATH . 'Modules/Task',             // P5 (task/*)
         'App\Modules\Ricemill'         => APPPATH . 'Modules/Ricemill',         // public landing website
     ];
