@@ -619,7 +619,7 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="bgc-white bd bdrs-3 p-20 mB-20 report-panel report-results-panel">
-                               <!-- <div> <a target="_blank" href="<?php echo base_url().'uploads/invoice_slips/'.$users->invoice_name;?>" id="back-btn" class="btn cur-p btn-primary pull-right"><i class="fa fa-download"></i></a></div> -->
+                               <?php // (disabled) invoice-slip download button — was: uploads/invoice_slips/<invoice_name> ?>
                                     <table class="table report-result-table">
                                         <tbody>
                                             <tr>
