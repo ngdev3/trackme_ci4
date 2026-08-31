@@ -307,3 +307,28 @@ if (! function_exists('notif_time_ago')) {
         return 'just now';
     }
 }
+
+if (! function_exists('fy_date_range')) {
+    /** [start,end] Y-m-d for a financial year (Apr 1 – Mar 31). CI3 parity. */
+    function fy_date_range($fy = null): array
+    {
+        if ($fy === null) { $fy = fy(); }
+        $label = ($fy && isset($fy->FY)) ? (string) $fy->FY : '';
+        if (! preg_match('/(\d{4})\D+(\d{4})/', $label, $m)) {
+            return ['', ''];
+        }
+        return [$m[1] . '-04-01', $m[2] . '-03-31'];
+    }
+}
+
+if (! function_exists('fy_clamp_date')) {
+    /** Pull a Y-m-d date inside the current FY window (untouched if FY unknown). */
+    function fy_clamp_date($ymd, $fy = null)
+    {
+        [$start, $end] = fy_date_range($fy);
+        if ($start === '' || $ymd === '') { return $ymd; }
+        if ($ymd < $start) { return $start; }
+        if ($ymd > $end)   { return $end; }
+        return $ymd;
+    }
+}

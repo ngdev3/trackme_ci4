@@ -617,4 +617,67 @@ class ReportModel
         }
         return false;
     }
+
+    // ------------------------------------------------------------------
+    // Kisan Vahi Parcha report — CI3 Report_mod parity. Reads kisanvahidata
+    // filtered by the session-stored window (setParchaFromDate/To + search/
+    // center/pfms/paid). Read-only.
+    // ------------------------------------------------------------------
+    public function kishanVahi_Data_details()
+    {
+        $db  = $this->db();
+        $s   = session();
+        $from = $s->get('setParchaFromDate') ?: date('Y-m-d');
+        $to   = $s->get('setParchaToDate') ?: date('Y-m-d');
+        $search = trim((string) $s->get('kvParchaSearch'));
+        $center = trim((string) $s->get('kvParchaCenter'));
+        $pfms   = trim((string) $s->get('kvParchaPfms'));
+        $paid   = trim((string) $s->get('kvParchaPaid'));
+
+        $b = $db->table('kisanvahidata AS kvd')
+            ->select('acn.name, kvd.*, centers.name AS centern', false);
+        if ($db->fieldExists('added_by', 'kisanvahidata')) {
+            $b->select("TRIM(CONCAT(COALESCE(added_user.first_name,''),' ',COALESCE(added_user.last_name,''))) AS added_by_name", false)
+              ->join('users AS added_user', 'added_user.id = kvd.added_by', 'left');
+        }
+        $b->join('aa_account_name AS acn', 'acn.account_id = kvd.account_no', 'left')
+          ->join('aa_center_name AS centers', 'centers.center_id = kvd.CenterName', 'left')
+          ->where('kvd.Purchase_Date_new >=', $from)
+          ->where('kvd.Purchase_Date_new <=', $to);
+
+        if ($search !== '') {
+            $b->groupStart()
+              ->like('kvd.Farmer_ID', $search)
+              ->orLike('kvd.Farmer_name', $search)
+              ->orLike('kvd.mobile_no', $search)
+              ->orLike('kvd.Purchase_ID', $search)
+              ->orLike('acn.name', $search)
+              ->groupEnd();
+        }
+        if ($center !== '') { $b->where('kvd.CenterName', $center); }
+        if ($pfms !== '')   { $b->where('kvd.PFMS_Status', $pfms); }
+        if ($paid === '1')  { $b->where('kvd.paid_status', 1); }
+        elseif ($paid === '0') { $b->where('(kvd.paid_status IS NULL OR kvd.paid_status = 0)', null, false); }
+
+        $rows = $b->orderBy('kvd.Purchase_Date_new', 'desc')->orderBy('kvd.Kisan_ID', 'desc')->get()->getResult();
+        return $rows ?: false;
+    }
+
+    /** Centers for the Parcha search dropdown. */
+    public function kv_center_list(): array
+    {
+        return $this->db()->table('aa_center_name')->select('center_id, name')
+            ->orderBy('name', 'asc')->get()->getResult();
+    }
+
+    /** Distinct non-empty PFMS statuses for the Parcha search dropdown. */
+    public function kv_pfms_options(): array
+    {
+        $rows = $this->db()->table('kisanvahidata')->distinct()->select('PFMS_Status')
+            ->where("COALESCE(PFMS_Status,'') <>", '')
+            ->orderBy('PFMS_Status', 'asc')->get()->getResult();
+        $out = [];
+        foreach ($rows as $r) { $out[] = $r->PFMS_Status; }
+        return $out;
+    }
 }

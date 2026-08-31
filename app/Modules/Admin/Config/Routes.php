@@ -123,6 +123,8 @@ $routes->get('admin/accountMapping/capture_delete/(:num)', ['\App\Modules\Admin\
 $routes->get('admin/accountMapping/capture_use/(:num)', ['\App\Modules\Admin\Controllers\AccountMapping', 'capture_use/$1']);
 $routes->get('admin/kisan_vahi/listing', [KisanVahi::class, 'listing']);
 $routes->post('admin/kisan_vahi/view_all', [KisanVahi::class, 'viewAll']);
+$routes->match(['GET', 'POST'], 'admin/kisan_vahi/report', [KisanVahi::class, 'report']);
+$routes->get('admin/kisan_vahi/report_csv', [KisanVahi::class, 'report_csv']);
 
 // Driver, Truck, Attendance, Salary, Cold Lot — listing slices
 $routes->get('admin/driver_module/listing', [DriverModule::class, 'listing']);
