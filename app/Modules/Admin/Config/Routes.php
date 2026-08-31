@@ -25,6 +25,8 @@ use App\Modules\Admin\Controllers\Account_name;
 use App\Modules\Admin\Controllers\Gst_setting;
 use App\Modules\Admin\Controllers\Ricemill_inquiry;
 use App\Modules\Admin\Controllers\Billing_register;
+use App\Modules\Admin\Controllers\Traffic;
+use App\Modules\Admin\Controllers\Device;
 
 $routes->get('admin/dashboard', [Dashboard::class, 'index']);
 
@@ -131,3 +133,15 @@ $routes->get('admin/billing_register/listing', [Billing_register::class, 'listin
 $routes->get('admin/billing_register', [Billing_register::class, 'listing']);
 $routes->post('admin/billing_register/listing_data', [Billing_register::class, 'listing_data']);
 $routes->post('admin/billing_register/delete', [Billing_register::class, 'delete']);
+
+// Page Traffic viewer (log)
+$routes->get('admin/traffic/listing', [Traffic::class, 'listing']);
+$routes->get('admin/traffic', [Traffic::class, 'listing']);
+$routes->post('admin/traffic/view_all', [Traffic::class, 'view_all']);
+
+// Device Management (log)
+$routes->get('admin/device/listing', [Device::class, 'listing']);
+$routes->get('admin/device', [Device::class, 'listing']);
+$routes->post('admin/device/view_all', [Device::class, 'view_all']);
+$routes->post('admin/device/update_status', [Device::class, 'update_status']);
+$routes->post('admin/device/delete', [Device::class, 'delete']);
