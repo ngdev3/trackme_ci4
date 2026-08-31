@@ -67,6 +67,13 @@ $toast = session()->getFlashdata('cr_toast');
                     </div>
                 </div>
 
+                <div class="sidebar-menu-search">
+                    <div class="sidebar-menu-search-box">
+                        <i class="ti-search"></i>
+                        <input type="search" id="sidebarMenuSearchInput" placeholder="Search menu option" autocomplete="off">
+                    </div>
+                    <div class="sidebar-menu-search-empty" id="sidebarMenuSearchEmpty">No menu option found.</div>
+                </div>
                 <?= $this->include('\App\Modules\Admin\Views\elements\left_menu') ?>
             </div>
         </div>
