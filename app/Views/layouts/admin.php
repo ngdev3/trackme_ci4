@@ -121,6 +121,7 @@ $toast = session()->getFlashdata('cr_toast');
     <script src="<?= base_url('assets/admin/pages/scripts/form-samples.js') ?>"></script>
     <script src="<?= base_url('assets/admin/pages/scripts/components-dropdowns.js') ?>"></script>
     <script src="<?= base_url('assets/js/cr_notify.js') ?>"></script>
+    <script src="<?= base_url('assets/js/action_menu.js') ?>"></script>
     <script src="<?= base_url('assets/js/acc_picker.js') ?>"></script>
     <script src="<?= base_url('assets/js/hsn_picker.js') ?>"></script>
     <script src="<?= base_url('assets/js/app_i18n.js') ?>"></script>

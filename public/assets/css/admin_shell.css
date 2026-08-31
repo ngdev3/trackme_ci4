@@ -3113,3 +3113,24 @@
   /* Any feature page: wide tables scroll within their own box, never the page. */
   .main-content table, .page-content table { max-width: 100%; }
 }
+
+/* ── Shared row-action (kebab ⋮) menu — CI3 layout.php parity ───────────── */
+.cr-act { position: relative; display: inline-block; }
+.cr-act-btn { width: 34px; height: 34px; border: 1px solid #dce3ee; background: #fff; border-radius: 9px; color: #5b6b82;
+   cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; line-height: 1; transition: all .14s ease; padding: 0; }
+.cr-act-btn:hover, .cr-act.open .cr-act-btn { background: #1d4ed8; border-color: #1d4ed8; color: #fff; box-shadow: 0 6px 16px rgba(29,78,216,.28); }
+.cr-act-pop { display: none; position: fixed; z-index: 2147483001; min-width: 208px; padding: 6px;
+   background: #fff; border: 1px solid #e6ecf5; border-radius: 12px; box-shadow: 0 18px 44px rgba(16,32,72,.22); text-align: left; }
+.cr-act-pop.cr-open { display: block; animation: crPop .12s ease; }
+@keyframes crPop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.cr-item { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 8px; font-size: 13px; font-weight: 700;
+   color: #334155; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.cr-item:hover { background: #f1f6ff; color: #1740b5; text-decoration: none; }
+.cr-item i { width: 16px; text-align: center; font-size: 13px; }
+.cr-item .i-view { color: #17a2b8; } .cr-item .i-edit { color: #1769c2; } .cr-item .i-perm { color: #343a40; }
+.cr-item .i-imp { color: #e0a800; } .cr-item .i-on { color: #28a745; } .cr-item .i-off { color: #e08a12; }
+.cr-item .i-dl { color: #5f27cd; } .cr-item .i-pdf { color: #c0392b; } .cr-item .i-copy { color: #0891b2; }
+.cr-item .i-cancel { color: #b26a00; } .cr-item .i-print { color: #2f5847; } .cr-item .i-info { color: #2563eb; }
+.cr-item.danger { color: #dc3545; } .cr-item.danger:hover { background: #fdeef0; color: #c22030; } .cr-item.danger i { color: #dc3545; }
+.cr-item.disabled { opacity: .5; cursor: not-allowed; } .cr-item.disabled:hover { background: transparent; color: #334155; }
+.cr-sep { height: 1px; background: #eef2f7; margin: 5px 4px; }
