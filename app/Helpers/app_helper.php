@@ -406,3 +406,15 @@ if (! function_exists('gstin_state_master')) {
         ];
     }
 }
+
+if (! function_exists('correct_date')) {
+    /** Normalise a posted date (dd/mm/yyyy or similar) to Y-m-d. CI3 parity. */
+    function correct_date($posted_date)
+    {
+        $posted_date = trim((string) $posted_date);
+        if ($posted_date !== '') {
+            return date('Y-m-d', strtotime(str_replace('/', '-', $posted_date)));
+        }
+        return '0000-00-00';
+    }
+}

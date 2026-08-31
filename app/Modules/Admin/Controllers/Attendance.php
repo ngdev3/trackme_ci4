@@ -8,7 +8,7 @@ use Config\Database;
 /** Attendance — CI4 port, full CRUD (aa_attendance). Gated rbac('attendance'). */
 class Attendance extends BaseController
 {
-    protected $helpers = ['url', 'app'];
+    protected $helpers = ['url', 'app', 'form'];
 
     private function db()
     {
@@ -93,5 +93,165 @@ class Attendance extends BaseController
     private function json(string $s, string $m, array $x = [])
     {
         return $this->response->setJSON(array_merge(['status' => $s, 'message' => $m], $x));
+    }
+
+    /* ==================================================================== */
+    /*  Employee master (aa_employees) — CI3 Attendance::employee_* parity.  */
+    /*  Global table (no template_id/FY). Search + kebab action menu.        */
+    /* ==================================================================== */
+
+    private const EMP_TABLE = 'aa_employees';
+
+    public function employee_listing()
+    {
+        return _layout('\App\Modules\Admin\Views\attendance\employee_listing', [
+            'title' => 'Track (The Rest Accounting Key) || Employee Listing',
+        ]);
+    }
+
+    public function employee_add()
+    {
+        if (strtoupper($this->request->getMethod()) === 'POST') {
+            $err = $this->employeeValidate();
+            if ($err === '') {
+                $this->db()->table(self::EMP_TABLE)->insert([
+                    'employee_code' => trim((string) $this->request->getPost('employee_code')),
+                    'employee_name' => trim((string) $this->request->getPost('employee_name')),
+                    'mobile'        => trim((string) $this->request->getPost('mobile')),
+                    'designation'   => trim((string) $this->request->getPost('designation')),
+                    'joining_date'  => $this->request->getPost('joining_date') ? correct_date($this->request->getPost('joining_date')) : null,
+                    'salary'        => $this->request->getPost('salary') ?: null,
+                    'address'       => trim((string) $this->request->getPost('address')),
+                    'added_by'      => (int) (currentuserinfo()->id ?? 0),
+                    'status'        => $this->request->getPost('status') ?: 'Active',
+                    'created_date'  => date('Y-m-d H:i:s'),
+                    'updated_date'  => date('Y-m-d'),
+                ]);
+                $name = trim((string) $this->request->getPost('employee_name'));
+                if (function_exists('notify')) {
+                    notify('New employee <b>' . esc($name) . '</b> added', base_url('admin/attendance/employee_listing'), ['event' => 'added']);
+                }
+                if (function_exists('flash_toast')) { flash_toast('Employee "' . $name . '" was added.', 'success', 'Employee added'); }
+                return redirect()->to(base_url('admin/attendance/employee_listing'))->with('success', 'Employee added successfully');
+            }
+            session()->setFlashdata('error', $err);
+        }
+        return _layout('\App\Modules\Admin\Views\attendance\employee_add', [
+            'title'  => 'Track (The Rest Accounting Key) || Add Employee',
+            'result' => null,
+        ]);
+    }
+
+    public function employee_edit($id = null)
+    {
+        $eid = (int) ID_decode($id);
+        $emp = $this->db()->table(self::EMP_TABLE)->where('employee_id', $eid)->get()->getRow();
+        if (! $emp) {
+            return redirect()->to(base_url('admin/attendance/employee_listing'))->with('error', 'Employee not found.');
+        }
+
+        if (strtoupper($this->request->getMethod()) === 'POST') {
+            $err = $this->employeeValidate();
+            if ($err === '') {
+                $this->db()->table(self::EMP_TABLE)->where('employee_id', $eid)->update([
+                    'employee_code' => trim((string) $this->request->getPost('employee_code')),
+                    'employee_name' => trim((string) $this->request->getPost('employee_name')),
+                    'mobile'        => trim((string) $this->request->getPost('mobile')),
+                    'designation'   => trim((string) $this->request->getPost('designation')),
+                    'joining_date'  => $this->request->getPost('joining_date') ? correct_date($this->request->getPost('joining_date')) : null,
+                    'salary'        => $this->request->getPost('salary') ?: null,
+                    'address'       => trim((string) $this->request->getPost('address')),
+                    'status'        => $this->request->getPost('status') ?: 'Active',
+                    'updated_date'  => date('Y-m-d'),
+                ]);
+                $name = trim((string) $this->request->getPost('employee_name'));
+                if (function_exists('notify')) {
+                    notify('Employee <b>' . esc($name) . '</b> updated', base_url('admin/attendance/employee_listing'), ['event' => 'updated']);
+                }
+                if (function_exists('flash_toast')) { flash_toast('Employee "' . $name . '" was updated.', 'success', 'Employee updated'); }
+                return redirect()->to(base_url('admin/attendance/employee_listing'))->with('success', 'Employee updated successfully');
+            }
+            session()->setFlashdata('error', $err);
+        }
+        return _layout('\App\Modules\Admin\Views\attendance\employee_add', [
+            'title'  => 'Track (The Rest Accounting Key) || Edit Employee',
+            'result' => $emp,
+        ]);
+    }
+
+    public function employee_view_all()
+    {
+        $post   = $this->request->getPost();
+        $search = trim((string) ($post['search']['value'] ?? ''));
+        $start  = (int) ($post['start'] ?? 0);
+        $length = $post['length'] ?? 25;
+
+        $b = $this->db()->table(self::EMP_TABLE)->where('status !=', 'Delete');
+        if ($search !== '') {
+            $b->like("CONCAT(employee_name,' ',employee_code,' ',mobile,' ',designation)", $search);
+        }
+        $total = (clone $b)->countAllResults(false);
+
+        $cols = [1 => 'employee_code', 2 => 'employee_name', 3 => 'mobile', 4 => 'designation', 5 => 'joining_date'];
+        $oc   = (int) ($post['order'][0]['column'] ?? -1);
+        $od   = strtolower((string) ($post['order'][0]['dir'] ?? '')) === 'asc' ? 'asc' : 'desc';
+        if (isset($cols[$oc])) { $b->orderBy($cols[$oc], $od); } else { $b->orderBy('employee_id', 'desc'); }
+        if ($length != '-1') { $b->limit((int) $length, $start); }
+
+        $rows = $b->get()->getResult();
+        $data = [];
+        $j = $start;
+        foreach ($rows as $item) {
+            $j++;
+            $row = (array) $item;
+            $data[] = [
+                $j,
+                esc($row['employee_code'] ?? ''),
+                esc($row['employee_name'] ?? ''),
+                esc($row['mobile'] ?? ''),
+                esc($row['designation'] ?? ''),
+                ! empty($row['joining_date']) && $row['joining_date'] !== '0000-00-00' ? date('Y-m-d', strtotime($row['joining_date'])) : '',
+                esc($row['status'] ?? ''),
+                view('\App\Modules\Admin\Views\attendance\_employee_action', ['row' => $row]),
+            ];
+        }
+        return $this->response->setJSON([
+            'draw'            => (int) ($post['draw'] ?? 0),
+            'recordsTotal'    => $total,
+            'recordsFiltered' => $total,
+            'data'            => $data,
+        ]);
+    }
+
+    public function employee_delete($id = null)
+    {
+        $eid = (int) ID_decode($id);
+        $emp = $this->db()->table(self::EMP_TABLE)->where('employee_id', $eid)->get()->getRow();
+        $ename = $emp->employee_name ?? 'Employee';
+        $this->db()->table(self::EMP_TABLE)->where('employee_id', $eid)->update(['status' => 'Delete']);
+        if (function_exists('notify')) {
+            notify('Employee <b>' . esc($ename) . '</b> deleted', base_url('admin/attendance/employee_listing'), ['event' => 'deleted']);
+        }
+        if (function_exists('flash_toast')) { flash_toast('Employee "' . $ename . '" was deleted.', 'warning', 'Employee deleted'); }
+        return redirect()->to(base_url('admin/attendance/employee_listing'))->with('success', 'Employee deleted successfully');
+    }
+
+    public function employee_toggle_status($id = null)
+    {
+        $eid = (int) ID_decode($id);
+        $emp = $this->db()->table(self::EMP_TABLE)->where('employee_id', $eid)->get()->getRow();
+        if (! $emp || $emp->status === 'Delete') {
+            return redirect()->to(base_url('admin/attendance/employee_listing'))->with('error', 'Employee status not changed');
+        }
+        $next = ($emp->status === 'Active') ? 'Inactive' : 'Active';
+        $this->db()->table(self::EMP_TABLE)->where('employee_id', $eid)->update(['status' => $next, 'updated_date' => date('Y-m-d')]);
+        return redirect()->to(base_url('admin/attendance/employee_listing'))->with('success', 'Employee marked ' . $next);
+    }
+
+    private function employeeValidate(): string
+    {
+        if (trim((string) $this->request->getPost('employee_name')) === '') { return 'Employee Name is required.'; }
+        if (trim((string) $this->request->getPost('status')) === '') { return 'Status is required.'; }
+        return '';
     }
 }

@@ -150,6 +150,13 @@ $routes->post('admin/attendance/view_all', [Attendance::class, 'viewAll']);
 $routes->post('admin/attendance/save', [Attendance::class, 'save']);
 $routes->post('admin/attendance/delete', [Attendance::class, 'delete']);
 $routes->get('admin/attendance/row/(:num)', [Attendance::class, 'row']);
+// Attendance — Employee master (aa_employees): listing (search + kebab menu), CRUD, toggle
+$routes->get('admin/attendance/employee_listing', [Attendance::class, 'employee_listing']);
+$routes->match(['GET', 'POST'], 'admin/attendance/employee_add', [Attendance::class, 'employee_add']);
+$routes->match(['GET', 'POST'], 'admin/attendance/employee_edit/(:segment)', [Attendance::class, 'employee_edit']);
+$routes->post('admin/attendance/employee_view_all', [Attendance::class, 'employee_view_all']);
+$routes->get('admin/attendance/employee_delete/(:segment)', [Attendance::class, 'employee_delete']);
+$routes->get('admin/attendance/employee_toggle_status/(:segment)', [Attendance::class, 'employee_toggle_status']);
 $routes->get('admin/salary_module/listing', [SalaryModule::class, 'listing']);
 $routes->get('admin/salary_module', [SalaryModule::class, 'listing']);
 $routes->post('admin/salary_module/view_all', [SalaryModule::class, 'viewAll']);
