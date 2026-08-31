@@ -118,9 +118,9 @@ class Filters extends BaseFilters
         // --- TrackmeNew: CI3 MY_Controller guard chain, now ON for admin/* -----
         // (P2). AdminAuthFilter internally excepts admin/auth/* so login stays
         // public. Order matters: auth -> context -> rbac.
-        'adminAuth' => ['before' => ['admin/*', 'master/*']],
-        'fyContext' => ['before' => ['admin/*', 'master/*']],
-        'rbac'      => ['before' => ['admin/*', 'master/*']],
+        'adminAuth' => ['before' => ['admin/*', 'master/*', 'task', 'task/*']],
+        'fyContext' => ['before' => ['admin/*', 'master/*', 'task', 'task/*']],
+        'rbac'      => ['before' => ['admin/*', 'master/*', 'task', 'task/*']],
         // traffic + salaryCron are wired but deferred to their phases (P3/P5):
         // 'traffic'    => ['before' => ['admin/*']],
         // 'salaryCron' => ['before' => ['admin/*']],

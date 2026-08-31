@@ -17,6 +17,18 @@ defined('APP_NAMESPACE') || define('APP_NAMESPACE', 'App');
 
 /*
  | --------------------------------------------------------------------------
+ | CI3 compatibility — BASEPATH
+ | --------------------------------------------------------------------------
+ | Views and helpers copied 1:1 from the legacy CI3 app open with
+ |   defined('BASEPATH') OR exit('No direct script access allowed');
+ | CI4 has no BASEPATH (it uses SYSTEMPATH), so rendering such a view would
+ | exit with "No direct script access allowed". Define it as a harmless alias
+ | so every ported CI3 view/helper passes that guard.
+ */
+defined('BASEPATH') || define('BASEPATH', defined('SYSTEMPATH') ? SYSTEMPATH : ROOTPATH);
+
+/*
+ | --------------------------------------------------------------------------
  | Composer Path
  | --------------------------------------------------------------------------
  |

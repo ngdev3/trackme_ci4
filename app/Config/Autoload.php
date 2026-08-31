@@ -52,6 +52,7 @@ class Autoload extends AutoloadConfig
         'App\Modules\Auth'             => APPPATH . 'Modules/Auth',             // P2
         'App\Modules\Admin'            => APPPATH . 'Modules/Admin',            // P2+ (admin/*)
         'App\Modules\Master'           => APPPATH . 'Modules/Master',           // P3 (master/*)
+        'App\Modules\Task'             => APPPATH . 'Modules/Task',             // P5 (task/*)
     ];
 
     /**

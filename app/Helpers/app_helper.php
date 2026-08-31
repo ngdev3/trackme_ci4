@@ -147,3 +147,63 @@ if (! function_exists('_layout')) {
         return view('layouts/admin', $vars);
     }
 }
+
+if (! function_exists('notificationData')) {
+    /** Insert one row into the `notification` table (FY/product/template scoped). */
+    function notificationData(array $data, string $type): int
+    {
+        $db  = \Config\Database::connect();
+        $not = [];
+        $not['msg_global'] = ! empty($data['msg_global']) ? 1 : 0;
+        $not['name']       = ! empty($data['name'])
+            ? $data['name']
+            : (($data['type'] ?? '') . ' <b>' . ($data['module_title'] ?? '') . '</b> ' . ($data['module_name'] ?? ''));
+        $not['action'] = $data['action'] ?? '';
+        $not['remark'] = $data['remark']
+            ?? (($data['type'] ?? '') . ' ' . ($data['module_title'] ?? '') . ' ' . ($data['module_name'] ?? '') . ' ' . $type . ' by ' . ($data['user_name'] ?? ''));
+        $not['is_seen']      = 0;
+        $not['status']       = 'Active';
+        $not['user_id']      = ! empty($data['user_id']) ? $data['user_id'] : currentuserinfo()->id;
+        $not['updated_date'] = date('Y-m-d H:i:s');
+        $not['added_date']   = date('Y-m-d H:i:s');
+        $not['FY']           = fy()->FY;
+        $not['product_type'] = fy()->product_type;
+        $not['template_id']  = fy()->template_id;
+        $db->table('notification')->insert($not);
+        return (int) $db->insertID();
+    }
+}
+
+if (! function_exists('notify')) {
+    /** Convenience wrapper to raise an in-app notification from anywhere. */
+    function notify(string $message, string $action = '', array $opts = []): int
+    {
+        return notificationData([
+            'name'       => $message,
+            'action'     => $action,
+            'msg_global' => ! empty($opts['msg_global']) ? 1 : 0,
+            'user_id'    => ! empty($opts['user_id']) ? $opts['user_id'] : currentuserinfo()->id,
+            'remark'     => $opts['remark'] ?? strip_tags($message),
+        ], $opts['event'] ?? 'added');
+    }
+}
+
+if (! function_exists('BLACKLIST_SEARCH_USER_IDS_DB')) {
+    /** True if $search_id is an actively blacklisted account (aa_blacklist_search). */
+    function BLACKLIST_SEARCH_USER_IDS_DB($search_id): bool
+    {
+        $db = \Config\Database::connect();
+        return $db->table('aa_blacklist_search')
+            ->where('status', 'Active')
+            ->where('search_id', $search_id)
+            ->countAllResults() > 0;
+    }
+}
+
+if (! function_exists('BlackList_Search_USER_IDS')) {
+    /** CI3-compatible alias: is this account blocked from being viewed/searched? */
+    function BlackList_Search_USER_IDS($allowed_users): bool
+    {
+        return BLACKLIST_SEARCH_USER_IDS_DB($allowed_users);
+    }
+}

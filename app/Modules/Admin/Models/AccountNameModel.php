@@ -127,4 +127,70 @@ class AccountNameModel
     {
         return $this->db()->table('aa_rokad')->where('account_no', $accountId)->where('status <>', 'Delete')->countAllResults() > 0;
     }
+
+    /**
+     * Options for the shared account picker (acc_picker.js → billing/account_options).
+     * Each option carries the live credit-positive balance (Jama/Naam side + abs),
+     * entry count and last-activity date. $reg filters by GST registration:
+     * 'registered' = 15-char GSTIN, 'unregistered' = not, 'all' = no filter.
+     *
+     * @return array<int, array<string,mixed>>
+     */
+    public function pickerOptions(string $reg = 'all'): array
+    {
+        $db = $this->db();
+        $b  = $db->table($this->table)->select('account_id, name')->where('status !=', 'Delete');
+        if ($reg === 'unregistered') {
+            $b->where("CHAR_LENGTH(TRIM(COALESCE(purchaser_gst_no,''))) <> 15", null, false);
+        } elseif ($reg === 'registered') {
+            $b->where("CHAR_LENGTH(TRIM(COALESCE(purchaser_gst_no,''))) = 15", null, false);
+        }
+        $accounts = $b->orderBy('name', 'asc')->get()->getResult();
+        if (empty($accounts)) {
+            return [];
+        }
+
+        $ids = [];
+        foreach ($accounts as $a) {
+            $ids[] = (int) $a->account_id;
+        }
+
+        $balances = (new AccountingModel())->ledger_balances($ids);
+
+        $fy   = fy();
+        $in   = implode(',', array_map('intval', $ids));
+        $meta = [];
+        $sql  = "SELECT account_no AS aid, COUNT(*) AS cnt, MAX(rokad_date) AS last_dt
+                   FROM aa_rokad
+                  WHERE status <> 'Delete' AND account_no IN ($in)
+                    AND FY = " . $db->escape($fy->FY) . "
+                    AND product_type = " . $db->escape($fy->product_type) . "
+                    AND template_id = " . $db->escape($fy->template_id) . "
+                  GROUP BY account_no";
+        foreach ($db->query($sql)->getResult() as $r) {
+            $meta[(int) $r->aid] = ['cnt' => (int) $r->cnt, 'last' => $r->last_dt];
+        }
+
+        $out = [];
+        foreach ($accounts as $a) {
+            $aid  = (int) $a->account_id;
+            $bal  = $balances[$aid] ?? ['abs' => 0.0, 'side' => 'Nil'];
+            $side = $bal['side'] ?? 'Nil';
+            $abs  = isset($bal['abs']) ? (float) $bal['abs'] : 0.0;
+            $net  = ($side === 'Dr') ? -$abs : (($side === 'Cr') ? $abs : 0.0);
+            $m    = $meta[$aid] ?? ['cnt' => 0, 'last' => null];
+            $out[] = [
+                'account_id' => $aid,
+                'name'       => $a->name,
+                'side'       => $side,
+                'label'      => ($side === 'Cr' ? 'Jama' : ($side === 'Dr' ? 'Naam' : 'Nil')),
+                'abs'        => $abs,
+                'net'        => $net,
+                'amount_txt' => number_format($abs, 2),
+                'entries'    => (int) $m['cnt'],
+                'last_txt'   => (! empty($m['last']) ? date('d M y', strtotime($m['last'])) : ''),
+            ];
+        }
+        return $out;
+    }
 }

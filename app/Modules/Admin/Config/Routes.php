@@ -111,6 +111,42 @@ $routes->match(['get', 'post'], 'admin/item_master/edit/(:segment)', [Item_maste
 $routes->post('admin/item_master/delete', [Item_master::class, 'delete']);
 $routes->post('admin/item_master/updateStatus', [Item_master::class, 'updateStatus']);
 
+// Jama/Naam voucher (admin/account) — combined cash-book entry (write path)
+$routes->match(['get', 'post'], 'admin/account/entry', ['\App\Modules\Admin\Controllers\Account', 'entry']);
+$routes->post('admin/account/save_entry', ['\App\Modules\Admin\Controllers\Account', 'save_entry']);
+
+// Billing — shared account picker JSON feed (acc_picker.js + report autocompletes)
+$routes->match(['get', 'post'], 'admin/billing/account_options', ['\App\Modules\Admin\Controllers\Billing', 'account_options']);
+
+// Reports — Account Ledger (GET page / POST JSON feed)
+$routes->match(['get', 'post'], 'admin/report/ledger', ['\App\Modules\Admin\Controllers\Report', 'ledger']);
+// Reports — Rokad Parcha (daily cash book) + drag-drop group move
+$routes->match(['get', 'post'], 'admin/report/rokad_parcha', ['\App\Modules\Admin\Controllers\Report', 'rokad_parcha']);
+$routes->post('admin/report/rokad_parcha_move', ['\App\Modules\Admin\Controllers\Report', 'rokad_parcha_move']);
+// Reports — Account Report (search) + Account Statement (byaccount_name)
+$routes->match(['get', 'post'], 'admin/report/search', ['\App\Modules\Admin\Controllers\Report', 'search']);
+$routes->match(['get', 'post'], 'admin/report/byaccount_name', ['\App\Modules\Admin\Controllers\Report', 'byaccount_name']);
+// Reports — statement/ledger exports (CSV/Excel/Hindi PDF) + per-row modal
+$routes->match(['get', 'post'], 'admin/report/byaccount_name_export/(:segment)', ['\App\Modules\Admin\Controllers\Report', 'byaccount_name_export']);
+$routes->get('admin/report/account_ledger_modal/(:num)', ['\App\Modules\Admin\Controllers\Report', 'account_ledger_modal']);
+$routes->get('admin/report/account_ledger_export/(:num)/(:segment)', ['\App\Modules\Admin\Controllers\Report', 'account_ledger_export']);
+// Reports — Deleted Rokad Entries (trash + restore)
+$routes->get('admin/report/deleted_entries', ['\App\Modules\Admin\Controllers\Report', 'deleted_entries']);
+$routes->post('admin/report/deleted_entries_data', ['\App\Modules\Admin\Controllers\Report', 'deleted_entries_data']);
+$routes->post('admin/report/deleted_entry_detail', ['\App\Modules\Admin\Controllers\Report', 'deleted_entry_detail']);
+$routes->post('admin/report/restore_entry', ['\App\Modules\Admin\Controllers\Report', 'restore_entry']);
+
+// Accounting Reports (accounts_report) — live chart-of-accounts statements
+$routes->get('admin/accounts_report', ['\App\Modules\Admin\Controllers\Accounts_report', 'index']);
+$routes->get('admin/accounts_report/trial_balance', ['\App\Modules\Admin\Controllers\Accounts_report', 'trial_balance']);
+$routes->get('admin/accounts_report/outstanding', ['\App\Modules\Admin\Controllers\Accounts_report', 'outstanding']);
+$routes->get('admin/accounts_report/debtors', ['\App\Modules\Admin\Controllers\Accounts_report', 'debtors']);
+$routes->get('admin/accounts_report/creditors', ['\App\Modules\Admin\Controllers\Accounts_report', 'creditors']);
+$routes->get('admin/accounts_report/ageing', ['\App\Modules\Admin\Controllers\Accounts_report', 'ageing']);
+$routes->get('admin/accounts_report/balance_sheet', ['\App\Modules\Admin\Controllers\Accounts_report', 'balance_sheet']);
+$routes->get('admin/accounts_report/profit_loss', ['\App\Modules\Admin\Controllers\Accounts_report', 'profit_loss']);
+$routes->get('admin/accounts_report/inter_firm', ['\App\Modules\Admin\Controllers\Accounts_report', 'inter_firm']);
+
 // Account Master (account_name) — listing slice (P6 master)
 $routes->get('admin/account_name/listing', [Account_name::class, 'listing']);
 $routes->get('admin/account_name', [Account_name::class, 'listing']);
