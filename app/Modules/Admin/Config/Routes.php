@@ -28,6 +28,7 @@ use App\Modules\Admin\Controllers\Billing_register;
 use App\Modules\Admin\Controllers\Traffic;
 use App\Modules\Admin\Controllers\Device;
 use App\Modules\Admin\Controllers\Document;
+use App\Modules\Admin\Controllers\Letter_pad;
 
 $routes->get('admin/dashboard', [Dashboard::class, 'index']);
 
@@ -155,3 +156,13 @@ $routes->match(['get', 'post'], 'admin/document/add', [Document::class, 'add']);
 $routes->match(['get', 'post'], 'admin/document/edit/(:segment)', [Document::class, 'edit']);
 $routes->get('admin/document/download/(:segment)', [Document::class, 'download']);
 $routes->post('admin/document/delete', [Document::class, 'delete']);
+
+// Letter Pad (full flow: create/edit + PDF + QR verify)
+$routes->get('admin/letter_pad/listing', [Letter_pad::class, 'listing']);
+$routes->get('admin/letter_pad', [Letter_pad::class, 'listing']);
+$routes->post('admin/letter_pad/listing_data', [Letter_pad::class, 'listing_data']);
+$routes->match(['get', 'post'], 'admin/letter_pad/add', [Letter_pad::class, 'add']);
+$routes->match(['get', 'post'], 'admin/letter_pad/edit/(:segment)', [Letter_pad::class, 'edit']);
+$routes->get('admin/letter_pad/pdf/(:segment)', [Letter_pad::class, 'pdf']);
+$routes->get('admin/letter_pad/download/(:segment)', [Letter_pad::class, 'download']);
+$routes->post('admin/letter_pad/delete', [Letter_pad::class, 'delete']);
