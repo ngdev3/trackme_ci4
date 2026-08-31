@@ -1,0 +1,35 @@
+# ---------------------------------------------------------------------------
+# CodeIgniter 4 — project-root .htaccess for shared hosting (Hostinger/LiteSpeed).
+#
+# The real front controller lives in public/. On shared hosting the document
+# root usually points at this project root, so this file forwards every request
+# into public/ (which has its own .htaccess routing to index.php). This lets the
+# app be served without "/public/" in the URL and keeps app/, system files,
+# writable/, vendor/ and .env unreachable over HTTP.
+#
+# If you CAN set the vhost/subdomain document root directly to .../public,
+# do that instead and this file is simply ignored — that is the cleanest setup.
+# ---------------------------------------------------------------------------
+
+# Never list directory contents.
+Options -Indexes
+
+# Block access to sensitive dotfiles and env/config at the root, regardless of
+# rewrite support (defence in depth).
+<FilesMatch "^\.env|^\.git|composer\.(json|lock)$|^spark$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Send everything that is not already targeting public/ into public/.
+    # Existing files/dirs at the root are still forwarded so only public/ is
+    # ever served. The inner public/.htaccess then routes to index.php.
+    RewriteRule ^((?!public/).*)$ public/$1 [L,NC]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    # Without mod_rewrite the app must be reached at /public/ directly.
+    RedirectMatch 302 ^/$ /public/
+</IfModule>

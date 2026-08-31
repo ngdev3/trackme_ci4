@@ -238,5 +238,43 @@ class Database extends Config
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }
+
+        // ------------------------------------------------------------------
+        // Production DB auto-switch (mirrors the CI3 SERVER_NAME switch in
+        // application/config/database.php). The live deploy is https://challan.org
+        // (Hostinger account u930296518 — the same account also hosts
+        // thecrindustries.com), so on either host use the Hostinger MySQL
+        // credentials; otherwise the local .env values (root@localhost) are kept
+        // for dev. The CI4 app's data always lives in u930296518_mykisandata,
+        // reachable as u930296518_admin@localhost on that account regardless of
+        // which domain serves it. This lets the same codebase deploy via git
+        // auto-pull with no manual per-server .env step. Local .env is untouched.
+        // ------------------------------------------------------------------
+        $host = $_SERVER['SERVER_NAME'] ?? ($_SERVER['HTTP_HOST'] ?? '');
+        $isProd = $host !== '' && (
+            str_contains($host, 'challan.org')
+            || str_contains($host, 'thecrindustries.com')
+        );
+        if ($isProd) {
+            $debug = (ENVIRONMENT !== 'production');
+
+            $this->default['hostname'] = 'localhost';
+            $this->default['username'] = 'u930296518_admin';
+            $this->default['password'] = ']+ei1o5W';
+            $this->default['database'] = 'u930296518_mykisandata';
+            $this->default['DBDebug']  = $debug;
+
+            $this->old['hostname'] = 'localhost';
+            $this->old['username'] = 'u930296518_old';
+            $this->old['password'] = 'P:k5e6+&g3!A';
+            $this->old['database'] = 'u930296518_old';
+            $this->old['DBDebug']  = $debug;
+
+            $this->challan['hostname'] = 'localhost';
+            $this->challan['username'] = 'u930296518_challan';
+            $this->challan['password'] = 'BhUyY8x#';
+            $this->challan['database'] = 'u930296518_challan';
+            $this->challan['DBDebug']  = $debug;
+        }
     }
 }

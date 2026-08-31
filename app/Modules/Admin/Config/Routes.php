@@ -160,14 +160,14 @@ $routes->get('admin/users', [Users::class, 'listing']);
 $routes->post('admin/users/view_all', [Users::class, 'viewAll']);
 $routes->post('admin/users/updateUserStatus', [Users::class, 'updateUserStatus']);
 $routes->post('admin/users/delete', [Users::class, 'delete']);
-$routes->match(['get', 'post'], 'admin/users/add', [Users::class, 'add']);
-$routes->match(['get', 'post'], 'admin/users/edit/(:segment)', [Users::class, 'edit']);
+$routes->match(['GET', 'POST'], 'admin/users/add', [Users::class, 'add']);
+$routes->match(['GET', 'POST'], 'admin/users/edit/(:segment)', [Users::class, 'edit']);
 $routes->get('admin/users/view/(:segment)', [Users::class, 'view']);
 
 // Profile — self-profile (P2)
-$routes->match(['get', 'post'], 'admin/profile', [Profile::class, 'index']);
+$routes->match(['GET', 'POST'], 'admin/profile', [Profile::class, 'index']);
 $routes->post('admin/profile/changeImage', [Profile::class, 'changeImage']);
-$routes->match(['get', 'post'], 'admin/profile/reset_password', [Profile::class, 'reset_password']);
+$routes->match(['GET', 'POST'], 'admin/profile/reset_password', [Profile::class, 'reset_password']);
 
 // Notification centre (P2)
 $routes->get('admin/notification/listing', [Notification::class, 'listing']);
@@ -179,12 +179,12 @@ $routes->get('admin/notification/read/(:num)', [Notification::class, 'read']);
 $routes->post('admin/notification/updatenotificationStatus', [Notification::class, 'updatenotificationStatus']);
 
 // Role Permissions — RBAC matrix editor (P2, super-admin only)
-$routes->match(['get', 'post'], 'admin/role_permissions', [Role_permissions::class, 'index']);
-$routes->match(['get', 'post'], 'admin/user_permissions', [User_permissions::class, 'index']);
+$routes->match(['GET', 'POST'], 'admin/role_permissions', [Role_permissions::class, 'index']);
+$routes->match(['GET', 'POST'], 'admin/user_permissions', [User_permissions::class, 'index']);
 
 // Menu order — per-user left-menu personalisation (P2, JSON)
 $routes->post('admin/menu_order/save', [Menu_order::class, 'save']);
-$routes->match(['get', 'post'], 'admin/menu_order/reset', [Menu_order::class, 'reset']);
+$routes->match(['GET', 'POST'], 'admin/menu_order/reset', [Menu_order::class, 'reset']);
 
 // Help & FAQ (P3)
 $routes->get('admin/help', [Help::class, 'index']);
@@ -212,28 +212,28 @@ $routes->get('admin/web_push/service_worker', [Web_push::class, 'service_worker'
 // Item Master (P5 — master data) — CRUD over hsn_codes + unit
 $routes->get('admin/item_master/listing', [Item_master::class, 'listing']);
 $routes->get('admin/item_master', [Item_master::class, 'listing']);
-$routes->match(['get', 'post'], 'admin/item_master/add', [Item_master::class, 'add']);
-$routes->match(['get', 'post'], 'admin/item_master/edit/(:segment)', [Item_master::class, 'edit']);
+$routes->match(['GET', 'POST'], 'admin/item_master/add', [Item_master::class, 'add']);
+$routes->match(['GET', 'POST'], 'admin/item_master/edit/(:segment)', [Item_master::class, 'edit']);
 $routes->post('admin/item_master/delete', [Item_master::class, 'delete']);
 $routes->post('admin/item_master/updateStatus', [Item_master::class, 'updateStatus']);
 
 // Jama/Naam voucher (admin/account) — combined cash-book entry (write path)
-$routes->match(['get', 'post'], 'admin/account/entry', ['\App\Modules\Admin\Controllers\Account', 'entry']);
+$routes->match(['GET', 'POST'], 'admin/account/entry', ['\App\Modules\Admin\Controllers\Account', 'entry']);
 $routes->post('admin/account/save_entry', ['\App\Modules\Admin\Controllers\Account', 'save_entry']);
 
 // Billing — shared account picker JSON feed (acc_picker.js + report autocompletes)
-$routes->match(['get', 'post'], 'admin/billing/account_options', ['\App\Modules\Admin\Controllers\Billing', 'account_options']);
+$routes->match(['GET', 'POST'], 'admin/billing/account_options', ['\App\Modules\Admin\Controllers\Billing', 'account_options']);
 
 // Reports — Account Ledger (GET page / POST JSON feed)
-$routes->match(['get', 'post'], 'admin/report/ledger', ['\App\Modules\Admin\Controllers\Report', 'ledger']);
+$routes->match(['GET', 'POST'], 'admin/report/ledger', ['\App\Modules\Admin\Controllers\Report', 'ledger']);
 // Reports — Rokad Parcha (daily cash book) + drag-drop group move
-$routes->match(['get', 'post'], 'admin/report/rokad_parcha', ['\App\Modules\Admin\Controllers\Report', 'rokad_parcha']);
+$routes->match(['GET', 'POST'], 'admin/report/rokad_parcha', ['\App\Modules\Admin\Controllers\Report', 'rokad_parcha']);
 $routes->post('admin/report/rokad_parcha_move', ['\App\Modules\Admin\Controllers\Report', 'rokad_parcha_move']);
 // Reports — Account Report (search) + Account Statement (byaccount_name)
-$routes->match(['get', 'post'], 'admin/report/search', ['\App\Modules\Admin\Controllers\Report', 'search']);
-$routes->match(['get', 'post'], 'admin/report/byaccount_name', ['\App\Modules\Admin\Controllers\Report', 'byaccount_name']);
+$routes->match(['GET', 'POST'], 'admin/report/search', ['\App\Modules\Admin\Controllers\Report', 'search']);
+$routes->match(['GET', 'POST'], 'admin/report/byaccount_name', ['\App\Modules\Admin\Controllers\Report', 'byaccount_name']);
 // Reports — statement/ledger exports (CSV/Excel/Hindi PDF) + per-row modal
-$routes->match(['get', 'post'], 'admin/report/byaccount_name_export/(:segment)', ['\App\Modules\Admin\Controllers\Report', 'byaccount_name_export']);
+$routes->match(['GET', 'POST'], 'admin/report/byaccount_name_export/(:segment)', ['\App\Modules\Admin\Controllers\Report', 'byaccount_name_export']);
 $routes->get('admin/report/account_ledger_modal/(:num)', ['\App\Modules\Admin\Controllers\Report', 'account_ledger_modal']);
 $routes->get('admin/report/account_ledger_export/(:num)/(:segment)', ['\App\Modules\Admin\Controllers\Report', 'account_ledger_export']);
 // Reports — Deleted Rokad Entries (trash + restore)
@@ -263,7 +263,7 @@ $routes->post('admin/account_name/restore', [Account_name::class, 'restore']);
 $routes->post('admin/account_name/quick_update', [Account_name::class, 'quick_update']);
 
 // GST default-rate settings (super-admin)
-$routes->match(['get', 'post'], 'admin/gst_setting', [Gst_setting::class, 'index']);
+$routes->match(['GET', 'POST'], 'admin/gst_setting', [Gst_setting::class, 'index']);
 
 // Rice Mill Website Inquiries
 $routes->get('admin/ricemill_inquiry/listing', [Ricemill_inquiry::class, 'listing']);
@@ -295,8 +295,8 @@ $routes->post('admin/device/delete', [Device::class, 'delete']);
 $routes->get('admin/document/listing', [Document::class, 'listing']);
 $routes->get('admin/document', [Document::class, 'listing']);
 $routes->post('admin/document/view_all', [Document::class, 'view_all']);
-$routes->match(['get', 'post'], 'admin/document/add', [Document::class, 'add']);
-$routes->match(['get', 'post'], 'admin/document/edit/(:segment)', [Document::class, 'edit']);
+$routes->match(['GET', 'POST'], 'admin/document/add', [Document::class, 'add']);
+$routes->match(['GET', 'POST'], 'admin/document/edit/(:segment)', [Document::class, 'edit']);
 $routes->get('admin/document/download/(:segment)', [Document::class, 'download']);
 $routes->post('admin/document/delete', [Document::class, 'delete']);
 
@@ -304,8 +304,8 @@ $routes->post('admin/document/delete', [Document::class, 'delete']);
 $routes->get('admin/letter_pad/listing', [Letter_pad::class, 'listing']);
 $routes->get('admin/letter_pad', [Letter_pad::class, 'listing']);
 $routes->post('admin/letter_pad/listing_data', [Letter_pad::class, 'listing_data']);
-$routes->match(['get', 'post'], 'admin/letter_pad/add', [Letter_pad::class, 'add']);
-$routes->match(['get', 'post'], 'admin/letter_pad/edit/(:segment)', [Letter_pad::class, 'edit']);
+$routes->match(['GET', 'POST'], 'admin/letter_pad/add', [Letter_pad::class, 'add']);
+$routes->match(['GET', 'POST'], 'admin/letter_pad/edit/(:segment)', [Letter_pad::class, 'edit']);
 $routes->get('admin/letter_pad/pdf/(:segment)', [Letter_pad::class, 'pdf']);
 $routes->get('admin/letter_pad/download/(:segment)', [Letter_pad::class, 'download']);
 $routes->post('admin/letter_pad/delete', [Letter_pad::class, 'delete']);
@@ -314,12 +314,12 @@ $routes->post('admin/letter_pad/delete', [Letter_pad::class, 'delete']);
 $routes->get('admin/app_update/listing', [App_update::class, 'listing']);
 $routes->get('admin/app_update', [App_update::class, 'listing']);
 $routes->post('admin/app_update/versions_data', [App_update::class, 'versions_data']);
-$routes->match(['get', 'post'], 'admin/app_update/upload', [App_update::class, 'upload']);
+$routes->match(['GET', 'POST'], 'admin/app_update/upload', [App_update::class, 'upload']);
 $routes->post('admin/app_update/toggle_status', [App_update::class, 'toggle_status']);
 $routes->post('admin/app_update/flag_toggle', [App_update::class, 'flag_toggle']);
 $routes->post('admin/app_update/mark_latest', [App_update::class, 'mark_latest']);
 $routes->post('admin/app_update/delete', [App_update::class, 'delete']);
 $routes->get('admin/app_update/download/(:num)', [App_update::class, 'download']);
-$routes->match(['get', 'post'], 'admin/app_update/settings', [App_update::class, 'settings']);
+$routes->match(['GET', 'POST'], 'admin/app_update/settings', [App_update::class, 'settings']);
 $routes->get('admin/app_update/logs', [App_update::class, 'logs']);
 $routes->get('admin/app_update/portal', [App_update::class, 'portal']);
