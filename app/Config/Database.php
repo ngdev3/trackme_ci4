@@ -275,6 +275,22 @@ class Database extends Config
             $this->challan['password'] = 'BhUyY8x#';
             $this->challan['database'] = 'u930296518_challan';
             $this->challan['DBDebug']  = $debug;
+        } else {
+            // Local / non-production host (or CLI): force the XAMPP/Laragon dev
+            // MySQL (root@127.0.0.1, no password) even though .env now carries the
+            // live server credentials. This keeps local development working — the
+            // server user u930296518_admin only exists on the Hostinger box.
+            $this->default['hostname'] = '127.0.0.1';
+            $this->default['username'] = 'root';
+            $this->default['password'] = '';
+
+            $this->old['hostname'] = '127.0.0.1';
+            $this->old['username'] = 'root';
+            $this->old['password'] = '';
+
+            $this->challan['hostname'] = '127.0.0.1';
+            $this->challan['username'] = 'root';
+            $this->challan['password'] = '';
         }
     }
 }
