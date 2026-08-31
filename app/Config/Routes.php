@@ -3,11 +3,9 @@
 use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
-// Root → the ERP. Authenticated users land on the dashboard; the adminAuth
-// filter bounces guests to admin/auth/login. (Replaces the default CI4 welcome.)
-$routes->get('/', static function () {
-    return redirect()->to('admin/dashboard');
-});
+// Root → the public rice-mill marketing website (same as the CI3 default
+// controller `ricemill`). Admin login is reached via the site's Admin Login link.
+$routes->get('/', '\App\Modules\Ricemill\Controllers\Ricemill::index');
 
 // --- P0 foundation self-test (remove before go-live) ---------------------
 $routes->get('health', 'Health::index');

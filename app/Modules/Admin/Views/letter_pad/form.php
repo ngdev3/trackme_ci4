@@ -1,8 +1,7 @@
 <?php
 $is_edit = !empty($result);
 $v = function ($field, $default = '') use ($result) {
-    $CI = &get_instance();
-    $posted = $CI->input->post($field);
+    $posted = service('request')->getPost($field);
     if ($posted !== null) {
         return $posted; // re-render after a failed validation keeps what was typed
     }
@@ -107,7 +106,7 @@ $default_sign_name = strtoupper(trim((isset($me->first_name) ? $me->first_name :
                     <section class="lp-panel">
                         <h5>Letter Details
                             <?php if ($is_edit && !empty($result->letter_no)): ?>
-                                <span class="lp-no-chip" title="Unique letter number — printed on the letter with a verification QR code"><i class="fa fa-qrcode"></i> <?= html_escape($result->letter_no) ?></span>
+                                <span class="lp-no-chip" title="Unique letter number — printed on the letter with a verification QR code"><i class="fa fa-qrcode"></i> <?= esc($result->letter_no) ?></span>
                             <?php endif; ?>
                         </h5>
                         <p class="lp-panel-sub">Firm details load automatically from the firm master — nothing is typed twice.<?= $is_edit ? '' : ' A unique letter number + verification QR code are assigned when you save.' ?></p>
@@ -119,46 +118,46 @@ $default_sign_name = strtoupper(trim((isset($me->first_name) ? $me->first_name :
                                     <option value="">— Select firm —</option>
                                     <?php foreach ($firm_templates as $t): ?>
                                         <option value="<?= (int) $t->template_id ?>" <?= ((string) $sel_template === (string) $t->template_id) ? 'selected' : '' ?>>
-                                            <?= html_escape($t->firm_name) ?> (<?= html_escape($t->FY) ?> — <?= html_escape($t->template_name) ?>)
+                                            <?= esc($t->firm_name) ?> (<?= esc($t->FY) ?> — <?= esc($t->template_name) ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="lp-field">
                                 <label>Letter Date <span class="lp-req">*</span> <small style="text-transform:none;font-weight:700;color:#8a97aa;">(today to +7 days)</small></label>
-                                <input type="date" name="letter_date" value="<?= html_escape($letter_date) ?>" min="<?= $date_min ?>" max="<?= $date_max ?>" required>
+                                <input type="date" name="letter_date" value="<?= esc($letter_date) ?>" min="<?= $date_min ?>" max="<?= $date_max ?>" required>
                             </div>
                         </div>
 
                         <div class="lp-field">
                             <label>To / Recipient (Name &amp; Address)</label>
-                            <textarea name="recipient" id="lp-recipient" rows="3" placeholder="The Branch Manager,&#10;State Bank of India,&#10;Shahabad, Hardoi (U.P.)"><?= html_escape($v('recipient')) ?></textarea>
+                            <textarea name="recipient" id="lp-recipient" rows="3" placeholder="The Branch Manager,&#10;State Bank of India,&#10;Shahabad, Hardoi (U.P.)"><?= esc($v('recipient')) ?></textarea>
                         </div>
 
                         <div class="lp-field-row">
                             <div class="lp-field">
                                 <label>Letter Title / Ref <span class="lp-req">*</span></label>
-                                <input type="text" name="title" maxlength="255" value="<?= html_escape($v('title')) ?>" placeholder="e.g. LTR/2026/014 or Bank Request Letter" required>
+                                <input type="text" name="title" maxlength="255" value="<?= esc($v('title')) ?>" placeholder="e.g. LTR/2026/014 or Bank Request Letter" required>
                             </div>
                             <div class="lp-field">
                                 <label>Subject</label>
-                                <input type="text" name="subject" maxlength="255" value="<?= html_escape($v('subject')) ?>" placeholder="Subject line printed on the letter">
+                                <input type="text" name="subject" maxlength="255" value="<?= esc($v('subject')) ?>" placeholder="Subject line printed on the letter">
                             </div>
                         </div>
 
                         <div class="lp-field">
                             <label>Letter Body <span class="lp-req">*</span></label>
-                            <textarea name="content" id="lp-content" style="display:none;"><?= html_escape($v('content')) ?></textarea>
+                            <textarea name="content" id="lp-content" style="display:none;"><?= esc($v('content')) ?></textarea>
                         </div>
 
                         <div class="lp-field-row">
                             <div class="lp-field">
                                 <label>Signature Name</label>
-                                <input type="text" name="signature_name" maxlength="255" value="<?= html_escape($v('signature_name', $default_sign_name)) ?>" placeholder="Blank = Authorised Signatory">
+                                <input type="text" name="signature_name" maxlength="255" value="<?= esc($v('signature_name', $default_sign_name)) ?>" placeholder="Blank = Authorised Signatory">
                             </div>
                             <div class="lp-field">
                                 <label>Signature Designation</label>
-                                <input type="text" name="signature_designation" maxlength="255" value="<?= html_escape($v('signature_designation', 'PARTNER')) ?>" placeholder="e.g. PARTNER / MANAGER">
+                                <input type="text" name="signature_designation" maxlength="255" value="<?= esc($v('signature_designation', 'PARTNER')) ?>" placeholder="e.g. PARTNER / MANAGER">
                             </div>
                         </div>
 
@@ -184,10 +183,10 @@ $default_sign_name = strtoupper(trim((isset($me->first_name) ? $me->first_name :
                                         <img class="lp-verify-qr" id="lp-qr-img" src="<?= $letter_qr ?>" alt="Verification QR" title="Click to zoom">
                                     <?php endif; ?>
                                     <div class="lp-verify-meta">
-                                        <div class="lp-verify-no"><?= html_escape($result->letter_no) ?></div>
+                                        <div class="lp-verify-no"><?= esc($result->letter_no) ?></div>
                                         <p>This number + QR code print on the letterhead of every page. Anyone can scan it to confirm the letter is genuine.</p>
                                         <?php if (!empty($verify_url)): ?>
-                                            <a href="<?= html_escape($verify_url) ?>" target="_blank" rel="noopener"><i class="fa fa-external-link"></i> Open verification page</a>
+                                            <a href="<?= esc($verify_url) ?>" target="_blank" rel="noopener"><i class="fa fa-external-link"></i> Open verification page</a>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -212,7 +211,7 @@ $default_sign_name = strtoupper(trim((isset($me->first_name) ? $me->first_name :
         <div class="lp-qr-overlay" id="lp-qr-overlay" title="Click to close">
             <div class="lp-qr-overlay-card">
                 <img src="<?= $letter_qr ?>" alt="Verification QR (large)">
-                <div class="lp-qr-overlay-no"><?= html_escape($result->letter_no) ?></div>
+                <div class="lp-qr-overlay-no"><?= esc($result->letter_no) ?></div>
                 <div class="lp-qr-overlay-hint">Scan with any phone camera to open the verification page &bull; click anywhere to close</div>
             </div>
         </div>

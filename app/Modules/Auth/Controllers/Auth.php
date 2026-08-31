@@ -26,8 +26,9 @@ class Auth extends BaseController
             return redirect()->to(site_url('admin/dashboard'));
         }
         return view('\App\Modules\Auth\Views\login', [
-            'error'    => session()->getFlashdata('error'),
+            'title'    => 'Track (The Rest Accounting Key) || Login',
             'redirect' => $this->request->getGet('redirect'),
+            'timeout'  => $this->request->getGet('timeout'),
         ]);
     }
 
@@ -70,8 +71,73 @@ class Auth extends BaseController
         // Load the firm/FY context now (CI3 validate_admin_login()).
         service('fyContext')->loadFirmContext();
 
-        $redirect = $this->request->getPost('redirect');
-        return redirect()->to($redirect ? site_url($redirect) : site_url('admin/dashboard'));
+        // Normalise the post-login redirect. Strip a leading slash and any stale
+        // base-subfolder prefix (e.g. "trackme_ci4/public/…" from an old link) so
+        // site_url() can't double-prefix it. Only same-app relative paths allowed.
+        $redirect = ltrim((string) $this->request->getPost('redirect'), '/');
+        $basePath = trim((string) parse_url(base_url(), PHP_URL_PATH), '/');
+        if ($basePath !== '' && strpos($redirect, $basePath . '/') === 0) {
+            $redirect = substr($redirect, strlen($basePath) + 1);
+        }
+        if (strpos($redirect, '//') !== false || preg_match('#^[a-z][a-z0-9+.-]*:#i', $redirect)) {
+            $redirect = ''; // reject protocol-relative / absolute URLs
+        }
+        return redirect()->to($redirect !== '' ? site_url($redirect) : site_url('admin/dashboard'));
+    }
+
+    /**
+     * Forgot password — CI3 admin/Auth::forgot(). GET shows the form; POST looks
+     * up the account, issues a temporary password (forcing a change at next
+     * login), and texts it via MSG91. On SMS failure the password is rolled back.
+     */
+    public function forgot()
+    {
+        if (service('fyContext')->isLoggedIn()) {
+            return redirect()->to(site_url('admin/dashboard'));
+        }
+
+        if (strtoupper($this->request->getMethod()) === 'POST') {
+            if (! $this->validate(['email' => 'trim|required|valid_email'])) {
+                return redirect()->to(site_url('admin/auth/forgot'))
+                    ->with('error', 'Please enter correct Email Address.');
+            }
+
+            helper('sms'); // generate_password + msg91_send_template
+            $email = (string) $this->request->getPost('email');
+            $user  = (new AuthModel())->forgotLookup($email);
+
+            if (! $user) {
+                return redirect()->to(site_url('admin/auth/forgot'))
+                    ->with('error', 'Please enter correct Email Address.');
+            }
+            if (empty($user->mobile)) {
+                return redirect()->to(site_url('admin/auth/forgot'))
+                    ->with('error', 'Mobile number is not linked with this Email Address. Please contact admin.');
+            }
+
+            $model        = new AuthModel();
+            $newPassword  = generate_password();
+            if (! $model->updatePasswordOnForgot((int) $user->id, $newPassword)) {
+                return redirect()->to(site_url('admin/auth/forgot'))
+                    ->with('error', 'Password could not be reset. Please try again.');
+            }
+
+            $sms = msg91_send_template($user->mobile, 'Password', ['password' => $newPassword]);
+            if (empty($sms['status'])) {
+                // Roll back so the old password keeps working.
+                $model->restorePasswordOnForgot((int) $user->id, (string) $user->password);
+                log_message('error', 'Admin forgot password SMS failed for user ID ' . $user->id . ': ' . json_encode($sms));
+                $msg = ! empty($sms['message']) ? $sms['message'] : 'SMS could not be sent. Please contact admin.';
+                return redirect()->to(site_url('admin/auth/forgot'))->with('error', $msg);
+            }
+
+            return redirect()->to(site_url('admin/auth/login'))
+                ->with('success', 'A temporary password has been sent to your registered mobile number. Log in with that password below — you will then be asked to set your own new password.');
+        }
+
+        return view('\App\Modules\Auth\Views\forgot', [
+            'title' => 'Track (The Rest Accounting Key) || Forgot',
+        ]);
     }
 
     /** Logout — clear the admin session. */

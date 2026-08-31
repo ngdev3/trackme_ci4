@@ -1,101 +1,105 @@
 <?php
 /**
- * Sidebar menu — CI4 port, mirroring the CI3 super-admin left_menu.php
- * (application/views/elements/left_menu.php). Same top-level modules, order,
- * labels and sub-links. Each group is RBAC-gated: a super admin sees everything;
- * a regular user sees a group only if erp_current_user_can(<rbac>, 'view').
- * Groups whose rbac key is null are super-admin-only admin tools.
+ * Sidebar menu — CI4 port that mirrors the CI3 SUPER-ADMIN left_menu.php
+ * (application/views/elements/left_menu.php) EXACTLY: same top-level items, the
+ * same order, the same labels and the same sub-links. A super admin sees every
+ * group; a regular user sees a group only if erp_current_user_can(<rbac>,'view')
+ * (rbac null = super-admin-only admin tool). Cold-storage groups appear only for
+ * product_type 3 firms, exactly as CI3.
  *
- * As controllers are ported their links resolve; until then a link may 404 —
- * the structure + names + RBAC gating are what this mirrors.
+ * A small red "NEW" badge marks links whose CI4 route is live (migration aid);
+ * it never changes the list itself.
  */
 helper(['url', 'permission']);
 
-$seg2  = strtolower(service('uri')->getSegment(2, ''));
-$isSA  = function_exists('erp_is_super_admin') && erp_is_super_admin();
-$can   = function ($rbac) use ($isSA) {
+$seg1 = strtolower(service('uri')->getSegment(1, ''));
+$seg2 = strtolower(service('uri')->getSegment(2, ''));
+$isSA = function_exists('erp_is_super_admin') && erp_is_super_admin();
+$can  = function ($rbac) use ($isSA) {
     if ($isSA) { return true; }
     return $rbac && function_exists('erp_current_user_can') && erp_current_user_can($rbac, 'view');
 };
-$u = fn($p) => base_url('admin/' . $p);
+$pt   = (int) (function_exists('fy') && fy() ? (fy()->product_type ?? 0) : 0);
 
-/**
- * Controllers already ported to CI4 → show a "NEW" badge so it's obvious which
- * modules are live in the new project. Add keys here as more controllers land.
- */
-$ready = ['dashboard', 'notification', 'users', 'role_permissions', 'user_permissions', 'invoice', 'seo', 'hsn', 'profile', 'help', 'attachments', 'app_setting', 'entry_trace', 'menu_order', 'item_master', 'web_push', 'account_name', 'gst_setting', 'ricemill_inquiry', 'billing_register', 'traffic', 'device', 'document', 'letter_pad', 'app_update',
-    // Ported + verified (finance registers, ops, HR, lot/cold/kisan) — listing slices live on CI4:
-    'taxinvoice', 'uninvoice', 'payment_receipt', 'cd_note', 'purchase_module', 'delivery_challan', 'bank_password',
-    'stock', 'lot_system', 'paddylotsystem', 'kisanreg', 'kisan_vahi',
-    'driver_module', 'truck_module', 'attendance', 'salary_module', 'cold_lot_system',
-    'city', 'state', 'tax'];
-$ctrlOf = fn($uri) => strtolower(explode('/', $uri)[0]);
-$isNew  = fn($ctrl) => in_array(strtolower($ctrl), $ready, true);
-$NEW    = '<span class="menu-new">NEW</span>';
+// URL builder: '/xxx' → root-relative, 'http…' → as-is, else admin/-prefixed.
+$mkUrl = function ($uri) {
+    if ($uri === '' || $uri === '#' || $uri === '#soon' || $uri === '---') { return 'javascript:void(0);'; }
+    if (strpos($uri, 'http') === 0) { return $uri; }
+    if ($uri[0] === '/') { return base_url(ltrim($uri, '/')); }
+    return base_url('admin/' . $uri);
+};
 
-/**
- * Precise "works on CI4" whitelist — a NEW badge is shown only for a menu link
- * whose EXACT uri resolves to a ported route (verified by smoke test). This
- * stops the controller-level badge from marking unported sub-methods (add/edit/
- * position/report/…) that would 404. Keys are lowercased 'ctrl/method' (or a
- * single segment for one-word pages). Add here as more methods are ported.
- */
+/* Controllers/links already live on CI4 → show a red "NEW" badge. Precise URI
+   whitelist so the badge never marks an unported sub-method that would 404. */
 $readyUris = [
-    'dashboard', 'hsn/listing', 'invoice/listing', 'invoice/add', 'taxinvoice/listing', 'uninvoice/listing',
-    'payment_receipt/listing', 'cd_note/listing', 'purchase_module/listing', 'delivery_challan/listing',
-    'bank_password/listing', 'stock/listing', 'lot_system/listing', 'paddylotsystem/listing',
-    'kisanreg/listing', 'kisan_vahi/listing', 'driver_module/listing', 'driver_module/add', 'truck_module/listing', 'truck_module/add',
-    'attendance/listing', 'attendance/add', 'salary_module/listing', 'salary_module/add', 'cold_lot_system/listing',
-    'account/entry', 'account_name/listing', 'accounts_report', 'attachments', 'billing_register/listing',
-    'document/listing', 'document/add', 'notification/listing', 'item_master/listing',
-    'ricemill_inquiry/listing', 'gst_setting',
-    // report/search excluded: parallel-work controller bug (undefined $users) — not badged until fixed by its owner.
+    'dashboard', 'help', 'hsn/listing', 'item_master/listing',
+    'invoice/listing', 'invoice/add', 'taxinvoice/e_invoice_add', 'taxinvoice/einvoice_listing',
+    'uninvoice/listing', 'uninvoice/add', 'payment_receipt/listing', 'payment_receipt/add',
+    'cd_note/listing', 'cd_note/add', 'purchase_module/listing', 'purchase_module/add',
+    'delivery_challan/listing', 'delivery_challan/add', 'bank_password/listing', 'bank_password/add', 'bank_password/history',
+    'stock/listing', 'stock/position', 'stock/statement', 'lot_system/listing', 'lot_system/add',
+    'paddylotsystem/listing', 'paddylotsystem/add', 'kisanreg/listing', 'kisan_vahi/register', 'kisan_vahi/entry', 'kisan_vahi/report',
+    'driver_module/listing', 'driver_module/add', 'truck_module/listing', 'truck_module/add',
+    'attendance/listing', 'attendance/add', 'attendance/employee_listing', 'salary_module/listing', 'salary_module/add',
+    'cold_lot_system/listing', 'account/entry', 'account_name/listing', 'account_name/add', 'accounts_report',
+    'attachments', 'billing_register/listing', 'billing_register/add', 'document/listing', 'document/add',
+    'notification/listing', 'ricemill_inquiry/listing', 'gst_setting', 'letter_pad/listing', 'letter_pad/add',
+    'app_update/listing', 'users/listing', 'users/add', 'role_permissions', 'user_permissions', 'seo', 'seo/generate',
     'report/byaccount_name', 'report/deleted_entries', 'report/ledger', 'report/rokad_parcha',
 ];
-$uriNew = fn($uri) => in_array(strtolower(trim((string) $uri, '/')), $readyUris, true);
+$uriNew = function ($uri) use ($readyUris) {
+    $u = strtolower(trim((string) $uri, '/'));
+    $u = explode('?', $u)[0];                 // drop query (e.g. account/entry?type=…)
+    return in_array($u, $readyUris, true);
+};
+$NEW = '<span class="menu-new">NEW</span>';
 
 /**
- * Each entry: 'label','icon','ctrl' (segment for active state),'rbac' (module key
- * or null = super-admin only), and either 'href' (single link) or 'items' => [label => uri].
+ * EXACT CI3 super-admin menu. Each entry:
+ *   'label','icon','ctrl' (active-state segment),'rbac' (module key | null),
+ *   optional 'firm3'=>true (only product_type 3), optional 'badge' (forced label),
+ *   and either 'href' (single link, full URL) or 'items' => [label => uri].
+ * Sub-item uris are admin/-relative unless they start with '/' (root) or 'http'.
+ * A label containing '↗' opens in a new tab; uri '#soon' renders a disabled item;
+ * uri '---' renders a separator line.
  */
 $menu = [
-    ['label' => 'Dashboard', 'icon' => 'fa-tachometer', 'ctrl' => 'dashboard', 'rbac' => 'dashboard', 'href' => $u('dashboard')],
-    ['label' => 'Help & FAQ', 'icon' => 'fa-question-circle', 'ctrl' => 'help', 'rbac' => null, 'href' => $u('help')],
-    ['label' => 'Documents Renewal', 'icon' => 'fa-refresh', 'ctrl' => 'document', 'rbac' => 'document', 'items' => ['Add Document' => 'document/add', 'Document List' => 'document/listing']],
+    ['label' => 'Help & FAQ', 'icon' => 'fa-question-circle', 'ctrl' => 'help', 'rbac' => null, 'href' => base_url('admin/help')],
+    ['label' => 'Documents Renewal', 'icon' => 'fa-refresh', 'ctrl' => 'document', 'rbac' => 'document', 'items' => ['Add Docs' => 'document/add', 'Listing' => 'document/listing']],
     ['label' => 'Letter Pad', 'icon' => 'fa-envelope-o', 'ctrl' => 'letter_pad', 'rbac' => 'letter_pad', 'items' => ['Create Letter' => 'letter_pad/add', 'Letters' => 'letter_pad/listing']],
-    ['label' => 'APK Manager', 'icon' => 'fa-android', 'ctrl' => 'app_update', 'rbac' => 'app_update', 'items' => ['Versions' => 'app_update/listing', 'Upload Build' => 'app_update/upload', 'Employee Portal' => 'app_update/portal', 'Download Logs' => 'app_update/logs', 'Settings' => 'app_update/settings']],
-    ['label' => 'Notification', 'icon' => 'fa-bell', 'ctrl' => 'notification', 'rbac' => 'notification', 'href' => $u('notification/listing')],
-    ['label' => 'Device Management', 'icon' => 'fa-mobile', 'ctrl' => 'device', 'rbac' => null, 'items' => ['Devices' => 'device/listing', 'Send Push' => 'device/send_push']],
-    ['label' => 'Tasks', 'icon' => 'fa-tasks', 'ctrl' => 'task', 'rbac' => null, 'href' => base_url('task')],
-    ['label' => 'Activity & Audit Monitor', 'icon' => 'fa-desktop', 'ctrl' => 'monitor', 'rbac' => null, 'href' => $u('monitor')],
-    ['label' => 'Password Manager', 'icon' => 'fa-key', 'ctrl' => 'bank_password', 'rbac' => 'bank_password', 'items' => ['Vault' => 'bank_password/listing', 'Add Credential' => 'bank_password/add', 'History' => 'bank_password/history']],
-    ['label' => 'Account Name', 'icon' => 'fa-address-book-o', 'ctrl' => 'account_name', 'rbac' => 'account_name', 'items' => ['Accounts' => 'account_name/listing', 'Add Account' => 'account_name/add']],
-    ['label' => 'FCI Driver', 'icon' => 'fa-id-card-o', 'ctrl' => 'driver_module', 'rbac' => 'driver_module', 'items' => ['Drivers' => 'driver_module/listing', 'Add Driver' => 'driver_module/add']],
-    ['label' => 'FCI Truck', 'icon' => 'fa-truck', 'ctrl' => 'truck_module', 'rbac' => 'truck_module', 'items' => ['Trucks' => 'truck_module/listing', 'Add Truck' => 'truck_module/add']],
-    ['label' => 'Attendance', 'icon' => 'fa-calendar-check-o', 'ctrl' => 'attendance', 'rbac' => 'attendance', 'items' => ['Employees' => 'attendance/employee_listing', 'Add Employee' => 'attendance/employee_add', 'Attendance' => 'attendance/listing', 'Mark Attendance' => 'attendance/add', 'Report' => 'attendance/report']],
-    ['label' => 'Jama Naam Voucher', 'icon' => 'fa-exchange', 'ctrl' => 'account', 'rbac' => 'account', 'href' => $u('account/entry')],
-    ['label' => 'Cold Lot System', 'icon' => 'fa-snowflake-o', 'ctrl' => 'cold_lot_system', 'rbac' => 'cold_lot_system', 'items' => ['Cold Lots' => 'cold_lot_system/listing', 'Add Lot' => 'cold_lot_system/add', 'Kisan' => 'cold_lot_system/kisan_listing', 'Employee' => 'cold_lot_system/employee_listing', 'Kisan Inventory Bill' => 'cold_lot_system/billing/kisan_inventory_bill/listing', 'Reports' => 'cold_lot_system/reports', 'Bank Statement' => 'cold_lot_system/bank_statement', 'Saved Statements' => 'cold_lot_system/bank_statement_listing', 'Statement Setting' => 'cold_lot_system/bank_statement_setting']],
-    ['label' => 'Cold Storage Inventory', 'icon' => 'fa-cube', 'ctrl' => 'cold_inventory', 'rbac' => 'cold_lot_system', 'items' => ['Overview' => 'cold_inventory/overview', 'By Variety' => 'cold_inventory/report/variety', 'Movement' => 'cold_inventory/report/movement']],
-    ['label' => 'Rice Mill Website', 'icon' => 'fa-leaf', 'ctrl' => 'kisan_vahi', 'rbac' => 'accountMapping', 'items' => ['Rice Mill Inquiry' => 'ricemill_inquiry/listing', 'Kisan Vahi Register' => 'kisan_vahi/register', 'Kisan Registration' => 'Kisanreg/listing', 'Kisan Reg Report' => 'Kisanreg/report', 'Kisan Vahi Entry' => 'kisan_vahi/entry', 'Account Mapping' => 'accountMapping/account_mapping', 'Thumb Figure' => 'accountMapping/thumb_figure', 'Farmer Captures' => 'accountMapping/captures', 'Kisan Vahi Report' => 'kisan_vahi/report', 'Extension Key' => 'kisan_vahi/extension']],
-    ['label' => 'Reports', 'icon' => 'fa-bar-chart', 'ctrl' => 'report', 'rbac' => 'report', 'items' => ['Search' => 'report/search', 'By Account' => 'report/byaccount_name', 'Ledger' => 'report/ledger', 'Rokad Parcha' => 'report/rokad_parcha', 'Deleted Entries' => 'report/deleted_entries', 'Attachments' => 'attachments']],
-    ['label' => 'Accounting Reports', 'icon' => 'fa-line-chart', 'ctrl' => 'accounts_report', 'rbac' => 'report', 'href' => $u('accounts_report')],
-    ['label' => 'Stock Records', 'icon' => 'fa-cubes', 'ctrl' => 'stock', 'rbac' => 'stock', 'items' => ['Add Stock' => 'stock/add', 'Stock List' => 'stock/listing', 'Position' => 'stock/position', 'Statement' => 'stock/statement', 'HSN Master' => 'hsn/listing', 'Item Master' => 'item_master/listing']],
-    ['label' => 'Bill Of Supply', 'icon' => 'fa-file-text-o', 'ctrl' => 'invoice', 'rbac' => 'invoice', 'items' => ['Bills' => 'invoice/listing', 'Add Bill' => 'invoice/add', 'Verify Logs' => 'invoice/verify_logs', 'PDF Theme' => 'pdf_theme/listing']],
-    ['label' => 'Credit/Debit Note', 'icon' => 'fa-exchange', 'ctrl' => 'cd_note', 'rbac' => 'cd_note', 'items' => ['CD Notes' => 'cd_note/listing', 'Add CD Note' => 'cd_note/add']],
-    ['label' => 'Unregistered BOS', 'icon' => 'fa-file-o', 'ctrl' => 'uninvoice', 'rbac' => 'uninvoice', 'items' => ['Bills' => 'uninvoice/listing', 'Add Bill' => 'uninvoice/add']],
-    ['label' => 'Delivery Challan', 'icon' => 'fa-truck', 'ctrl' => 'delivery_challan', 'rbac' => 'delivery_challan', 'items' => ['Challans' => 'delivery_challan/listing', 'Add Challan' => 'delivery_challan/add']],
-    ['label' => 'Billing Register', 'icon' => 'fa-book', 'ctrl' => 'billing_register', 'rbac' => 'report', 'items' => ['Register' => 'billing_register/listing', 'Add' => 'billing_register/add', 'Statement' => 'billing_register/statement']],
-    ['label' => 'E-Tax Invoice', 'icon' => 'fa-file-text', 'ctrl' => 'taxinvoice', 'rbac' => 'taxinvoice', 'items' => ['E-Invoice Add' => 'taxinvoice/e_invoice_add', 'E-Invoice List' => 'taxinvoice/einvoice_listing', 'GST Setting' => 'gst_setting']],
-    ['label' => 'Purchase From Farmers', 'icon' => 'fa-inr', 'ctrl' => 'payment_receipt', 'rbac' => 'payment_receipt', 'items' => ['Add Receipt' => 'payment_receipt/add', 'Receipts' => 'payment_receipt/listing']],
-    ['label' => 'Purchase Module', 'icon' => 'fa-shopping-cart', 'ctrl' => 'purchase_module', 'rbac' => 'purchase_module', 'items' => ['Add Purchase' => 'purchase_module/add', 'Purchases' => 'purchase_module/listing']],
-    ['label' => 'Sales Register', 'icon' => 'fa-tags', 'ctrl' => 'sale_module', 'rbac' => 'sale_module', 'href' => $u('sale_module/listing')],
-    ['label' => 'Lot System', 'icon' => 'fa-th-large', 'ctrl' => 'lot_system', 'rbac' => 'lot_system', 'items' => ['Lots' => 'lot_system/listing', 'Add Lot' => 'lot_system/add']],
-    ['label' => 'Paddy Center Challan', 'icon' => 'fa-leaf', 'ctrl' => 'paddylotsystem', 'rbac' => 'PaddyLotsystem', 'items' => ['Paddy Lots' => 'PaddyLotsystem/listing', 'Add Paddy Lot' => 'PaddyLotsystem/add']],
-    ['label' => 'Salary Module', 'icon' => 'fa-money', 'ctrl' => 'salary_module', 'rbac' => 'salary_module', 'items' => ['Salaries' => 'Salary_Module/listing', 'Add' => 'Salary_Module/add', 'History' => 'Salary_Module/history']],
-    ['label' => 'Users', 'icon' => 'fa-user-plus', 'ctrl' => 'users', 'rbac' => 'users', 'items' => ['Users' => 'users/listing', 'Add User' => 'users/add', 'Role Permissions' => 'role_permissions', 'User Permissions' => 'user_permissions']],
-    ['label' => 'Setting', 'icon' => 'fa-cog', 'ctrl' => 'setting', 'rbac' => 'setting', 'items' => ['Setting Hub' => 'setting/hub', 'Templates' => 'setting/listing', 'Add Template' => 'setting/add', 'Add Firm' => 'setting/add_firm', 'Change FY' => 'setting/change_fy', 'TDS/TCS' => 'setting/tds_tcs', 'MSP' => 'setting/msp', 'GSTIN' => 'gstin', 'Opening Balance' => 'opening_balance']],
-    ['label' => 'SEO & Search', 'icon' => 'fa-search', 'ctrl' => 'seo', 'rbac' => 'seo', 'items' => ['SEO Settings' => 'seo', 'Generate Files' => 'seo/generate']],
-    ['label' => 'App Settings', 'icon' => 'fa-sliders', 'ctrl' => 'app_setting', 'rbac' => null, 'href' => $u('app_setting')],
+    ['label' => 'APK Manager', 'icon' => 'fa-android', 'ctrl' => 'app_update', 'rbac' => 'app_update', 'items' => ['APK Manager' => 'app_update/listing', 'Upload APK' => 'app_update/upload', 'Download Portal' => 'app_update/portal', 'Download Logs' => 'app_update/logs', 'Settings' => 'app_update/settings']],
+    ['label' => 'Notification', 'icon' => 'fa-bell', 'ctrl' => 'notification', 'rbac' => 'notification', 'items' => ['Listing' => 'notification/listing']],
+    ['label' => 'Device Management', 'icon' => 'fa-mobile', 'ctrl' => 'device', 'rbac' => null, 'items' => ['Registered Devices' => 'device/listing', 'Send Notification' => 'device/send_push']],
+    ['label' => 'Tasks', 'icon' => 'fa-clipboard', 'ctrl' => 'task', 'rbac' => null, 'items' => ['All Tasks' => '/task/task', 'Add Task' => '/task/task/add']],
+    ['label' => 'Activity & Audit Monitor', 'icon' => 'fa-desktop', 'ctrl' => 'monitor', 'rbac' => null, 'items' => ['Overview' => 'monitor/overview', 'Page Traffic' => 'monitor/traffic', 'Entry Audit' => 'monitor/entries', 'Logins' => 'monitor/logins', 'Activity Timeline' => 'monitor/timeline', 'IP & Location' => 'monitor/ip_intel', 'Anomalies' => 'monitor/anomalies', 'Retention' => 'monitor/retention']],
+    ['label' => 'Password Manager', 'icon' => 'fa-lock', 'ctrl' => 'bank_password', 'rbac' => 'bank_password', 'items' => ['Listing' => 'bank_password/listing', 'Add' => 'bank_password/add', 'Export History' => 'bank_password/history']],
+    ['label' => 'Account Name', 'icon' => 'fa-address-book-o', 'ctrl' => 'account_name', 'rbac' => 'account_name', 'items' => ['Listing' => 'account_name/listing', 'Generate Account Name' => 'account_name/add']],
+    ['label' => 'FCI Driver', 'icon' => 'fa-id-card-o', 'ctrl' => 'driver_module', 'rbac' => 'driver_module', 'items' => ['Driver Listing' => 'driver_module/listing', 'Add Driver' => 'driver_module/add']],
+    ['label' => 'FCI Truck', 'icon' => 'fa-truck', 'ctrl' => 'truck_module', 'rbac' => 'truck_module', 'items' => ['Listing' => 'truck_module/listing', 'Add' => 'truck_module/add']],
+    ['label' => 'Attendance', 'icon' => 'fa-calendar-check-o', 'ctrl' => 'attendance', 'rbac' => 'attendance', 'items' => ['Employee Listing' => 'attendance/employee_listing', 'Add Employee' => 'attendance/employee_add', 'Attendance Listing' => 'attendance/listing', 'Mark Attendance' => 'attendance/add', 'Report' => 'attendance/report']],
+    ['label' => 'Jama Naam Voucher', 'icon' => 'fa-exchange', 'ctrl' => 'account', 'rbac' => 'account', 'items' => ['Jama (जमा)' => 'account/entry?type=deposit', 'Naam (नाम)' => 'account/entry?type=expenses']],
+    ['label' => 'Cold Lot System', 'icon' => 'fa-snowflake-o', 'ctrl' => 'cold_lot_system', 'rbac' => 'cold_lot_system', 'firm3' => true, 'items' => ['Cold Lot Listing' => 'cold_lot_system/listing', 'Add Cold Lot' => 'cold_lot_system/add', 'Kisan Accounts' => 'cold_lot_system/kisan_listing', 'Employee Accounts' => 'cold_lot_system/employee_listing', '——' => '---', 'Delivery Order (soon)' => '#soon', 'Billing — Kisan Bills' => 'cold_lot_system/billing/kisan_inventory_bill/listing', 'Inventory Control (soon)' => '#soon', 'Reports' => 'cold_lot_system/reports', 'Bank Stock Statement' => 'cold_lot_system/bank_statement', 'Saved Bank Statements' => 'cold_lot_system/bank_statement_listing', 'Bank Statement Settings' => 'cold_lot_system/bank_statement_setting']],
+    ['label' => 'Cold Storage Inventory', 'icon' => 'fa-cube', 'ctrl' => 'cold_inventory', 'rbac' => 'cold_lot_system', 'firm3' => true, 'items' => ['Overview' => 'cold_inventory/overview', 'Stock Position' => 'cold_inventory/report/variety', 'Movement Register' => 'cold_inventory/report/movement']],
+    ['label' => 'Rice Mill Website', 'icon' => 'fa-comments', 'ctrl' => 'ricemill_inquiry', 'rbac' => 'ricemill_inquiry', 'items' => ['Website Inquiries' => 'ricemill_inquiry/listing', 'View Website ↗' => '/ricemill']],
+    ['label' => 'Kisan Vahi', 'icon' => 'fa-leaf', 'ctrl' => 'kisan_vahi', 'rbac' => 'accountMapping', 'badge' => 'New', 'items' => ['Registration' => 'kisan_vahi/register', 'Registrations List' => 'Kisanreg/listing', 'Reg Report' => 'Kisanreg/report', 'Add Entry' => 'kisan_vahi/entry', 'Khata Naksha' => 'accountMapping/account_mapping', 'Thumb Figure' => 'accountMapping/thumb_figure', 'Farmer Captures' => 'accountMapping/captures', 'Parcha Report' => 'kisan_vahi/report', 'Chrome Extension' => 'kisan_vahi/extension']],
+    ['label' => 'Reports', 'icon' => 'fa-file-text-o', 'ctrl' => 'report', 'rbac' => 'report', 'items' => ['Account Report' => 'report/search', 'Account Statement' => 'report/byaccount_name', 'Account Ledger' => 'report/ledger', 'Daily Rokad Parcha' => 'report/rokad_parcha', 'Deleted Rokad Entries' => 'report/deleted_entries', 'Attachments Gallery' => 'attachments']],
+    ['label' => 'Accounting Reports', 'icon' => 'fa-bar-chart', 'ctrl' => 'accounts_report', 'rbac' => 'report', 'items' => ['Trial Balance' => 'accounts_report/trial_balance', 'Balance Sheet' => 'accounts_report/balance_sheet', 'Profit & Loss' => 'accounts_report/profit_loss', 'Trading Profit' => 'accounts_report/trading_profit', 'Outstanding' => 'accounts_report/outstanding', 'Debtor Report' => 'accounts_report/debtors', 'Creditor Report' => 'accounts_report/creditors', 'Ageing Report' => 'accounts_report/ageing', 'Sister-Firm Reconciliation' => 'accounts_report/inter_firm']],
+    ['label' => 'Stock Records', 'icon' => 'fa-cubes', 'ctrl' => 'stock', 'rbac' => 'stock', 'items' => ['Opening Stocks Details' => 'stock/listing', 'Stock Position' => 'stock/position', 'Stock Statement' => 'stock/statement', 'HSN Code Master' => 'hsn/listing', 'Item Master' => 'item_master/listing']],
+    ['label' => 'Bill Of Supply', 'icon' => 'fa-file-text-o', 'ctrl' => 'invoice', 'rbac' => 'invoice', 'items' => ['Listing' => 'invoice/listing', 'Add' => 'invoice/add', 'Verification Log' => 'invoice/verify_logs', 'PDF Theme Manager' => 'pdf_theme/listing']],
+    ['label' => 'Credit/Debit Note', 'icon' => 'fa-exchange', 'ctrl' => 'cd_note', 'rbac' => 'cd_note', 'items' => ['Listing' => 'cd_note/listing', 'Add' => 'cd_note/add']],
+    ['label' => 'Unregistered BOS', 'icon' => 'fa-file-o', 'ctrl' => 'uninvoice', 'rbac' => 'uninvoice', 'items' => ['Listing' => 'uninvoice/listing', 'Add' => 'uninvoice/add']],
+    ['label' => 'Delivery Challan', 'icon' => 'fa-truck', 'ctrl' => 'delivery_challan', 'rbac' => 'delivery_challan', 'items' => ['Listing' => 'delivery_challan/listing', 'Add' => 'delivery_challan/add']],
+    ['label' => 'Billing Register', 'icon' => 'fa-book', 'ctrl' => 'billing_register', 'rbac' => 'report', 'items' => ['Listing' => 'billing_register/listing', 'Add' => 'billing_register/add', 'Account Statement' => 'billing_register/statement']],
+    ['label' => 'E-Tax Invoice', 'icon' => 'fa-file-text', 'ctrl' => 'taxinvoice', 'rbac' => 'taxinvoice', 'items' => ['Add E-invoice' => 'taxinvoice/e_invoice_add', 'Listing E-Invoice' => 'taxinvoice/einvoice_listing', 'GST Settings' => 'gst_setting']],
+    ['label' => 'Purchase From Farmers', 'icon' => 'fa-inr', 'ctrl' => 'payment_receipt', 'rbac' => 'payment_receipt', 'items' => ['Add' => 'payment_receipt/add', 'Listing' => 'payment_receipt/listing']],
+    ['label' => 'Purchase Module', 'icon' => 'fa-shopping-cart', 'ctrl' => 'purchase_module', 'rbac' => 'purchase_module', 'items' => ['Add Bill' => 'purchase_module/add', 'Listing' => 'purchase_module/listing']],
+    ['label' => 'Sales Register', 'icon' => 'fa-tags', 'ctrl' => 'sale_module', 'rbac' => 'sale_module', 'items' => ['Listing' => 'sale_module/listing']],
+    ['label' => 'Lot System', 'icon' => 'fa-th-large', 'ctrl' => 'lot_system', 'rbac' => 'lot_system', 'items' => ['Listing' => 'lot_system/listing', 'Add' => 'lot_system/add']],
+    ['label' => 'Paddy Center Challan', 'icon' => 'fa-pencil-square-o', 'ctrl' => 'paddylotsystem', 'rbac' => 'PaddyLotsystem', 'items' => ['Listing' => 'PaddyLotsystem/listing', 'Add' => 'PaddyLotsystem/add']],
+    ['label' => 'Setting', 'icon' => 'fa-cog', 'ctrl' => 'setting', 'rbac' => 'setting', 'href' => base_url('admin/setting/hub')],
+    ['label' => 'Users', 'icon' => 'fa-users', 'ctrl' => 'users', 'rbac' => 'users', 'items' => ['Listing' => 'users/listing', 'Add' => 'users/add', 'Role Permissions' => 'role_permissions', 'User Permissions' => 'user_permissions']],
+    ['label' => 'Salary Module', 'icon' => 'fa-money', 'ctrl' => 'salary_module', 'rbac' => 'salary_module', 'items' => ['Listing' => 'Salary_Module/listing', 'Add' => 'Salary_Module/add', 'Credit History' => 'Salary_Module/history']],
+    ['label' => 'SEO & Search', 'icon' => 'fa-search', 'ctrl' => 'seo', 'rbac' => 'seo', 'items' => ['SEO Settings' => 'seo', 'Generate Sitemap' => 'seo/generate']],
 ];
 ?>
 <style>
@@ -104,14 +108,19 @@ $menu = [
         vertical-align: middle; line-height: 1.5; text-transform: uppercase;
         box-shadow: 0 0 0 1px rgba(220,38,38,.35); }
     .dropdown-menu .menu-new { background: #ef4444; }
+    .menu-badge-new { display:inline-block; margin-left:6px; padding:1px 6px; border-radius:9px;
+        background:#16a34a; color:#fff; font-size:9px; font-weight:800; letter-spacing:.04em;
+        vertical-align:middle; line-height:1.5; text-transform:uppercase; }
+    .sidebar-menu .menu-sep { list-style:none; border-top:1px solid rgba(255,255,255,.10); margin:6px 12px; padding:0; }
+    .sidebar-menu .is-soon > a { opacity:.45; cursor:not-allowed; }
 </style>
 <ul class="sidebar-menu scrollable pos-r">
     <?php foreach ($menu as $m): ?>
         <?php if (! $can($m['rbac'])) { continue; } ?>
-        <?php $active = ($seg2 !== '' && $seg2 === $m['ctrl']); ?>
+        <?php if (! empty($m['firm3']) && $pt !== 3) { continue; } ?>
+        <?php $active = ($seg2 !== '' && $seg2 === $m['ctrl']) || ($m['ctrl'] === 'task' && $seg1 === 'task'); ?>
         <?php
-        // A group is "ready" only if its own link OR a sub-item link actually
-        // resolves to a ported route (precise — no false NEW on unported methods).
+        // "NEW" on the group only if its own link OR a sub-link resolves on CI4.
         $groupNew = false;
         if (! empty($m['href'])) {
             $hrefUri = ltrim(str_replace(rtrim(base_url('admin'), '/') . '/', '', $m['href']), '/');
@@ -122,21 +131,29 @@ $menu = [
                 if ($uriNew($uri)) { $groupNew = true; break; }
             }
         }
+        $badge = ! empty($m['badge']) ? '<span class="menu-badge-new">' . esc($m['badge']) . '</span>' : '';
         ?>
         <?php if (! empty($m['href'])): ?>
             <li class="nav-item <?= $active ? 'btn_active' : '' ?>">
-                <a href="<?= $m['href'] ?>"><span class="icon-holder"><i class="c-red-500 fa <?= esc($m['icon']) ?>"></i></span><span class="title"><?= esc($m['label']) ?><?= $groupNew ? $NEW : '' ?></span></a>
+                <a href="<?= $m['href'] ?>"><span class="icon-holder"><i class="c-red-500 fa <?= esc($m['icon']) ?>"></i></span><span class="title"><?= esc($m['label']) ?><?= $badge ?><?= $groupNew ? $NEW : '' ?></span></a>
             </li>
         <?php else: ?>
             <li class="nav-item dropdown <?= $active ? 'open' : '' ?>">
                 <a class="dropdown-toggle" href="javascript:void(0);">
                     <span class="icon-holder"><i class="c-red-500 fa <?= esc($m['icon']) ?>"></i></span>
-                    <span class="title"><?= esc($m['label']) ?><?= $groupNew ? $NEW : '' ?></span>
+                    <span class="title"><?= esc($m['label']) ?><?= $badge ?><?= $groupNew ? $NEW : '' ?></span>
                     <span class="arrow"><i class="fa fa-angle-right"></i></span>
                 </a>
                 <ul class="dropdown-menu">
                     <?php foreach ($m['items'] as $label => $uri): ?>
-                        <li><a class="sidebar-link" href="<?= $u($uri) ?>"><?= esc($label) ?><?= $uriNew($uri) ? $NEW : '' ?></a></li>
+                        <?php if ($uri === '---'): ?>
+                            <li class="menu-sep"></li>
+                        <?php elseif ($uri === '#soon'): ?>
+                            <li class="is-soon"><a class="sidebar-link" href="javascript:void(0);" title="Planned module"><?= esc($label) ?></a></li>
+                        <?php else: ?>
+                            <?php $newTab = (strpos($label, '↗') !== false) ? ' target="_blank" rel="noopener"' : ''; ?>
+                            <li><a class="sidebar-link" href="<?= $mkUrl($uri) ?>"<?= $newTab ?>><?= esc($label) ?><?= $uriNew($uri) ? $NEW : '' ?></a></li>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 </ul>
             </li>

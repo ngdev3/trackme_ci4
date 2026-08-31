@@ -40,7 +40,10 @@ class AdminAuthFilter implements FilterInterface
         }
 
         if (! $fy->isLoggedIn()) {
-            $redirect = $request->getUri()->getPath();
+            // Route-relative path (e.g. "admin/dashboard") — NOT getUri()->getPath(),
+            // which includes the base subfolder (/trackme_ci4/public/…) and would be
+            // double-prefixed by site_url() after login.
+            $redirect = ltrim($request->getPath(), '/');
             return redirect()->to(site_url('admin/auth') . '?redirect=' . rawurlencode($redirect))
                 ->with('error', 'Please sign in to continue.');
         }

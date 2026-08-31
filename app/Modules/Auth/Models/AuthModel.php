@@ -68,4 +68,54 @@ class AuthModel
 
         return ['status' => 'success', 'result' => $row];
     }
+
+    /**
+     * Forgot-password lookup — CI3 admin/Auth_mod::forgot(). Returns the active
+     * super-admin (user_type==1) row for this email, or null.
+     */
+    public function forgotLookup(string $email): ?object
+    {
+        $db  = Database::connect();
+        $row = $db->table($this->userTable)
+            ->where('email', $email)
+            ->where('status', 'Active')
+            ->get()->getRow();
+
+        if (! $row || (int) $row->user_type !== 1) {
+            return null;
+        }
+        return $row;
+    }
+
+    /** Issue a temporary password and force a change at next login (CI3 parity). */
+    public function updatePasswordOnForgot(int $userId, string $password): bool
+    {
+        if ($userId <= 0 || $password === '') {
+            return false;
+        }
+        return (bool) Database::connect()->table($this->userTable)
+            ->where('id', $userId)
+            ->update([
+                'password' => md5($password),
+                'token' => '',
+                'token_valid' => '',
+                'is_reuired_to_change_password' => 1,
+                'remark' => $password,
+            ]);
+    }
+
+    /** Roll back the temporary password if the SMS could not be sent. */
+    public function restorePasswordOnForgot(int $userId, string $passwordHash): bool
+    {
+        if ($userId <= 0 || $passwordHash === '') {
+            return false;
+        }
+        return (bool) Database::connect()->table($this->userTable)
+            ->where('id', $userId)
+            ->update([
+                'password' => $passwordHash,
+                'is_reuired_to_change_password' => 0,
+                'remark' => '',
+            ]);
+    }
 }

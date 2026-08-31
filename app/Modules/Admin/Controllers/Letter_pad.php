@@ -109,7 +109,7 @@ class Letter_pad extends BaseController
 
         return _layout('\App\Modules\Admin\Views\letter_pad\form', [
             'title'  => $id ? 'Edit Letter' : 'Create Letter',
-            'row'    => $letter,
+            'result' => $letter,
             'firm_templates' => $model->getFirmTemplates(),
         ]);
     }
