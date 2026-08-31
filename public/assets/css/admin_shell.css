@@ -3081,3 +3081,35 @@
             padding-top: 346px !important;
          }
       }
+
+/* ============================================================================
+   Mobile/tablet responsive hardening (CI4). The fixed top-nav was resolving to
+   a 628px containing block on phones (sidebar width leaking in), forcing the
+   whole page to scroll sideways. Cap the header to the viewport, clip stray
+   horizontal page scroll, and let the firm chip truncate instead of overflow.
+   ============================================================================ */
+@media (max-width: 991px) {
+  html { overflow-x: hidden; }
+  body.app { overflow-x: hidden; max-width: 100vw; }
+
+  .header.navbar,
+  .header .header-container {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box;
+  }
+
+  .header .header-container .nav-right { max-width: 100% !important; min-width: 0; }
+  .header .header-container .nav-right > li { max-width: 100%; min-width: 0; }
+  .header .header-container .nav-right > li.fy-block { overflow: hidden; }
+  .header .header-container .nav-right > li.fy-block .fy-content {
+    display: inline-block; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle;
+  }
+  .session-meter { max-width: 100%; }
+
+  /* Any feature page: wide tables scroll within their own box, never the page. */
+  .main-content table, .page-content table { max-width: 100%; }
+}
