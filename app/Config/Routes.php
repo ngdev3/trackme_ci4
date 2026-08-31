@@ -3,7 +3,11 @@
 use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
-$routes->get('/', 'Home::index');
+// Root → the ERP. Authenticated users land on the dashboard; the adminAuth
+// filter bounces guests to admin/auth/login. (Replaces the default CI4 welcome.)
+$routes->get('/', static function () {
+    return redirect()->to('admin/dashboard');
+});
 
 // --- P0 foundation self-test (remove before go-live) ---------------------
 $routes->get('health', 'Health::index');
