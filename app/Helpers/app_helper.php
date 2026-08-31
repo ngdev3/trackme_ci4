@@ -332,3 +332,54 @@ if (! function_exists('fy_clamp_date')) {
         return $ymd;
     }
 }
+
+if (! function_exists('html_escape')) {
+    /**
+     * CI3-compatibility shim: html_escape() → CI4 esc(). Lets faithfully-ported
+     * CI3 views (which used html_escape) run unchanged. Handles arrays like CI3.
+     */
+    function html_escape($var)
+    {
+        if (is_array($var)) {
+            return array_map('html_escape', $var);
+        }
+        return esc((string) $var);
+    }
+}
+
+if (! function_exists('form_error')) {
+    /**
+     * CI3-compatibility shim: return the validation error for a field (empty if
+     * none), wrapped in the given markup. Reads CI4 validation errors from the
+     * session (set via redirect()->withInput()->with('errors', ...)).
+     */
+    function form_error($field = '', $open = '<span class="help-block" style="color:red">', $close = '</span>')
+    {
+        $errors = session('errors');
+        if (is_array($errors) && ! empty($errors[$field])) {
+            return $open . esc($errors[$field]) . $close;
+        }
+        return '';
+    }
+}
+
+if (! function_exists('get_flashdata')) {
+    /**
+     * CI3-compatibility shim: render session flash messages (success/error/
+     * warning/info) as Bootstrap alerts. Lets ported CI3 views that echo
+     * get_flashdata() run unchanged.
+     */
+    function get_flashdata()
+    {
+        $s = session();
+        $map = ['success' => 'success', 'error' => 'danger', 'warning' => 'warning', 'info' => 'info'];
+        $out = '';
+        foreach ($map as $key => $cls) {
+            $m = $s->getFlashdata($key);
+            if (! empty($m)) {
+                $out .= '<div class="alert alert-' . $cls . '" role="alert">' . $m . '</div>';
+            }
+        }
+        return $out;
+    }
+}
