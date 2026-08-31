@@ -24,6 +24,7 @@ use App\Modules\Admin\Controllers\Item_master;
 use App\Modules\Admin\Controllers\Account_name;
 use App\Modules\Admin\Controllers\Gst_setting;
 use App\Modules\Admin\Controllers\Ricemill_inquiry;
+use App\Modules\Admin\Controllers\Billing_register;
 
 $routes->get('admin/dashboard', [Dashboard::class, 'index']);
 
@@ -124,3 +125,9 @@ $routes->post('admin/ricemill_inquiry/view_all', [Ricemill_inquiry::class, 'view
 $routes->post('admin/ricemill_inquiry/update_status', [Ricemill_inquiry::class, 'update_status']);
 $routes->post('admin/ricemill_inquiry/add_remark', [Ricemill_inquiry::class, 'add_remark']);
 $routes->post('admin/ricemill_inquiry/delete', [Ricemill_inquiry::class, 'delete']);
+
+// Billing Register (report)
+$routes->get('admin/billing_register/listing', [Billing_register::class, 'listing']);
+$routes->get('admin/billing_register', [Billing_register::class, 'listing']);
+$routes->post('admin/billing_register/listing_data', [Billing_register::class, 'listing_data']);
+$routes->post('admin/billing_register/delete', [Billing_register::class, 'delete']);
