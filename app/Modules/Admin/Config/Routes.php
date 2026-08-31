@@ -262,6 +262,11 @@ $routes->post('admin/account_name/soft_delete', [Account_name::class, 'soft_dele
 $routes->post('admin/account_name/restore', [Account_name::class, 'restore']);
 $routes->post('admin/account_name/quick_update', [Account_name::class, 'quick_update']);
 
+// Setting — firm/FY workspace switch (top-nav Change Firm modal) + settings hub
+$routes->post('admin/setting/change_fy_id', ['\App\Modules\Admin\Controllers\Setting', 'change_fy_id']);
+$routes->get('admin/setting/hub', ['\App\Modules\Admin\Controllers\Setting', 'hub']);
+$routes->get('admin/setting', ['\App\Modules\Admin\Controllers\Setting', 'hub']);
+
 // GST default-rate settings (super-admin)
 $routes->match(['GET', 'POST'], 'admin/gst_setting', [Gst_setting::class, 'index']);
 

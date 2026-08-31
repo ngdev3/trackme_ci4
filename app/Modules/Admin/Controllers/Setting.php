@@ -3,62 +3,55 @@
 namespace App\Modules\Admin\Controllers;
 
 use App\Controllers\BaseController;
+use App\Modules\Admin\Models\SettingModel;
 
 /**
- * Setting — CI4 port slice: the Change Firm / Financial-Year switch used by the
- * top-nav modal (elements/setting.php). Mirrors CI3 Setting::change_fy_id:
- * persist users.default_firm, reload the firm/FY context, log the switch.
+ * Setting — CI4 port of the firm/FY workspace switch (CI3 Setting::change_fy_id)
+ * plus a Settings hub landing. change_fy_id is the endpoint the top-nav "Change
+ * Firm" modal (elements/setting.php) posts to; hub is the sidebar "Setting" link.
  */
 class Setting extends BaseController
 {
-    protected $helpers = ['url', 'app'];
+    protected $helpers = ['url', 'app', 'permission'];
 
-    /** AJAX: switch the active firm/FY. POST template_fy. Returns { status }. */
+    /** Switch the active firm/FY workspace (AJAX, from the Change Firm modal). */
     public function change_fy_id()
     {
-        $tid = (int) $this->request->getPost('template_fy');
-        if (! $tid) {
+        if (strtoupper($this->request->getMethod()) !== 'POST') {
+            return $this->response->setStatusCode(405)->setJSON(['status' => 'error', 'message' => 'POST required.']);
+        }
+
+        $templateId = (int) $this->request->getPost('template_fy');
+        $u = currentuserinfo();
+
+        if (empty($templateId) || ! $u || empty($u->id)) {
             session()->setFlashdata('error', 'Please select a valid Financial Year');
             return $this->response->setJSON(['status' => 'error']);
         }
 
-        $db  = \Config\Database::connect();
-        $tpl = $db->table('aa_template')->where('template_id', $tid)->get()->getRow();
-        if (! $tpl) {
-            return $this->response->setJSON(['status' => 'error']);
+        $m = new SettingModel();
+        $m->switchFirm((int) $u->id, $templateId);
+        $m->logSwitch((int) $u->id, $templateId, 'Web', $this->request->getIPAddress());
+
+        // Refresh the session user row (now carrying the new default_firm) and
+        // drop the cached firm context so FyContext re-resolves it next request.
+        $fresh = $m->reloadUser((string) $u->email);
+        if ($fresh) {
+            session()->set('userinfo', $fresh);
         }
+        session()->remove('fy');
 
-        $uid = (int) (currentuserinfo()->id ?? 0);
-
-        // 1) Persist the selection on the user (CI3 Setting_mod::add_fy).
-        $db->table('users')->where('id', $uid)->update(['default_firm' => $tid]);
-
-        // 2) Update the in-session user + reload the firm/FY row (CI3 getUserDetail).
-        $info = currentuserinfo();
-        if (is_object($info)) {
-            $info->default_firm = $tid;
-            session()->set('userinfo', $info);
-        }
-        service('fyContext')->loadFirmContext();
-
-        // 3) Switch audit log (CI3 log_template_switch) — lazy table, best-effort.
-        try {
-            $db->query("CREATE TABLE IF NOT EXISTS `aa_template_switch_log` (
-                `id` INT AUTO_INCREMENT PRIMARY KEY,
-                `user_id` INT NULL, `template_id` INT NULL,
-                `selected_at` DATETIME NULL, `ip_address` VARCHAR(45) NULL,
-                `source` VARCHAR(10) NULL,
-                KEY `idx_tsl_user` (`user_id`), KEY `idx_tsl_template` (`template_id`)) ENGINE=InnoDB");
-            $db->table('aa_template_switch_log')->insert([
-                'user_id' => $uid, 'template_id' => $tid,
-                'selected_at' => date('Y-m-d H:i:s'),
-                'ip_address' => $this->request->getIPAddress(), 'source' => 'Web',
-            ]);
-        } catch (\Throwable $e) {
-            // audit is non-critical
-        }
-
-        session()->setFlashdata('success', 'Firm Loaded Successfully !!');
+        session()->setFlashdata('cr_toast', ['type' => 'success', 'message' => 'Firm Loaded Successfully !!']);
         return $this->response->setJSON(['status' => 'success']);
+    }
+
+    /** Settings landing hub — current workspace + links to available settings. */
+    public function hub()
+    {
+        return _layout('\App\Modules\Admin\Views\setting\hub', [
+            'title'   => 'Settings · C R Industries ERP',
+            'firm'    => service('fyContext')->fyRow(),
+            'firms'   => (new SettingModel())->financialYears(),
+        ]);
     }
 }
