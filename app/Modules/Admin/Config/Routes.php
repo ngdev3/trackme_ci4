@@ -271,6 +271,14 @@ $routes->get('admin/setting', ['\App\Modules\Admin\Controllers\Setting', 'hub'])
 $routes->match(['GET', 'POST'], 'admin/seo', ['\App\Modules\Admin\Controllers\Seo', 'index']);
 $routes->get('admin/seo/generate', ['\App\Modules\Admin\Controllers\Seo', 'generate']);
 
+// Cold Storage Inventory (read-only, derived from cls_* — no own tables)
+$routes->get('admin/cold_inventory', ['\App\Modules\Admin\Controllers\Cold_inventory', 'overview']);
+$routes->get('admin/cold_inventory/overview', ['\App\Modules\Admin\Controllers\Cold_inventory', 'overview']);
+$routes->get('admin/cold_inventory/report/(:segment)', ['\App\Modules\Admin\Controllers\Cold_inventory', 'report/$1']);
+$routes->get('admin/cold_inventory/report', ['\App\Modules\Admin\Controllers\Cold_inventory', 'report']);
+$routes->get('admin/cold_inventory/report_pdf/(:segment)', ['\App\Modules\Admin\Controllers\Cold_inventory', 'report_pdf/$1']);
+$routes->get('admin/cold_inventory/report_csv/(:segment)', ['\App\Modules\Admin\Controllers\Cold_inventory', 'report_csv/$1']);
+
 // GST default-rate settings (super-admin)
 $routes->match(['GET', 'POST'], 'admin/gst_setting', [Gst_setting::class, 'index']);
 
