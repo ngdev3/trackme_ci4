@@ -269,6 +269,7 @@ $routes->get('admin/accounts_report/inter_firm', ['\App\Modules\Admin\Controller
 
 // Account Master (account_name) — listing slice (P6 master)
 $routes->get('admin/account_name/listing', [Account_name::class, 'listing']);
+$routes->match(['GET', 'POST'], 'admin/account_name/add', [Account_name::class, 'add']);
 $routes->get('admin/account_name', [Account_name::class, 'listing']);
 $routes->post('admin/account_name/view_all', [Account_name::class, 'view_all']);
 $routes->post('admin/account_name/updateStatus', [Account_name::class, 'updateStatus']);

@@ -193,4 +193,19 @@ class AccountNameModel
         }
         return $out;
     }
+
+    /** Insert a new account (aa_account_name). Returns the new account_id. */
+    public function add(array $data): int
+    {
+        $this->db()->table($this->table)->insert($data);
+        return (int) $this->db()->insertID();
+    }
+
+    /** True if an active (non-deleted) account already uses this exact name. */
+    public function nameExists(string $name): bool
+    {
+        return $this->db()->table($this->table)
+            ->where('name', $name)->where('status <>', 'Delete')
+            ->countAllResults() > 0;
+    }
 }
