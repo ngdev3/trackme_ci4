@@ -19,6 +19,30 @@ class App extends BaseConfig
     public string $baseURL = 'http://localhost:8080/';
 
     /**
+     * Production URL auto-switch. The live deploy is https://challan.org
+     * (Hostinger, HTTPS, domain root). Because .env is gitignored it is NOT
+     * shipped by git auto-pull, so without this the server would fall back to
+     * the localhost default and every generated URL/asset would break. When
+     * served from a known production host we build the base URL from the live
+     * request (https://<host>/) and drop index.php (the root + public .htaccess
+     * give clean URLs). Local dev is untouched: its host is not production, so
+     * the .env baseURL is used as before.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        $host = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? '');
+        if ($host !== '' && (str_contains($host, 'challan.org') || str_contains($host, 'thecrindustries.com'))) {
+            $https = (! empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || (($_SERVER['SERVER_PORT'] ?? '') == 443)
+                || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+            $this->baseURL   = ($https ? 'https' : 'http') . '://' . $host . '/';
+            $this->indexPage = '';
+        }
+    }
+
+    /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.
      * If you want to accept multiple Hostnames, set this.
      *
