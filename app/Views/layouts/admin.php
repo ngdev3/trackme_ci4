@@ -63,33 +63,7 @@ $toast = session()->getFlashdata('cr_toast');
 
         <!-- Page container -->
         <div class="page-container">
-            <div class="header navbar">
-                <div class="header-container">
-                    <ul class="nav-left">
-                        <li><a id="sidebar-toggle" class="sidebar-toggle" href="javascript:void(0);"><i class="ti-menu"></i></a></li>
-                    </ul>
-                    <ul class="nav-right">
-                        <li class="fy-block">
-                            <span class="fy-content">
-                                <i class="ti-briefcase"></i>&nbsp;
-                                <strong><?= esc($firm->firm_name ?? '—') ?></strong>
-                                &nbsp;·&nbsp; FY <?= esc($ctx->fyYear() ?? '—') ?>
-                                &nbsp;·&nbsp; Firm #<?= esc($ctx->templateId() ?? '—') ?>
-                            </span>
-                        </li>
-                        <li class="profile-block">
-                            <span class="fy-content">
-                                <i class="ti-user"></i>&nbsp;
-                                <?= esc(trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''))) ?: 'User' ?>
-                                <?php if ($ctx->isSuperAdmin()): ?><span class="label label-warning" style="margin-left:6px">SUPER</span><?php endif; ?>
-                            </span>
-                        </li>
-                        <li class="web-lock-block">
-                            <a href="<?= base_url('admin/auth/logout') ?>" title="Sign out"><i class="ti-power-off"></i></a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+            <?= $this->include('\App\Modules\Admin\Views\elements\top_nav') ?>
 
             <div class="page-content" style="padding-top:82px;">
                 <?php if ($contentView !== null): ?>
@@ -106,6 +80,7 @@ $toast = session()->getFlashdata('cr_toast');
     <script src="<?= base_url('assets/admin/assets/js/vendor.js') ?>"></script>
     <script src="<?= base_url('assets/admin/assets/js/bundle.js') ?>"></script>
     <script src="<?= base_url('assets/global/scripts/metronic.js') ?>"></script>
+    <script src="<?= base_url('assets/js/top_nav.js') ?>"></script>
     <script>
         // Minimal sidebar dropdown toggle (Metronic layout4 accordion) + collapse.
         $(function () {

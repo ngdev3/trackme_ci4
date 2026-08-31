@@ -207,3 +207,62 @@ if (! function_exists('BlackList_Search_USER_IDS')) {
         return BLACKLIST_SEARCH_USER_IDS_DB($allowed_users);
     }
 }
+
+if (! function_exists('unread_notifcations')) {
+    /** Count of the current user's unseen notifications (CI3 parity). */
+    function unread_notifcations(): int
+    {
+        $u = currentuserinfo();
+        if (empty($u->id)) {
+            return 0;
+        }
+        return (int) \Config\Database::connect()->table('notification')
+            ->where('user_id', $u->id)
+            ->where('is_seen', '0')
+            ->countAllResults();
+    }
+}
+
+if (! function_exists('recent_notifications')) {
+    /** The current user's most recent notifications incl. broadcasts (CI3 parity). */
+    function recent_notifications(int $limit = 10): array
+    {
+        $u = currentuserinfo();
+        if (empty($u->id)) {
+            return [];
+        }
+        return \Config\Database::connect()->table('notification n')
+            ->select("n.*, TRIM(CONCAT(COALESCE(u.first_name,''), ' ', COALESCE(u.last_name,''))) as user_name", false)
+            ->join('users u', 'u.id = n.user_id', 'left')
+            ->groupStart()
+                ->where('n.user_id', $u->id)
+                ->orWhere('n.msg_global', 1)
+            ->groupEnd()
+            ->orderBy('n.id', 'desc')
+            ->limit($limit)
+            ->get()->getResult();
+    }
+}
+
+if (! function_exists('notif_time_ago')) {
+    /** Human-friendly "x minutes ago" string (CI3 parity). */
+    function notif_time_ago($datetime): string
+    {
+        $ts = strtotime((string) $datetime);
+        if (! $ts) {
+            return '';
+        }
+        $diff = time() - $ts;
+        if ($diff < 60) {
+            return 'just now';
+        }
+        $units = [31536000 => 'year', 2592000 => 'month', 604800 => 'week', 86400 => 'day', 3600 => 'hour', 60 => 'minute'];
+        foreach ($units as $secs => $label) {
+            if ($diff >= $secs) {
+                $n = floor($diff / $secs);
+                return $n . ' ' . $label . ($n > 1 ? 's' : '') . ' ago';
+            }
+        }
+        return 'just now';
+    }
+}
