@@ -29,6 +29,7 @@ use App\Modules\Admin\Controllers\Traffic;
 use App\Modules\Admin\Controllers\Device;
 use App\Modules\Admin\Controllers\Document;
 use App\Modules\Admin\Controllers\Letter_pad;
+use App\Modules\Admin\Controllers\App_update;
 
 $routes->get('admin/dashboard', [Dashboard::class, 'index']);
 
@@ -166,3 +167,17 @@ $routes->match(['get', 'post'], 'admin/letter_pad/edit/(:segment)', [Letter_pad:
 $routes->get('admin/letter_pad/pdf/(:segment)', [Letter_pad::class, 'pdf']);
 $routes->get('admin/letter_pad/download/(:segment)', [Letter_pad::class, 'download']);
 $routes->post('admin/letter_pad/delete', [Letter_pad::class, 'delete']);
+
+// APK Manager (App Updates — full flow)
+$routes->get('admin/app_update/listing', [App_update::class, 'listing']);
+$routes->get('admin/app_update', [App_update::class, 'listing']);
+$routes->post('admin/app_update/versions_data', [App_update::class, 'versions_data']);
+$routes->match(['get', 'post'], 'admin/app_update/upload', [App_update::class, 'upload']);
+$routes->post('admin/app_update/toggle_status', [App_update::class, 'toggle_status']);
+$routes->post('admin/app_update/flag_toggle', [App_update::class, 'flag_toggle']);
+$routes->post('admin/app_update/mark_latest', [App_update::class, 'mark_latest']);
+$routes->post('admin/app_update/delete', [App_update::class, 'delete']);
+$routes->get('admin/app_update/download/(:num)', [App_update::class, 'download']);
+$routes->match(['get', 'post'], 'admin/app_update/settings', [App_update::class, 'settings']);
+$routes->get('admin/app_update/logs', [App_update::class, 'logs']);
+$routes->get('admin/app_update/portal', [App_update::class, 'portal']);
