@@ -51,6 +51,7 @@ class Autoload extends AutoloadConfig
         'App\Modules\PermissionDenied' => APPPATH . 'Modules/PermissionDenied', // P1
         'App\Modules\Auth'             => APPPATH . 'Modules/Auth',             // P2
         'App\Modules\Admin'            => APPPATH . 'Modules/Admin',            // P2+ (admin/*)
+        'App\Modules\Task'             => APPPATH . 'Modules/Task',             // P3 (task/*)
         'App\Modules\Master'           => APPPATH . 'Modules/Master',           // P3 (master/*)
         'App\Modules\Task'             => APPPATH . 'Modules/Task',             // P5 (task/*)
     ];

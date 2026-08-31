@@ -4,354 +4,223 @@ namespace App\Modules\Task\Controllers;
 
 use App\Controllers\BaseController;
 use App\Modules\Task\Models\TaskModel;
-use CodeIgniter\Exceptions\PageNotFoundException;
 
 /**
- * Task — CI4 port of the top-level `task` module controller.
- *
- * Web admin for the Task module: task CRUD plus the Jira-style threaded
- * discussion (comments, replies, attachments, notifications). The mobile app
- * talks to the mirror endpoints in the webservices module.
- *
- * Auth + RBAC are enforced by the route filter chain (adminAuth+fyContext+rbac)
- * on `task/*` (Config\Filters) — the CI3 manual guards are no longer needed.
- * RBAC module key = 2nd URI segment = 'task'.
+ * Task — CI4 port of task/Task (top-level module). Task CRUD + Jira-style
+ * threaded comments (replies, attachments) + per-user notifications. FCM
+ * assignment/participant push is guarded (task_notify helper not yet ported).
+ * Gated by adminAuth+fyContext+rbac on the task/* group (Config\Filters).
  */
 class Task extends BaseController
 {
-    protected $helpers = ['url', 'form', 'text', 'app', 'cr_cache', 'task_notify'];
+    protected $helpers = ['url', 'app', 'form'];
+    private const UPDIR = 'uploads/task_attachments/';
+    private const ALLOWED = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt'];
 
-    private function model(): TaskModel
+    private function uid(): int
     {
-        return new TaskModel();
+        return (int) (currentuserinfo()->id ?? 0);
     }
 
-    /** Current logged-in user id from the admin session. */
-    private function _uid(): int
+    private function utype(): string
     {
-        $info = currentuserinfo();
-        return $info ? (int) $info->id : 0;
+        return (string) (currentuserinfo()->user_type ?? '');
     }
 
-    private function _utype(): string
+    private function actorName(): string
     {
-        return (string) ($this->session->get('user_type') ?? '');
+        $u = currentuserinfo();
+        return $u ? trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')) : 'Someone';
     }
-
-    private function _actor_name(): string
-    {
-        $info = currentuserinfo();
-        return $info ? trim($info->first_name . ' ' . $info->last_name) : 'Someone';
-    }
-
-    /* =====================================================================
-     * LISTING / CRUD
-     * ===================================================================== */
 
     public function index()
     {
-        return _layout('\App\Modules\Task\Views\tasks\listing', [
-            'title'      => 'Track | Tasks',
-            'page_title' => 'Tasks',
-            'breadcum'   => ['dashboard/' => 'Home', '' => 'Tasks'],
-        ]);
+        return _layout('\App\Modules\Task\Views\tasks\listing', ['title' => 'Tasks · C R Industries ERP']);
     }
 
-    /** DataTables server-side feed. */
     public function view_all()
     {
-        $req         = $this->request;
-        $requestData = $req->getPost();
-        $totalData   = $this->model()->count_task_data();
-        $rows        = $this->model()->get_task_data();
-
+        $model = new TaskModel();
+        $rows  = $model->getTaskData();
         $data = [];
-        $j = (int) ($requestData['start'] ?? 0);
-        foreach ((array) $rows as $row) {
+        $j = (int) ($this->request->getPost('start') ?? 0);
+        foreach ($rows as $row) {
             $j++;
-            $assignee = trim($row->assignee_first . ' ' . $row->assignee_last);
-            $nested   = [];
-            $nested[] = $j;
-            $nested[] = '<a href="' . base_url('task/task/view/' . ID_encode($row->task_id)) . '">' . esc($row->title) . '</a>';
-            $nested[] = $this->_status_badge($row->status);
-            $nested[] = ucfirst($row->priority);
-            $nested[] = $assignee !== '' ? esc($assignee) : '<span class="text-muted">Unassigned</span>';
-            $nested[] = '<i class="ti-comment-alt"></i> ' . (int) $row->comment_count;
-            $nested[] = date('d-M-Y', strtotime($row->added_date));
-            $nested[] = view('\App\Modules\Task\Views\tasks\_action', ['row' => $row]);
-            $data[]   = $nested;
+            $assignee = trim(($row->assignee_first ?? '') . ' ' . ($row->assignee_last ?? ''));
+            $data[] = [
+                $j,
+                '<a href="' . base_url('task/task/view/' . ID_encode((int) $row->task_id)) . '">' . esc($row->title) . '</a>',
+                $this->statusBadge((string) $row->status),
+                ucfirst((string) $row->priority),
+                $assignee !== '' ? esc($assignee) : '<span class="text-muted">Unassigned</span>',
+                '<i class="fa fa-comment-o"></i> ' . (int) $row->comment_count,
+                ! empty($row->added_date) ? date('d-M-Y', strtotime($row->added_date)) : '-',
+                $this->rowActions($row),
+            ];
         }
-
-        return $this->response->setJSON([
-            'draw'            => (int) ($requestData['draw'] ?? 0),
-            'recordsTotal'    => (int) $totalData,
-            'recordsFiltered' => (int) $totalData,
-            'data'            => $data,
-        ]);
-    }
-
-    private function _status_badge(string $status): string
-    {
-        $map = [
-            'open'        => 'badge-secondary',
-            'in_progress' => 'badge-info',
-            'done'        => 'badge-success',
-            'closed'      => 'badge-dark',
-        ];
-        $cls = $map[$status] ?? 'badge-secondary';
-        return '<span class="badge ' . $cls . '">' . ucwords(str_replace('_', ' ', $status)) . '</span>';
+        return $this->response->setJSON(['draw' => (int) $this->request->getPost('draw'), 'recordsTotal' => $model->countTaskData(), 'recordsFiltered' => $model->countTaskData(), 'data' => $data]);
     }
 
     public function add()
     {
-        if ($this->request->is('post')) {
-            if ($this->validate(['title' => 'trim|required'])) {
-                $uid     = $this->_uid();
-                $assigned = $this->request->getPost('assigned_to') ?: null;
-                $task_id = $this->model()->add([
-                    'title'       => $this->request->getPost('title'),
-                    'description' => $this->request->getPost('description'),
-                    'status'      => $this->request->getPost('status') ?: 'open',
-                    'priority'    => $this->request->getPost('priority') ?: 'medium',
-                    'assigned_to' => $assigned,
-                    'created_by'  => $uid,
-                    'due_date'    => $this->request->getPost('due_date') ?: null,
-                    'added_date'  => date('Y-m-d H:i:s'),
+        $model = new TaskModel();
+        if (strtoupper($this->request->getMethod()) === 'POST') {
+            if (trim((string) $this->request->getPost('title')) !== '') {
+                $taskId = $model->add([
+                    'title' => $this->request->getPost('title'), 'description' => $this->request->getPost('description'),
+                    'status' => $this->request->getPost('status') ?: 'open', 'priority' => $this->request->getPost('priority') ?: 'medium',
+                    'assigned_to' => $this->request->getPost('assigned_to') ?: null, 'created_by' => $this->uid(),
+                    'due_date' => $this->request->getPost('due_date') ?: null, 'added_date' => date('Y-m-d H:i:s'),
                 ]);
-
-                if ($task_id && $assigned) {
-                    task_notify_assignment($task_id, $uid, (int) $assigned);
+                if ($taskId && $this->request->getPost('assigned_to') && function_exists('task_notify_assignment')) {
+                    task_notify_assignment($taskId, $this->uid(), (int) $this->request->getPost('assigned_to'));
                 }
-                session()->setFlashdata('success', 'Task created successfully');
-                return redirect()->to('/task/task');
+                return redirect()->to(base_url('task/task'))->with('success', 'Task created successfully');
             }
+            session()->setFlashdata('error', 'Title is required.');
         }
-
-        return _layout('\App\Modules\Task\Views\tasks\add', [
-            'users'      => $this->model()->get_users(),
-            'result'     => false,
-            'title'      => 'Track | Add Task',
-            'page_title' => 'Add Task',
-            'breadcum'   => ['dashboard/' => 'Home', 'task/task' => 'Tasks', '' => 'Add Task'],
-            'validation' => $this->validator,
-        ]);
+        return _layout('\App\Modules\Task\Views\tasks\add', ['title' => 'Add Task', 'result' => false, 'users' => $model->getUsers()]);
     }
 
     public function edit($id = '')
     {
-        $task_id = (int) ID_decode($id);
-        if (empty($task_id)) {
-            throw PageNotFoundException::forPageNotFound();
-        }
+        $model  = new TaskModel();
+        $taskId = (int) ID_decode($id);
+        if (! $taskId) { throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound(); }
 
-        if ($this->request->is('post')) {
-            if ($this->validate(['title' => 'trim|required'])) {
-                $uid          = $this->_uid();
-                $prev         = $this->model()->view($task_id);
-                $old_assignee = $prev ? (int) $prev->assigned_to : 0;
-                $new_assignee = (int) ($this->request->getPost('assigned_to') ?: 0);
-
-                $this->model()->update($task_id, [
-                    'title'        => $this->request->getPost('title'),
-                    'description'  => $this->request->getPost('description'),
-                    'status'       => $this->request->getPost('status'),
-                    'priority'     => $this->request->getPost('priority'),
-                    'assigned_to'  => $this->request->getPost('assigned_to') ?: null,
-                    'due_date'     => $this->request->getPost('due_date') ?: null,
-                    'updated_date' => date('Y-m-d H:i:s'),
+        if (strtoupper($this->request->getMethod()) === 'POST') {
+            if (trim((string) $this->request->getPost('title')) !== '') {
+                $model->update($taskId, [
+                    'title' => $this->request->getPost('title'), 'description' => $this->request->getPost('description'),
+                    'status' => $this->request->getPost('status'), 'priority' => $this->request->getPost('priority'),
+                    'assigned_to' => $this->request->getPost('assigned_to') ?: null,
+                    'due_date' => $this->request->getPost('due_date') ?: null, 'updated_date' => date('Y-m-d H:i:s'),
                 ]);
-
-                $newly_assigned = ($new_assignee && $new_assignee !== $old_assignee);
-                if ($newly_assigned) {
-                    task_notify_assignment($task_id, $uid, $new_assignee);
-                }
-
-                $title = $this->request->getPost('title');
-                task_notify_participants(
-                    $task_id,
-                    $uid,
-                    'updated',
-                    $this->_actor_name() . ' updated task: ' . $title,
-                    0,
-                    $newly_assigned ? [$new_assignee] : []
-                );
-
-                session()->setFlashdata('success', 'Task updated successfully');
-                return redirect()->to('/task/task');
+                return redirect()->to(base_url('task/task'))->with('success', 'Task updated successfully');
             }
+            session()->setFlashdata('error', 'Title is required.');
         }
-
-        return _layout('\App\Modules\Task\Views\tasks\add', [
-            'result'     => $this->model()->view($task_id),
-            'users'      => $this->model()->get_users(),
-            'title'      => 'Track | Edit Task',
-            'page_title' => 'Update Task',
-            'breadcum'   => ['dashboard/' => 'Home', 'task/task' => 'Tasks', '' => 'Update Task'],
-            'validation' => $this->validator,
-        ]);
+        return _layout('\App\Modules\Task\Views\tasks\add', ['title' => 'Edit Task', 'result' => $model->view($taskId), 'users' => $model->getUsers()]);
     }
 
-    /** Task detail with the Jira-style activity / comments thread. */
     public function view($id = '')
     {
-        $task_id = (int) ID_decode($id);
-        $task    = $this->model()->view($task_id);
-        if (! $task || $task->is_deleted) {
-            throw PageNotFoundException::forPageNotFound();
-        }
-
+        $model  = new TaskModel();
+        $taskId = (int) ID_decode($id);
+        $task   = $model->view($taskId);
+        if (! $task || $task->is_deleted) { throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound(); }
         return _layout('\App\Modules\Task\Views\tasks\view', [
-            'result'      => $task,
-            'comments'    => $this->model()->get_comments_tree($task_id),
-            'current_uid' => $this->_uid(),
-            'title'       => 'Track | Task #' . $task_id,
-            'page_title'  => $task->title,
-            'breadcum'    => ['dashboard/' => 'Home', 'task/task' => 'Tasks', '' => 'View'],
+            'title' => 'Task #' . $taskId, 'result' => $task,
+            'comments' => $model->getCommentsTree($taskId), 'current_uid' => $this->uid(),
         ]);
     }
 
     public function delete()
     {
         $id = (int) ID_decode($this->request->getPost('id'));
-        if (! empty($id) && $this->model()->soft_delete($id)) {
-            session()->setFlashdata('success', 'Task deleted successfully');
-        }
+        if ($id) { (new TaskModel())->softDelete($id); }
         return $this->response->setJSON(['status' => 'success']);
     }
 
-    /** Change a task's status (e.g. "Mark as Done") via AJAX. */
     public function set_status()
     {
-        $id      = (int) ID_decode($this->request->getPost('id'));
-        $status  = (string) $this->request->getPost('status');
-        $allowed = ['open', 'in_progress', 'done', 'closed'];
-
-        if (empty($id) || ! in_array($status, $allowed, true)) {
+        $id = (int) ID_decode($this->request->getPost('id'));
+        $status = (string) $this->request->getPost('status');
+        if (! $id || ! in_array($status, ['open', 'in_progress', 'done', 'closed'], true)) {
             return $this->response->setJSON(['status' => 'error', 'error_msg' => 'Invalid task or status.']);
         }
-
-        $this->model()->update($id, ['status' => $status, 'updated_date' => date('Y-m-d H:i:s')]);
-
-        if ($status === 'done' || $status === 'closed') {
-            task_notify_participants($id, $this->_uid(), 'status',
-                $this->_actor_name() . ' marked the task as ' . ucfirst($status));
+        (new TaskModel())->update($id, ['status' => $status, 'updated_date' => date('Y-m-d H:i:s')]);
+        if (in_array($status, ['done', 'closed'], true) && function_exists('task_notify_participants')) {
+            task_notify_participants($id, $this->uid(), 'status', $this->actorName() . ' marked the task as ' . ucfirst($status));
         }
         return $this->response->setJSON(['status' => 'success']);
     }
 
-    /* =====================================================================
-     * COMMENTS (AJAX)
-     * ===================================================================== */
-
-    /** Add a comment or reply. Optional multipart file attachments. */
     public function comment_add()
     {
-        $task_id   = (int) $this->request->getPost('task_id');
-        $parent_id = (int) $this->request->getPost('parent_id');
-        $text      = trim((string) $this->request->getPost('comment_text'));
-        $uid       = $this->_uid();
+        $model   = new TaskModel();
+        $taskId  = (int) $this->request->getPost('task_id');
+        $parent  = (int) $this->request->getPost('parent_id');
+        $text    = trim((string) $this->request->getPost('comment_text'));
+        $files   = $this->request->getFileMultiple('attachment') ?: [];
+        $hasFile = false;
+        foreach ($files as $f) { if ($f && $f->isValid()) { $hasFile = true; break; } }
 
-        $hasFile = ! empty($_FILES['attachment']['name'][0]) || (! empty($_FILES['attachment']['name']) && ! is_array($_FILES['attachment']['name']));
-        if (! $task_id || ($text === '' && ! $hasFile)) {
+        if (! $taskId || ($text === '' && ! $hasFile)) {
             return $this->response->setJSON(['status' => 'error', 'error_msg' => 'Comment text or attachment is required.']);
         }
+        $commentId = $model->addComment($taskId, $this->uid(), $text, $parent);
+        $this->saveAttachments($model, $taskId, $commentId, $files);
 
-        $comment_id = $this->model()->add_comment($task_id, $uid, $text, $parent_id);
-
-        $this->_save_uploaded_attachments($task_id, $comment_id, $uid);
-
-        $type    = $parent_id ? 'reply' : 'comment';
-        $snippet = $text !== '' ? $text : 'shared an attachment';
-        task_notify_participants($task_id, $uid, $type,
-            $this->_actor_name() . ($parent_id ? ' replied: ' : ' commented: ') . $snippet, $comment_id);
-
-        return $this->response->setJSON([
-            'status'  => 'success',
-            'message' => 'Comment posted',
-            'data'    => $this->model()->get_comments_tree($task_id),
-        ]);
+        if (function_exists('task_notify_participants')) {
+            $type = $parent ? 'reply' : 'comment';
+            task_notify_participants($taskId, $this->uid(), $type, $this->actorName() . ($parent ? ' replied: ' : ' commented: ') . ($text ?: 'shared an attachment'), $commentId);
+        }
+        return $this->response->setJSON(['status' => 'success', 'message' => 'Comment posted', 'data' => $model->getCommentsTree($taskId)]);
     }
 
     public function comment_delete()
     {
-        $comment_id = (int) $this->request->getPost('comment_id');
-        return $this->response->setJSON(
-            $this->model()->delete_comment($comment_id, $this->_uid(), $this->_utype())
-        );
+        $res = (new TaskModel())->deleteComment((int) $this->request->getPost('comment_id'), $this->uid(), $this->utype());
+        return $this->response->setJSON($res);
     }
 
     public function get_comments($id = '')
     {
-        $task_id = $id ? (int) ID_decode($id) : (int) $this->request->getPost('task_id');
-        return $this->response->setJSON([
-            'status' => 'success',
-            'data'   => $this->model()->get_comments_tree($task_id),
-        ]);
+        $taskId = $id ? (int) ID_decode($id) : (int) $this->request->getPost('task_id');
+        return $this->response->setJSON(['status' => 'success', 'data' => (new TaskModel())->getCommentsTree($taskId)]);
     }
-
-    /**
-     * Persist files posted under the `attachment` input (single or multiple)
-     * into uploads/task_attachments/<task_id>/ and record them.
-     */
-    private function _save_uploaded_attachments($task_id, $comment_id, $uid): void
-    {
-        if (empty($_FILES['attachment']['name'])) {
-            return;
-        }
-
-        $rel_dir = 'uploads/task_attachments/' . (int) $task_id . '/';
-        $abs_dir = FCPATH . $rel_dir;
-        if (! is_dir($abs_dir)) {
-            @mkdir($abs_dir, 0755, true);
-        }
-
-        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt'];
-        $names   = (array) $_FILES['attachment']['name'];
-        $tmps    = (array) $_FILES['attachment']['tmp_name'];
-        $sizes   = (array) $_FILES['attachment']['size'];
-        $types   = (array) $_FILES['attachment']['type'];
-
-        foreach ($names as $i => $name) {
-            if ($name === '' || empty($tmps[$i]) || ! is_uploaded_file($tmps[$i])) {
-                continue;
-            }
-            $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-            if (! in_array($ext, $allowed, true)) {
-                continue;
-            }
-            $filename = 'cmt_' . $comment_id . '_' . $i . '_' . time() . '.' . $ext;
-            if (@move_uploaded_file($tmps[$i], $abs_dir . $filename)) {
-                $this->model()->add_attachment([
-                    'comment_id'  => (int) $comment_id,
-                    'task_id'     => (int) $task_id,
-                    'file_name'   => $name,
-                    'file_path'   => $rel_dir . $filename,
-                    'file_type'   => $types[$i] ?? '',
-                    'file_size'   => isset($sizes[$i]) ? (int) $sizes[$i] : 0,
-                    'uploaded_by' => (int) $uid,
-                    'added_date'  => date('Y-m-d H:i:s'),
-                ]);
-            }
-        }
-    }
-
-    /* =====================================================================
-     * NOTIFICATIONS (AJAX)
-     * ===================================================================== */
 
     public function notifications()
     {
-        $uid = $this->_uid();
+        $model = new TaskModel();
         return $this->response->setJSON([
-            'status'       => 'success',
-            'unread_count' => $this->model()->unread_notification_count($uid),
-            'data'         => $this->model()->list_notifications($uid),
+            'status' => 'success',
+            'unread_count' => $model->unreadNotificationCount($this->uid()),
+            'data' => $model->listNotifications($this->uid()),
         ]);
     }
 
     public function mark_read()
     {
-        $this->model()->mark_notifications_read($this->_uid(), (int) $this->request->getPost('notification_id'));
+        (new TaskModel())->markNotificationsRead($this->uid(), (int) $this->request->getPost('notification_id'));
         return $this->response->setJSON(['status' => 'success']);
+    }
+
+    private function saveAttachments(TaskModel $model, int $taskId, int $commentId, array $files): void
+    {
+        if (! $files) { return; }
+        $dir = FCPATH . self::UPDIR . $taskId . '/';
+        if (! is_dir($dir)) { @mkdir($dir, 0755, true); }
+        foreach ($files as $i => $f) {
+            if (! $f || ! $f->isValid() || $f->getError() === UPLOAD_ERR_NO_FILE) { continue; }
+            $ext = strtolower($f->getClientExtension() ?: '');
+            if (! in_array($ext, self::ALLOWED, true)) { continue; }
+            $orig = $f->getClientName();
+            $type = $f->getClientMimeType();
+            $size = $f->getSize();
+            $stored = 'cmt_' . $commentId . '_' . $i . '_' . time() . '.' . $ext;
+            $f->move($dir, $stored);
+            $model->addAttachment([
+                'comment_id' => $commentId, 'task_id' => $taskId, 'file_name' => $orig,
+                'file_path' => self::UPDIR . $taskId . '/' . $stored, 'file_type' => $type, 'file_size' => $size,
+                'uploaded_by' => $this->uid(), 'added_date' => date('Y-m-d H:i:s'),
+            ]);
+        }
+    }
+
+    private function statusBadge(string $status): string
+    {
+        $map = ['open' => 'default', 'in_progress' => 'info', 'done' => 'success', 'closed' => 'primary'];
+        return '<span class="label label-' . ($map[$status] ?? 'default') . '">' . ucwords(str_replace('_', ' ', $status)) . '</span>';
+    }
+
+    private function rowActions($row): string
+    {
+        $enc = ID_encode((int) $row->task_id);
+        return '<div class="text-nowrap">'
+            . '<a class="btn btn-xs btn-default" href="' . base_url('task/task/view/' . $enc) . '"><i class="fa fa-eye"></i></a> '
+            . '<a class="btn btn-xs btn-primary" href="' . base_url('task/task/edit/' . $enc) . '"><i class="fa fa-edit"></i></a> '
+            . '<button class="btn btn-xs btn-danger tsk-del" data-id="' . esc($enc, 'attr') . '"><i class="fa fa-trash"></i></button></div>';
     }
 }
