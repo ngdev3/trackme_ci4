@@ -104,4 +104,61 @@ class InvoiceModel
             $builder->where('ab.billing_date <=', date('Y-m-d', strtotime($to)));
         }
     }
+
+    /**
+     * Headline counts for the verification-log viewer (CI3 verify_log_stats).
+     * The verification log is global (public QR verifier) — not firm/FY scoped.
+     */
+    public function verifyLogStats(): array
+    {
+        $out = ['total' => 0, 'genuine' => 0, 'invalid' => 0, 'cancelled' => 0, 'invoices' => 0, 'ips' => 0];
+        $db  = $this->db();
+        if (! $db->tableExists('aa_invoice_verify_log')) {
+            return $out;
+        }
+        $r = $db->query("SELECT
+                COUNT(*) total,
+                SUM(verdict='genuine') genuine,
+                SUM(verdict='invalid') invalid,
+                SUM(verdict='cancelled') cancelled,
+                COUNT(DISTINCT bos_id) invoices,
+                COUNT(DISTINCT ip_address) ips
+            FROM aa_invoice_verify_log")->getRow();
+        if ($r) {
+            $out = [
+                'total'     => (int) $r->total,
+                'genuine'   => (int) $r->genuine,
+                'invalid'   => (int) $r->invalid,
+                'cancelled' => (int) $r->cancelled,
+                'invoices'  => (int) $r->invoices,
+                'ips'       => (int) $r->ips,
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Recent verification hits (newest first), optionally filtered by
+     * verdict/invoice (CI3 verify_logs). Returns objects with joined
+     * product_name + contact_person_name.
+     */
+    public function verifyLogs(int $limit = 300, string $verdict = '', int $bosId = 0): array
+    {
+        $db = $this->db();
+        if (! $db->tableExists('aa_invoice_verify_log')) {
+            return [];
+        }
+        $builder = $db->table('aa_invoice_verify_log l')
+            ->select('l.*, i.product_name, acn.contact_person_name', false)
+            ->join('invoice_system i', 'i.bos_id = l.bos_id', 'left')
+            ->join('aa_account_name acn', 'acn.account_id = i.account_id', 'left');
+        if (in_array($verdict, ['genuine', 'invalid', 'cancelled'], true)) {
+            $builder->where('l.verdict', $verdict);
+        }
+        if ($bosId) {
+            $builder->where('l.bos_id', $bosId);
+        }
+        $builder->orderBy('l.id', 'desc')->limit($limit);
+        return $builder->get()->getResult();
+    }
 }

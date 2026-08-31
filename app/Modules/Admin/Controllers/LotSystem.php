@@ -8,7 +8,7 @@ use App\Modules\Admin\Models\LotSystemModel;
 /** Lot System — CI4 port, listing slice. Gated rbac('lot_system'). */
 class LotSystem extends BaseController
 {
-    protected $helpers = ['url', 'app'];
+    protected $helpers = ['url', 'form', 'app'];
 
     public function listing()
     {
@@ -36,5 +36,18 @@ class LotSystem extends BaseController
             ];
         }
         return $this->response->setJSON(['draw' => (int) $this->request->getPost('draw'), 'recordsTotal' => $total, 'recordsFiltered' => $total, 'data' => $data]);
+    }
+
+    /** Add Lot — GET renders the full guided form with center/truck/driver dropdowns. */
+    public function add()
+    {
+        $model = new LotSystemModel();
+        $data = [
+            'title'           => 'Track (The Rest Accounting Key) || Add',
+            'center_list'     => $model->centerList(),
+            'get_truck_list'  => $model->getTruckList(),
+            'get_driver_list' => $model->getDriverList(),
+        ];
+        return _layout('\App\Modules\Admin\Views\lot_system\add', $data);
     }
 }

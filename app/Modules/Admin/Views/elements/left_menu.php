@@ -32,20 +32,25 @@ $mkUrl = function ($uri) {
 /* Controllers/links already live on CI4 → show a red "NEW" badge. Precise URI
    whitelist so the badge never marks an unported sub-method that would 404. */
 $readyUris = [
-    'dashboard', 'help', 'hsn/listing', 'item_master/listing',
-    'invoice/listing', 'invoice/add', 'taxinvoice/e_invoice_add', 'taxinvoice/einvoice_listing',
-    'uninvoice/listing', 'uninvoice/add', 'payment_receipt/listing', 'payment_receipt/add',
-    'cd_note/listing', 'cd_note/add', 'purchase_module/listing', 'purchase_module/add',
-    'delivery_challan/listing', 'delivery_challan/add', 'bank_password/listing', 'bank_password/add', 'bank_password/history',
-    'stock/listing', 'stock/position', 'stock/statement', 'lot_system/listing', 'lot_system/add',
-    'paddylotsystem/listing', 'paddylotsystem/add', 'kisanreg/listing', 'kisan_vahi/register', 'kisan_vahi/entry', 'kisan_vahi/report',
+    // Verified LIVE on CI4 by an authenticated sweep of every menu link (the rest
+    // render the "being migrated" page). Keep this in sync as controllers are ported.
+    'dashboard', 'help',
+    'document/add', 'document/listing', 'letter_pad/add', 'letter_pad/listing',
+    'app_update/listing', 'app_update/upload', 'app_update/portal', 'app_update/logs', 'app_update/settings',
+    'notification/listing', 'device/listing',
+    'bank_password/listing', 'account_name/listing',
     'driver_module/listing', 'driver_module/add', 'truck_module/listing', 'truck_module/add',
-    'attendance/listing', 'attendance/add', 'attendance/employee_listing', 'salary_module/listing', 'salary_module/add',
-    'cold_lot_system/listing', 'account/entry', 'account_name/listing', 'account_name/add', 'accounts_report',
-    'attachments', 'billing_register/listing', 'billing_register/add', 'document/listing', 'document/add',
-    'notification/listing', 'ricemill_inquiry/listing', 'gst_setting', 'letter_pad/listing', 'letter_pad/add',
-    'app_update/listing', 'users/listing', 'users/add', 'role_permissions', 'user_permissions', 'seo', 'seo/generate',
-    'report/byaccount_name', 'report/deleted_entries', 'report/ledger', 'report/rokad_parcha',
+    'attendance/listing', 'attendance/add', 'account/entry',
+    'cold_lot_system/listing', 'ricemill_inquiry/listing', 'kisanreg/listing',
+    'report/search', 'report/byaccount_name', 'report/ledger', 'report/rokad_parcha', 'report/deleted_entries', 'attachments',
+    'accounts_report', 'accounts_report/trial_balance', 'accounts_report/balance_sheet', 'accounts_report/profit_loss',
+    'accounts_report/outstanding', 'accounts_report/debtors', 'accounts_report/creditors', 'accounts_report/ageing', 'accounts_report/inter_firm',
+    'stock/listing', 'hsn/listing', 'item_master/listing',
+    'invoice/listing', 'invoice/add', 'cd_note/listing', 'uninvoice/listing', 'delivery_challan/listing',
+    'billing_register/listing', 'gst_setting', 'payment_receipt/listing', 'purchase_module/listing',
+    'lot_system/listing', 'paddylotsystem/listing',
+    'users/listing', 'users/add', 'role_permissions', 'user_permissions',
+    'salary_module/listing', 'salary_module/add',
 ];
 $uriNew = function ($uri) use ($readyUris) {
     $u = strtolower(trim((string) $uri, '/'));

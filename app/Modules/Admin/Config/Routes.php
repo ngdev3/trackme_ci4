@@ -111,6 +111,10 @@ $routes->post('admin/PaddyLotsystem/view_all', [PaddyLotsystem::class, 'viewAll'
 $routes->get('admin/Kisanreg/listing', [Kisanreg::class, 'listing']);
 $routes->get('admin/Kisanreg', [Kisanreg::class, 'listing']);
 $routes->post('admin/Kisanreg/view_all', [Kisanreg::class, 'viewAll']);
+$routes->get('admin/Kisanreg/report/(:segment)', [Kisanreg::class, 'report/$1']);
+$routes->get('admin/Kisanreg/report', [Kisanreg::class, 'report']);
+$routes->get('admin/Kisanreg/report_pdf/(:segment)', [Kisanreg::class, 'report_pdf/$1']);
+$routes->get('admin/Kisanreg/report_csv/(:segment)', [Kisanreg::class, 'report_csv/$1']);
 $routes->get('admin/kisan_vahi/listing', [KisanVahi::class, 'listing']);
 $routes->post('admin/kisan_vahi/view_all', [KisanVahi::class, 'viewAll']);
 

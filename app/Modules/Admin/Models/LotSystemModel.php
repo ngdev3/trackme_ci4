@@ -34,4 +34,28 @@ class LotSystemModel
         }
         return $b->get()->getResult();
     }
+
+    /** Active centers for the Add form (aa_center_name). CI3: AccountMapping_mod::center_list(). */
+    public function centerList(): array
+    {
+        return $this->db()->table('aa_center_name')
+            ->where('status', 'Active')
+            ->get()->getResult();
+    }
+
+    /** Active trucks (aa_truck). CI3: Lot_system_mod::get_truck_list(). */
+    public function getTruckList(): array
+    {
+        return $this->db()->table('aa_truck')
+            ->where('status', 'Active')
+            ->get()->getResult();
+    }
+
+    /** Active drivers (aa_driver). CI3: Lot_system_mod::get_driver_list(). */
+    public function getDriverList(): array
+    {
+        return $this->db()->table('aa_driver')
+            ->where('status', 'Active')
+            ->get()->getResult();
+    }
 }

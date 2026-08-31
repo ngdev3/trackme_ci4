@@ -99,4 +99,28 @@ class SalaryModule extends BaseController
     {
         return $this->response->setJSON(array_merge(['status' => $s, 'message' => $m], $x));
     }
+
+    /** Credit history from salary_module_cron_log. Ported 1:1 from CI3 Salary_Module::history(). */
+    public function history()
+    {
+        return _layout('\App\Modules\Admin\Views\salary\history', [
+            'title' => 'Track (The Rest Accounting Key) || Salary Credit History',
+            'logs'  => $this->creditHistory(1000),
+        ]);
+    }
+
+    /** Salary_Module_mod::credit_history() port — newest-first cron log with names. */
+    private function creditHistory(int $limit = 1000): array
+    {
+        $b = $this->db()->table('salary_module_cron_log cl')
+            ->select('cl.*, u.first_name, u.last_name, acn.name as account_name, atp.template_name')
+            ->join('users u', 'u.id = cl.user_id', 'left')
+            ->join('aa_account_name acn', 'acn.account_id = cl.account_id', 'left')
+            ->join('aa_template atp', 'atp.template_id = cl.mapped_template_id', 'left')
+            ->orderBy('cl.id', 'desc');
+        if ($limit) {
+            $b->limit($limit);
+        }
+        return $b->get()->getResult();
+    }
 }

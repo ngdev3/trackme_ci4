@@ -27,6 +27,47 @@ if (! function_exists('acc_side_from_balance')) {
     }
 }
 
+if (! function_exists('acc_account_types')) {
+    /** Ordered map of Account Type value => label (CI3 accounting_helper 1:1). */
+    function acc_account_types(): array
+    {
+        return [
+            'customer'          => 'Customer',
+            'supplier'          => 'Supplier',
+            'customer_supplier' => 'Customer + Supplier',
+            'sister_firm'       => 'Sister Firm',
+            'farmer'            => 'Farmer (Kisan)',
+            'transporter'       => 'Transporter',
+            'commission_agent'  => 'Commission Agent / Broker',
+            'employee'          => 'Employee',
+            'bank'              => 'Bank',
+            'cash'              => 'Cash',
+            'expense'           => 'Expense',
+            'income'            => 'Income',
+            'fixed_asset'       => 'Fixed Asset',
+            'loan'              => 'Loan',
+            'capital'           => 'Capital',
+            'other'             => 'Other',
+        ];
+    }
+}
+
+if (! function_exists('acc_is_valid_account_type')) {
+    function acc_is_valid_account_type($type): bool
+    {
+        return array_key_exists((string) $type, acc_account_types());
+    }
+}
+
+if (! function_exists('acc_account_type_label')) {
+    /** Human label for an Account Type value ('' if unknown). */
+    function acc_account_type_label($type): string
+    {
+        $map = acc_account_types();
+        return $map[$type] ?? '';
+    }
+}
+
 if (! function_exists('acc_money')) {
     /** Format an amount as "1,23,456.00" (Indian grouping) for report display. */
     function acc_money($amount): string

@@ -145,6 +145,26 @@ class Invoice extends BaseController
         ]);
     }
 
+    /**
+     * Invoice Verification Log (CI3 Invoice::verify_logs). Read-only viewer of
+     * every public QR / verify-link hit against an invoice — headline stats +
+     * recent rows, optionally filtered by verdict via ?verdict=.
+     */
+    public function verify_logs()
+    {
+        $verdict = (string) ($this->request->getGet('verdict') ?? '');
+        $verdict = in_array($verdict, ['genuine', 'invalid', 'cancelled'], true) ? $verdict : '';
+
+        $model = new InvoiceModel();
+
+        return _layout('\App\Modules\Admin\Views\invoice\verify_logs', [
+            'title' => 'Track (The Rest Accounting Key) || Verification Log',
+            'logs'  => $model->verifyLogs(300, $verdict),
+            'stats' => $model->verifyLogStats(),
+            'cur'   => $verdict,
+        ]);
+    }
+
     /** Stream the themed Bill-of-Supply PDF (CI3 GeneratePdf). */
     public function GeneratePdf($event = null)
     {

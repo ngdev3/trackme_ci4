@@ -55,4 +55,35 @@ class DeviceModel
         $this->db()->table('aa_whitelist_device')->where('id', $id)->update(['status' => 'Delete', 'updated_at' => date('Y-m-d')]);
         return true;
     }
+
+    /* ----- Push notifications (port of Device_mod) ----- */
+
+    /**
+     * Active devices that carry a usable push token.
+     */
+    public function activePushDevices($device_id = null): array
+    {
+        $b = $this->db()->table('aa_whitelist_device d')
+            ->select('d.id, d.device_id, d.device_name, d.device_type, d.platform,
+                      d.push_token, d.push_provider,
+                      u.first_name, u.last_name, u.email')
+            ->join('users u', 'u.id = d.user_id', 'left')
+            ->where('d.status', 'Active')
+            ->where('d.push_token IS NOT NULL', null, false)
+            ->where("d.push_token != ''", null, false);
+        if ($device_id) {
+            $b->where('d.device_id', $device_id);
+        }
+        $b->orderBy('u.first_name', 'asc')->orderBy('d.device_name', 'asc');
+        return $b->get()->getResult();
+    }
+
+    public function recentPushLogs(int $limit = 15): array
+    {
+        $db = $this->db();
+        if (! $db->tableExists('aa_push_log')) {
+            return [];
+        }
+        return $db->table('aa_push_log')->orderBy('id', 'DESC')->limit($limit)->get()->getResult();
+    }
 }

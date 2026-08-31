@@ -34,4 +34,34 @@ class PaddyLotsystemModel
         }
         return $b->get()->getResult();
     }
+
+    /**
+     * Active centers for the Add-form dropdown.
+     * 1:1 port of AccountMapping_mod::center_list() (aa_center_name, status='Active').
+     */
+    public function center_list()
+    {
+        $rows = $this->db()->table('aa_center_name')
+            ->where('status', 'Active')
+            ->get()->getResult();
+        return $rows ?: false;
+    }
+
+    /** 1:1 port of Paddy_Lot_system_mod::get_truck_list() (aa_truck, status='Active'). */
+    public function get_truck_list()
+    {
+        $rows = $this->db()->table('aa_truck')
+            ->where('status', 'Active')
+            ->get()->getResult();
+        return $rows ?: false;
+    }
+
+    /** 1:1 port of Paddy_Lot_system_mod::get_driver_list() (aa_driver, status='Active'). */
+    public function get_driver_list()
+    {
+        $rows = $this->db()->table('aa_driver')
+            ->where('status', 'Active')
+            ->get()->getResult();
+        return $rows ?: false;
+    }
 }

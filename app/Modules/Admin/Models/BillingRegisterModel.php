@@ -90,4 +90,81 @@ class BillingRegisterModel
             ->update(['status' => 'Delete', 'updated_date' => date('Y-m-d')]);
         return true;
     }
+
+    /** Active account-name master for the Add form dropdown. */
+    public function accounts(): array
+    {
+        return $this->db()->table('aa_account_name')
+            ->select('account_id, name')
+            ->where('status', 'Active')
+            ->orderBy('name', 'asc')
+            ->get()->getResult();
+    }
+
+    public function getAccount($accountId)
+    {
+        return $this->db()->table('aa_account_name')
+            ->select('account_id, name')
+            ->where('account_id', (int) $accountId)
+            ->get()->getRow();
+    }
+
+    /** Insert a new billing entry (firm/FY stamped, purchaser resolved). */
+    public function addEntry(array $post): int
+    {
+        $acc = $this->getAccount($post['purchaser_account'] ?? 0);
+        $purchaser_name = $acc ? ($acc->name . '_' . $acc->account_id) : '';
+
+        $data = [
+            'billing_date'           => date('Y-m-d', strtotime($post['billing_date'])),
+            'billing_type'           => $post['billing_type'],
+            'khata_entry_no'         => $post['khata_entry_no'] ?? '',
+            'name'                   => $post['name'] ?? '',
+            'challan_no'             => $post['challan_no'] ?? '',
+            'type_of_account'        => $post['type_of_account'],
+            'rate'                   => $post['rate'] ?? '',
+            'total_weight'           => $post['total_weight'] ?? '',
+            'final_amount'           => $post['final_amount'],
+            'total_katti'            => $post['total_katti'] ?? '',
+            'purchaser_account_no'   => $acc ? $acc->account_id : ($post['purchaser_account'] ?? ''),
+            'purchaser_account_name' => $purchaser_name,
+            'remark'                 => $post['remark'] ?? '',
+            'updated_date'           => date('Y-m-d'),
+            'status'                 => 'Active',
+            'added_by'               => currentuserinfo()->id,
+            'FY'                     => fy()->FY,
+            'product_type'           => fy()->product_type,
+            'template_id'            => fy()->template_id,
+        ];
+
+        $this->db()->table('aa_billing')->insert($data);
+        return (int) $this->db()->insertID();
+    }
+
+    /** Human label for an account (name + #id). */
+    public function accountLabel($accountId): string
+    {
+        $a = $this->getAccount($accountId);
+        return $a ? ($a->name . ' (#' . $a->account_id . ')') : '';
+    }
+
+    /**
+     * Account-wise statement rows: every non-deleted aa_billing entry for one
+     * purchaser account under the current firm/FY, oldest first, with an
+     * optional date window. Ordered for a running balance.
+     */
+    public function statementRows($accountId, $from = '', $to = ''): array
+    {
+        $b = $this->db()->table('aa_billing')
+            ->where('template_id', fy()->template_id)
+            ->where('FY', fy()->FY)
+            ->where('status <>', 'Delete')
+            ->where('purchaser_account_no', (int) $accountId);
+        if (! empty($from) && ! empty($to)) {
+            $b->where('billing_date >=', date('Y-m-d', strtotime($from)));
+            $b->where('billing_date <=', date('Y-m-d', strtotime($to)));
+        }
+        $b->orderBy('billing_date', 'asc')->orderBy('billing_id', 'asc');
+        return $b->get()->getResult();
+    }
 }

@@ -76,4 +76,20 @@ class Device extends BaseController
         if ($id) { (new DeviceModel())->delete($id); }
         return $this->response->setJSON(['status' => 'success']);
     }
+
+    /**
+     * Send Push Notification — compose form (GET render only).
+     * Port of CI3 Device::send_push(). The actual FCM send/POST path is
+     * intentionally NOT ported here; this renders the composer + recent log.
+     */
+    public function send_push()
+    {
+        $model = new DeviceModel();
+        return _layout('\App\Modules\Admin\Views\device\send_push', [
+            'title'        => 'Track (The Rest Accounting Key) || Send Notification',
+            'devices'      => $model->activePushDevices(),
+            'recent'       => $model->recentPushLogs(15),
+            'fcm_disabled' => (! defined('FCM_SERVICE_ACCOUNT') || ! file_exists(FCM_SERVICE_ACCOUNT)),
+        ]);
+    }
 }

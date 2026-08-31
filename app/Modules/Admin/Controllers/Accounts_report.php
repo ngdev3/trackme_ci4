@@ -84,6 +84,7 @@ class Accounts_report extends BaseController
 
     private function party_report(string $mode, string $title)
     {
+        helper('accounting'); // outstanding.php/debtors view uses acc_account_type_label()
         $ason   = $this->ason();
         $all    = $this->model()->firm_account_balances($ason, true);
         $rows   = [];

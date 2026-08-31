@@ -37,4 +37,32 @@ class BankPasswordModel
         }
         return $b->get()->getResult();
     }
+
+    /** Insert one credential. Stamps created_date. Returns the new id. (CI3 add() 1:1) */
+    public function add(array $data)
+    {
+        $data['created_date'] = date('Y-m-d H:i:s');
+        $this->db()->table('aa_bank_passwords')->insert($data);
+        return $this->db()->insertID();
+    }
+
+    /** Insert an export/disclosure audit row. Returns the new id. (CI3 add_audit_log() 1:1) */
+    public function addAuditLog(array $data)
+    {
+        $this->db()->table('aa_password_audit_logs')->insert($data);
+        return $this->db()->insertID();
+    }
+
+    /**
+     * Export/print/share history for the current firm + FY, newest first.
+     * (CI3 audit_logs() 1:1 — scoped by template_id AND FY.)
+     */
+    public function auditLogs(): array
+    {
+        return $this->db()->table('aa_password_audit_logs')
+            ->where('template_id', (int) fy()->template_id)
+            ->where('FY', fy()->FY)
+            ->orderBy('id', 'desc')
+            ->get()->getResult();
+    }
 }
