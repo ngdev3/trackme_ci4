@@ -267,6 +267,10 @@ $routes->post('admin/setting/change_fy_id', ['\App\Modules\Admin\Controllers\Set
 $routes->get('admin/setting/hub', ['\App\Modules\Admin\Controllers\Setting', 'hub']);
 $routes->get('admin/setting', ['\App\Modules\Admin\Controllers\Setting', 'hub']);
 
+// SEO & Search Optimization (settings form + dynamic sitemap/robots)
+$routes->match(['GET', 'POST'], 'admin/seo', ['\App\Modules\Admin\Controllers\Seo', 'index']);
+$routes->get('admin/seo/generate', ['\App\Modules\Admin\Controllers\Seo', 'generate']);
+
 // GST default-rate settings (super-admin)
 $routes->match(['GET', 'POST'], 'admin/gst_setting', [Gst_setting::class, 'index']);
 

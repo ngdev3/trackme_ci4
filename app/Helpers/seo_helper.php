@@ -209,3 +209,23 @@ if (! function_exists('seo_send_noindex_header')) {
         }
     }
 }
+
+if (! function_exists('seo_save_settings')) {
+    /** Persist posted SEO settings (deep-merged) to Config/seo_settings.json. */
+    function seo_save_settings($new): bool
+    {
+        $current = [];
+        $file = seo_settings_path();
+        if (is_file($file)) {
+            $saved = json_decode((string) file_get_contents($file), true);
+            if (is_array($saved)) {
+                $current = $saved;
+            }
+        }
+        $merged = function_exists('seo_array_merge_deep')
+            ? seo_array_merge_deep($current, (array) $new)
+            : array_merge($current, (array) $new);
+        $json = json_encode($merged, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        return @file_put_contents($file, $json) !== false;
+    }
+}
