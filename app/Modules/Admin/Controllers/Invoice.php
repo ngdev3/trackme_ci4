@@ -62,6 +62,74 @@ class Invoice extends BaseController
     }
 
     /**
+     * Add a Bill of Supply. GET renders the form; POST validates, enforces the
+     * stock guard, and writes the 4-table transaction (rokad jama+nama →
+     * invoice_system → stock movement) via InvoiceWriteModel — the proven,
+     * transaction-safe write core.
+     */
+    public function add()
+    {
+        $db = \Config\Database::connect();
+
+        if (strtoupper($this->request->getMethod()) === 'POST') {
+            $write = new \App\Modules\Admin\Models\InvoiceWriteModel();
+
+            // Serialise invoice-number generation per firm/FY/product.
+            $lock = 'inv_seq_' . (int) fy()->template_id . '_' . substr(md5(fy()->FY . '|' . fy()->product_type), 0, 20);
+            $db->query('SELECT GET_LOCK(' . $db->escape($lock) . ', 10)');
+
+            $no      = $write->nextInvoiceId();
+            $payload = $write->buildBosPayload($this->request->getPost() ?? [], $no);
+            if (isset($payload['error'])) {
+                $db->query('SELECT RELEASE_LOCK(' . $db->escape($lock) . ')');
+                return redirect()->to(site_url('admin/invoice/add'))->with('error', $payload['error']);
+            }
+
+            // Strict stock guard: a sale may never exceed available stock.
+            $reqQty = (float) $this->request->getPost('quantity');
+            $bal    = (new \App\Modules\Admin\Models\StockModel())->currentBalance((int) $this->request->getPost('hsn_code_id'));
+            if ($reqQty > (float) $bal['balance']) {
+                $db->query('SELECT RELEASE_LOCK(' . $db->escape($lock) . ')');
+                return redirect()->to(site_url('admin/invoice/add'))
+                    ->with('error', 'Not created: quantity ' . $reqQty . ' exceeds available stock ' . $bal['balance'] . ' ' . $bal['unit'] . ' for ' . ($bal['product'] ?: 'this product') . '.');
+            }
+
+            $db->transBegin();
+            try {
+                $res = $write->createRokadEntry($payload['sale_jama'], $payload['sale_nama']);
+                $bos = $write->addInvoice($payload['invoice'], $res);
+                $stock = $payload['sale_stock'];
+                $stock['rokad_nama_id'] = $res['expenses_data'];
+                $stock['rokad_jama_id'] = $res['deposit_data'];
+                $write->stockUpdation($stock);
+
+                if ($db->transStatus() === false) {
+                    throw new \RuntimeException('transaction failed');
+                }
+                $db->transCommit();
+            } catch (\Throwable $e) {
+                $db->transRollback();
+                $db->query('SELECT RELEASE_LOCK(' . $db->escape($lock) . ')');
+                return redirect()->to(site_url('admin/invoice/add'))->with('error', 'Bill of Supply was not created. Please try again.');
+            }
+            $db->query('SELECT RELEASE_LOCK(' . $db->escape($lock) . ')');
+
+            return redirect()->to(site_url('admin/invoice/listing'))->with('success', 'Bill of Supply #' . $no . ' created.');
+        }
+
+        // GET — render the add form with account + product dropdowns.
+        $accounts = $db->table('aa_account_name')->select('account_id, name')
+            ->where("COALESCE(status,'') != 'Delete'", null, false)->orderBy('name', 'asc')->get()->getResult();
+
+        return _layout('\App\Modules\Admin\Views\invoice\add', [
+            'title'    => 'Add Bill of Supply · C R Industries ERP',
+            'accounts' => $accounts,
+            'hsn_list' => get_hsn_code() ?: [],
+            'error'    => session()->getFlashdata('error'),
+        ]);
+    }
+
+    /**
      * Live stock-availability check for the invoice form (CI3 stock_balance).
      * Returns the current available balance for the selected product — the
      * strict stock guard that prevents overselling. Read-only.

@@ -89,3 +89,53 @@ defined('EXIT_USER_INPUT')     || define('EXIT_USER_INPUT', 7);     // invalid u
 defined('EXIT_DATABASE')       || define('EXIT_DATABASE', 8);       // database error
 defined('EXIT__AUTO_MIN')      || define('EXIT__AUTO_MIN', 9);      // lowest automatically-assigned error code
 defined('EXIT__AUTO_MAX')      || define('EXIT__AUTO_MAX', 125);    // highest automatically-assigned error code
+
+/*
+ |--------------------------------------------------------------------------
+ | CI3 form-helper compatibility shims
+ |--------------------------------------------------------------------------
+ | Ported CI3 views call form_error()/validation_errors(), which don't exist
+ | in CI4 and 500 the page. These shims read validation errors from flashdata
+ | (set on a failed submit + redirect) and return '' on a fresh GET — so every
+ | ported add/edit view renders instead of crashing. Defined here because
+ | Constants.php is always loaded, regardless of a controller's $helpers.
+ */
+if (! function_exists('form_error')) {
+    function form_error(string $field = '', string $open = '<span class="text-danger">', string $close = '</span>'): string
+    {
+        $errors = session()->getFlashdata('errors');
+        $errors = is_array($errors) ? $errors : [];
+        $msg = $errors[$field] ?? '';
+        return $msg !== '' ? $open . $msg . $close : '';
+    }
+}
+if (! function_exists('validation_errors')) {
+    function validation_errors(string $open = '<p class="text-danger">', string $close = '</p>'): string
+    {
+        $errors = session()->getFlashdata('errors');
+        $errors = is_array($errors) ? $errors : [];
+        $out = '';
+        foreach ($errors as $msg) {
+            $out .= $open . $msg . $close;
+        }
+        return $out;
+    }
+}
+if (! function_exists('get_logical_data')) {
+    // CI3 shim: the global service on/off flag (SELECT status FROM service).
+    // Cached per request; returns the row object (->status) or false.
+    function get_logical_data()
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+        try {
+            $db = \Config\Database::connect();
+            $cached = $db->tableExists('service') ? ($db->table('service')->select('status')->get()->getRow() ?: false) : false;
+        } catch (\Throwable $e) {
+            $cached = false;
+        }
+        return $cached;
+    }
+}

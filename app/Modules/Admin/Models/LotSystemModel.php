@@ -4,12 +4,8 @@ namespace App\Modules\Admin\Models;
 
 use Config\Database;
 
-/**
- * CdNoteModel — CI4 port of the credit_debit_note listing. This table has NO
- * status column, so scope is template_id + FY + product_type only (no
- * soft-delete). Standalone (no account join). Listing only.
- */
-class CdNoteModel
+/** LotSystemModel — CI4 port of the lot_detail listing (general lot system). */
+class LotSystemModel
 {
     protected function db()
     {
@@ -18,21 +14,21 @@ class CdNoteModel
 
     private function base()
     {
-        return $this->db()->table('credit_debit_note')
-            ->where('FY', fy()->FY)
+        return $this->db()->table('lot_detail')
+            ->where('template_id', fy()->template_id)->where('FY', fy()->FY)
             ->where('product_type', fy()->product_type)
-            ->where('template_id', fy()->template_id);
+            ->where("COALESCE(status,'') != 'Delete'", null, false);
     }
 
     public function countData(): int
     {
-        return $this->base()->countAllResults();
+        return $this->base()->select('lot_id')->countAllResults();
     }
 
     public function getData(): array
     {
         $post = service('request')->getPost();
-        $b = $this->base()->orderBy('credit_debit_id', 'desc');
+        $b = $this->base()->orderBy('lot_id', 'desc');
         if (! empty($post['length']) && $post['length'] != '-1') {
             $b->limit((int) $post['length'], (int) ($post['start'] ?? 0));
         }

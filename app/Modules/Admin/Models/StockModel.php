@@ -18,6 +18,27 @@ class StockModel
         return Database::connect();
     }
 
+    /** Stock master listing (stock_detail), scoped by firm + FY. */
+    public function countList(): int
+    {
+        return $this->db()->table('stock_detail')
+            ->where('template_id', fy()->template_id)->where('FY', fy()->FY)
+            ->where("COALESCE(status,'') != 'Delete'", null, false)->countAllResults();
+    }
+
+    public function getList(): array
+    {
+        $post = service('request')->getPost();
+        $b = $this->db()->table('stock_detail')
+            ->where('template_id', fy()->template_id)->where('FY', fy()->FY)
+            ->where("COALESCE(status,'') != 'Delete'", null, false)
+            ->orderBy('id', 'desc');
+        if (! empty($post['length']) && $post['length'] != '-1') {
+            $b->limit((int) $post['length'], (int) ($post['start'] ?? 0));
+        }
+        return $b->get()->getResult();
+    }
+
     public function currentBalance(int $hsnCodeId): array
     {
         $out = ['balance' => 0, 'product' => '', 'unit' => '', 'opening' => 0, 'net' => 0];

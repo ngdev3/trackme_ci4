@@ -9,6 +9,23 @@
 use App\Modules\Admin\Controllers\Dashboard;
 use App\Modules\Admin\Controllers\Invoice;
 use App\Modules\Admin\Controllers\Hsn;
+use App\Modules\Admin\Controllers\PaymentReceipt;
+use App\Modules\Admin\Controllers\Uninvoice;
+use App\Modules\Admin\Controllers\Taxinvoice;
+use App\Modules\Admin\Controllers\CdNote;
+use App\Modules\Admin\Controllers\PurchaseModule;
+use App\Modules\Admin\Controllers\DeliveryChallan;
+use App\Modules\Admin\Controllers\BankPassword;
+use App\Modules\Admin\Controllers\Stock;
+use App\Modules\Admin\Controllers\LotSystem;
+use App\Modules\Admin\Controllers\PaddyLotsystem;
+use App\Modules\Admin\Controllers\Kisanreg;
+use App\Modules\Admin\Controllers\KisanVahi;
+use App\Modules\Admin\Controllers\DriverModule;
+use App\Modules\Admin\Controllers\TruckModule;
+use App\Modules\Admin\Controllers\Attendance;
+use App\Modules\Admin\Controllers\SalaryModule;
+use App\Modules\Admin\Controllers\ColdLotSystem;
 use App\Modules\Admin\Controllers\Users;
 use App\Modules\Admin\Controllers\Profile;
 use App\Modules\Admin\Controllers\Notification;
@@ -36,6 +53,8 @@ $routes->get('admin/dashboard', [Dashboard::class, 'index']);
 // Bill of Supply (invoice) — listing slice (P6 preview)
 $routes->get('admin/invoice/listing', [Invoice::class, 'listing']);
 $routes->post('admin/invoice/view_all', [Invoice::class, 'viewAll']);
+$routes->get('admin/invoice/add', [Invoice::class, 'add']);
+$routes->post('admin/invoice/add', [Invoice::class, 'add']);
 $routes->get('admin/invoice/GeneratePdf/(:segment)', [Invoice::class, 'GeneratePdf']);
 $routes->post('admin/invoice/stock_balance', [Invoice::class, 'stock_balance']);
 $routes->get('admin/invoice', [Invoice::class, 'listing']);
@@ -47,6 +66,93 @@ $routes->post('admin/hsn/listing_data', [Hsn::class, 'listingData']);
 $routes->post('admin/hsn/save', [Hsn::class, 'save']);
 $routes->post('admin/hsn/delete', [Hsn::class, 'delete']);
 $routes->get('admin/hsn/row/(:num)', [Hsn::class, 'row']);
+
+// Payment Receipt (Purchase from Farmer) — listing slice
+$routes->get('admin/payment_receipt/listing', [PaymentReceipt::class, 'listing']);
+$routes->get('admin/payment_receipt', [PaymentReceipt::class, 'listing']);
+$routes->post('admin/payment_receipt/view_all', [PaymentReceipt::class, 'viewAll']);
+
+// Unregistered Bill of Supply (UBOS) — listing slice
+$routes->get('admin/uninvoice/listing', [Uninvoice::class, 'listing']);
+$routes->get('admin/uninvoice', [Uninvoice::class, 'listing']);
+$routes->post('admin/uninvoice/view_all', [Uninvoice::class, 'viewAll']);
+
+// Tax Invoice — listing slice
+$routes->get('admin/taxinvoice/listing', [Taxinvoice::class, 'listing']);
+$routes->get('admin/taxinvoice', [Taxinvoice::class, 'listing']);
+$routes->post('admin/taxinvoice/view_all', [Taxinvoice::class, 'viewAll']);
+
+// Credit / Debit Note — listing slice
+$routes->get('admin/cd_note/listing', [CdNote::class, 'listing']);
+$routes->get('admin/cd_note', [CdNote::class, 'listing']);
+$routes->post('admin/cd_note/view_all', [CdNote::class, 'viewAll']);
+
+// Purchase, Delivery Challan, Password Manager — listing slices
+$routes->get('admin/purchase_module/listing', [PurchaseModule::class, 'listing']);
+$routes->get('admin/purchase_module', [PurchaseModule::class, 'listing']);
+$routes->post('admin/purchase_module/view_all', [PurchaseModule::class, 'viewAll']);
+$routes->get('admin/delivery_challan/listing', [DeliveryChallan::class, 'listing']);
+$routes->get('admin/delivery_challan', [DeliveryChallan::class, 'listing']);
+$routes->post('admin/delivery_challan/view_all', [DeliveryChallan::class, 'viewAll']);
+$routes->get('admin/bank_password/listing', [BankPassword::class, 'listing']);
+$routes->get('admin/bank_password', [BankPassword::class, 'listing']);
+$routes->post('admin/bank_password/view_all', [BankPassword::class, 'viewAll']);
+
+// Stock, Lot System, Paddy, Kisan Reg, Kisan Vahi — listing slices
+$routes->get('admin/stock/listing', [Stock::class, 'listing']);
+$routes->get('admin/stock', [Stock::class, 'listing']);
+$routes->post('admin/stock/view_all', [Stock::class, 'viewAll']);
+$routes->get('admin/lot_system/listing', [LotSystem::class, 'listing']);
+$routes->get('admin/lot_system', [LotSystem::class, 'listing']);
+$routes->post('admin/lot_system/view_all', [LotSystem::class, 'viewAll']);
+$routes->get('admin/PaddyLotsystem/listing', [PaddyLotsystem::class, 'listing']);
+$routes->get('admin/PaddyLotsystem', [PaddyLotsystem::class, 'listing']);
+$routes->post('admin/PaddyLotsystem/view_all', [PaddyLotsystem::class, 'viewAll']);
+$routes->get('admin/Kisanreg/listing', [Kisanreg::class, 'listing']);
+$routes->get('admin/Kisanreg', [Kisanreg::class, 'listing']);
+$routes->post('admin/Kisanreg/view_all', [Kisanreg::class, 'viewAll']);
+$routes->get('admin/kisan_vahi/listing', [KisanVahi::class, 'listing']);
+$routes->post('admin/kisan_vahi/view_all', [KisanVahi::class, 'viewAll']);
+
+// Driver, Truck, Attendance, Salary, Cold Lot — listing slices
+$routes->get('admin/driver_module/listing', [DriverModule::class, 'listing']);
+$routes->get('admin/driver_module', [DriverModule::class, 'listing']);
+$routes->get('admin/driver_module/add', [DriverModule::class, 'listing']); // Add opens the modal on the listing
+$routes->post('admin/driver_module/view_all', [DriverModule::class, 'viewAll']);
+$routes->post('admin/driver_module/save', [DriverModule::class, 'save']);
+$routes->post('admin/driver_module/delete', [DriverModule::class, 'delete']);
+$routes->get('admin/driver_module/row/(:num)', [DriverModule::class, 'row']);
+$routes->get('admin/truck_module/listing', [TruckModule::class, 'listing']);
+$routes->get('admin/truck_module', [TruckModule::class, 'listing']);
+$routes->get('admin/truck_module/add', [TruckModule::class, 'listing']);
+$routes->post('admin/truck_module/view_all', [TruckModule::class, 'viewAll']);
+$routes->post('admin/truck_module/save', [TruckModule::class, 'save']);
+$routes->post('admin/truck_module/delete', [TruckModule::class, 'delete']);
+$routes->get('admin/truck_module/row/(:num)', [TruckModule::class, 'row']);
+$routes->get('admin/attendance/listing', [Attendance::class, 'listing']);
+$routes->get('admin/attendance', [Attendance::class, 'listing']);
+$routes->get('admin/attendance/add', [Attendance::class, 'listing']);
+$routes->post('admin/attendance/view_all', [Attendance::class, 'viewAll']);
+$routes->post('admin/attendance/save', [Attendance::class, 'save']);
+$routes->post('admin/attendance/delete', [Attendance::class, 'delete']);
+$routes->get('admin/attendance/row/(:num)', [Attendance::class, 'row']);
+$routes->get('admin/salary_module/listing', [SalaryModule::class, 'listing']);
+$routes->get('admin/salary_module', [SalaryModule::class, 'listing']);
+$routes->post('admin/salary_module/view_all', [SalaryModule::class, 'viewAll']);
+$routes->post('admin/salary_module/save', [SalaryModule::class, 'save']);
+$routes->post('admin/salary_module/delete', [SalaryModule::class, 'delete']);
+$routes->get('admin/salary_module/row/(:num)', [SalaryModule::class, 'row']);
+// Menu uses the CI3 capitalised segment — alias so the links resolve.
+$routes->get('admin/Salary_Module/listing', [SalaryModule::class, 'listing']);
+$routes->get('admin/Salary_Module', [SalaryModule::class, 'listing']);
+$routes->get('admin/Salary_Module/add', [SalaryModule::class, 'listing']);
+$routes->post('admin/Salary_Module/view_all', [SalaryModule::class, 'viewAll']);
+$routes->post('admin/Salary_Module/save', [SalaryModule::class, 'save']);
+$routes->post('admin/Salary_Module/delete', [SalaryModule::class, 'delete']);
+$routes->get('admin/Salary_Module/row/(:num)', [SalaryModule::class, 'row']);
+$routes->get('admin/cold_lot_system/listing', [ColdLotSystem::class, 'listing']);
+$routes->get('admin/cold_lot_system', [ColdLotSystem::class, 'listing']);
+$routes->post('admin/cold_lot_system/view_all', [ColdLotSystem::class, 'viewAll']);
 
 // Users (P2)
 $routes->get('admin/users/listing', [Users::class, 'listing']);

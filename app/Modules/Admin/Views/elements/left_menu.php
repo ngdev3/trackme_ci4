@@ -23,10 +23,36 @@ $u = fn($p) => base_url('admin/' . $p);
  * Controllers already ported to CI4 → show a "NEW" badge so it's obvious which
  * modules are live in the new project. Add keys here as more controllers land.
  */
-$ready = ['dashboard', 'notification', 'users', 'role_permissions', 'user_permissions', 'invoice', 'seo', 'hsn', 'profile', 'help', 'attachments', 'app_setting', 'entry_trace', 'menu_order', 'item_master', 'web_push', 'account_name', 'gst_setting', 'ricemill_inquiry', 'billing_register', 'traffic', 'device', 'document', 'letter_pad', 'app_update'];
+$ready = ['dashboard', 'notification', 'users', 'role_permissions', 'user_permissions', 'invoice', 'seo', 'hsn', 'profile', 'help', 'attachments', 'app_setting', 'entry_trace', 'menu_order', 'item_master', 'web_push', 'account_name', 'gst_setting', 'ricemill_inquiry', 'billing_register', 'traffic', 'device', 'document', 'letter_pad', 'app_update',
+    // Ported + verified (finance registers, ops, HR, lot/cold/kisan) — listing slices live on CI4:
+    'taxinvoice', 'uninvoice', 'payment_receipt', 'cd_note', 'purchase_module', 'delivery_challan', 'bank_password',
+    'stock', 'lot_system', 'paddylotsystem', 'kisanreg', 'kisan_vahi',
+    'driver_module', 'truck_module', 'attendance', 'salary_module', 'cold_lot_system',
+    'city', 'state', 'tax'];
 $ctrlOf = fn($uri) => strtolower(explode('/', $uri)[0]);
 $isNew  = fn($ctrl) => in_array(strtolower($ctrl), $ready, true);
 $NEW    = '<span class="menu-new">NEW</span>';
+
+/**
+ * Precise "works on CI4" whitelist — a NEW badge is shown only for a menu link
+ * whose EXACT uri resolves to a ported route (verified by smoke test). This
+ * stops the controller-level badge from marking unported sub-methods (add/edit/
+ * position/report/…) that would 404. Keys are lowercased 'ctrl/method' (or a
+ * single segment for one-word pages). Add here as more methods are ported.
+ */
+$readyUris = [
+    'dashboard', 'hsn/listing', 'invoice/listing', 'invoice/add', 'taxinvoice/listing', 'uninvoice/listing',
+    'payment_receipt/listing', 'cd_note/listing', 'purchase_module/listing', 'delivery_challan/listing',
+    'bank_password/listing', 'stock/listing', 'lot_system/listing', 'paddylotsystem/listing',
+    'kisanreg/listing', 'kisan_vahi/listing', 'driver_module/listing', 'driver_module/add', 'truck_module/listing', 'truck_module/add',
+    'attendance/listing', 'attendance/add', 'salary_module/listing', 'salary_module/add', 'cold_lot_system/listing',
+    'account/entry', 'account_name/listing', 'accounts_report', 'attachments', 'billing_register/listing',
+    'document/listing', 'document/add', 'notification/listing', 'item_master/listing',
+    'ricemill_inquiry/listing', 'gst_setting',
+    // report/search excluded: parallel-work controller bug (undefined $users) — not badged until fixed by its owner.
+    'report/byaccount_name', 'report/deleted_entries', 'report/ledger', 'report/rokad_parcha',
+];
+$uriNew = fn($uri) => in_array(strtolower(trim((string) $uri, '/')), $readyUris, true);
 
 /**
  * Each entry: 'label','icon','ctrl' (segment for active state),'rbac' (module key
@@ -74,20 +100,26 @@ $menu = [
 ?>
 <style>
     .menu-new { display: inline-block; margin-left: 7px; padding: 1px 6px; border-radius: 9px;
-        background: #16a34a; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .04em;
-        vertical-align: middle; line-height: 1.5; text-transform: uppercase; }
-    .dropdown-menu .menu-new { background: #22c55e; }
+        background: #dc2626; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .04em;
+        vertical-align: middle; line-height: 1.5; text-transform: uppercase;
+        box-shadow: 0 0 0 1px rgba(220,38,38,.35); }
+    .dropdown-menu .menu-new { background: #ef4444; }
 </style>
 <ul class="sidebar-menu scrollable pos-r">
     <?php foreach ($menu as $m): ?>
         <?php if (! $can($m['rbac'])) { continue; } ?>
         <?php $active = ($seg2 !== '' && $seg2 === $m['ctrl']); ?>
         <?php
-        // A group is "ready" if its own controller is ported, or any sub-item's is.
-        $groupNew = $isNew($m['ctrl']);
+        // A group is "ready" only if its own link OR a sub-item link actually
+        // resolves to a ported route (precise — no false NEW on unported methods).
+        $groupNew = false;
+        if (! empty($m['href'])) {
+            $hrefUri = ltrim(str_replace(rtrim(base_url('admin'), '/') . '/', '', $m['href']), '/');
+            $groupNew = $uriNew($hrefUri);
+        }
         if (! $groupNew && ! empty($m['items'])) {
             foreach ($m['items'] as $uri) {
-                if ($isNew($ctrlOf($uri))) { $groupNew = true; break; }
+                if ($uriNew($uri)) { $groupNew = true; break; }
             }
         }
         ?>
@@ -104,7 +136,7 @@ $menu = [
                 </a>
                 <ul class="dropdown-menu">
                     <?php foreach ($m['items'] as $label => $uri): ?>
-                        <li><a class="sidebar-link" href="<?= $u($uri) ?>"><?= esc($label) ?><?= $isNew($ctrlOf($uri)) ? $NEW : '' ?></a></li>
+                        <li><a class="sidebar-link" href="<?= $u($uri) ?>"><?= esc($label) ?><?= $uriNew($uri) ? $NEW : '' ?></a></li>
                     <?php endforeach; ?>
                 </ul>
             </li>
