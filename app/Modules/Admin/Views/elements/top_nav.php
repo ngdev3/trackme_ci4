@@ -56,7 +56,7 @@ $trackNm  = $firm->track_name ?? ($firm->FY ?? '');
         <ul class="nav-right">
             <?php if (! function_exists('erp_current_user_can') || erp_current_user_can('setting', 'view')): ?>
             <li class="dropdown fy-block">
-                <a href="<?= base_url('admin/setting/listing') ?>" class="no-after tm-has-tooltip" data-tooltip="Change firm / financial year" aria-label="Change firm or financial year">
+                <a href="javascript:void(0)" class="no-after tm-has-tooltip" data-tooltip="Current firm / financial year" aria-label="Current firm and financial year">
                     <span class="fy-content">
                         <span title="<?= esc($firmName) ?>"><?= esc($firmName) ?></span>
                         <span class="fy-blue">ID-</span>
