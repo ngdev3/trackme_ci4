@@ -1,0 +1,2619 @@
+<!-- DEBUG-VIEW START 4 APPPATH\Views\layouts\admin.php -->
+<!DOCTYPE html>
+<html>
+<head>
+<style  id="debugbar_dynamic_style"></style><style class="kint-rich-style">.kint-rich{--spacing: 4px;--nav-size: 15px;--backdrop-color: rgba(255, 255, 255, 0.9);--main-background: #e0eaef;--secondary-background: #c1d4df;--text-color: #1d1e1e;--variable-name-color: #1d1e1e;--variable-type-color: #0092db;--variable-type-color-hover: #5cb730;--border-color: #b6cedb;--border-color-hover: #0092db;--border: 1px solid var(--border-color);--foldout-max-size: calc(100vh - 100px);--foldout-zindex: 999999;--caret-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 150'><g stroke-width='2' fill='%23FFF'><path d='M1 1h28v28H1zm5 14h18m-9 9V6M1 61h28v28H1zm5 14h18' stroke='%23379'/><path d='M1 31h28v28H1zm5 14h18m-9 9V36M1 91h28v28H1zm5 14h18' stroke='%235A3'/><path d='M1 121h28v28H1zm5 5l18 18m-18 0l18-18' stroke='%23CCC'/></g></svg>");--ap-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><g stroke='%23000' fill='transparent'><path d='M2 8h3m3 3v3M8 2v3m3 3h3M3 8' stroke-width='2' stroke-linecap='round'/><circle stroke-width='1.5' r='4.5' cx='8' cy='8'/></g></svg>");--folder-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M2 2h4l2 2h6v9H2V2h2' stroke-width='2' stroke='%23000' fill='transparent' stroke-linejoin='round'/></svg>");--search-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><g stroke='%23000' fill='transparent'><path d='M2 14l3-3' stroke-linecap='round' stroke-width='3'/><circle stroke-width='2' r='5' cx='9' cy='7'/></g></svg>");font-size:13px;overflow-x:auto;white-space:nowrap;background:var(--backdrop-color);direction:ltr;contain:content}.kint-rich.kint-folder{position:fixed;bottom:0;left:0;right:0;z-index:var(--foldout-zindex);width:100%;margin:0;display:block}.kint-rich.kint-folder dd.kint-foldout{max-height:var(--foldout-max-size);padding-right:calc(var(--spacing)*2);overflow-y:scroll;display:none}.kint-rich.kint-folder dd.kint-foldout.kint-show{display:block}.kint-rich::selection{background:var(--border-color-hover);color:var(--text-color)}.kint-rich .kint-focused{box-shadow:0 0 3px 3px var(--variable-type-color-hover)}.kint-rich .kint-focused.kint-weak-focus{box-shadow:0 0 3px 1px color-mix(in srgb, var(--variable-type-color-hover) 50%, transparent)}.kint-rich,.kint-rich::before,.kint-rich::after,.kint-rich *,.kint-rich *::before,.kint-rich *::after{box-sizing:border-box;border-radius:0;color:var(--text-color);float:none !important;font-family:Consolas,Menlo,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New,monospace,serif;line-height:15px;margin:0;padding:0;text-align:left}.kint-rich{margin:calc(var(--spacing)*2) 0}.kint-rich dt,.kint-rich dl{width:auto}.kint-rich dt,.kint-rich div.access-path{background:var(--main-background);border:var(--border);color:var(--text-color);display:block;font-weight:bold;list-style:none outside none;overflow:auto;padding:var(--spacing)}.kint-rich dt:hover,.kint-rich div.access-path:hover{border-color:var(--border-color-hover)}.kint-rich>dl dl{padding:0 0 0 calc(var(--spacing)*3)}.kint-rich dt.kint-parent>nav,.kint-rich>footer>nav{background:var(--caret-image) no-repeat scroll 0 0/var(--nav-size) 75px rgba(0,0,0,0);cursor:pointer;display:inline-block;height:var(--nav-size);width:var(--nav-size);margin-right:3px;vertical-align:middle}.kint-rich dt.kint-parent:hover>nav,.kint-rich>footer>nav:hover{background-position:0 25%}.kint-rich dt.kint-parent.kint-show>nav,.kint-rich>footer.kint-show>nav{background-position:0 50%}.kint-rich dt.kint-parent.kint-show:hover>nav,.kint-rich>footer.kint-show>nav:hover{background-position:0 75%}.kint-rich dt.kint-parent.kint-locked>nav{background-position:0 100%}.kint-rich dt.kint-parent+dd{display:none;border-left:1px dashed var(--border-color);contain:strict}.kint-rich dt.kint-parent.kint-show+dd{display:block;contain:content}.kint-rich var,.kint-rich var a{color:var(--variable-type-color);font-style:normal}.kint-rich dt:hover var,.kint-rich dt:hover var a{color:var(--variable-type-color-hover)}.kint-rich dfn{font-style:normal;font-family:monospace;color:var(--variable-name-color)}.kint-rich pre{color:var(--text-color);margin:0 0 0 calc(var(--spacing)*3);padding:5px;overflow-y:hidden;border-top:0;border:var(--border);background:var(--main-background);display:block;word-break:normal}.kint-rich .kint-access-path-trigger,.kint-rich .kint-folder-trigger,.kint-rich .kint-search-trigger{background:color-mix(in srgb, var(--text-color) 80%, transparent);border-radius:3px;padding:2px;height:var(--nav-size);width:var(--nav-size);font-size:var(--nav-size);margin-left:5px;font-weight:bold;text-align:center;line-height:1;float:right !important;cursor:pointer;position:relative;overflow:hidden}.kint-rich .kint-access-path-trigger::before,.kint-rich .kint-folder-trigger::before,.kint-rich .kint-search-trigger::before{display:block;content:"";width:100%;height:100%;background:var(--main-background);mask:center/contain no-repeat alpha}.kint-rich .kint-access-path-trigger:hover,.kint-rich .kint-folder-trigger:hover,.kint-rich .kint-search-trigger:hover{background:var(--main-background)}.kint-rich .kint-access-path-trigger:hover::before,.kint-rich .kint-folder-trigger:hover::before,.kint-rich .kint-search-trigger:hover::before{background:var(--text-color)}.kint-rich .kint-access-path-trigger::before{mask-image:var(--ap-image)}.kint-rich .kint-folder-trigger::before{mask-image:var(--folder-image)}.kint-rich .kint-search-trigger::before{mask-image:var(--search-image)}.kint-rich input.kint-search{display:none;border:var(--border);border-top-width:0;border-bottom-width:0;padding:var(--spacing);float:right !important;margin:calc(var(--spacing)*-1) 0;color:var(--variable-name-color);background:var(--secondary-background);height:calc(var(--nav-size) + var(--spacing)*2);width:calc(var(--nav-size)*10);position:relative;z-index:100}.kint-rich input.kint-search.kint-show{display:block}.kint-rich .kint-search-root ul.kint-tabs>li:not(.kint-search-match){background:var(--secondary-background);filter:saturate(0);opacity:.5}.kint-rich .kint-search-root dl:not(.kint-search-match){opacity:.5}.kint-rich .kint-search-root dl:not(.kint-search-match)>dt{background:var(--main-background);filter:saturate(0)}.kint-rich .kint-search-root dl:not(.kint-search-match) dl,.kint-rich .kint-search-root dl:not(.kint-search-match) ul.kint-tabs>li:not(.kint-search-match){opacity:1}.kint-rich div.access-path{background:var(--secondary-background);display:none;margin-top:5px;padding:4px;white-space:pre}.kint-rich div.access-path.kint-show{display:block}.kint-rich footer{padding:0 3px 3px;font-size:9px;background:rgba(0,0,0,0)}.kint-rich footer>.kint-folder-trigger{background:rgba(0,0,0,0)}.kint-rich footer>.kint-folder-trigger::before{background:var(--text-color)}.kint-rich footer nav{height:10px;width:10px;background-size:10px 50px}.kint-rich footer>ol{display:none;margin-left:32px}.kint-rich footer.kint-show>ol{display:block}.kint-rich a{color:var(--text-color);text-shadow:none;text-decoration:underline}.kint-rich a:hover{color:var(--variable-name-color);border-bottom:1px dotted var(--variable-name-color)}.kint-rich ul{list-style:none;padding-left:calc(var(--spacing)*3)}.kint-rich ul:not(.kint-tabs) li{border-left:1px dashed var(--border-color)}.kint-rich ul:not(.kint-tabs) li>dl{border-left:none}.kint-rich ul.kint-tabs{margin:0 0 0 calc(var(--spacing)*3);padding-left:0;background:var(--main-background);border:var(--border);border-top:0}.kint-rich ul.kint-tabs>li{background:var(--secondary-background);border:var(--border);cursor:pointer;display:inline-block;height:calc(var(--spacing)*6);margin:calc(var(--spacing)/2);padding:0 calc(2px + var(--spacing)*2.5);vertical-align:top}.kint-rich ul.kint-tabs>li:hover,.kint-rich ul.kint-tabs>li.kint-active-tab:hover{border-color:var(--border-color-hover);color:var(--variable-type-color-hover)}.kint-rich ul.kint-tabs>li.kint-active-tab{background:var(--main-background);border-top:0;margin-top:-1px;height:27px;line-height:24px}.kint-rich ul.kint-tabs>li:not(.kint-active-tab){line-height:calc(var(--spacing)*5)}.kint-rich ul.kint-tabs li+li{margin-left:0}.kint-rich ul.kint-tab-contents>li{display:none;contain:strict}.kint-rich ul.kint-tab-contents>li.kint-show{display:block;contain:content}.kint-rich dt:hover+dd>ul>li.kint-active-tab{border-color:var(--border-color-hover);color:var(--variable-type-color-hover)}.kint-rich dt>.kint-color-preview{width:var(--nav-size);height:var(--nav-size);display:inline-block;vertical-align:middle;margin-left:10px;border:var(--border);background-color:#ccc;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2"><path fill="%23FFF" d="M0 0h1v2h1V1H0z"/></svg>');background-size:min(20px,100%)}.kint-rich dt>.kint-color-preview:hover{border-color:var(--border-color-hover)}.kint-rich dt>.kint-color-preview>div{width:100%;height:100%}.kint-rich table{border-collapse:collapse;empty-cells:show;border-spacing:0}.kint-rich table *{font-size:12px}.kint-rich table dt{background:none;padding:calc(var(--spacing)/2)}.kint-rich table dt .kint-parent{min-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.kint-rich table td,.kint-rich table th{border:var(--border);padding:calc(var(--spacing)/2);vertical-align:center}.kint-rich table th{cursor:alias}.kint-rich table td:first-child,.kint-rich table th{font-weight:bold;background:var(--secondary-background);color:var(--variable-name-color)}.kint-rich table td{background:var(--main-background);white-space:pre}.kint-rich table td>dl{padding:0}.kint-rich table pre{border-top:0;border-right:0}.kint-rich table thead th:first-child{background:none;border:0}.kint-rich table tr:hover>td{box-shadow:0 0 1px 0 var(--border-color-hover) inset}.kint-rich table tr:hover var{color:var(--variable-type-color-hover)}.kint-rich table ul.kint-tabs li.kint-active-tab{height:20px;line-height:17px}.kint-rich pre.kint-source{margin-left:-1px}.kint-rich pre.kint-source[data-kint-filename]:before{display:block;content:attr(data-kint-filename);margin-bottom:var(--spacing);padding-bottom:var(--spacing);border-bottom:1px solid var(--secondary-background)}.kint-rich pre.kint-source>div:before{display:inline-block;content:counter(kint-l);counter-increment:kint-l;border-right:1px solid var(--border-color-hover);padding-right:calc(var(--spacing)*2);margin-right:calc(var(--spacing)*2)}.kint-rich pre.kint-source>div.kint-highlight{background:var(--secondary-background)}.kint-rich .kint-microtime-js .kint-microtime-lap{text-shadow:-1px 0 var(--border-color-hover),0 1px var(--border-color-hover),1px 0 var(--border-color-hover),0 -1px var(--border-color-hover);color:var(--main-background);font-weight:bold}.kint-rich{--main-background: #f8f8f8;--secondary-background: #f8f8f8;--variable-type-color: #06f;--variable-type-color-hover: #f00;--border-color: #d7d7d7;--border-color-hover: #aaa;--alternative-background: #fff;--highlight-color: #cfc;--caret-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 150'><path d='M6 7h18l-9 15zm0 30h18l-9 15zm0 45h18l-9-15zm0 30h18l-9-15zm0 12l18 18m-18 0l18-18' fill='%23555'/><path d='M6 126l18 18m-18 0l18-18' stroke-width='2' stroke='%23555'/></svg>")}.kint-rich .kint-focused{box-shadow:0 0 3px 2px var(--variable-type-color-hover)}.kint-rich dt{font-weight:normal}.kint-rich dt.kint-parent{margin-top:4px}.kint-rich dl dl{margin-top:4px;padding-left:25px;border-left:none}.kint-rich>dl>dt{background:var(--secondary-background)}.kint-rich ul{margin:0;padding-left:0}.kint-rich ul:not(.kint-tabs)>li{border-left:0}.kint-rich ul.kint-tabs{background:var(--secondary-background);border:var(--border);border-width:0 1px 1px 1px;padding:4px 0 0 12px;margin-left:-1px;margin-top:-1px}.kint-rich ul.kint-tabs li,.kint-rich ul.kint-tabs li+li{margin:0 0 0 4px}.kint-rich ul.kint-tabs li{border-bottom-width:0;height:calc(var(--spacing)*6 + 1px)}.kint-rich ul.kint-tabs li:first-child{margin-left:0}.kint-rich ul.kint-tabs li.kint-active-tab{border-top:var(--border);background:var(--alternative-background);font-weight:bold;padding-top:0;border-bottom:1px solid var(--alternative-background) !important;margin-bottom:-1px}.kint-rich ul.kint-tabs li.kint-active-tab:hover{border-bottom:1px solid var(--alternative-background)}.kint-rich ul>li>pre{border:var(--border)}.kint-rich dt:hover+dd>ul{border-color:var(--border-color-hover)}.kint-rich pre{background:var(--alternative-background);margin-top:4px;margin-left:25px}.kint-rich .kint-source{margin-left:-1px}.kint-rich .kint-source .kint-highlight{background:var(--highlight-color)}.kint-rich .kint-parent.kint-show>.kint-search{border-bottom-width:1px}.kint-rich table td{background:var(--alternative-background)}.kint-rich table td>dl{padding:0;margin:0}.kint-rich table td>dl>dt.kint-parent{margin:0}.kint-rich table td:first-child,.kint-rich table td,.kint-rich table th{padding:2px 4px}.kint-rich table dd,.kint-rich table dt{background:var(--alternative-background)}.kint-rich table tr:hover>td{box-shadow:none;background:var(--highlight-color)}
+</style>
+
+    <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+    <title>Dashboard · C R Industries ERP</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <meta name="robots" content="noindex, nofollow" />
+
+    
+    <link href="http://localhost:8077/trackme_ci4/public/assets/admin/assets/css/bootstrap.css" rel="stylesheet">
+    <link href="http://localhost:8077/trackme_ci4/public/assets/admin/assets/css/layout.css" rel="stylesheet">
+    <link href="http://localhost:8077/trackme_ci4/public/assets/global/plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <link href="http://localhost:8077/trackme_ci4/public/assets/global/plugins/simple-line-icons/simple-line-icons.min.css" rel="stylesheet">
+    <link href="http://localhost:8077/trackme_ci4/public/assets/css/admin_shell.css" rel="stylesheet">
+</head>
+
+<body class="app page-header-fixed page-sidebar-closed-hide-logo">
+
+    <div>
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-inner">
+                <div class="sidebar-logo">
+                    <div class="peers ai-c fxw-nw">
+                        <div class="peer peer-greed">
+                            <a class="sidebar-link td-n" href="http://localhost:8077/trackme_ci4/public/admin/dashboard">
+                                <div class="peers ai-c fxw-nw">
+                                    <div class="peer">
+                                        <div class="logo"><img src="http://localhost:8077/trackme_ci4/public/assets/images/logo.png" alt=""></div>
+                                    </div>
+                                    <div class="peer peer-greed">
+                                        <h5 class="lh-1 mB-0 logo-text">CR INDUSTRIES</h5>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DEBUG-VIEW START 1 APPPATH\Modules\Admin\Views\elements\left_menu.php -->
+<style>
+    .menu-new { display: inline-block; margin-left: 7px; padding: 1px 6px; border-radius: 9px;
+        background: #dc2626; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .04em;
+        vertical-align: middle; line-height: 1.5; text-transform: uppercase;
+        box-shadow: 0 0 0 1px rgba(220,38,38,.35); }
+    .dropdown-menu .menu-new { background: #ef4444; }
+</style>
+<ul class="sidebar-menu scrollable pos-r">
+                                                <li class="nav-item btn_active">
+                <a href="http://localhost:8077/trackme_ci4/public/admin/dashboard"><span class="icon-holder"><i class="c-red-500 fa fa-tachometer"></i></span><span class="title">Dashboard<span class="menu-new">NEW</span></span></a>
+            </li>
+                                                        <li class="nav-item ">
+                <a href="http://localhost:8077/trackme_ci4/public/admin/help"><span class="icon-holder"><i class="c-red-500 fa fa-question-circle"></i></span><span class="title">Help &amp; FAQ</span></a>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-refresh"></i></span>
+                    <span class="title">Documents Renewal<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/document/add">Add Document<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/document/listing">Document List<span class="menu-new">NEW</span></a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-envelope-o"></i></span>
+                    <span class="title">Letter Pad</span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/letter_pad/add">Create Letter</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/letter_pad/listing">Letters</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-android"></i></span>
+                    <span class="title">APK Manager</span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/app_update/listing">Versions</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/app_update/upload">Upload Build</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/app_update/portal">Employee Portal</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/app_update/logs">Download Logs</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/app_update/settings">Settings</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item ">
+                <a href="http://localhost:8077/trackme_ci4/public/admin/notification/listing"><span class="icon-holder"><i class="c-red-500 fa fa-bell"></i></span><span class="title">Notification<span class="menu-new">NEW</span></span></a>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-mobile"></i></span>
+                    <span class="title">Device Management</span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/device/listing">Devices</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/device/send_push">Send Push</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item ">
+                <a href="http://localhost:8077/trackme_ci4/public/task"><span class="icon-holder"><i class="c-red-500 fa fa-tasks"></i></span><span class="title">Tasks</span></a>
+            </li>
+                                                        <li class="nav-item ">
+                <a href="http://localhost:8077/trackme_ci4/public/admin/monitor"><span class="icon-holder"><i class="c-red-500 fa fa-desktop"></i></span><span class="title">Activity &amp; Audit Monitor</span></a>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-key"></i></span>
+                    <span class="title">Password Manager<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/bank_password/listing">Vault<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/bank_password/add">Add Credential</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/bank_password/history">History</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-address-book-o"></i></span>
+                    <span class="title">Account Name<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/account_name/listing">Accounts<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/account_name/add">Add Account</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-id-card-o"></i></span>
+                    <span class="title">FCI Driver<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/driver_module/listing">Drivers<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/driver_module/add">Add Driver<span class="menu-new">NEW</span></a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-truck"></i></span>
+                    <span class="title">FCI Truck<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/truck_module/listing">Trucks<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/truck_module/add">Add Truck<span class="menu-new">NEW</span></a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-calendar-check-o"></i></span>
+                    <span class="title">Attendance<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/attendance/employee_listing">Employees</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/attendance/employee_add">Add Employee</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/attendance/listing">Attendance<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/attendance/add">Mark Attendance<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/attendance/report">Report</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item ">
+                <a href="http://localhost:8077/trackme_ci4/public/admin/account/entry"><span class="icon-holder"><i class="c-red-500 fa fa-exchange"></i></span><span class="title">Jama Naam Voucher<span class="menu-new">NEW</span></span></a>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-snowflake-o"></i></span>
+                    <span class="title">Cold Lot System<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cold_lot_system/listing">Cold Lots<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cold_lot_system/add">Add Lot</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cold_lot_system/kisan_listing">Kisan</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cold_lot_system/employee_listing">Employee</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cold_lot_system/billing/kisan_inventory_bill/listing">Kisan Inventory Bill</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cold_lot_system/reports">Reports</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cold_lot_system/bank_statement">Bank Statement</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cold_lot_system/bank_statement_listing">Saved Statements</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cold_lot_system/bank_statement_setting">Statement Setting</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-cube"></i></span>
+                    <span class="title">Cold Storage Inventory</span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cold_inventory/overview">Overview</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cold_inventory/report/variety">By Variety</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cold_inventory/report/movement">Movement</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-leaf"></i></span>
+                    <span class="title">Rice Mill Website<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/ricemill_inquiry/listing">Rice Mill Inquiry<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/kisan_vahi/register">Kisan Vahi Register</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/Kisanreg/listing">Kisan Registration<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/Kisanreg/report">Kisan Reg Report</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/kisan_vahi/entry">Kisan Vahi Entry</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/accountMapping/account_mapping">Account Mapping</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/accountMapping/thumb_figure">Thumb Figure</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/accountMapping/captures">Farmer Captures</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/kisan_vahi/report">Kisan Vahi Report</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/kisan_vahi/extension">Extension Key</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-bar-chart"></i></span>
+                    <span class="title">Reports<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/report/search">Search</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/report/byaccount_name">By Account<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/report/ledger">Ledger<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/report/rokad_parcha">Rokad Parcha<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/report/deleted_entries">Deleted Entries<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/attachments">Attachments<span class="menu-new">NEW</span></a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item ">
+                <a href="http://localhost:8077/trackme_ci4/public/admin/accounts_report"><span class="icon-holder"><i class="c-red-500 fa fa-line-chart"></i></span><span class="title">Accounting Reports<span class="menu-new">NEW</span></span></a>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-cubes"></i></span>
+                    <span class="title">Stock Records<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/stock/add">Add Stock</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/stock/listing">Stock List<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/stock/position">Position</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/stock/statement">Statement</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/hsn/listing">HSN Master<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/item_master/listing">Item Master<span class="menu-new">NEW</span></a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-file-text-o"></i></span>
+                    <span class="title">Bill Of Supply<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/invoice/listing">Bills<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/invoice/add">Add Bill<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/invoice/verify_logs">Verify Logs</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/pdf_theme/listing">PDF Theme</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-exchange"></i></span>
+                    <span class="title">Credit/Debit Note<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cd_note/listing">CD Notes<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/cd_note/add">Add CD Note</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-file-o"></i></span>
+                    <span class="title">Unregistered BOS<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/uninvoice/listing">Bills<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/uninvoice/add">Add Bill</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-truck"></i></span>
+                    <span class="title">Delivery Challan<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/delivery_challan/listing">Challans<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/delivery_challan/add">Add Challan</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-book"></i></span>
+                    <span class="title">Billing Register<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/billing_register/listing">Register<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/billing_register/add">Add</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/billing_register/statement">Statement</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-file-text"></i></span>
+                    <span class="title">E-Tax Invoice<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/taxinvoice/e_invoice_add">E-Invoice Add</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/taxinvoice/einvoice_listing">E-Invoice List</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/gst_setting">GST Setting<span class="menu-new">NEW</span></a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-inr"></i></span>
+                    <span class="title">Purchase From Farmers<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/payment_receipt/add">Add Receipt</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/payment_receipt/listing">Receipts<span class="menu-new">NEW</span></a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-shopping-cart"></i></span>
+                    <span class="title">Purchase Module<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/purchase_module/add">Add Purchase</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/purchase_module/listing">Purchases<span class="menu-new">NEW</span></a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item ">
+                <a href="http://localhost:8077/trackme_ci4/public/admin/sale_module/listing"><span class="icon-holder"><i class="c-red-500 fa fa-tags"></i></span><span class="title">Sales Register</span></a>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-th-large"></i></span>
+                    <span class="title">Lot System<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/lot_system/listing">Lots<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/lot_system/add">Add Lot</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-leaf"></i></span>
+                    <span class="title">Paddy Center Challan<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/PaddyLotsystem/listing">Paddy Lots<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/PaddyLotsystem/add">Add Paddy Lot</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-money"></i></span>
+                    <span class="title">Salary Module<span class="menu-new">NEW</span></span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/Salary_Module/listing">Salaries<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/Salary_Module/add">Add<span class="menu-new">NEW</span></a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/Salary_Module/history">History</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-user-plus"></i></span>
+                    <span class="title">Users</span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/users/listing">Users</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/users/add">Add User</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/role_permissions">Role Permissions</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/user_permissions">User Permissions</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-cog"></i></span>
+                    <span class="title">Setting</span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/setting/hub">Setting Hub</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/setting/listing">Templates</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/setting/add">Add Template</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/setting/add_firm">Add Firm</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/setting/change_fy">Change FY</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/setting/tds_tcs">TDS/TCS</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/setting/msp">MSP</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/gstin">GSTIN</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/opening_balance">Opening Balance</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item dropdown ">
+                <a class="dropdown-toggle" href="javascript:void(0);">
+                    <span class="icon-holder"><i class="c-red-500 fa fa-search"></i></span>
+                    <span class="title">SEO &amp; Search</span>
+                    <span class="arrow"><i class="fa fa-angle-right"></i></span>
+                </a>
+                <ul class="dropdown-menu">
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/seo">SEO Settings</a></li>
+                                            <li><a class="sidebar-link" href="http://localhost:8077/trackme_ci4/public/admin/seo/generate">Generate Files</a></li>
+                                    </ul>
+            </li>
+                                                        <li class="nav-item ">
+                <a href="http://localhost:8077/trackme_ci4/public/admin/app_setting"><span class="icon-holder"><i class="c-red-500 fa fa-sliders"></i></span><span class="title">App Settings</span></a>
+            </li>
+            </ul>
+
+<!-- DEBUG-VIEW ENDED 1 APPPATH\Modules\Admin\Views\elements\left_menu.php -->
+            </div>
+        </div>
+
+        <!-- Page container -->
+        <div class="page-container">
+            <!-- DEBUG-VIEW START 2 APPPATH\Modules\Admin\Views\elements\top_nav.php -->
+<div class="header navbar">
+    <div class="header-container">
+        <ul class="nav-left">
+            <li><a id="sidebar-toggle" class="sidebar-toggle tm-has-tooltip" href="javascript:void(0);" data-tooltip="Toggle sidebar menu" aria-label="Toggle sidebar menu"><i class="ti-menu"></i></a></li>
+        </ul>
+
+        <div class="advanced-feature-note">
+            <i class="ti-info-alt"></i>
+            <span>Advanced features are inside the profile dropdown.</span>
+        </div>
+
+        <div class="erp-global-search" id="erpGlobalSearch">
+            <div class="erp-global-search-field">
+                <i class="ti-search"></i>
+                <input type="search" id="erpGlobalSearchInput" placeholder="Search ERP option..." autocomplete="off" aria-label="Search ERP option">
+                <button type="button" class="erp-global-search-clear" id="erpGlobalSearchClear" aria-label="Clear ERP search"><i class="ti-close"></i></button>
+            </div>
+            <div class="erp-search-suggestions" id="erpGlobalSearchSuggestions"></div>
+        </div>
+
+        <ul class="nav-right">
+                        <li class="dropdown fy-block">
+                <a href="javascript:void(0)" class="no-after tm-has-tooltip" data-tooltip="Current firm / financial year" aria-label="Current firm and financial year">
+                    <span class="fy-content">
+                        <span title="CR INDUSTRIES">CR INDUSTRIES</span>
+                        <span class="fy-blue">ID-</span>
+                        <span title="20_FY_2026_2027_1">20_FY_2026_2027_1</span>
+                    </span>
+                </a>
+            </li>
+            
+            <li class="dropdown notification-block">
+                <a href="javascript:void(0)" class="dropdown-toggle no-after notification-toggle tm-has-tooltip" data-toggle="dropdown" data-tooltip="Notifications" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
+                    <span class="notification-badge">
+                        <i class="ti-bell"></i>
+                                                    <span class="notification-count">7</span>
+                                            </span>
+                </a>
+                <ul class="dropdown-menu notif-menu">
+                    <li class="notif-head">
+                        <span>Notifications</span>
+                        <span class="notif-head-count">7 new</span>
+                    </li>
+                    <li>
+                        <ul class="notif-scroll">
+                                                            <li class="notif-item is-unread">
+                                    <a href="http://localhost:8077/trackme_ci4/public/admin/notification/read/3269">
+                                        <span class="notif-icon"><i class="ti-bell"></i></span>
+                                        <span class="notif-body">
+                                            <span class="notif-text">You are trying to Fetch the report of - <b>Santosh Shukla  Accessed By User : Super Admin</b></span>
+                                                                                            <span class="notif-user"><i class="ti-user"></i> Super Admin</span>
+                                                                                        <span class="notif-time">
+                                                <i class="ti-time"></i>
+                                                31 Aug 2026, 07:17 AM                                                <span class="notif-ago">&middot; 32 minutes ago</span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                                            <li class="notif-item is-unread">
+                                    <a href="http://localhost:8077/trackme_ci4/public/admin/notification/read/3268">
+                                        <span class="notif-icon"><i class="ti-bell"></i></span>
+                                        <span class="notif-body">
+                                            <span class="notif-text"><b>1</b> paddy lots milled to production</span>
+                                                                                            <span class="notif-user"><i class="ti-user"></i> Super Admin</span>
+                                                                                        <span class="notif-time">
+                                                <i class="ti-time"></i>
+                                                27 Aug 2026, 12:20 AM                                                <span class="notif-ago">&middot; 4 days ago</span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                                            <li class="notif-item is-unread">
+                                    <a href="http://localhost:8077/trackme_ci4/public/admin/notification/read/3267">
+                                        <span class="notif-icon"><i class="ti-bell"></i></span>
+                                        <span class="notif-body">
+                                            <span class="notif-text"><b>1</b> paddy conversions reverted</span>
+                                                                                            <span class="notif-user"><i class="ti-user"></i> Super Admin</span>
+                                                                                        <span class="notif-time">
+                                                <i class="ti-time"></i>
+                                                27 Aug 2026, 12:18 AM                                                <span class="notif-ago">&middot; 4 days ago</span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                                            <li class="notif-item is-unread">
+                                    <a href="http://localhost:8077/trackme_ci4/public/admin/notification/read/3266">
+                                        <span class="notif-icon"><i class="ti-bell"></i></span>
+                                        <span class="notif-body">
+                                            <span class="notif-text"><b>2</b> paddy lots milled to production</span>
+                                                                                            <span class="notif-user"><i class="ti-user"></i> Super Admin</span>
+                                                                                        <span class="notif-time">
+                                                <i class="ti-time"></i>
+                                                27 Aug 2026, 12:18 AM                                                <span class="notif-ago">&middot; 4 days ago</span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                                            <li class="notif-item is-unread">
+                                    <a href="http://localhost:8077/trackme_ci4/public/admin/notification/read/3265">
+                                        <span class="notif-icon"><i class="ti-bell"></i></span>
+                                        <span class="notif-body">
+                                            <span class="notif-text"><b>1</b> paddy conversions reverted</span>
+                                                                                            <span class="notif-user"><i class="ti-user"></i> Super Admin</span>
+                                                                                        <span class="notif-time">
+                                                <i class="ti-time"></i>
+                                                26 Aug 2026, 11:51 PM                                                <span class="notif-ago">&middot; 4 days ago</span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                                            <li class="notif-item is-unread">
+                                    <a href="http://localhost:8077/trackme_ci4/public/admin/notification/read/3264">
+                                        <span class="notif-icon"><i class="ti-bell"></i></span>
+                                        <span class="notif-body">
+                                            <span class="notif-text">Paddy lot <b>1155300526001</b> conversion reverted</span>
+                                                                                            <span class="notif-user"><i class="ti-user"></i> Super Admin</span>
+                                                                                        <span class="notif-time">
+                                                <i class="ti-time"></i>
+                                                26 Aug 2026, 11:50 PM                                                <span class="notif-ago">&middot; 4 days ago</span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                                            <li class="notif-item is-unread">
+                                    <a href="http://localhost:8077/trackme_ci4/public/admin/notification/read/3263">
+                                        <span class="notif-icon"><i class="ti-bell"></i></span>
+                                        <span class="notif-body">
+                                            <span class="notif-text"><b>23</b> paddy lots milled to production</span>
+                                                                                            <span class="notif-user"><i class="ti-user"></i> Super Admin</span>
+                                                                                        <span class="notif-time">
+                                                <i class="ti-time"></i>
+                                                26 Aug 2026, 07:51 PM                                                <span class="notif-ago">&middot; 4 days ago</span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                                            <li class="notif-item ">
+                                    <a href="http://localhost:8077/trackme_ci4/public/admin/notification/read/3066">
+                                        <span class="notif-icon"><i class="ti-bell"></i></span>
+                                        <span class="notif-body">
+                                            <span class="notif-text">Letter <b>kkkk</b> updated on letter pad (No. LP-260727-C8K4MX)</span>
+                                                                                            <span class="notif-user"><i class="ti-user"></i> Super Admin</span>
+                                                                                        <span class="notif-time">
+                                                <i class="ti-time"></i>
+                                                13 Aug 2026, 02:51 PM                                                <span class="notif-ago">&middot; 2 weeks ago</span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                                            <li class="notif-item ">
+                                    <a href="http://localhost:8077/trackme_ci4/public/admin/notification/read/3065">
+                                        <span class="notif-icon"><i class="ti-bell"></i></span>
+                                        <span class="notif-body">
+                                            <span class="notif-text">Letter <b>kkkk</b> updated on letter pad (No. LP-260727-C8K4MX)</span>
+                                                                                            <span class="notif-user"><i class="ti-user"></i> Super Admin</span>
+                                                                                        <span class="notif-time">
+                                                <i class="ti-time"></i>
+                                                13 Aug 2026, 02:51 PM                                                <span class="notif-ago">&middot; 2 weeks ago</span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                                            <li class="notif-item ">
+                                    <a href="http://localhost:8077/trackme_ci4/public/admin/notification/read/3064">
+                                        <span class="notif-icon"><i class="ti-bell"></i></span>
+                                        <span class="notif-body">
+                                            <span class="notif-text">Letter <b>kkkk</b> updated on letter pad (No. LP-260727-C8K4MX)</span>
+                                                                                            <span class="notif-user"><i class="ti-user"></i> Super Admin</span>
+                                                                                        <span class="notif-time">
+                                                <i class="ti-time"></i>
+                                                13 Aug 2026, 02:50 PM                                                <span class="notif-ago">&middot; 2 weeks ago</span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                                    </ul>
+                    </li>
+                    <li class="notif-foot">
+                        <a href="http://localhost:8077/trackme_ci4/public/admin/notification/listing">See all notifications</a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="session-block">
+                <div class="session-meter tm-has-tooltip" id="sessionMeter"
+                    data-started-at="1788139256"
+                    data-timeout="3600"
+                    data-expires-at="1788142856"
+                    data-logout-url="http://localhost:8077/trackme_ci4/public/admin/auth/logout"
+                    data-renew-url="http://localhost:8077/trackme_ci4/public/admin/auth/renew_session"
+                    data-tooltip="Session time: active and remaining"
+                    aria-label="Session time active and remaining">
+                    <span class="session-meter-icon"><i class="ti-timer"></i></span>
+                    <span class="session-meter-copy">
+                        <span class="session-meter-label">Active</span>
+                        <span class="session-meter-value" id="sessionActiveTime">00:00:00</span>
+                        <span class="session-meter-label session-meter-remaining-label">Left</span>
+                        <span class="session-meter-value session-meter-remaining-value" id="sessionTimeLeft">00:00:00</span>
+                    </span>
+                </div>
+            </li>
+
+            <li class="dropdown profile-block">
+                <a href="#" class="dropdown-toggle no-after peers ai-c lh-1 flex-wrap tm-has-tooltip" data-toggle="dropdown" data-tooltip="Profile menu" aria-label="Profile menu">
+                    <div class="peer mR-10"><img class="w-2r bdrs-50p" style="width:2rem;height:2rem;object-fit:cover;" src="http://localhost:8077/trackme_ci4/public/uploads/profile_image/5a3322a75f0ea21bdde943d580b7ca09_thumb.jpg" alt=""></div>
+                    <div class="peer"><span class="fsz-sm c-grey-900">Super Admin</span></div>
+                    <span class="arrow"><i class="ti-angle-down my_cls"></i></span>
+                </a>
+                <ul class="dropdown-menu fsz-sm profile-menu">
+                    <li class="profile-tools-title">Panel Tools</li>
+                    <li class="profile-clock-tool">
+                        <div class="top-clock-widget tm-has-tooltip" data-tooltip="Current date and time" aria-label="Current date and time">
+                            <span class="top-clock-icon"><i class="ti-calendar"></i></span>
+                            <span class="top-clock-copy">
+                                <span class="top-clock-date" id="topNavDate">--</span>
+                                <span class="top-clock-time" id="topNavTime">--:--</span>
+                            </span>
+                        </div>
+                    </li>
+                    <li class="profile-theme-tool theme-block">
+                        <div class="theme-menu">
+                            <div class="theme-presets-title">Preset Themes</div>
+                            <div class="theme-presets" id="themePresets">
+                                <button type="button" class="theme-swatch" title="Ocean Blue" style="--sw:#1769c2;--sw2:#0c315f" onclick="trackmeSetPreset('#1769c2','#18243c')"></button>
+                                <button type="button" class="theme-swatch" title="Emerald" style="--sw:#16835d;--sw2:#0f513b" onclick="trackmeSetPreset('#16835d','#14342a')"></button>
+                                <button type="button" class="theme-swatch" title="Violet" style="--sw:#6956d9;--sw2:#3d2f91" onclick="trackmeSetPreset('#6956d9','#241f45')"></button>
+                                <button type="button" class="theme-swatch" title="Rose" style="--sw:#d63d5c;--sw2:#8f1f37" onclick="trackmeSetPreset('#d63d5c','#3d1722')"></button>
+                                <button type="button" class="theme-swatch" title="Sunset" style="--sw:#e85d2c;--sw2:#9c3a16" onclick="trackmeSetPreset('#e85d2c','#3f1e10')"></button>
+                                <button type="button" class="theme-swatch" title="Aqua" style="--sw:#00a7c4;--sw2:#055d72" onclick="trackmeSetPreset('#00a7c4','#0c3944')"></button>
+                                <button type="button" class="theme-swatch" title="Royal" style="--sw:#8257c9;--sw2:#452d74" onclick="trackmeSetPreset('#8257c9','#2c2447')"></button>
+                                <button type="button" class="theme-swatch" title="Crimson" style="--sw:#e23b3b;--sw2:#8f1f1f" onclick="trackmeSetPreset('#e23b3b','#3d1414')"></button>
+                            </div>
+                            <div class="theme-picker-title">Custom Colors</div>
+                            <div class="theme-picker-field">
+                                <label for="themePrimaryColor">Primary Color</label>
+                                <input type="color" id="themePrimaryColor" value="#1769c2" oninput="trackmeApplyCustomTheme()" onchange="trackmeApplyCustomTheme()">
+                            </div>
+                            <div class="theme-picker-field">
+                                <label for="themeFontColor">Font Color</label>
+                                <input type="color" id="themeFontColor" value="#18243c" oninput="trackmeApplyCustomTheme()" onchange="trackmeApplyCustomTheme()">
+                            </div>
+                            <button type="button" class="theme-reset" id="themeResetBtn" onclick="trackmeResetTheme()">Reset Theme</button>
+                        </div>
+                    </li>
+                    <li role="separator" class="divider"></li>
+                    <li><a href="http://localhost:8077/trackme_ci4/public/admin/profile" class="d-b td-n pY-5 bgcH-grey-100 c-grey-700"><i class="ti-settings mR-10"></i> <span>My Profile</span></a></li>
+                    <li><a href="http://localhost:8077/trackme_ci4/public/admin/profile/reset_password" class="d-b td-n pY-5 bgcH-grey-100 c-grey-700"><i class="ti-settings mR-10"></i> <span>Change Password</span></a></li>
+                    <li role="separator" class="divider"></li>
+                    <li><a href="http://localhost:8077/trackme_ci4/public/admin/auth/logout" class="d-b td-n pY-5 bgcH-grey-100 c-grey-700"><i class="ti-power-off mR-10"></i> <span>Logout</span></a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Session expiry warning (5-minute) — driven by top_nav.js (CI3 markup/classes) -->
+<div class="session-warning-overlay" id="sessionWarningModal">
+    <div class="session-warning-card">
+        <div class="session-warning-head">
+            <i class="ti-alert"></i>
+            <h4>Session Time Warning</h4>
+        </div>
+        <div class="session-warning-body">
+            <p>Your session is going to expire. Do you want to renew it for 5 minutes more?</p>
+            <span class="session-warning-time">Session left: <span id="sessionWarningLeft">00:00</span></span>
+            <div class="session-renew-error" id="sessionRenewError"></div>
+        </div>
+        <div class="session-warning-actions">
+            <button type="button" class="btn btn-default" id="sessionLogoutNowBtn">Logout</button>
+            <button type="button" class="btn btn-primary" id="sessionRenewBtn">Renew 5 Minutes</button>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- DEBUG-VIEW ENDED 2 APPPATH\Modules\Admin\Views\elements\top_nav.php -->
+
+            <div class="page-content" style="padding-top:82px;">
+                                    <!-- DEBUG-VIEW START 3 APPPATH\Modules\Admin\Views\dashboard\site_dashboard.php -->
+<style>
+   .dashboard-page {
+      width: 100%;
+      overflow: visible;
+   }
+
+   .dashboard-page h5 {
+      position: relative;
+      margin: 24px 0 14px;
+      padding-left: 14px;
+      color: var(--tm-ink, #18243c);
+      font-weight: 800;
+      letter-spacing: 0;
+   }
+
+   .dashboard-page>div>h5:before,
+   .dashboard-page h5:before {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 0;
+      width: 5px;
+      height: 18px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--tm-brand, #1769c2), var(--tm-accent, #f0a020));
+   }
+
+   .dashboard-page hr {
+      margin: 22px 0;
+      border: 0;
+      border-top: 1px dashed var(--tm-line, #dce6f2);
+   }
+
+   /* ===================== WELCOME HERO ===================== */
+   .dash-hero {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 22px;
+      flex-wrap: wrap;
+      margin: 4px 0 6px;
+      padding: 22px 26px;
+      border-radius: 18px;
+      color: #fff;
+      background:
+         radial-gradient(circle at 88% -20%, color-mix(in srgb, var(--tm-accent, #f0a020) 55%, transparent), transparent 42%),
+         linear-gradient(130deg, var(--tm-brand, #1769c2), var(--tm-sidebar-end, #091e39) 120%);
+      box-shadow: 0 20px 44px rgba(24, 36, 60, .22);
+   }
+
+   .dash-hero:after {
+      content: "";
+      position: absolute;
+      right: -60px;
+      top: -80px;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .08);
+      pointer-events: none;
+   }
+
+   .dash-hero-left { position: relative; z-index: 1; min-width: 0; }
+   .dash-hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 9px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .16);
+      border: 1px solid rgba(255, 255, 255, .2);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+   }
+   .dash-hero-eyebrow i { font-size: 13px; }
+   .dash-hero h3 {
+      margin: 0 0 6px;
+      color: #fff;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -.3px;
+   }
+   .dash-hero p {
+      margin: 0;
+      max-width: 520px;
+      color: rgba(255, 255, 255, .82);
+      font-size: 13.5px;
+      font-weight: 600;
+      line-height: 1.55;
+   }
+
+   .dash-hero-clock {
+      position: relative;
+      z-index: 1;
+      flex: 0 0 auto;
+      min-width: 170px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      text-align: center;
+      background: rgba(255, 255, 255, .14);
+      border: 1px solid rgba(255, 255, 255, .22);
+      backdrop-filter: blur(8px);
+   }
+   .dash-hero-time {
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+   }
+   .dash-hero-date {
+      margin-top: 7px;
+      color: rgba(255, 255, 255, .82);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .03em;
+   }
+
+   /* ----- weather card in hero ----- */
+   .dash-hero-weather {
+      position: relative;
+      z-index: 1;
+      flex: 0 0 auto;
+      width: 300px;
+      max-width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      color: #fff;
+      background: rgba(255, 255, 255, .14);
+      border: 1px solid rgba(255, 255, 255, .22);
+      backdrop-filter: blur(8px);
+   }
+   .dhw-main { display: flex; align-items: center; gap: 12px; }
+   .dhw-emoji { font-size: 32px; line-height: 1; }
+   .dhw-temp { font-size: 26px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+   .dhw-cond { margin-top: 3px; font-size: 12px; color: rgba(255, 255, 255, .82); font-weight: 600; }
+   .dhw-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 9px;
+      border-top: 1px solid rgba(255, 255, 255, .16);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .82);
+   }
+   .dhw-meta b { color: #fff; }
+   .dhw-auto {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 9px 0 0;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .88);
+      cursor: pointer;
+   }
+   .dhw-auto input { width: 14px; height: 14px; margin: 0; accent-color: #fff; cursor: pointer; }
+
+   .dhw-edit {
+      margin-top: 8px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: rgba(255, 255, 255, .92);
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+   }
+   .dhw-editor { margin-top: 9px; }
+   .dhw-editor input[type="text"] {
+      width: 100%;
+      height: 34px;
+      padding: 7px 10px;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, .35);
+      background: rgba(255, 255, 255, .16);
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+   }
+   .dhw-editor input[type="text"]::placeholder { color: rgba(255, 255, 255, .7); }
+   .dhw-actions { display: flex; gap: 7px; margin-top: 7px; }
+   .dhw-actions button {
+      flex: 1;
+      height: 30px;
+      border: 0;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+   }
+   #dhwSearch, #dhwPinBtn { background: #fff; color: #13344a; }
+   #dhwAutoLoc { background: rgba(255, 255, 255, .18); color: #fff; border: 1px solid rgba(255, 255, 255, .3); }
+   .dhw-result {
+      display: block;
+      width: 100%;
+      margin-top: 5px;
+      padding: 7px 9px;
+      text-align: left;
+      border: 0;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .14);
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+   }
+   .dhw-result:hover { background: rgba(255, 255, 255, .28); }
+   .dhw-hint { margin-top: 6px; font-size: 11px; color: rgba(255, 255, 255, .82); font-weight: 600; }
+
+   /* current rain chance */
+   .dhw-rain {
+      margin-top: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .9);
+   }
+   .dhw-rain b { color: #fff; }
+
+   /* 7-day forecast strip */
+   .dhw-forecast {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, .16);
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, .35) transparent;
+   }
+   .dhw-forecast::-webkit-scrollbar { height: 5px; }
+   .dhw-forecast::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .3); border-radius: 4px; }
+   .dhw-day {
+      flex: 0 0 auto;
+      width: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 7px 4px;
+      border-radius: 11px;
+      text-align: center;
+      background: rgba(255, 255, 255, .1);
+      border: 1px solid rgba(255, 255, 255, .14);
+   }
+   .dhw-day-name { font-size: 9.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: rgba(255, 255, 255, .85); }
+   .dhw-day-emoji { font-size: 18px; line-height: 1; }
+   .dhw-day-temp { font-size: 10.5px; font-weight: 800; color: #fff; white-space: nowrap; }
+   .dhw-day-temp small { color: rgba(255, 255, 255, .62); font-weight: 700; }
+   .dhw-day-rain { font-size: 9.5px; font-weight: 700; color: #bfe3ff; white-space: nowrap; }
+
+   /* ===================== HORIZONTAL WEATHER BAR ===================== */
+   .dash-weather-bar {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 14px 0 6px;
+      padding: 16px 22px;
+      border-radius: 18px;
+      color: #fff;
+      background:
+         radial-gradient(circle at 97% -40%, color-mix(in srgb, var(--tm-accent, #f0a020) 45%, transparent), transparent 42%),
+         linear-gradient(130deg, var(--tm-brand, #1769c2), var(--tm-sidebar-end, #091e39) 125%);
+      box-shadow: 0 18px 40px rgba(24, 36, 60, .18);
+   }
+
+   .dash-weather-bar .dwb-now { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; }
+   .dash-weather-bar .dhw-emoji { font-size: 44px; line-height: 1; }
+   .dash-weather-bar .dhw-temp { font-size: 30px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+   .dash-weather-bar .dhw-cond { margin-top: 3px; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, .85); }
+   .dwb-now-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 12px;
+      margin-top: 7px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .82);
+   }
+   .dwb-now-meta b { color: #fff; }
+
+   .dwb-divider { width: 1px; align-self: stretch; min-height: 64px; background: rgba(255, 255, 255, .2); }
+
+   /* forecast spreads across the remaining width */
+   .dash-weather-bar .dhw-forecast {
+      flex: 1 1 380px;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      justify-content: space-between;
+   }
+   .dash-weather-bar .dhw-day { flex: 1 1 0; min-width: 56px; }
+
+   .dwb-tools { position: relative; flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+   .dwb-tools .dhw-edit { margin: 0; }
+   .dwb-tools .dhw-auto { margin: 0; }
+
+   /* location editor as a popover */
+   .dash-weather-bar .dhw-editor {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      z-index: 40;
+      width: 264px;
+      padding: 13px;
+      border-radius: 13px;
+      background: var(--tm-sidebar-end, #0d2747);
+      border: 1px solid rgba(255, 255, 255, .18);
+      box-shadow: 0 22px 48px rgba(0, 0, 0, .4);
+   }
+
+   @media (max-width: 991px) {
+      .dwb-divider { display: none; }
+      .dwb-tools { width: 100%; align-items: flex-start; }
+      .dash-weather-bar .dhw-editor { right: auto; left: 0; }
+   }
+
+   /* ===================== KPI STAT TILES ===================== */
+   /* Common stat box */
+   .stat-soft {
+      position: relative;
+      padding: 12px 16px;
+      border-radius: 13px;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.3;
+      white-space: nowrap;
+      color: var(--tm-ink, #18243c);
+      background: #fff;
+      border: 1px solid var(--tm-line, #dce6f2);
+      box-shadow: 0 8px 20px rgba(24, 36, 60, .05);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+   }
+
+   .stat-soft:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 30px rgba(24, 36, 60, .12);
+      z-index: 5;
+   }
+
+   /* Soft backgrounds */
+   .soft-primary {
+      background: var(--tm-brand-soft, #eef5ff);
+      border-color: rgba(var(--tm-brand-rgb, 23, 105, 194), .18);
+      color: var(--tm-brand-dark, #0c315f);
+   }
+
+   .soft-green {
+      background: #edf7f1;
+      border-color: #cfead9;
+      color: #13734f;
+   }
+
+   .soft-success {
+      background: #edf7f1;
+      border-color: #cfead9;
+   }
+
+   .soft-warning {
+      background: #fff7e6;
+      border-color: #ffe2b8;
+   }
+
+   .soft-danger {
+      background: #fdeeee;
+      border-color: #f5c2c7;
+   }
+
+   .soft-neutral {
+      background: #f4f6f8;
+      border-color: #dfe3e7;
+   }
+
+   .soft-pendinglot {
+      background: #fff5e8;
+      border-color: #f7d8a8;
+      color: #995300;
+   }
+
+   /* Space between cards */
+   .stats-row .col-auto {
+      margin-right: 10px;
+   }
+
+   /* Optional vertical space if wrapping happens */
+   .stats-row {
+      row-gap: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+   }
+
+   .card-body {
+      border: 0;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 100%;
+      background: #fff;
+      box-shadow: 0 14px 34px rgba(24, 36, 60, .07);
+   }
+
+   .dashboard-page .card {
+      border: 1px solid var(--tm-line, #dce6f2) !important;
+      border-radius: 16px !important;
+   }
+
+   .dashboard-lot-panel {
+      width: 100%;
+      max-width: 100%;
+      padding-left: 0;
+      padding-right: 0;
+      overflow: visible !important;
+   }
+
+   .dashboard-page .card {
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+   }
+
+   .dashboard-page .row {
+      margin-left: -10px;
+      margin-right: -10px;
+   }
+
+   .dashboard-page [class*="col-"] {
+      padding-left: 10px;
+      padding-right: 10px;
+   }
+
+   .dashboard-page .masonry,
+   .dashboard-page .masonry-item,
+   .dashboard-page .masonry-item>.row {
+      width: 100%;
+      max-width: 100%;
+   }
+
+   .dashboard-page .layers {
+      position: relative;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
+      padding: 18px !important;
+      border: 0 !important;
+      border-radius: 16px !important;
+      color: #fff !important;
+      box-shadow: 0 14px 30px rgba(24, 36, 60, .16) !important;
+      transition: transform .2s ease, box-shadow .2s ease;
+   }
+
+   /* glossy top sheen */
+   .dashboard-page .layers:before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, 0) 42%);
+      pointer-events: none;
+   }
+
+   /* decorative orb */
+   .dashboard-page .layers:after {
+      content: "";
+      position: absolute;
+      right: -34px;
+      bottom: -46px;
+      width: 124px;
+      height: 124px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .14);
+      pointer-events: none;
+      transition: transform .25s ease;
+   }
+
+   .dashboard-page .layers:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 24px 44px rgba(24, 36, 60, .26) !important;
+   }
+
+   .dashboard-page .layers:hover:after {
+      transform: scale(1.18);
+   }
+
+   .dashboard-page .layers h5,
+   .dashboard-page .layers h6 {
+      position: relative;
+      z-index: 1;
+      max-width: 100%;
+      margin: 0;
+      color: #fff !important;
+      font-size: 12px;
+      font-weight: 800 !important;
+      letter-spacing: .04em !important;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, .25);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+   }
+
+   .dashboard-page .layers span {
+      position: relative;
+      z-index: 1;
+      max-width: 100%;
+      color: #fff !important;
+      background: rgba(255, 255, 255, .22) !important;
+      border: 1px solid rgba(255, 255, 255, .3);
+      border-radius: 12px !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35);
+      backdrop-filter: blur(4px);
+      overflow-wrap: anywhere;
+      font-size: 21px !important;
+      font-weight: 800;
+      line-height: 1.2;
+      padding: 9px 15px !important;
+   }
+
+   .dashboard-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 26px 0 14px;
+      padding: 18px 22px;
+      border: 1px solid var(--tm-line, #dce6f2);
+      border-radius: 16px;
+      background:
+         linear-gradient(135deg, rgba(255,255,255,.98), rgba(248,251,255,.94)),
+         radial-gradient(circle at 96% 8%, color-mix(in srgb, var(--tm-brand, #1769c2) 14%, transparent), transparent 28%);
+      box-shadow: 0 14px 32px rgba(24, 36, 60, .08);
+   }
+
+   .dashboard-section-head h5 {
+      margin: 0;
+      padding-left: 14px;
+      font-size: 20px;
+   }
+
+   .dashboard-section-head p {
+      margin: 5px 0 0;
+      color: #718096;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.45;
+   }
+
+   .dashboard-section-pill {
+      flex: 0 0 auto;
+      padding: 9px 13px;
+      border-radius: 8px;
+      background: #edf7f1;
+      color: #13734f;
+      border: 1px solid #cfead9;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+   }
+
+   .paddy-card-grid {
+      margin-bottom: 4px;
+   }
+
+   .paddy-dashboard-card {
+      position: relative;
+      display: block;
+      min-height: 154px;
+      padding: 18px;
+      overflow: hidden;
+      border: 1px solid var(--tm-line, #dce6f2);
+      border-radius: 16px;
+      text-decoration: none !important;
+      color: #18243c;
+      background:
+         linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.92)),
+         radial-gradient(circle at 88% 12%, color-mix(in srgb, var(--paddy-accent, #1f9d70) 16%, transparent), transparent 34%);
+      box-shadow: 0 14px 32px rgba(24, 36, 60, .08);
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+   }
+
+   .paddy-dashboard-card:hover,
+   .paddy-dashboard-card:focus {
+      transform: translateY(-5px);
+      border-color: color-mix(in srgb, var(--paddy-accent, #1f9d70) 45%, #fff);
+      box-shadow: 0 24px 44px rgba(24, 36, 60, .14);
+      color: #18243c;
+   }
+
+   .paddy-dashboard-card:before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      background: var(--paddy-accent, #1f9d70);
+   }
+
+   .paddy-dashboard-card:after {
+      content: "";
+      position: absolute;
+      right: -38px;
+      bottom: -46px;
+      width: 124px;
+      height: 124px;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--paddy-accent, #1f9d70) 9%, transparent);
+      transition: transform .2s ease;
+   }
+
+   .paddy-dashboard-card:hover:after {
+      transform: scale(1.12);
+   }
+
+   .paddy-card-label {
+      position: relative;
+      z-index: 1;
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 5px 9px;
+      border-radius: 8px;
+      background: #edf7f1;
+      color: #13734f;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+   }
+
+   .paddy-card-title {
+      position: relative;
+      z-index: 1;
+      min-height: 38px;
+      margin: 0 0 14px;
+      color: #18243c;
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+   }
+
+   .paddy-card-value {
+      position: relative;
+      z-index: 1;
+      display: inline-block;
+      padding: 8px 13px;
+      border-radius: 8px;
+      background: #fff7e6;
+      border: 1px solid #ffe2b8;
+      color: #995300;
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.1;
+   }
+
+   .paddy-card-meta {
+      position: relative;
+      z-index: 1;
+      display: block;
+      margin-top: 10px;
+      color: #718096;
+      font-size: 12px;
+      font-weight: 800;
+   }
+
+   /* ===================== SALES & PURCHASE ANALYTICS ===================== */
+   .sp-analytics { margin: 8px 0 4px; }
+   .sp-head { margin: 22px 0 14px; }
+   .sp-head h5 { position: relative; margin: 0; padding-left: 14px; font-size: 20px; font-weight: 800; color: var(--tm-ink, #18243c); }
+   .sp-head h5:before { content: ""; position: absolute; left: 0; top: 3px; width: 5px; height: 18px; border-radius: 999px; background: linear-gradient(180deg, var(--tm-brand, #1769c2), var(--tm-accent, #f0a020)); }
+   .sp-head p { margin: 6px 0 0 14px; color: var(--tm-muted, #718096); font-size: 13px; font-weight: 600; }
+
+   .sp-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 14px; }
+   .sp-kpi { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-radius: 16px; color: #fff; box-shadow: 0 16px 34px rgba(24, 36, 60, .16); }
+   .sp-kpi-ico { width: 46px; height: 46px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: rgba(255, 255, 255, .2); font-size: 20px; font-weight: 900; }
+   .sp-kpi small { display: block; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; opacity: .92; }
+   .sp-kpi b { display: block; margin-top: 3px; font-size: 21px; font-weight: 900; line-height: 1.1; }
+   .sp-kpi-sale { background: linear-gradient(135deg, var(--tm-brand, #1769c2), var(--tm-sidebar-end, #0c315f)); }
+   .sp-kpi-purchase { background: linear-gradient(135deg, #f0a020, #c9791a); }
+   .sp-kpi-opening { background: linear-gradient(135deg, #0f766e, #115e59); }
+   .sp-kpi-profit { background: linear-gradient(135deg, #1f9d70, #0f6b4a); }
+   .sp-kpi-loss { background: linear-gradient(135deg, #e5484d, #a32635); }
+   .sp-kpi-ratio { background: linear-gradient(135deg, #6c5ce7, #3f2db0); }
+   .sp-kpi-ratio.is-neg { background: linear-gradient(135deg, #e5484d, #a32635); }
+   .sp-kpis-4 { grid-template-columns: repeat(4, 1fr); }
+   .sp-kpis-5 { grid-template-columns: repeat(5, 1fr); }
+
+   .sp-charts { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px; }
+   .sp-card { min-width: 0; padding: 16px 18px; border: 1px solid var(--tm-line, #dce6f2); border-radius: 16px; background: #fff; box-shadow: 0 14px 32px rgba(24, 36, 60, .06); }
+   .sp-card-head { align-items: center; display: flex; gap: 12px; justify-content: space-between; margin-bottom: 12px; }
+   .sp-card-head h6 { margin: 0; font-size: 14px; font-weight: 800; color: var(--tm-ink, #18243c); }
+   .sp-chart-filter { min-width: 210px; position: relative; }
+   .sp-chart-filter:after { color: var(--tm-brand, #1769c2); content: "\f107"; font-family: FontAwesome; pointer-events: none; position: absolute; right: 12px; top: 10px; }
+   .sp-chart-filter select { -webkit-appearance: none; appearance: none; background: #f8fbff; border: 1px solid var(--tm-line, #dce6f2); border-radius: 8px; color: var(--tm-ink, #18243c); cursor: pointer; font-size: 12px; font-weight: 800; height: 36px; outline: 0; padding: 7px 34px 7px 11px; width: 100%; }
+   .sp-chart-filter select:hover, .sp-chart-filter select:focus { border-color: var(--tm-brand, #1769c2); box-shadow: 0 0 0 3px rgba(23, 105, 194, .1); }
+   .sp-date-filter { align-items: flex-end; display: flex; flex-wrap: wrap; gap: 8px; }
+   .sp-date-field { min-width: 150px; }
+   .sp-date-field label { display: block; margin-bottom: 5px; font-size: 11px; font-weight: 900; letter-spacing: .03em; color: #718096; text-transform: uppercase; }
+   .sp-date-field input { background: #f8fbff; border: 1px solid var(--tm-line, #dce6f2); border-radius: 8px; color: var(--tm-ink, #18243c); font-size: 12px; font-weight: 800; height: 36px; outline: 0; padding: 7px 10px; width: 100%; }
+   .sp-date-field input:hover, .sp-date-field input:focus { border-color: var(--tm-brand, #1769c2); box-shadow: 0 0 0 3px rgba(23, 105, 194, .1); }
+   .sp-date-actions { display: flex; gap: 8px; }
+   .sp-date-actions button, .sp-date-actions a { align-items: center; border: 0; border-radius: 8px; display: inline-flex; font-size: 12px; font-weight: 900; height: 36px; padding: 0 13px; text-decoration: none; }
+   .sp-date-actions button { background: var(--tm-brand, #1769c2); color: #fff; }
+   .sp-date-actions a { background: #eef3fa; color: var(--tm-ink, #18243c); }
+   .sp-canvas-wrap { position: relative; height: 300px; }
+
+   .sp-table-wrap { max-height: 300px; overflow: auto; }
+   .sp-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+   .sp-table th, .sp-table td { padding: 9px 8px; text-align: right; border-bottom: 1px solid var(--tm-line, #eef2f8); white-space: nowrap; }
+   .sp-table th:first-child, .sp-table td:first-child { text-align: left; }
+   .sp-table th { position: sticky; top: 0; background: #fff; color: var(--tm-muted, #718096); font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; font-weight: 800; }
+   .sp-table td { font-weight: 800; color: var(--tm-ink, #24324f); }
+   .sp-table tbody tr:hover { background: var(--tm-brand-soft, #f1f6ff); }
+   .sp-pos { color: #1f9d70; }
+   .sp-neg { color: #e5484d; }
+
+   /* ===================== AGEING (DEBTORS / CREDITORS) ===================== */
+   .ageing { margin: 8px 0 4px; }
+   .age-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+   .age-card { overflow: hidden; border: 1px solid var(--tm-line, #dce6f2); border-radius: 16px; background: #fff; box-shadow: 0 14px 32px rgba(24, 36, 60, .06); }
+   .age-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; color: #fff; }
+   .age-deb .age-card-head { background: linear-gradient(135deg, #1f9d70, #0f6b4a); }
+   .age-cred .age-card-head { background: linear-gradient(135deg, #e5484d, #a32635); }
+   .age-card-head h6 { margin: 0; font-size: 15px; font-weight: 800; }
+   .age-card-head small { display: block; margin-top: 3px; font-size: 11px; font-weight: 700; opacity: .9; }
+   .age-total { text-align: right; font-size: 22px; font-weight: 900; line-height: 1.1; }
+   .age-total small { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; opacity: .9; }
+   .age-body { padding: 14px 16px; }
+   .age-bar { display: flex; height: 14px; margin-bottom: 12px; border-radius: 8px; overflow: hidden; background: #eef1f6; }
+   .age-bar span { display: block; height: 100%; }
+   .age-seg0 { background: #1f9d70; }
+   .age-seg1 { background: #e0a92a; }
+   .age-seg2 { background: #ef7c1a; }
+   .age-seg3 { background: #e5484d; }
+   .age-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+   .age-chip { padding: 8px 9px; border-radius: 10px; background: #f6f8fc; border: 1px solid var(--tm-line, #eef2f8); }
+   .age-chip small { display: block; margin-bottom: 3px; color: var(--tm-muted, #718096); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+   .age-chip small i { display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; }
+   .age-chip b { font-size: 13px; font-weight: 900; color: var(--tm-ink, #24324f); }
+   .age-table-wrap { max-height: 280px; overflow: auto; }
+   .age-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+   .age-table th, .age-table td { padding: 8px 7px; text-align: right; border-bottom: 1px solid var(--tm-line, #eef2f8); white-space: nowrap; }
+   .age-table th:first-child, .age-table td:first-child { text-align: left; }
+   .age-table th { position: sticky; top: 0; background: #fff; color: var(--tm-muted, #718096); font-size: 10px; text-transform: uppercase; letter-spacing: .03em; font-weight: 800; }
+   .age-table td { font-weight: 800; color: var(--tm-ink, #24324f); }
+   .age-table tbody tr:hover { background: var(--tm-brand-soft, #f1f6ff); }
+   .age-table td.age-old { color: #e5484d; }
+   .age-empty { padding: 22px; text-align: center; color: #9aa3c4; font-weight: 700; }
+   @media (max-width: 991px) { .age-grid { grid-template-columns: 1fr; } }
+
+   @media (max-width: 991px) {
+      .sp-kpis { grid-template-columns: 1fr; }
+      .sp-charts { grid-template-columns: 1fr; }
+      .sp-canvas-wrap { height: 260px; }
+   }
+   @media (max-width: 560px) {
+      .sp-card-head { align-items: stretch; flex-direction: column; }
+      .sp-chart-filter { min-width: 0; width: 100%; }
+      .sp-date-filter { width: 100%; }
+      .sp-date-field, .sp-date-actions { width: 100%; }
+      .sp-date-actions button, .sp-date-actions a { justify-content: center; flex: 1; }
+   }
+
+   @media (max-width: 767px) {
+      .dashboard-page {
+         padding-bottom: 70px;
+      }
+
+      .dashboard-page h5 {
+         font-size: 17px;
+         line-height: 1.35;
+      }
+
+      .dashboard-lot-panel {
+         margin-top: 10px;
+      }
+
+      .stats-row {
+         display: grid;
+         grid-template-columns: 1fr;
+         gap: 10px;
+         margin-left: 0;
+         margin-right: 0;
+      }
+
+      .stats-row .col-auto,
+      .stats-row [class*="col-"] {
+         width: 100%;
+         max-width: 100%;
+         margin-right: 0;
+         padding-left: 0;
+         padding-right: 0;
+      }
+
+      .stat-soft,
+      .stats-row .form-control {
+         width: 100%;
+         min-height: 44px;
+         display: flex;
+         align-items: center;
+         justify-content: space-between;
+         text-align: left;
+         white-space: normal;
+      }
+
+      .card-body {
+         padding: 12px !important;
+      }
+
+      .dashboard-page .masonry,
+      .dashboard-page .masonry-item {
+         position: static !important;
+         height: auto !important;
+      }
+
+      .dashboard-page .masonry-item>.row,
+      .dashboard-page .row.gap-20 {
+         display: grid;
+         grid-template-columns: 1fr;
+         gap: 12px;
+         margin-left: 0;
+         margin-right: 0;
+      }
+
+      .dashboard-page .row.gap-20>[class*="col-"] {
+         width: 100%;
+         max-width: 100%;
+         padding-left: 0;
+         padding-right: 0;
+      }
+
+      .dashboard-page .layers {
+         min-height: 116px;
+         padding: 14px !important;
+         border-radius: 8px !important;
+      }
+
+      .dashboard-page .layers span {
+         font-size: 19px !important;
+         padding: 7px 12px !important;
+      }
+
+      .dashboard-section-head {
+         display: block;
+         padding: 15px;
+      }
+
+      .dashboard-section-pill {
+         display: inline-block;
+         margin-top: 12px;
+      }
+
+      .paddy-dashboard-card {
+         min-height: 138px;
+      }
+   }
+
+   @media (min-width: 768px) and (max-width: 1199px) {
+      .dashboard-page .row.gap-20>.col-md-3 {
+         width: 50%;
+         max-width: 50%;
+         flex: 0 0 50%;
+      }
+   }
+</style>
+
+<main class="main-content bgc-grey-100">
+   <div id="mainContent" class="dashboard-page">
+
+            <div class="container mt-3" data-sec="apk_widgets" data-sec-label="App Updates">
+         <h5>App Updates (APK)</h5>
+         <div style="display:grid;gap:12px;grid-template-columns:repeat(6,1fr)">
+                           <a href="http://localhost:8077/trackme_ci4/public/admin/app_update/listing" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #1769c2;border-radius:10px;box-shadow:0 6px 18px rgba(24,36,60,.05);display:block;padding:14px;text-decoration:none">
+                  <div style="color:#8394a7;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase">Current Version</div>
+                  <div style="color:#18243c;font-size:19px;font-weight:900;margin-top:5px">v2.0.10</div>
+                  <div style="color:#7a8aa0;font-size:11px;font-weight:700;margin-top:2px">Code 210</div>
+               </a>
+                           <a href="http://localhost:8077/trackme_ci4/public/admin/app_update/listing" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #1f9d55;border-radius:10px;box-shadow:0 6px 18px rgba(24,36,60,.05);display:block;padding:14px;text-decoration:none">
+                  <div style="color:#8394a7;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase">Total Downloads</div>
+                  <div style="color:#18243c;font-size:19px;font-weight:900;margin-top:5px">2</div>
+                  <div style="color:#7a8aa0;font-size:11px;font-weight:700;margin-top:2px">All versions</div>
+               </a>
+                           <a href="http://localhost:8077/trackme_ci4/public/admin/app_update/listing" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #7b4bd0;border-radius:10px;box-shadow:0 6px 18px rgba(24,36,60,.05);display:block;padding:14px;text-decoration:none">
+                  <div style="color:#8394a7;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase">Total Versions</div>
+                  <div style="color:#18243c;font-size:19px;font-weight:900;margin-top:5px">2</div>
+                  <div style="color:#7a8aa0;font-size:11px;font-weight:700;margin-top:2px">Builds</div>
+               </a>
+                           <a href="http://localhost:8077/trackme_ci4/public/admin/app_update/listing" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #c67c11;border-radius:10px;box-shadow:0 6px 18px rgba(24,36,60,.05);display:block;padding:14px;text-decoration:none">
+                  <div style="color:#8394a7;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase">Latest Upload</div>
+                  <div style="color:#18243c;font-size:19px;font-weight:900;margin-top:5px">30 Jul 2026</div>
+                  <div style="color:#7a8aa0;font-size:11px;font-weight:700;margin-top:2px">07:09 AM</div>
+               </a>
+                           <a href="http://localhost:8077/trackme_ci4/public/admin/app_update/listing" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #1f9d55;border-radius:10px;box-shadow:0 6px 18px rgba(24,36,60,.05);display:block;padding:14px;text-decoration:none">
+                  <div style="color:#8394a7;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase">Force Update</div>
+                  <div style="color:#18243c;font-size:19px;font-weight:900;margin-top:5px">ON</div>
+                  <div style="color:#7a8aa0;font-size:11px;font-weight:700;margin-top:2px">Current build</div>
+               </a>
+                           <a href="http://localhost:8077/trackme_ci4/public/admin/app_update/listing" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #c53030;border-radius:10px;box-shadow:0 6px 18px rgba(24,36,60,.05);display:block;padding:14px;text-decoration:none">
+                  <div style="color:#8394a7;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase">Website Visible</div>
+                  <div style="color:#18243c;font-size:19px;font-weight:900;margin-top:5px">OFF</div>
+                  <div style="color:#7a8aa0;font-size:11px;font-weight:700;margin-top:2px">Homepage</div>
+               </a>
+                     </div>
+      </div>
+      
+      <!-- Dashboard layout toolbar (drag-reorder / show-hide sections; per-user, App Settings). -->
+      <div class="dash-layout-toolbar" id="dashLayoutToolbar">
+         <button type="button" class="dlt-btn" id="dashArrangeToggle"><i class="ti-layout-grid2"></i> <span>Arrange layout</span></button>
+         <span class="dlt-hint" id="dashArrangeHint" style="display:none;">Drag the <i class="ti-move"></i> handles to reorder. Changes save automatically.</span>
+         <span class="dlt-spacer"></span>
+         <a class="dlt-link" href="http://localhost:8077/trackme_ci4/public/admin/app_setting"><i class="ti-settings"></i> App Settings</a>
+      </div>
+      <style>
+         .dash-layout-toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 12px; }
+         .dash-layout-toolbar .dlt-spacer { flex:1 1 auto; }
+         .dlt-btn { border:1px solid #dce6f2; background:#fff; color:#0c315f; font-weight:800; padding:8px 14px; border-radius:8px; cursor:pointer; font-size:13px; }
+         .dlt-btn.active { background:linear-gradient(135deg,#1769c2,#0c4a94); color:#fff; border-color:transparent; }
+         .dlt-link { color:#516174; font-weight:700; font-size:13px; text-decoration:none; border-bottom:1px dashed #9cc0ff; }
+         .dlt-hint { color:#718096; font-size:12px; font-weight:700; }
+         /* Widgetized sections */
+         .dash-widget { margin-bottom:16px; }
+         .dash-widget-head { display:none; align-items:center; gap:10px; padding:7px 12px; margin-bottom:8px; background:#eef4fb; border:1px solid #dce6f2; border-radius:8px; }
+         .dash-page-arranging .dash-widget-head { display:flex; }
+         .dash-page-arranging .dash-widget { outline:2px dashed #9cc0ff; outline-offset:6px; border-radius:12px; }
+         .dash-widget-grip { cursor:grab; display:inline-flex; align-items:center; gap:6px; background:#0c315f; color:#fff; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:800; }
+         .dash-widget-grip:active { cursor:grabbing; }
+         .dash-widget-title { font-weight:800; color:#0c315f; font-size:13px; }
+         .dash-widget.dash-widget-dragging { opacity:.55; }
+         .dash-widget.dash-widget-over { outline-color:#1769c2 !important; }
+         /* Widget host: full-width sections stack; compact tiles flow in a grid. */
+         #dashLayoutHost { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start; }
+         #dashLayoutHost > .dash-widget { flex:1 1 100%; min-width:0; margin-bottom:0; }
+         #dashLayoutHost > .dash-widget.dash-widget-tile { flex:1 1 230px; max-width:320px; }
+         .dash-metric-card { display:flex; align-items:center; gap:14px; padding:16px 18px; border:1px solid #dce6f2; border-radius:12px; background:#fff; box-shadow:0 10px 26px rgba(24,36,60,.06); text-decoration:none; transition:transform .12s ease, box-shadow .12s ease; }
+         .dash-metric-card:hover { transform:translateY(-2px); box-shadow:0 16px 34px rgba(24,36,60,.12); }
+         .dash-metric-ico { width:46px; height:46px; flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; background:linear-gradient(135deg,#1769c2,#0c4a94); color:#fff; font-size:20px; }
+         .dash-metric-meta { display:flex; flex-direction:column; line-height:1.15; }
+         .dash-metric-num { font-size:26px; font-weight:900; color:#0c315f; font-variant-numeric:tabular-nums; }
+         .dash-metric-label { font-size:12px; font-weight:800; color:#718096; }
+      </style>
+
+            <section class="dash-hero" data-sec="hero" data-sec-label="Welcome &amp; Clock">
+         <div class="dash-hero-left">
+            <span class="dash-hero-eyebrow"><i class="ti-bar-chart-alt"></i> Operations Dashboard</span>
+            <h3 id="dashGreeting">Welcome back!</h3>
+            <p>Here is your live business overview for <b>CR INDUSTRIES</b> — lots, stock and sales at a glance.</p>
+         </div>
+         <div class="dash-hero-clock">
+            <div class="dash-hero-time" id="dashHeroTime">--:--</div>
+            <div class="dash-hero-date" id="dashHeroDate">--</div>
+         </div>
+      </section>
+
+      <!-- HORIZONTAL WEATHER BAR -->
+      <section class="dash-weather-bar" id="dashWeather" data-sec="weather" data-sec-label="Weather Bar">
+         <div class="dwb-now">
+            <span class="dhw-emoji" id="dhwEmoji">🛰️</span>
+            <div class="dwb-now-main">
+               <div class="dhw-temp" id="dhwTemp">--&deg;</div>
+               <div class="dhw-cond" id="dhwCond">Fetching weather…</div>
+               <div class="dwb-now-meta">
+                  <span id="dhwCity">📍 Locating…</span>
+                  <span id="dhwHL"></span>
+                  <span id="dhwRain"></span>
+               </div>
+            </div>
+         </div>
+
+         <div class="dwb-divider"></div>
+
+         <div class="dhw-forecast" id="dhwForecast"></div>
+
+         <div class="dwb-tools">
+            <button type="button" class="dhw-edit" id="dhwEdit">✎ Change location</button>
+            <label class="dhw-auto" title="Automatically match the app theme to the current weather">
+               <input type="checkbox" id="dhwAuto" checked>
+               <span>Match theme to weather</span>
+            </label>
+            <div class="dhw-editor" id="dhwEditor" style="display:none">
+               <input type="text" id="dhwInput" placeholder="Type a city, e.g. Mumbai" autocomplete="off">
+               <div class="dhw-actions">
+                  <button type="button" id="dhwSearch">Search</button>
+                  <button type="button" id="dhwAutoLoc">Use my location</button>
+               </div>
+               <input type="text" id="dhwPin" placeholder="Or enter PIN code, e.g. 110001" inputmode="numeric" maxlength="6" autocomplete="off" style="margin-top:7px;">
+               <div class="dhw-actions">
+                  <button type="button" id="dhwPinBtn">Get weather by PIN</button>
+               </div>
+               <div class="dhw-results" id="dhwResults"></div>
+               <div class="dhw-hint" id="dhwHint"></div>
+            </div>
+         </div>
+      </section>
+
+      <!-- Module data tiles (live counts). Each is a show/hide + reorderable widget. -->
+                           <div class="dash-metric" data-sec="m_tasks" data-sec-label="Open Tasks" data-sec-tile="1">
+               <a class="dash-metric-card" href="http://localhost:8077/trackme_ci4/public/task/task">
+                  <span class="dash-metric-ico"><i class="ti-clipboard"></i></span>
+                  <span class="dash-metric-meta">
+                     <span class="dash-metric-num">0</span>
+                     <span class="dash-metric-label">Open Tasks</span>
+                  </span>
+               </a>
+            </div>
+                     <div class="dash-metric" data-sec="m_documents" data-sec-label="Documents Due (30d)" data-sec-tile="1">
+               <a class="dash-metric-card" href="http://localhost:8077/trackme_ci4/public/admin/document/listing">
+                  <span class="dash-metric-ico"><i class="ti-files"></i></span>
+                  <span class="dash-metric-meta">
+                     <span class="dash-metric-num">0</span>
+                     <span class="dash-metric-label">Documents Due (30d)</span>
+                  </span>
+               </a>
+            </div>
+                     <div class="dash-metric" data-sec="m_attendance" data-sec-label="Present Today" data-sec-tile="1">
+               <a class="dash-metric-card" href="http://localhost:8077/trackme_ci4/public/admin/attendance">
+                  <span class="dash-metric-ico"><i class="ti-user"></i></span>
+                  <span class="dash-metric-meta">
+                     <span class="dash-metric-num">0</span>
+                     <span class="dash-metric-label">Present Today</span>
+                  </span>
+               </a>
+            </div>
+                     <div class="dash-metric" data-sec="m_bos" data-sec-label="Bill of Supply (This Month)" data-sec-tile="1">
+               <a class="dash-metric-card" href="http://localhost:8077/trackme_ci4/public/admin/invoice">
+                  <span class="dash-metric-ico"><i class="ti-receipt"></i></span>
+                  <span class="dash-metric-meta">
+                     <span class="dash-metric-num">28</span>
+                     <span class="dash-metric-label">Bill of Supply (This Month)</span>
+                  </span>
+               </a>
+            </div>
+                     <div class="dash-metric" data-sec="m_taxinv" data-sec-label="Tax Invoices (This Month)" data-sec-tile="1">
+               <a class="dash-metric-card" href="http://localhost:8077/trackme_ci4/public/admin/taxinvoice">
+                  <span class="dash-metric-ico"><i class="ti-receipt"></i></span>
+                  <span class="dash-metric-meta">
+                     <span class="dash-metric-num">0</span>
+                     <span class="dash-metric-label">Tax Invoices (This Month)</span>
+                  </span>
+               </a>
+            </div>
+                     <div class="dash-metric" data-sec="m_purchase" data-sec-label="Purchases (This Month)" data-sec-tile="1">
+               <a class="dash-metric-card" href="http://localhost:8077/trackme_ci4/public/admin/purchase_module">
+                  <span class="dash-metric-ico"><i class="ti-shopping-cart"></i></span>
+                  <span class="dash-metric-meta">
+                     <span class="dash-metric-num">20</span>
+                     <span class="dash-metric-label">Purchases (This Month)</span>
+                  </span>
+               </a>
+            </div>
+                     <div class="dash-metric" data-sec="m_accounts" data-sec-label="Account Names (Active)" data-sec-tile="1">
+               <a class="dash-metric-card" href="http://localhost:8077/trackme_ci4/public/admin/account_name/listing">
+                  <span class="dash-metric-ico"><i class="ti-book"></i></span>
+                  <span class="dash-metric-meta">
+                     <span class="dash-metric-num">7898</span>
+                     <span class="dash-metric-label">Account Names (Active)</span>
+                  </span>
+               </a>
+            </div>
+               
+
+   <style>
+      .ula-table-wrap { overflow-x: auto; margin-top: 6px; }
+      .ula-table { width: 100%; min-width: 720px; border-collapse: collapse; }
+      .ula-table th, .ula-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgba(120,135,160,.16); font-size: 13px; }
+      .ula-table th { color: #6b7890; font-size: 11px; font-weight: 800; text-transform: uppercase; background: rgba(120,135,160,.06); }
+      .ula-table td b { font-weight: 800; }
+      .ula-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+      .ula-badge.on { color: #15803d; background: #dcfce7; }
+      .ula-badge.off { color: #b45309; background: #fef3c7; }
+      .ula-badge:before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+      .ula-count { font-variant-numeric: tabular-nums; font-weight: 800; }
+   </style>
+   <section class="sp-analytics" data-sec="user_login" data-sec-label="User Login Analytics">
+      <div class="sp-head">
+         <h5>User Login Analytics</h5>
+         <p>Who is active, their last login and how many times each user has accessed the system.</p>
+      </div>
+
+      <div class="sp-kpis">
+         <div class="sp-kpi sp-kpi-sale"><span class="sp-kpi-ico">&#128101;</span><div><small>Total Users</small><b>18</b></div></div>
+         <div class="sp-kpi sp-kpi-profit"><span class="sp-kpi-ico">&#10004;</span><div><small>Active</small><b>4</b></div></div>
+         <div class="sp-kpi sp-kpi-loss"><span class="sp-kpi-ico">&#10006;</span><div><small>Inactive</small><b>14</b></div></div>
+         <div class="sp-kpi sp-kpi-purchase"><span class="sp-kpi-ico">&#128336;</span><div><small>Logged In Today</small><b>2</b></div></div>
+         <div class="sp-kpi sp-kpi-sale"><span class="sp-kpi-ico">&#128274;</span><div><small>Total Logins</small><b>3828</b></div></div>
+      </div>
+
+      <div class="sp-charts">
+         <div class="sp-card">
+            <div class="sp-card-head"><h6>Active vs Inactive Users</h6></div>
+            <div class="sp-canvas-wrap"><canvas id="ulaStatusChart"></canvas></div>
+         </div>
+         <div class="sp-card">
+            <div class="sp-card-head"><h6>Logins &mdash; Last 14 Days</h6></div>
+            <div class="sp-canvas-wrap"><canvas id="ulaTrendChart"></canvas></div>
+         </div>
+      </div>
+
+      <div class="sp-charts">
+         <div class="sp-card">
+            <div class="sp-card-head"><h6>Top Users by Access Count</h6></div>
+            <div class="sp-canvas-wrap"><canvas id="ulaTopChart"></canvas></div>
+         </div>
+         <div class="sp-card">
+            <div class="sp-card-head"><h6>Recent User Activity</h6></div>
+            <div class="ula-table-wrap">
+               <table class="ula-table">
+                  <thead>
+                     <tr><th>User</th><th>Role</th><th>Status</th><th>Last Login</th><th>Access Count</th></tr>
+                  </thead>
+                  <tbody>
+                                             <tr>
+                           <td><b>Super Admin</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge on">Active</span></td>
+                           <td>31 Aug 2026, 07:44 AM</td>
+                           <td class="ula-count">442</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Shobhit Gupta</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge on">Active</span></td>
+                           <td>31 Aug 2026, 05:37 AM</td>
+                           <td class="ula-count">49</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Sonu Pal</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge on">Active</span></td>
+                           <td>26 Aug 2026, 04:12 PM</td>
+                           <td class="ula-count">3065</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Ankit Gupta</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge on">Active</span></td>
+                           <td>15 Aug 2026, 03:50 PM</td>
+                           <td class="ula-count">146</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Ashirwad Gupta</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>03 Aug 2026, 12:00 PM</td>
+                           <td class="ula-count">0</td>
+                        </tr>
+                                             <tr>
+                           <td><b>SHIVENDRA PANDEY</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>16 Jul 2026, 10:35 AM</td>
+                           <td class="ula-count">11</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Foolvi Khan</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>12 Jul 2026, 10:50 AM</td>
+                           <td class="ula-count">12</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Mohd Suhel</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>06 Jul 2026, 07:00 PM</td>
+                           <td class="ula-count">26</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Amardeep K</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>01 Jul 2026, 10:30 AM</td>
+                           <td class="ula-count">20</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Sonali K</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>28 Jun 2026, 11:05 AM</td>
+                           <td class="ula-count">2</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Arjit Kumar</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>26 Jun 2026, 08:40 PM</td>
+                           <td class="ula-count">19</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Govind K</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>26 Jun 2026, 05:50 PM</td>
+                           <td class="ula-count">13</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Prashant Bhajpai</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>07 Jun 2026, 11:46 AM</td>
+                           <td class="ula-count">0</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Aditya Pratap Singh</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>25 Apr 2026, 08:27 PM</td>
+                           <td class="ula-count">2</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Abhinav Shukla</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>11 Jan 2026, 07:15 AM</td>
+                           <td class="ula-count">0</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Ananad Kumar</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>07 Dec 2025, 03:59 AM</td>
+                           <td class="ula-count">0</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Akanshu Gupta</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>23 Nov 2025, 05:42 AM</td>
+                           <td class="ula-count">0</td>
+                        </tr>
+                                             <tr>
+                           <td><b>Vijay Singh</b></td>
+                           <td>Type 1</td>
+                           <td><span class="ula-badge off">Inactive</span></td>
+                           <td>20 Jul 2023, 01:13 AM</td>
+                           <td class="ula-count">0</td>
+                        </tr>
+                                       </tbody>
+               </table>
+            </div>
+         </div>
+      </div>
+   </section>
+
+   
+   
+   
+
+      <section class="sp-analytics" data-sec="sales_purchase" data-sec-label="Sales &amp; Purchase Analytics">
+         <div class="sp-head">
+            <h5>Sales &amp; Purchase Analytics</h5>
+            <p>Profit / loss, profit ratio, monthly trend and commodity-wise purchase &amp; sale rates for the current financial year.</p>
+         </div>
+
+         <div class="sp-kpis sp-kpis-4">
+            <div class="sp-kpi sp-kpi-sale">
+               <span class="sp-kpi-ico">&#8599;</span>
+               <div><small>Total Sales</small><b>&#8377;78,848,058.35</b></div>
+            </div>
+            <div class="sp-kpi sp-kpi-purchase">
+               <span class="sp-kpi-ico">&#8600;</span>
+               <div><small>Total Purchase</small><b>&#8377;91,144,632.23</b></div>
+            </div>
+            <div class="sp-kpi sp-kpi-loss">
+               <span class="sp-kpi-ico">&#9660;</span>
+               <div><small>Net Loss</small><b>&#8377;12,296,573.88</b></div>
+            </div>
+            <div class="sp-kpi sp-kpi-ratio is-neg">
+               <span class="sp-kpi-ico">&#37;</span>
+               <div><small>Profit Ratio</small><b>-15.6%</b></div>
+            </div>
+         </div>
+
+         <div class="sp-charts">
+            <div class="sp-card">
+               <div class="sp-card-head">
+                  <h6>Sales vs Purchase &mdash; Monthly Trend</h6>
+                  <div class="sp-chart-filter">
+                     <select id="spCommodityFilter" aria-label="Filter monthly chart by commodity">
+                        <option value="">All Commodities</option>
+                                                   <option value="Rice">Rice</option>
+                                                   <option value="Cattle Feed">Cattle Feed</option>
+                                                   <option value="Paddy">Paddy</option>
+                                                   <option value="Wheat">Wheat</option>
+                                                   <option value="Rice Bran">Rice Bran</option>
+                                                   <option value="Paddy husk">Paddy husk</option>
+                                             </select>
+                  </div>
+               </div>
+               <div class="sp-canvas-wrap"><canvas id="spTrendChart"></canvas></div>
+            </div>
+            <div class="sp-card">
+               <div class="sp-card-head"><h6>Sales Share by Commodity</h6></div>
+               <div class="sp-canvas-wrap"><canvas id="spShareChart"></canvas></div>
+            </div>
+         </div>
+
+         <div class="sp-charts">
+            <div class="sp-card">
+               <div class="sp-card-head"><h6>Commodity Rate &mdash; Purchase vs Sale</h6></div>
+               <div class="sp-canvas-wrap"><canvas id="spRateChart"></canvas></div>
+            </div>
+            <div class="sp-card">
+               <div class="sp-card-head"><h6>Profit Margin by Commodity</h6></div>
+               <div class="sp-canvas-wrap"><canvas id="spMarginChart"></canvas></div>
+            </div>
+         </div>
+
+         <div class="sp-charts">
+            <div class="sp-card">
+               <div class="sp-card-head"><h6>Sales vs Purchase &mdash; Profit Ratio</h6></div>
+               <div class="sp-canvas-wrap"><canvas id="spRatioChart"></canvas></div>
+            </div>
+            <div class="sp-card">
+               <div class="sp-card-head"><h6>Commodity Rate Sheet</h6></div>
+               <div class="sp-table-wrap">
+                  <table class="sp-table">
+                     <thead>
+                        <tr><th>Commodity</th><th>Buy &#8377;</th><th>Sell &#8377;</th><th>Margin</th></tr>
+                     </thead>
+                     <tbody>
+                                                   <tr>
+                              <td>Rice</td>
+                              <td>2,981</td>
+                              <td>2,984</td>
+                              <td class="sp-pos">4</td>
+                           </tr>
+                                                   <tr>
+                              <td>Cattle Feed</td>
+                              <td>2,540</td>
+                              <td>2,653</td>
+                              <td class="sp-pos">114</td>
+                           </tr>
+                                                   <tr>
+                              <td>Paddy</td>
+                              <td>2,394</td>
+                              <td>2,389</td>
+                              <td class="sp-neg">-5</td>
+                           </tr>
+                                                   <tr>
+                              <td>Wheat</td>
+                              <td>2,405</td>
+                              <td>2,404</td>
+                              <td class="sp-neg">-1</td>
+                           </tr>
+                                                   <tr>
+                              <td>Rice Bran</td>
+                              <td>&mdash;</td>
+                              <td>2,094</td>
+                              <td class="sp-pos">&mdash;</td>
+                           </tr>
+                                                   <tr>
+                              <td>Paddy husk</td>
+                              <td>326</td>
+                              <td>351</td>
+                              <td class="sp-pos">25</td>
+                           </tr>
+                                             </tbody>
+                  </table>
+               </div>
+            </div>
+         </div>
+      </section>
+      
+      
+            <section class="ageing" data-sec="ageing" data-sec-label="Ageing (Debtors &amp; Creditors)">
+         <div class="sp-head">
+            <h5>Ageing &mdash; Debtors &amp; Creditors</h5>
+            <p>Outstanding receivables &amp; payables as of today, aged FIFO into 0&ndash;30 / 31&ndash;60 / 61&ndash;90 / 90+ day buckets.</p>
+         </div>
+         <div class="age-grid">
+                           <div class="age-card age-deb">
+                  <div class="age-card-head">
+                     <div>
+                        <h6>Receivable (Debtors)</h6>
+                        <small>Parties that owe you &middot; 12 parties</small>
+                     </div>
+                     <div class="age-total"><small>Outstanding</small>&#8377;45,231,299</div>
+                  </div>
+                  <div class="age-body">
+                                             <div class="age-bar">
+                                                            <span class="age-seg0" style="width:43.92%"></span>
+                                                            <span class="age-seg1" style="width:37.07%"></span>
+                                                            <span class="age-seg2" style="width:12.74%"></span>
+                                                            <span class="age-seg3" style="width:6.26%"></span>
+                                                   </div>
+                        <div class="age-chips">
+                                                         <div class="age-chip">
+                                 <small><i class="age-seg0"></i>0-30d</small>
+                                 <b>&#8377;19,867,413</b>
+                              </div>
+                                                         <div class="age-chip">
+                                 <small><i class="age-seg1"></i>31-60d</small>
+                                 <b>&#8377;16,767,465</b>
+                              </div>
+                                                         <div class="age-chip">
+                                 <small><i class="age-seg2"></i>61-90d</small>
+                                 <b>&#8377;5,763,209</b>
+                              </div>
+                                                         <div class="age-chip">
+                                 <small><i class="age-seg3"></i>90+ d</small>
+                                 <b>&#8377;2,833,212</b>
+                              </div>
+                                                   </div>
+                        <div class="age-table-wrap">
+                           <table class="age-table">
+                              <thead>
+                                 <tr><th>Party</th><th>0-30</th><th>31-60</th><th>61-90</th><th>90+</th><th>Total</th></tr>
+                              </thead>
+                              <tbody>
+                                                                     <tr>
+                                       <td>SHRI VIGHNESHWAR AGROTECH &amp; LOGISTICS PRIVATE LIMITED</td>
+                                       <td>3,000,000</td>
+                                       <td>12,943,275</td>
+                                       <td>&mdash;</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;15,943,275</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>Akshat Commodities</td>
+                                       <td>8,675,832</td>
+                                       <td>3,824,190</td>
+                                       <td>&mdash;</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;12,500,022</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>Jai Shiv Traders</td>
+                                       <td>7,365,041</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;7,365,041</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>SPKN INDUSTRIES PRIVATE LIMITED</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>2,994,967</td>
+                                       <td class="age-old">672,966</td>
+                                       <td>&#8377;3,667,933</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>M/S RAM BHAJAN  PUTTU LAL</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>654,780</td>
+                                       <td class="age-old">1,160,280</td>
+                                       <td>&#8377;1,815,060</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>SANTOSH TRADERS</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>1,085,436</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;1,085,436</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>M/S  VIDYA SAGAR SUMAN KUMAR</td>
+                                       <td>826,540</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;826,540</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>SHREE VINAYAK ENTERPRISES</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td class="age-old">635,740</td>
+                                       <td>&#8377;635,740</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>Shiv Trading Company</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>625,430</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;625,430</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>M/S TIRUPATI SOLVENT EXTRACTIONS AND REFINERIES PRIVATE LIMITED</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>402,596</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;402,596</td>
+                                    </tr>
+                                                               </tbody>
+                           </table>
+                        </div>
+                                       </div>
+               </div>
+                           <div class="age-card age-cred">
+                  <div class="age-card-head">
+                     <div>
+                        <h6>Payable (Creditors)</h6>
+                        <small>Parties you owe &middot; 13 parties</small>
+                     </div>
+                     <div class="age-total"><small>Outstanding</small>&#8377;48,407,607</div>
+                  </div>
+                  <div class="age-body">
+                                             <div class="age-bar">
+                                                            <span class="age-seg0" style="width:16.54%"></span>
+                                                            <span class="age-seg1" style="width:3.29%"></span>
+                                                            <span class="age-seg2" style="width:46.12%"></span>
+                                                            <span class="age-seg3" style="width:34.06%"></span>
+                                                   </div>
+                        <div class="age-chips">
+                                                         <div class="age-chip">
+                                 <small><i class="age-seg0"></i>0-30d</small>
+                                 <b>&#8377;8,004,741</b>
+                              </div>
+                                                         <div class="age-chip">
+                                 <small><i class="age-seg1"></i>31-60d</small>
+                                 <b>&#8377;1,590,626</b>
+                              </div>
+                                                         <div class="age-chip">
+                                 <small><i class="age-seg2"></i>61-90d</small>
+                                 <b>&#8377;22,323,703</b>
+                              </div>
+                                                         <div class="age-chip">
+                                 <small><i class="age-seg3"></i>90+ d</small>
+                                 <b>&#8377;16,488,538</b>
+                              </div>
+                                                   </div>
+                        <div class="age-table-wrap">
+                           <table class="age-table">
+                              <thead>
+                                 <tr><th>Party</th><th>0-30</th><th>31-60</th><th>61-90</th><th>90+</th><th>Total</th></tr>
+                              </thead>
+                              <tbody>
+                                                                     <tr>
+                                       <td>M/S SARLA GUPTA</td>
+                                       <td>8,004,741</td>
+                                       <td>&mdash;</td>
+                                       <td>2,698,249</td>
+                                       <td class="age-old">6,023,288</td>
+                                       <td>&#8377;16,726,278</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>OM SAI TRADING CO.</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>5,873,121</td>
+                                       <td class="age-old">9,281,897</td>
+                                       <td>&#8377;15,155,018</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>M/S TARUSH AGRO FOODS</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>5,334,943</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;5,334,943</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>M/S SIDDHI TRADING COMPANY</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>2,634,450</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;2,634,450</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>PIYUSH RAW RICE MILL</td>
+                                       <td>&mdash;</td>
+                                       <td>896,584</td>
+                                       <td>&mdash;</td>
+                                       <td class="age-old">1,076,552</td>
+                                       <td>&#8377;1,973,136</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>MAYA INDUSTRIES</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>1,046,150</td>
+                                       <td class="age-old">106,801</td>
+                                       <td>&#8377;1,152,951</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>SANGAM TRADERS</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>942,300</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;942,300</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>M/S  SONU TRADERS</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>838,890</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;838,890</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>M/S TIRUPATI BALAJI TRADERS</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>831,600</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;831,600</td>
+                                    </tr>
+                                                                     <tr>
+                                       <td>M/S RAMA TRADING COMPANY</td>
+                                       <td>&mdash;</td>
+                                       <td>&mdash;</td>
+                                       <td>818,100</td>
+                                       <td class="">&mdash;</td>
+                                       <td>&#8377;818,100</td>
+                                    </tr>
+                                                               </tbody>
+                           </table>
+                        </div>
+                                       </div>
+               </div>
+                     </div>
+      </section>
+      
+      
+               <div class="container mt-3 dashboard-lot-panel" style="overflow: auto;" data-sec="lot_report" data-sec-label="Lot Wise Report">
+            <div class="card border-0 shadow-sm">
+               <div class="card-body py-2">
+
+                  <div class="row g-2 stats-row">
+
+                     <div class="col-12 col-sm-6 col-md-auto stat-soft soft-primary">
+                        KisanVahi Date
+                     </div>
+
+                     <div class="col-12 col-sm-6 col-md-auto">
+                        <input type="text" id="datepicker" name="activeKishan" class="form-control form-control-sm"
+                           placeholder="Latest KisanVahi">
+                     </div>
+
+                     <div class="col-12 col-sm-6 col-md-auto stat-soft soft-primary">
+                        <span id="total_quant"></span>
+                     </div>
+
+                     <div class="col-6 col-md-auto stat-soft soft-success">
+                        Total Kisan Vahi<br>
+                        0.00                     </div>
+
+                     <div class="col-6 col-md-auto stat-soft soft-warning">
+                        Pending Lot<br>
+                        0                     </div>
+
+                     <div class="col-6 col-md-auto stat-soft soft-neutral">
+                        Accepted Lot<br>
+                        0                     </div>
+
+                     <div class="col-6 col-md-auto stat-soft soft-danger">
+                        Lot On Hold<br>
+                        0                     </div>
+
+                     <div class="col-6 col-md-auto stat-soft soft-green">
+                        Expected Lot<br>
+                        0.00                     </div>
+
+                     <div class="col-6 col-md-auto stat-soft soft-pendinglot">
+                        Left Lot<br>
+                        0.00                     </div>
+
+                  </div>
+
+               </div>
+            </div>
+         </div>
+
+                  
+
+        
+
+                  <style>
+            .sale-stock-tabs { display:inline-flex; gap:6px; flex-wrap:wrap; }
+            .sale-stock-tab { border:1px solid #dce6f2; background:#fff; color:#516174; font-weight:700; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:13px; }
+            .sale-stock-tab.active { background:linear-gradient(135deg,#1769c2,#0c4a94); color:#fff; border-color:transparent; }
+         </style>
+         <div class="sale-stock-block" data-sec="sale_stock" data-sec-label="Sale Stock">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+               <h5 style="margin:0;">Sale Stock</h5>
+               <div class="sale-stock-tabs">
+                                       <button type="button" class="sale-stock-tab active" data-target="ss-bos">Bill of Supply</button>
+                                       <button type="button" class="sale-stock-tab" data-target="ss-einvoice">Tax E-Invoice</button>
+                                       <button type="button" class="sale-stock-tab" data-target="ss-unreg">Tax Unregistered</button>
+                                 </div>
+            </div>
+
+                           <div class="sale-stock-panel" id="ss-bos" style="">
+                  <div class="row gap-20 masonry pos-r">
+                     <div class="masonry-sizer col-md-6"></div>
+                     <div class="masonry-item w-100">
+                        <div class="row gap-20">
+                                             <div class="col-md-3 col-sm-6 col-xs-6 text-center">
+                     <a href="Javascript:void(0)" style="text-decoration:none;">
+                        <div class="layers p-20" style="background: linear-gradient(135deg,#667eea,#764ba2); border-radius:18px; box-shadow:0 8px 18px rgba(0,0,0,0.12); color:#fff;">
+                           <!-- Product + HSN -->
+                           <div class="layer w-100 mB-15">
+                              <h6 style="margin:0;font-weight:600;letter-spacing:0.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                 PADDY_100610                              </h6>
+                           </div>
+                           <!-- Quantity -->
+                           <div class="layer w-100">
+                              <span style="display:inline-block;font-size:24px;font-weight:700;padding:12px 25px;background:rgba(255,255,255,0.25);border-radius:50px;">
+                                 7907.90<br>18,889,266.30                              </span>
+                           </div>
+                        </div>
+                     </a>
+                  </div>
+                                    <div class="col-md-3 col-sm-6 col-xs-6 text-center">
+                     <a href="Javascript:void(0)" style="text-decoration:none;">
+                        <div class="layers p-20" style="background: linear-gradient(135deg,#f7971e,#ffd200); border-radius:18px; box-shadow:0 8px 18px rgba(0,0,0,0.12); color:#fff;">
+                           <!-- Product + HSN -->
+                           <div class="layer w-100 mB-15">
+                              <h6 style="margin:0;font-weight:600;letter-spacing:0.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                 WHEAT_1001                              </h6>
+                           </div>
+                           <!-- Quantity -->
+                           <div class="layer w-100">
+                              <span style="display:inline-block;font-size:24px;font-weight:700;padding:12px 25px;background:rgba(255,255,255,0.25);border-radius:50px;">
+                                 2820.60<br>6,781,645.30                              </span>
+                           </div>
+                        </div>
+                     </a>
+                  </div>
+                                    <div class="col-md-3 col-sm-6 col-xs-6 text-center">
+                     <a href="Javascript:void(0)" style="text-decoration:none;">
+                        <div class="layers p-20" style="background: linear-gradient(135deg,#43cea2,#185a9d); border-radius:18px; box-shadow:0 8px 18px rgba(0,0,0,0.12); color:#fff;">
+                           <!-- Product + HSN -->
+                           <div class="layer w-100 mB-15">
+                              <h6 style="margin:0;font-weight:600;letter-spacing:0.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                 CATTLE FEED_2309                              </h6>
+                           </div>
+                           <!-- Quantity -->
+                           <div class="layer w-100">
+                              <span style="display:inline-block;font-size:24px;font-weight:700;padding:12px 25px;background:rgba(255,255,255,0.25);border-radius:50px;">
+                                 3818.35<br>9,427,153.25                              </span>
+                           </div>
+                        </div>
+                     </a>
+                  </div>
+                                    <div class="col-md-3 col-sm-6 col-xs-6 text-center">
+                     <a href="Javascript:void(0)" style="text-decoration:none;">
+                        <div class="layers p-20" style="background: linear-gradient(135deg,#ff512f,#dd2476); border-radius:18px; box-shadow:0 8px 18px rgba(0,0,0,0.12); color:#fff;">
+                           <!-- Product + HSN -->
+                           <div class="layer w-100 mB-15">
+                              <h6 style="margin:0;font-weight:600;letter-spacing:0.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                 RICE_1006                              </h6>
+                           </div>
+                           <!-- Quantity -->
+                           <div class="layer w-100">
+                              <span style="display:inline-block;font-size:24px;font-weight:700;padding:12px 25px;background:rgba(255,255,255,0.25);border-radius:50px;">
+                                 9441.36<br>28,175,370.30                              </span>
+                           </div>
+                        </div>
+                     </a>
+                  </div>
+                                    <div class="col-md-3 col-sm-6 col-xs-6 text-center">
+                     <a href="Javascript:void(0)" style="text-decoration:none;">
+                        <div class="layers p-20" style="background: linear-gradient(135deg,#00c6ff,#0072ff); border-radius:18px; box-shadow:0 8px 18px rgba(0,0,0,0.12); color:#fff;">
+                           <!-- Product + HSN -->
+                           <div class="layer w-100 mB-15">
+                              <h6 style="margin:0;font-weight:600;letter-spacing:0.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                 PADDY HUSK_1213                              </h6>
+                           </div>
+                           <!-- Quantity -->
+                           <div class="layer w-100">
+                              <span style="display:inline-block;font-size:24px;font-weight:700;padding:12px 25px;background:rgba(255,255,255,0.25);border-radius:50px;">
+                                 989.60<br>322,364.50                              </span>
+                           </div>
+                        </div>
+                     </a>
+                  </div>
+                                          </div>
+                     </div>
+                  </div>
+               </div>
+                           <div class="sale-stock-panel" id="ss-einvoice" style="display:none;">
+                  <div class="row gap-20 masonry pos-r">
+                     <div class="masonry-sizer col-md-6"></div>
+                     <div class="masonry-item w-100">
+                        <div class="row gap-20">
+                                             <div class="col-md-3 col-sm-6 col-xs-6 text-center">
+                     <a href="Javascript:void(0)" style="text-decoration:none;">
+                        <div class="layers p-20" style="background: linear-gradient(135deg,#667eea,#764ba2); border-radius:18px; box-shadow:0 8px 18px rgba(0,0,0,0.12); color:#fff;">
+                           <!-- Product + HSN -->
+                           <div class="layer w-100 mB-15">
+                              <h6 style="margin:0;font-weight:600;letter-spacing:0.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                 RICE BRAN_23022020                              </h6>
+                           </div>
+                           <!-- Quantity -->
+                           <div class="layer w-100">
+                              <span style="display:inline-block;font-size:24px;font-weight:700;padding:12px 25px;background:rgba(255,255,255,0.25);border-radius:50px;">
+                                 2122.45<br>4,444,470.00                              </span>
+                           </div>
+                        </div>
+                     </a>
+                  </div>
+                                          </div>
+                     </div>
+                  </div>
+               </div>
+                           <div class="sale-stock-panel" id="ss-unreg" style="display:none;">
+                  <div class="row gap-20 masonry pos-r">
+                     <div class="masonry-sizer col-md-6"></div>
+                     <div class="masonry-item w-100">
+                        <div class="row gap-20">
+                                             <div class="col-md-3 col-sm-6 col-xs-6 text-center">
+                     <a href="Javascript:void(0)" style="text-decoration:none;">
+                        <div class="layers p-20" style="background: linear-gradient(135deg,#667eea,#764ba2); border-radius:18px; box-shadow:0 8px 18px rgba(0,0,0,0.12); color:#fff;">
+                           <!-- Product + HSN -->
+                           <div class="layer w-100 mB-15">
+                              <h6 style="margin:0;font-weight:600;letter-spacing:0.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                 CATTLE FEED_2309                              </h6>
+                           </div>
+                           <!-- Quantity -->
+                           <div class="layer w-100">
+                              <span style="display:inline-block;font-size:24px;font-weight:700;padding:12px 25px;background:rgba(255,255,255,0.25);border-radius:50px;">
+                                 3776.20<br>10,724,088.70                              </span>
+                           </div>
+                        </div>
+                     </a>
+                  </div>
+                                    <div class="col-md-3 col-sm-6 col-xs-6 text-center">
+                     <a href="Javascript:void(0)" style="text-decoration:none;">
+                        <div class="layers p-20" style="background: linear-gradient(135deg,#f7971e,#ffd200); border-radius:18px; box-shadow:0 8px 18px rgba(0,0,0,0.12); color:#fff;">
+                           <!-- Product + HSN -->
+                           <div class="layer w-100 mB-15">
+                              <h6 style="margin:0;font-weight:600;letter-spacing:0.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                 PADDY HUSK_1213                              </h6>
+                           </div>
+                           <!-- Quantity -->
+                           <div class="layer w-100">
+                              <span style="display:inline-block;font-size:24px;font-weight:700;padding:12px 25px;background:rgba(255,255,255,0.25);border-radius:50px;">
+                                 167.40<br>83,700.00                              </span>
+                           </div>
+                        </div>
+                     </a>
+                  </div>
+                                          </div>
+                     </div>
+                  </div>
+               </div>
+                     </div>
+         
+         <hr>
+         
+
+         <div class="row gap-20 masonry pos-r">
+            <div class="masonry-sizer col-md-6"></div>
+            <div class="masonry-item w-100">
+               <div class="row gap-20" id="repeat">
+
+               </div>
+            </div>
+         </div>
+
+      </div>
+   
+</main>
+
+
+
+
+
+
+
+
+<!-- DEBUG-VIEW ENDED 3 APPPATH\Modules\Admin\Views\dashboard\site_dashboard.php -->
+                            </div>
+        </div>
+    </div>
+
+    
+    
+    
+    
+    
+    
+</body>
+</html>
+
+<!-- DEBUG-VIEW ENDED 4 APPPATH\Views\layouts\admin.php -->

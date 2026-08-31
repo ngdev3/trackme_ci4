@@ -265,6 +265,9 @@ $routes->post('admin/account_name/quick_update', [Account_name::class, 'quick_up
 // GST default-rate settings (super-admin)
 $routes->match(['GET', 'POST'], 'admin/gst_setting', [Gst_setting::class, 'index']);
 
+// Change Firm / FY switch (top-nav modal → elements/setting.php)
+$routes->post('admin/setting/change_fy_id', ['\App\Modules\Admin\Controllers\Setting', 'change_fy_id']);
+
 // Rice Mill Website Inquiries
 $routes->get('admin/ricemill_inquiry/listing', [Ricemill_inquiry::class, 'listing']);
 $routes->get('admin/ricemill_inquiry', [Ricemill_inquiry::class, 'listing']);

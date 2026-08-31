@@ -148,6 +148,47 @@ if (! function_exists('_layout')) {
     }
 }
 
+if (! function_exists('session_lock_minutes')) {
+    /** Global web-panel auto-lock timeout in minutes (0 = disabled). */
+    function session_lock_minutes(): int
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+        $db = \Config\Database::connect();
+        if (! $db->tableExists('aa_session_settings')) {
+            return $cached = 0;
+        }
+        $row = $db->table('aa_session_settings')->orderBy('id', 'asc')->limit(1)->get()->getRow();
+        return $cached = $row ? max(0, (int) $row->lock_after_minutes) : 0;
+    }
+}
+
+if (! function_exists('recent_switched_templates')) {
+    /** Recent DISTINCT firms/FYs this user switched to (for the Change Firm popup). */
+    function recent_switched_templates($user_id = null, int $limit = 6): array
+    {
+        $db = \Config\Database::connect();
+        if (! $db->tableExists('aa_template_switch_log')) {
+            return [];
+        }
+        $b = $db->table('aa_template_switch_log as tsl')
+            ->select("tsl.template_id,
+                MAX(tsl.selected_at) AS last_selected,
+                COUNT(*) AS switch_count,
+                fn.name AS firm_name, t.FY, t.template_name, t.product_type,
+                (SELECT COUNT(*) FROM aa_rokad r WHERE r.template_id = tsl.template_id AND r.status <> 'Delete') AS entry_count", false)
+            ->join('aa_template as t', 't.template_id = tsl.template_id', 'left')
+            ->join('firm_name as fn', 'fn.id = t.firm_name_id', 'left')
+            ->where('tsl.template_id IS NOT NULL', null, false);
+        if ($user_id !== null) {
+            $b->where('tsl.user_id', (int) $user_id);
+        }
+        return $b->groupBy('tsl.template_id')->orderBy('last_selected', 'desc')->limit($limit)->get()->getResult();
+    }
+}
+
 if (! function_exists('notificationData')) {
     /** Insert one row into the `notification` table (FY/product/template scoped). */
     function notificationData(array $data, string $type): int
