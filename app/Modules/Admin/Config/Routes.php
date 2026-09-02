@@ -157,6 +157,10 @@ $routes->match(['GET', 'POST'], 'admin/attendance/employee_edit/(:segment)', [At
 $routes->post('admin/attendance/employee_view_all', [Attendance::class, 'employee_view_all']);
 $routes->get('admin/attendance/employee_delete/(:segment)', [Attendance::class, 'employee_delete']);
 $routes->get('admin/attendance/employee_toggle_status/(:segment)', [Attendance::class, 'employee_toggle_status']);
+
+// Activity & Audit Monitor — overview (KPIs, charts, online-now, recent activity)
+$routes->get('admin/monitor', ['\App\Modules\Admin\Controllers\Monitor', 'index']);
+$routes->get('admin/monitor/overview', ['\App\Modules\Admin\Controllers\Monitor', 'overview']);
 $routes->get('admin/salary_module/listing', [SalaryModule::class, 'listing']);
 $routes->get('admin/salary_module', [SalaryModule::class, 'listing']);
 $routes->post('admin/salary_module/view_all', [SalaryModule::class, 'viewAll']);
@@ -290,6 +294,8 @@ $routes->post('admin/account_name/quick_add_city', [Account_name::class, 'quick_
 $routes->post('admin/setting/change_fy_id', ['\App\Modules\Admin\Controllers\Setting', 'change_fy_id']);
 $routes->get('admin/setting/hub', ['\App\Modules\Admin\Controllers\Setting', 'hub']);
 $routes->get('admin/setting', ['\App\Modules\Admin\Controllers\Setting', 'hub']);
+$routes->get('admin/setting/view_only', ['\App\Modules\Admin\Controllers\Setting', 'view_only']);
+$routes->post('admin/setting/save_view_only', ['\App\Modules\Admin\Controllers\Setting', 'save_view_only']);
 
 // SEO & Search Optimization (settings form + dynamic sitemap/robots)
 $routes->match(['GET', 'POST'], 'admin/seo', ['\App\Modules\Admin\Controllers\Seo', 'index']);

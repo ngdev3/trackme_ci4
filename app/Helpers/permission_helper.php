@@ -98,6 +98,63 @@ if (! function_exists('erp_permission_action_from_method')) {
     }
 }
 
+if (! function_exists('erp_method_is_read_endpoint')) {
+    /**
+     * Does this controller method NEVER mutate data? Hardens the GLOBAL view-only
+     * gate: some write endpoints have read-looking names (save_entry, quick_update,
+     * store, …) that erp_permission_action_from_method() classifies as 'view'. For
+     * a view-only user any write HTTP verb whose method is NOT a known read is
+     * blocked. Generous on purpose — a false "read" only keeps read access.
+     */
+    function erp_method_is_read_endpoint($method): bool
+    {
+        $m = strtolower((string) $method);
+        if ($m === '') {
+            return true;
+        }
+        if (preg_match('/(^|_)(data|listing|list|json|options|option|search|feed|count|stats|summary|details|detail|modal|export|pdf|csv|excel|print|preview|view|report|autocomplete|suggest|dropdown|chart|graph|balance|balances|ledger)$/', $m)) {
+            return true;
+        }
+        if (preg_match('/^(get|list|search|check|fetch|load|show|view|report|export|print|download|pdf|preview|is|render)_/', $m)) {
+            return true;
+        }
+        return in_array($m, [
+            'index', 'listing', 'view', 'view_all', 'viewall', 'search', 'options',
+            'account_options', 'account_search', 'activity_feed', 'feed', 'get_comments',
+            'comments', 'notifications', 'check_template', 'dashboard', 'report',
+        ], true);
+    }
+}
+
+if (! function_exists('erp_user_is_view_only')) {
+    /** Lazily add the users.is_view_only column (idempotent, shared with CI3). */
+    function erp_ensure_view_only_column(): void
+    {
+        static $done = false;
+        if ($done) { return; }
+        $done = true;
+        try {
+            $db = Database::connect();
+            if (! $db->fieldExists('is_view_only', 'users')) {
+                $db->query("ALTER TABLE `users` ADD COLUMN `is_view_only` TINYINT(1) NOT NULL DEFAULT 0");
+            }
+        } catch (\Throwable $e) { /* ignore */ }
+    }
+
+    /** GLOBAL view-only user? (Super Admin handled by caller.) Cached per request. */
+    function erp_user_is_view_only($uid): bool
+    {
+        static $cache = [];
+        $uid = (int) $uid;
+        if ($uid <= 0) { return false; }
+        if (isset($cache[$uid])) { return $cache[$uid]; }
+        erp_ensure_view_only_column();
+        $db  = Database::connect();
+        $row = $db->table('users')->select('is_view_only')->where('id', $uid)->get()->getRow();
+        return $cache[$uid] = ($row && (int) $row->is_view_only === 1);
+    }
+}
+
 if (! function_exists('erp_current_user_can')) {
     /**
      * Resolution: super admin -> per-user grants (default-deny once configured)
@@ -114,6 +171,11 @@ if (! function_exists('erp_current_user_can')) {
         }
 
         $uid = erp_current_user_id();
+
+        // GLOBAL view-only users: allow view, block every write action app-wide.
+        if ($uid && $action !== 'view' && erp_user_is_view_only($uid)) {
+            return false;
+        }
 
         // Per-user permissions take precedence once configured.
         if ($uid && erp_user_has_custom_permissions($uid)) {

@@ -13,8 +13,12 @@ class PermissionDenied extends BaseController
 {
     public function index()
     {
+        // ?vo=1 marks a view-only (read-only mode) bounce — show a friendly page
+        // rather than the accusatory "you don't have permission" one.
+        $viewOnly = (string) $this->request->getGet('vo') === '1';
+
         return $this->response
             ->setStatusCode(403)
-            ->setBody(view('\App\Modules\PermissionDenied\Views\denied'));
+            ->setBody(view('\App\Modules\PermissionDenied\Views\denied', ['view_only' => $viewOnly]));
     }
 }

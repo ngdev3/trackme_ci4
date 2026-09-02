@@ -4,12 +4,17 @@ helper(['url']);
 $firm = $firm ?? null;
 $cards = [
     ['Change Firm / FY', 'ti-exchange-vertical', 'Switch the active workspace (firm + financial year).', 'javascript:void(0)', 'exampleModal'],
+];
+if (function_exists('erp_is_super_admin') && erp_is_super_admin()) {
+    $cards[] = ['View-Only Users', 'ti-eye', 'Make a user global read-only (block add/edit/update/delete app-wide).', base_url('admin/setting/view_only'), ''];
+}
+$cards = array_merge($cards, [
     ['GST Settings', 'ti-receipt', 'E-invoice / GST portal credentials and defaults.', base_url('admin/gst_setting'), ''],
     ['Users', 'ti-user', 'Manage panel users and their status.', base_url('admin/users/listing'), ''],
     ['Role Permissions', 'ti-lock', 'Module access per role.', base_url('admin/role_permissions'), ''],
     ['User Permissions', 'ti-key', 'Per-user module overrides.', base_url('admin/user_permissions'), ''],
     ['HSN Code Master', 'ti-list', 'Commodity HSN codes used across invoices & stock.', base_url('admin/hsn/listing'), ''],
-];
+]);
 ?>
 <main class="main-content"><div id="mainContent"><div class="container-fluid" style="max-width:1080px;margin:0 auto;padding-top:6px;">
 

@@ -37,9 +37,42 @@ class RbacFilter implements FilterInterface
         }
 
         $action = erp_permission_action_from_method($method);
+        $uid    = erp_current_user_id();
         if (! erp_current_user_can($module, $action)) {
-            return redirect()->to(site_url('permission_denied'));
+            // Read-only mode is not a "no access" denial — tell the user the right thing.
+            $viewOnly = ($uid && $action !== 'view' && erp_user_is_view_only($uid));
+            return $this->deny($request, $viewOnly);
         }
+
+        // GLOBAL view-only hardening: even when the method name classifies as a
+        // 'view' (save_entry, quick_update, store, …), block it for a view-only
+        // user whenever it arrives over a write HTTP verb and is not a known read.
+        if ($action === 'view' && $uid && erp_user_is_view_only($uid)) {
+            $http = strtoupper($request->getMethod());
+            if (in_array($http, ['POST', 'PUT', 'PATCH', 'DELETE'], true) && ! erp_method_is_read_endpoint($method)) {
+                return $this->deny($request, true);
+            }
+        }
+    }
+
+    /** AJAX → JSON 403; normal request → permission_denied page. Friendly for view-only. */
+    private function deny(RequestInterface $request, bool $viewOnly = false)
+    {
+        // Never reveal the permission/read-only restriction to the user — present
+        // a neutral "temporary technical glitch" for every blocked request.
+        $title   = 'Something Went Wrong';
+        $message = 'We hit a temporary technical glitch while processing your request. Please refresh the page and try again in a little while. If it keeps happening, contact support.';
+
+        if ($request->isAJAX()) {
+            return service('response')->setStatusCode(403)->setJSON([
+                'status'        => 'denied',
+                'access_denied' => true,
+                'view_only'     => $viewOnly,
+                'error_msg'     => $title,
+                'message'       => $message,
+            ]);
+        }
+        return redirect()->to(site_url('permission_denied') . ($viewOnly ? '?vo=1' : ''));
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
