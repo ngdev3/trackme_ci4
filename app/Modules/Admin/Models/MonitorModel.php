@@ -515,6 +515,106 @@ class MonitorModel
         return $res;
     }
 
+    /* ==================== MAC resolution (LAN clients only) ==================== */
+    private function ensureIpMacTable(): void
+    {
+        static $done = false;
+        if ($done) { return; }
+        $done = true;
+        $this->db()->query("CREATE TABLE IF NOT EXISTS `aa_ip_mac` (
+            `ip` VARCHAR(45) NOT NULL, `mac` VARCHAR(17) NULL, `vendor` VARCHAR(120) NULL,
+            `source` VARCHAR(16) DEFAULT 'remote', `first_seen` TIMESTAMP NULL DEFAULT NULL,
+            `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`ip`), KEY `idx_mac` (`mac`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+    }
+
+    /** Parse the host's ARP (IPv4) + NDP (IPv6) neighbour tables → ip => MAC. */
+    private function arpTable(): array
+    {
+        static $cache = null;
+        if ($cache !== null) { return $cache; }
+        $cache = [];
+        if (! function_exists('shell_exec')) { return $cache; }
+
+        if (stripos(PHP_OS, 'WIN') === 0) {
+            $out  = (string) @shell_exec('arp -a 2>&1');
+            $out .= "\n" . (string) @shell_exec('netsh interface ipv6 show neighbors 2>&1');
+        } else {
+            $out = (string) @shell_exec('ip neigh 2>&1');
+        }
+
+        foreach (preg_split('/\r?\n/', $out) as $line) {
+            if (! preg_match('/([0-9a-f]{2}[:-]){5}[0-9a-f]{2}/i', $line, $mm)) { continue; }
+            $mac = strtoupper(str_replace('-', ':', $mm[0]));
+            if ($mac === 'FF:FF:FF:FF:FF:FF' || strpos($mac, '01:00:5E') === 0 || strpos($mac, '33:33:') === 0 || $mac === '00:00:00:00:00:00') { continue; }
+            if (preg_match('/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/', $line, $ip4)) {
+                $cache[$ip4[1]] = $mac;
+            } elseif (preg_match('/([0-9a-f]{0,4}:){2,7}[0-9a-f]{0,4}/i', $line, $ip6)) {
+                $cache[strtolower($ip6[0])] = $mac;
+            }
+        }
+        return $cache;
+    }
+
+    /** Best-effort OUI → vendor lookup (macvendors.com); '' on failure. */
+    private function macVendor(string $mac): string
+    {
+        if ($mac === '' || ! function_exists('curl_init')) { return ''; }
+        $ch = curl_init('https://api.macvendors.com/' . rawurlencode($mac));
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 6, CURLOPT_CONNECTTIMEOUT => 4]);
+        $v = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($v !== false && $code == 200 && stripos($v, 'errors') === false) { return substr(trim($v), 0, 120); }
+        return '';
+    }
+
+    /**
+     * Resolve MACs for a list of IPs. Only LAN (private/link-local) clients that
+     * share the server's segment can have a MAC (matched from the ARP/NDP table);
+     * remote/internet IPs are recorded 'remote' (unobtainable). Cached in
+     * aa_ip_mac. CI3 Monitor_mod::resolve_macs(). @return array<string,object>
+     */
+    public function resolve_macs(array $ips): array
+    {
+        $out = [];
+        $ips = array_values(array_unique(array_filter(array_map(fn ($x) => trim((string) $x), $ips))));
+        if (! $ips) { return $out; }
+        $this->ensureIpMacTable();
+        $db = $this->db();
+
+        foreach ($db->table('aa_ip_mac')->whereIn('ip', $ips)->get()->getResult() as $r) {
+            if ($r->source === 'unknown') { continue; } // allow LAN-unknown to be retried
+            $out[$r->ip] = $r;
+        }
+
+        $arp = null;
+        foreach ($ips as $ip) {
+            if (isset($out[$ip])) { continue; }
+            if ($this->ipVersion($ip) === 0) { continue; }
+
+            if ($ip === '127.0.0.1' || $ip === '::1') {
+                $row = ['ip' => $ip, 'mac' => null, 'vendor' => null, 'source' => 'loopback', 'updated_at' => date('Y-m-d H:i:s')];
+                $db->table('aa_ip_mac')->replace($row); $out[$ip] = (object) $row; continue;
+            }
+            if ($this->ipPublic($ip)) {
+                $row = ['ip' => $ip, 'mac' => null, 'vendor' => null, 'source' => 'remote', 'updated_at' => date('Y-m-d H:i:s')];
+                $db->table('aa_ip_mac')->replace($row); $out[$ip] = (object) $row; continue;
+            }
+
+            if ($arp === null) { $arp = $this->arpTable(); }
+            $mac = $arp[$ip] ?? ($arp[strtolower($ip)] ?? null);
+            if ($mac) {
+                $row = ['ip' => $ip, 'mac' => $mac, 'vendor' => $this->macVendor($mac), 'source' => 'arp', 'first_seen' => date('Y-m-d H:i:s'), 'updated_at' => date('Y-m-d H:i:s')];
+            } else {
+                $row = ['ip' => $ip, 'mac' => null, 'vendor' => null, 'source' => 'unknown', 'updated_at' => date('Y-m-d H:i:s')];
+            }
+            $db->table('aa_ip_mac')->replace($row); $out[$ip] = (object) $row;
+        }
+        return $out;
+    }
+
     /** Exact device-GPS points from the entry-audit log for the map (firm-scoped). */
     public function geo_points(array $f): array
     {

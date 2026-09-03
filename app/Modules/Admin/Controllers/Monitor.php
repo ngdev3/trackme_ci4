@@ -179,9 +179,10 @@ class Monitor extends BaseController
         $f = $data['filters'];
         $data['ips'] = $m->ip_intel($f, $data['is_super']);
 
-        // Geolocate every IP in the rollup (cached) and attach city/country/isp.
+        // Geolocate every IP in the rollup (cached) + resolve MACs for LAN clients.
         $ipList = array_map(fn ($r) => $r->ip, $data['ips']);
-        $geo = $m->geolocate_ips($ipList);
+        $geo  = $m->geolocate_ips($ipList);
+        $macs = $m->resolve_macs($ipList);
         $markers = [];
         foreach ($data['ips'] as $row) {
             $g = $geo[$row->ip] ?? null;
@@ -190,6 +191,11 @@ class Monitor extends BaseController
             $row->region     = $g->region ?? null;
             $row->isp        = $g->isp ?? null;
             $row->geo_status = $g->status ?? 'unknown';
+            // MAC (LAN devices only; remote IPs → source 'remote').
+            $mc = $macs[$row->ip] ?? null;
+            $row->mac        = $mc->mac ?? null;
+            $row->mac_vendor = $mc->vendor ?? null;
+            $row->mac_source = $mc->source ?? 'remote';
             if ($g && ($g->status ?? '') === 'ok' && $g->lat !== null && $g->lng !== null) {
                 $markers[] = [
                     'lat' => (float) $g->lat, 'lng' => (float) $g->lng, 'ip' => $row->ip, 'version' => (int) $row->version,
