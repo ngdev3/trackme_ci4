@@ -127,7 +127,7 @@ if (! function_exists('erp_method_is_read_endpoint')) {
 }
 
 if (! function_exists('erp_user_is_view_only')) {
-    /** Lazily add the users.is_view_only column (idempotent, shared with CI3). */
+    /** Lazily add users.is_view_only + the per-firm scope table (shared with CI3). */
     function erp_ensure_view_only_column(): void
     {
         static $done = false;
@@ -138,20 +138,72 @@ if (! function_exists('erp_user_is_view_only')) {
             if (! $db->fieldExists('is_view_only', 'users')) {
                 $db->query("ALTER TABLE `users` ADD COLUMN `is_view_only` TINYINT(1) NOT NULL DEFAULT 0");
             }
+            // Per-firm (template) view-only: one row per (user, template) = that
+            // user is read-only only while working in that firm.
+            $db->query("CREATE TABLE IF NOT EXISTS `aa_view_only_template` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `template_id` INT NOT NULL,
+                UNIQUE KEY `uq_vot` (`user_id`, `template_id`),
+                KEY `idx_vot_user` (`user_id`)
+            )");
         } catch (\Throwable $e) { /* ignore */ }
     }
 
-    /** GLOBAL view-only user? (Super Admin handled by caller.) Cached per request. */
+    /** template_ids this user is read-only in (empty = none). For the manager UI. */
+    function erp_user_view_only_templates($uid): array
+    {
+        $uid = (int) $uid;
+        if ($uid <= 0) { return []; }
+        erp_ensure_view_only_column();
+        $out = [];
+        foreach (Database::connect()->table('aa_view_only_template')->select('template_id')->where('user_id', $uid)->get()->getResult() as $r) {
+            $out[] = (int) $r->template_id;
+        }
+        return $out;
+    }
+
+    /**
+     * Read-only for the CURRENT request? True when GLOBAL view-only, OR view-only
+     * for the firm (template) currently being worked in. (Super Admin handled by
+     * caller.) Cached per (user, current-template).
+     */
     function erp_user_is_view_only($uid): bool
     {
         static $cache = [];
         $uid = (int) $uid;
         if ($uid <= 0) { return false; }
-        if (isset($cache[$uid])) { return $cache[$uid]; }
+
+        // Current firm id. fy()->template_id is authoritative, but the firm row
+        // isn't always resolved in filter context (filter order + loadFirmContext's
+        // once-guard), so fall back to the user's default_firm — the same pattern
+        // CI3 Entry_trace_mod::_template_id() uses. Without this, PER-FIRM view-only
+        // silently fails (tid=0) while GLOBAL view-only still works.
+        $tid = 0;
+        if (function_exists('fy')) {
+            $f = fy();
+            if (is_object($f) && isset($f->template_id) && $f->template_id !== '') { $tid = (int) $f->template_id; }
+        }
+        if ($tid <= 0 && function_exists('currentuserinfo')) {
+            $ui = currentuserinfo();
+            if (is_object($ui) && ! empty($ui->default_firm)) { $tid = (int) $ui->default_firm; }
+        }
+        @file_put_contents(WRITEPATH . 'logs/vo2.log', date('H:i:s') . " VOFN uid=$uid tid=$tid ui=" . (function_exists('currentuserinfo') && is_object(currentuserinfo()) ? ('obj df=' . (currentuserinfo()->default_firm ?? 'NULL')) : 'NOOBJ') . "\n", FILE_APPEND);
+        $key = $uid . ':' . $tid;
+        if (isset($cache[$key])) { return $cache[$key]; }
+
         erp_ensure_view_only_column();
-        $db  = Database::connect();
+        $db = Database::connect();
+
         $row = $db->table('users')->select('is_view_only')->where('id', $uid)->get()->getRow();
-        return $cache[$uid] = ($row && (int) $row->is_view_only === 1);
+        if ($row && (int) $row->is_view_only === 1) { return $cache[$key] = true; }
+
+        if ($tid > 0) {
+            $n = $db->table('aa_view_only_template')->where('user_id', $uid)->where('template_id', $tid)->countAllResults();
+            if ($n > 0) { return $cache[$key] = true; }
+        }
+
+        return $cache[$key] = false;
     }
 }
 

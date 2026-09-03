@@ -73,7 +73,17 @@ try {
         }
         ?>
         <ul class="nav-right">
-            <?php if (!function_exists('erp_current_user_can') || erp_current_user_can('setting', 'view')): ?>
+            <?php
+            // Change Firm is core navigation — visible to anyone who can view
+            // Setting AND to view-only users (they must switch firms to view their
+            // data even without Setting access). change_fy_id is gate-exempt.
+            $__can_switch_firm = (! function_exists('erp_current_user_can') || erp_current_user_can('setting', 'view'));
+            if (! $__can_switch_firm && function_exists('erp_user_is_view_only') && function_exists('currentuserinfo')) {
+                $__sw_cu = currentuserinfo();
+                $__can_switch_firm = (is_object($__sw_cu) && isset($__sw_cu->id) && erp_user_is_view_only((int) $__sw_cu->id));
+            }
+            ?>
+            <?php if ($__can_switch_firm): ?>
             <li class="dropdown fy-block">
                 <a href="javascript:void(0)" class="dropdown-toggle no-after tm-has-tooltip" data-toggle="modal" data-target="#exampleModal" data-tooltip="Change firm / financial year" aria-label="Change firm or financial year">
                     <span class="fy-content">

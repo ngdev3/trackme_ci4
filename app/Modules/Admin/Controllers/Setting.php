@@ -68,35 +68,64 @@ class Setting extends BaseController
             return redirect()->to(base_url('admin/dashboard'))->with('error', 'Only Super Admin can manage view-only users.');
         }
         erp_ensure_view_only_column();
-        $users = \Config\Database::connect()->table('users')
+        $db = \Config\Database::connect();
+        $users = $db->table('users')
             ->select('id, first_name, last_name, email, mobile, user_type, status, is_view_only')
             ->where('COALESCE(isSuperAdmin,0) != 1', null, false)
             ->where("COALESCE(status,'') != 'Delete'", null, false)
             ->orderBy('first_name', 'ASC')
             ->get()->getResult();
 
+        $userTemplates = [];
+        foreach ($users as $u) {
+            $userTemplates[(int) $u->id] = erp_user_view_only_templates((int) $u->id);
+        }
+        $templates = $db->table('aa_template t')
+            ->select('t.template_id, t.FY, t.track_name, f.name AS firm_name', false)
+            ->join('firm_name f', 'f.id = t.firm_name_id', 'left')
+            ->where('t.status', 'Active')
+            ->orderBy('f.name', 'ASC')->orderBy('t.FY', 'DESC')
+            ->get()->getResult();
+
         return _layout('\App\Modules\Admin\Views\setting\view_only', [
-            'title' => 'View-Only Users · C R Industries ERP',
-            'users' => $users,
+            'title'          => 'View-Only Users · C R Industries ERP',
+            'users'          => $users,
+            'templates'      => $templates,
+            'user_templates' => $userTemplates,
         ]);
     }
 
-    /** Persist the view-only flags (Super Admin ONLY). */
+    /** Persist the view-only scopes — global + per-firm (Super Admin ONLY). */
     public function save_view_only()
     {
         if (! (function_exists('erp_is_super_admin') && erp_is_super_admin())) {
             return $this->response->setStatusCode(403)->setJSON(['status' => 'denied']);
         }
         erp_ensure_view_only_column();
-        $db  = \Config\Database::connect();
-        $ids = array_values(array_filter(array_map('intval', (array) $this->request->getPost('view_only_ids'))));
+        $db     = \Config\Database::connect();
+        $global = array_values(array_filter(array_map('intval', (array) $this->request->getPost('vo_global'))));
+        $tpl    = (array) $this->request->getPost('vo_tpl');   // [user_id => [template_id, ...]]
 
-        // Reset every non-super-admin user to full access, then flag the checked ones.
+        // 1) Global flag: reset all non-super-admin, then flag "all firms" users.
         $db->table('users')->where('COALESCE(isSuperAdmin,0) != 1', null, false)->update(['is_view_only' => 0]);
-        if (! empty($ids)) {
-            $db->table('users')->where('COALESCE(isSuperAdmin,0) != 1', null, false)->whereIn('id', $ids)->update(['is_view_only' => 1]);
+        if (! empty($global)) {
+            $db->table('users')->where('COALESCE(isSuperAdmin,0) != 1', null, false)->whereIn('id', $global)->update(['is_view_only' => 1]);
         }
+
+        // 2) Per-firm rows: rebuild (the form is authoritative for all listed users).
+        $db->table('aa_view_only_template')->truncate();
+        $rows = [];
+        foreach ($tpl as $uid => $tids) {
+            $uid = (int) $uid;
+            if ($uid <= 0 || in_array($uid, $global, true)) { continue; }
+            foreach ((array) $tids as $t) {
+                $t = (int) $t;
+                if ($t > 0) { $rows[] = ['user_id' => $uid, 'template_id' => $t]; }
+            }
+        }
+        if (! empty($rows)) { $db->table('aa_view_only_template')->insertBatch($rows); }
+
         return redirect()->to(base_url('admin/setting/view_only'))
-            ->with('success', 'View-only users updated. Selected users can now only VIEW data — add, edit, update and delete are disabled for them everywhere.');
+            ->with('success', 'View-only settings updated. "All firms" users are read-only everywhere; the rest are read-only only in the firms you picked.');
     }
 }
