@@ -1,4 +1,6 @@
 <?php
+helper(['url', 'form']);
+$result  = $result ?? null;
 $is_edit = !empty($result);
 $paddy_result = $is_edit ? $result : null;
 $page_title = $is_edit ? 'Edit Paddy Lot' : 'Add Paddy Lot';

@@ -254,4 +254,156 @@ class Attendance extends BaseController
         if (trim((string) $this->request->getPost('status')) === '') { return 'Status is required.'; }
         return '';
     }
+
+    /* ======================= Attendance Report (CI3 parity) ======================= */
+
+    public function report()
+    {
+        $filters = $this->reportFilters();
+        $rows    = $this->reportData($filters);
+        return _layout('\App\Modules\Admin\Views\attendance\report', [
+            'title'     => 'Track (The Rest Accounting Key) || Attendance Report',
+            'employees' => $this->activeEmployees(),
+            'rows'      => $rows,
+            'summary'   => $this->reportSummary($rows),
+            'filters'   => $filters,
+        ]);
+    }
+
+    public function report_csv()
+    {
+        $filters = $this->reportFilters();
+        $rows    = $this->reportData($filters);
+        $summary = $this->reportSummary($rows);
+
+        $out = fopen('php://temp', 'r+');
+        fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel
+        fputcsv($out, ['Attendance Report']);
+        fputcsv($out, ['Period', ucfirst($filters['period']), 'From', $filters['from_date'], 'To', $filters['to_date']]);
+        fputcsv($out, ['Total', $summary['total'], 'Present', $summary['present'], 'Absent', $summary['absent'], 'Half Day', $summary['half_day'], 'Leave', $summary['leave']]);
+        fputcsv($out, []);
+        fputcsv($out, ['S.No.', 'Date', 'Employee Code', 'Employee Name', 'Designation', 'Status', 'Check In', 'Check Out', 'Remark']);
+        $i = 1;
+        foreach ($rows as $row) {
+            fputcsv($out, [
+                $i++, date('Y-m-d', strtotime($row->attendance_date)),
+                $row->employee_code ?? '', ! empty($row->employee_name) ? $row->employee_name : ($row->person_name ?? ''),
+                $row->designation ?? '', $row->attendance_status ?? '', $row->check_in ?? '', $row->check_out ?? '', $row->remark ?? '',
+            ]);
+        }
+        rewind($out);
+        $csv = stream_get_contents($out);
+        fclose($out);
+
+        return $this->response
+            ->setContentType('text/csv; charset=utf-8')
+            ->setHeader('Content-Disposition', 'attachment; filename="attendance_report_' . date('Ymd_His') . '.csv"')
+            ->setBody($csv);
+    }
+
+    public function report_pdf()
+    {
+        $data = $this->reportExportData();
+        $html = view('\App\Modules\Admin\Views\attendance\report_export', $data);
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return $this->response
+            ->setContentType('application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="attendance_report_' . date('Ymd_His') . '.pdf"')
+            ->setBody($dompdf->output());
+    }
+
+    public function report_print()
+    {
+        $data = $this->reportExportData();
+        $data['auto_print'] = true;
+        return view('\App\Modules\Admin\Views\attendance\report_export', $data);
+    }
+
+    private function reportExportData(): array
+    {
+        $filters = $this->reportFilters();
+        $rows    = $this->reportData($filters);
+        return [
+            'rows'       => $rows,
+            'summary'    => $this->reportSummary($rows),
+            'filters'    => $filters,
+            'auto_print' => false,
+        ];
+    }
+
+    /** Resolve report filters from GET (period/date range). Dates stored Y-m-d. */
+    private function reportFilters(): array
+    {
+        $period    = $this->request->getGet('period') ?: 'monthly';
+        $from_date = $this->request->getGet('from_date');
+        $to_date   = $this->request->getGet('to_date');
+
+        if (empty($from_date) || empty($to_date)) {
+            $range     = $this->reportRange($period);
+            $from_date = $range['from_date'];
+            $to_date   = $range['to_date'];
+        } else {
+            $from_date = correct_date($from_date);
+            $to_date   = correct_date($to_date);
+        }
+
+        return [
+            'employee_id' => $this->request->getGet('employee_id'),
+            'from_date'   => $from_date,
+            'to_date'     => $to_date,
+            'period'      => $period,
+        ];
+    }
+
+    private function reportRange(string $period): array
+    {
+        if ($period === 'weekly') { return ['from_date' => date('Y-m-d', strtotime('monday this week')), 'to_date' => date('Y-m-d', strtotime('sunday this week'))]; }
+        if ($period === 'yearly') { return ['from_date' => date('Y-01-01'), 'to_date' => date('Y-12-31')]; }
+        if ($period === 'today')  { return ['from_date' => date('Y-m-d'), 'to_date' => date('Y-m-d')]; }
+        return ['from_date' => date('Y-m-01'), 'to_date' => date('Y-m-t')];
+    }
+
+    /** Attendance rows joined with employee, scoped to current firm + FY. */
+    private function reportData(array $filters): array
+    {
+        $b = $this->db()->table('aa_attendance')
+            ->select('aa_attendance.*, aa_employees.employee_code, aa_employees.employee_name, aa_employees.mobile, aa_employees.designation')
+            ->join('aa_employees', 'aa_employees.employee_id = aa_attendance.employee_id', 'left')
+            ->where('aa_attendance.status !=', 'Delete')
+            ->where('aa_attendance.template_id', fy()->template_id)
+            ->where('aa_attendance.FY', fy()->FY);
+
+        if (! empty($filters['employee_id'])) { $b->where('aa_attendance.employee_id', $filters['employee_id']); }
+        if (! empty($filters['from_date']))   { $b->where('aa_attendance.attendance_date >=', $filters['from_date']); }
+        if (! empty($filters['to_date']))     { $b->where('aa_attendance.attendance_date <=', $filters['to_date']); }
+
+        return $b->orderBy('aa_attendance.attendance_date', 'desc')->get()->getResult();
+    }
+
+    private function reportSummary(array $rows): array
+    {
+        $s = ['total' => 0, 'present' => 0, 'absent' => 0, 'half_day' => 0, 'leave' => 0];
+        foreach ($rows as $row) {
+            $s['total']++;
+            switch ($row->attendance_status ?? '') {
+                case 'Present':  $s['present']++; break;
+                case 'Absent':   $s['absent']++; break;
+                case 'Half Day': $s['half_day']++; break;
+                case 'Leave':    $s['leave']++; break;
+            }
+        }
+        return $s;
+    }
+
+    private function activeEmployees(): array
+    {
+        return $this->db()->table('aa_employees')
+            ->where('status', 'Active')->orderBy('employee_name', 'asc')
+            ->get()->getResult();
+    }
 }

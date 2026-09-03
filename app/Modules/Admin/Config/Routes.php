@@ -110,6 +110,7 @@ $routes->post('admin/lot_system/view_all', [LotSystem::class, 'viewAll']);
 $routes->get('admin/PaddyLotsystem/listing', [PaddyLotsystem::class, 'listing']);
 $routes->get('admin/PaddyLotsystem', [PaddyLotsystem::class, 'listing']);
 $routes->post('admin/PaddyLotsystem/view_all', [PaddyLotsystem::class, 'viewAll']);
+$routes->match(['GET', 'POST'], 'admin/PaddyLotsystem/add', [PaddyLotsystem::class, 'add']);
 $routes->get('admin/Kisanreg/listing', [Kisanreg::class, 'listing']);
 $routes->get('admin/Kisanreg', [Kisanreg::class, 'listing']);
 $routes->post('admin/Kisanreg/view_all', [Kisanreg::class, 'viewAll']);
@@ -157,6 +158,11 @@ $routes->match(['GET', 'POST'], 'admin/attendance/employee_edit/(:segment)', [At
 $routes->post('admin/attendance/employee_view_all', [Attendance::class, 'employee_view_all']);
 $routes->get('admin/attendance/employee_delete/(:segment)', [Attendance::class, 'employee_delete']);
 $routes->get('admin/attendance/employee_toggle_status/(:segment)', [Attendance::class, 'employee_toggle_status']);
+// Attendance report (filterable) + CSV / PDF / print exports
+$routes->get('admin/attendance/report', [Attendance::class, 'report']);
+$routes->get('admin/attendance/report_csv', [Attendance::class, 'report_csv']);
+$routes->get('admin/attendance/report_pdf', [Attendance::class, 'report_pdf']);
+$routes->get('admin/attendance/report_print', [Attendance::class, 'report_print']);
 
 // Activity & Audit Monitor — overview + all sibling tabs (date/user filter nav)
 $routes->get('admin/monitor', ['\App\Modules\Admin\Controllers\Monitor', 'index']);
@@ -188,6 +194,8 @@ $routes->post('admin/Salary_Module/view_all', [SalaryModule::class, 'viewAll']);
 $routes->post('admin/Salary_Module/save', [SalaryModule::class, 'save']);
 $routes->post('admin/Salary_Module/delete', [SalaryModule::class, 'delete']);
 $routes->get('admin/Salary_Module/row/(:num)', [SalaryModule::class, 'row']);
+$routes->get('admin/salary_module/history', [SalaryModule::class, 'history']);
+$routes->get('admin/Salary_Module/history', [SalaryModule::class, 'history']);
 $routes->get('admin/cold_lot_system/listing', [ColdLotSystem::class, 'listing']);
 $routes->get('admin/cold_lot_system', [ColdLotSystem::class, 'listing']);
 $routes->post('admin/cold_lot_system/view_all', [ColdLotSystem::class, 'viewAll']);

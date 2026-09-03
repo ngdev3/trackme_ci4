@@ -64,4 +64,19 @@ class PaddyLotsystemModel
             ->get()->getResult();
         return $rows ?: false;
     }
+
+    /** Insert a paddy lot; returns the new lot_id. (1:1 port of Paddy_Lot_system_mod::add) */
+    public function add(array $data)
+    {
+        $this->db()->table('paddy_lot_system')->insert($data);
+        return (int) $this->db()->insertID();
+    }
+
+    /** True if a lot_number already exists. (1:1 port of Paddy_Lot_system_mod::check_preexistance) */
+    public function check_preexistance($lot_number): bool
+    {
+        return $this->db()->table('paddy_lot_system')
+            ->where('lot_number', $lot_number)
+            ->countAllResults() > 0;
+    }
 }
