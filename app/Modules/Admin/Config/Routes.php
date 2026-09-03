@@ -120,6 +120,7 @@ $routes->get('admin/Kisanreg/report_pdf/(:segment)', [Kisanreg::class, 'report_p
 $routes->get('admin/Kisanreg/report_csv/(:segment)', [Kisanreg::class, 'report_csv/$1']);
 
 // Account Mapping — Farmer Captures inbox (read + archive/delete on staging)
+$routes->match(['GET', 'POST'], 'admin/accountMapping/account_mapping', ['\App\Modules\Admin\Controllers\AccountMapping', 'account_mapping']);
 $routes->get('admin/accountMapping/captures', ['\App\Modules\Admin\Controllers\AccountMapping', 'captures']);
 $routes->get('admin/accountMapping/capture_archive/(:num)', ['\App\Modules\Admin\Controllers\AccountMapping', 'capture_archive/$1']);
 $routes->get('admin/accountMapping/capture_delete/(:num)', ['\App\Modules\Admin\Controllers\AccountMapping', 'capture_delete/$1']);
