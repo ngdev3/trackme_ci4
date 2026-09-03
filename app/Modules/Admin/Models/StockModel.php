@@ -497,4 +497,68 @@ class StockModel
         $base['remark'] = ! empty($r['jama_remark']) ? $r['jama_remark'] : $r['nama_remark'];
         return $base;
     }
+
+    /* ============= Firm stock valuation (CI3 Stock_mod parity) — Trading Profit ============= */
+
+    /**
+     * Stock value/qty/items for the current firm as of a date. Master opening_stock
+     * is the FY opening, so movements are counted only from $fy_start up to $asof
+     * (else pre-FY movements double-count). Both dates optional.
+     */
+    public function firm_stock_value_asof($fy_start = '', $asof = ''): array
+    {
+        $tid  = (int) fy()->template_id;
+        $FY   = fy()->FY;
+        $bind = [$tid];
+
+        $dateClause = '';
+        if ($fy_start !== '') { $dateClause .= ' AND date >= ?'; $bind[] = $fy_start; }
+        if ($asof !== '')     { $dateClause .= ' AND date <= ?'; $bind[] = $asof; }
+        $bind[] = $tid;
+        $bind[] = $FY;
+
+        $sql = "SELECT COALESCE(SUM((sd.opening_stock + IFNULL(mv.net,0)) * sd.rate),0) AS value,
+                       COALESCE(SUM(sd.opening_stock + IFNULL(mv.net,0)),0) AS qty,
+                       COUNT(*) AS items
+            FROM stock_detail sd
+            LEFT JOIN (
+                SELECT hsn_code_id, SUM(CASE
+                        WHEN type_of_invoice='purchase'   THEN IFNULL(purchase_stock,0)
+                        WHEN type_of_invoice='production' THEN IFNULL(production_stock,0)
+                        WHEN type_of_invoice='sale'       THEN -IFNULL(sales_stock,0)
+                        ELSE 0 END) AS net
+                FROM stock_log_details
+                WHERE template_id = ? AND COALESCE(status,'') NOT IN ('Inactive','Delete')" . $dateClause . "
+                GROUP BY hsn_code_id
+            ) mv ON mv.hsn_code_id = sd.hsn_code_id
+            WHERE sd.template_id = ? AND sd.FY = ? AND COALESCE(sd.status,'') <> 'Delete'";
+        $row = $this->db()->query($sql, $bind)->getRow();
+        return [
+            'value' => $row ? (float) $row->value : 0,
+            'qty'   => $row ? (float) $row->qty : 0,
+            'items' => $row ? (int) $row->items : 0,
+        ];
+    }
+
+    /**
+     * Opening & closing stock valuation for a period: opening = value the day
+     * BEFORE $from; closing = value as of $to. Feeds the Trading Profit report
+     * (gross profit = (Sales − Purchase) + (Closing − Opening stock)).
+     */
+    public function firm_stock_valuation($from = '', $to = '', $fy_start = ''): array
+    {
+        $open_before = '';
+        if ($from !== '') {
+            $ts = strtotime($from . ' -1 day');
+            $open_before = $ts ? date('Y-m-d', $ts) : '';
+        }
+        $open  = $this->firm_stock_value_asof($fy_start, $open_before);
+        $close = $this->firm_stock_value_asof($fy_start, $to);
+        return [
+            'items'         => $close['items'],
+            'opening_value' => $open['value'],
+            'closing_value' => $close['value'],
+            'closing_qty'   => $close['qty'],
+        ];
+    }
 }

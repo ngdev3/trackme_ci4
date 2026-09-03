@@ -4,6 +4,7 @@ namespace App\Modules\Admin\Controllers;
 
 use App\Controllers\BaseController;
 use App\Modules\Admin\Models\AccountingModel;
+use App\Modules\Admin\Models\StockModel;
 
 /**
  * Accounts_report — CI4 port of admin/Accounts_report (balance-driven reports).
@@ -281,6 +282,161 @@ class Accounts_report extends BaseController
             'ason'           => $ason,
             'ready'          => $this->model()->schema_ready(),
         ]);
+    }
+
+    /* ------------------------------------------------------ Trading Profit */
+
+    /**
+     * Trading Profit — month-wise (default, Prev/Next stepper) or whole-FY.
+     * Gross profit = (Sales − Purchase) + (Closing − Opening stock). CI3 parity.
+     */
+    public function trading_profit()
+    {
+        $f = fy();
+        [$fyStart, $fyEnd] = fy_date_range();
+
+        $mode = ($this->request->getGet('mode') === 'fy') ? 'fy' : 'month';
+        $m = (string) $this->request->getGet('m');
+        if (! preg_match('/^\d{4}-\d{2}$/', $m)) { $m = date('Y-m'); }
+        $ms = date('Y-m-01', strtotime($m . '-01'));
+        $me = date('Y-m-t',  strtotime($m . '-01'));
+        // Snap to the FY-start month if the chosen month falls outside the FY.
+        if ($fyStart !== '' && $fyEnd !== '' && ($me < $fyStart || $ms > $fyEnd)) {
+            $m  = substr($fyStart, 0, 7);
+            $ms = date('Y-m-01', strtotime($fyStart));
+            $me = date('Y-m-t',  strtotime($fyStart));
+        }
+        if ($fyStart !== '' && $ms < $fyStart) { $ms = $fyStart; }
+        if ($fyEnd   !== '' && $me > $fyEnd)   { $me = $fyEnd; }
+
+        $prev = date('Y-m', strtotime($m . '-01 -1 month'));
+        $next = date('Y-m', strtotime($m . '-01 +1 month'));
+        $has_prev = ($fyStart === '' || date('Y-m-t', strtotime($prev . '-01')) >= $fyStart);
+        $has_next = ($fyEnd   === '' || date('Y-m-01', strtotime($next . '-01')) <= $fyEnd);
+
+        if ($mode === 'fy') {
+            $rangeStart = ($fyStart !== '') ? $fyStart : $ms;
+            $rangeEnd   = ($fyEnd   !== '') ? $fyEnd   : $me;
+            $period_label = 'Full FY ' . $f->FY;
+        } else {
+            $rangeStart = $ms;
+            $rangeEnd   = $me;
+            $period_label = date('F Y', strtotime($m . '-01'));
+        }
+
+        $stock = new StockModel();
+        $data = [];
+        $data['sum']   = $this->model()->trading_profit_summary($f->template_id, $f->product_type, $rangeStart, $rangeEnd);
+        $data['stock'] = $stock->firm_stock_valuation($rangeStart, $rangeEnd, $fyStart);
+
+        // Full FY: month-by-month gross-profit breakdown (Sales − COGS).
+        $data['month_rows']   = [];
+        $data['fy_sum_cogs']  = 0;
+        $data['fy_sum_gross'] = 0;
+        if ($mode === 'fy' && $fyStart !== '' && $fyEnd !== '') {
+            $cursor = $fyStart; $guard = 0;
+            while ($cursor <= $fyEnd && $guard < 24) {
+                $guard++;
+                $cms = date('Y-m-01', strtotime($cursor));
+                $cme = date('Y-m-t',  strtotime($cursor));
+                if ($cms < $fyStart) { $cms = $fyStart; }
+                if ($cme > $fyEnd)   { $cme = $fyEnd; }
+                $ms2 = $this->model()->trading_profit_summary($f->template_id, $f->product_type, $cms, $cme);
+                $st2 = $stock->firm_stock_valuation($cms, $cme, $fyStart);
+                $sb  = $ms2['totals']['sales_base'];
+                $sq  = $ms2['totals']['sales_qty'];
+                $cr  = ($st2['closing_qty'] > 0) ? $st2['closing_value'] / $st2['closing_qty'] : 0;
+                $cg  = $sq * $cr;
+                $gr  = $sb - $cg;
+                $data['month_rows'][] = [
+                    'label' => date('M Y', strtotime($cms)),
+                    'sales' => $sb, 'qty' => $sq, 'cost_rate' => $cr, 'cogs' => $cg, 'gross' => $gr,
+                    'bills' => $ms2['totals']['sales_cnt'],
+                ];
+                $data['fy_sum_cogs']  += $cg;
+                $data['fy_sum_gross'] += $gr;
+                $cursor = date('Y-m-d', strtotime($cms . ' +1 month'));
+            }
+        }
+
+        // Profit target projection: how much more to sell to hit ₹X/month.
+        $target_pm = (float) $this->request->getGet('target');
+        if ($target_pm <= 0) { $target_pm = 2500000; } // default ₹25 lakh / month
+        $months = 1;
+        if ($rangeStart !== '' && $rangeEnd !== '') {
+            $d1 = new \DateTime(date('Y-m-01', strtotime($rangeStart)));
+            $d2 = new \DateTime(date('Y-m-01', strtotime($rangeEnd)));
+            $months = ((int) $d2->format('Y') - (int) $d1->format('Y')) * 12 + ((int) $d2->format('n') - (int) $d1->format('n')) + 1;
+            if ($months < 1) { $months = 1; }
+        }
+
+        $data['target_pm']    = $target_pm;
+        $data['months']       = $months;
+        $data['mode']         = $mode;
+        $data['month']        = $m;
+        $data['month_label']  = date('F Y', strtotime($m . '-01'));
+        $data['period_label'] = $period_label;
+        $data['m_start']      = $rangeStart;
+        $data['m_end']        = $rangeEnd;
+        $data['prev_m']       = $prev;
+        $data['next_m']       = $next;
+        $data['has_prev']     = $has_prev;
+        $data['has_next']     = $has_next;
+        $data['fy_start']     = $fyStart;
+        $data['fy_end']       = $fyEnd;
+        $data['ready']        = $this->model()->schema_ready();
+        $data['title']        = 'Trading Profit';
+
+        return _layout('\App\Modules\Admin\Views\accounts_report\trading_profit', $data);
+    }
+
+    /** Shared period range from mode/m GET params (report + bill drill-down). */
+    private function tp_range(): array
+    {
+        $f = fy();
+        [$fyStart, $fyEnd] = fy_date_range();
+        $mode = ($this->request->getGet('mode') === 'fy') ? 'fy' : 'month';
+        $m = (string) $this->request->getGet('m');
+        if (! preg_match('/^\d{4}-\d{2}$/', $m)) { $m = date('Y-m'); }
+        $ms = date('Y-m-01', strtotime($m . '-01'));
+        $me = date('Y-m-t',  strtotime($m . '-01'));
+        if ($fyStart !== '' && $fyEnd !== '' && ($me < $fyStart || $ms > $fyEnd)) {
+            $m = substr($fyStart, 0, 7); $ms = date('Y-m-01', strtotime($fyStart)); $me = date('Y-m-t', strtotime($fyStart));
+        }
+        if ($fyStart !== '' && $ms < $fyStart) { $ms = $fyStart; }
+        if ($fyEnd   !== '' && $me > $fyEnd)   { $me = $fyEnd; }
+        if ($mode === 'fy') {
+            $rs = ($fyStart !== '') ? $fyStart : $ms; $re = ($fyEnd !== '') ? $fyEnd : $me; $label = 'Full FY ' . $f->FY;
+        } else {
+            $rs = $ms; $re = $me; $label = date('F Y', strtotime($m . '-01'));
+        }
+        return ['start' => $rs, 'end' => $re, 'label' => $label];
+    }
+
+    /** AJAX: individual bills behind the Sales / Purchase totals (drill-down). */
+    public function trading_profit_bills()
+    {
+        $f    = fy();
+        $type = ($this->request->getGet('type') === 'purchase') ? 'purchase' : 'sales';
+        $r    = $this->tp_range();
+        $rows = $type === 'purchase'
+            ? $this->model()->trading_purchase_bills($f->template_id, $f->product_type, $r['start'], $r['end'])
+            : $this->model()->trading_sales_bills($f->template_id, $f->product_type, $r['start'], $r['end']);
+
+        $map = [
+            'Bill of Supply'      => 'admin/invoice/DownloadGeneratePdf/',
+            'Tax Invoice'         => 'admin/taxinvoice/GeneratePdf/',
+            'Un-registered BOS'   => 'admin/uninvoice/GeneratePdf/',
+            'Purchase from Kisan' => 'admin/payment_receipt/DownloadGeneratePdf/',
+            'Purchase Module'     => 'admin/purchase_module/view/',
+        ];
+        foreach ($rows as $row) {
+            $row->url = (isset($map[$row->src]) && $row->doc_id !== null)
+                ? base_url($map[$row->src] . ID_encode($row->doc_id)) : '';
+            unset($row->doc_id);
+        }
+
+        return $this->response->setJSON(['type' => $type, 'label' => $r['label'], 'rows' => $rows]);
     }
 
     /* --------------------------------------------------------- Inter-firm */

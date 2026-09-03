@@ -298,6 +298,8 @@ $routes->get('admin/accounts_report/ageing', ['\App\Modules\Admin\Controllers\Ac
 $routes->get('admin/accounts_report/balance_sheet', ['\App\Modules\Admin\Controllers\Accounts_report', 'balance_sheet']);
 $routes->get('admin/accounts_report/profit_loss', ['\App\Modules\Admin\Controllers\Accounts_report', 'profit_loss']);
 $routes->get('admin/accounts_report/inter_firm', ['\App\Modules\Admin\Controllers\Accounts_report', 'inter_firm']);
+$routes->get('admin/accounts_report/trading_profit', ['\App\Modules\Admin\Controllers\Accounts_report', 'trading_profit']);
+$routes->get('admin/accounts_report/trading_profit_bills', ['\App\Modules\Admin\Controllers\Accounts_report', 'trading_profit_bills']);
 
 // Account Master (account_name) — listing slice (P6 master)
 $routes->get('admin/account_name/listing', [Account_name::class, 'listing']);

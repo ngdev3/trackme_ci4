@@ -401,4 +401,125 @@ class AccountingModel
         }
         return $out;
     }
+
+    /* ===================== Trading Profit (CI3 Accounting_mod parity) ===================== */
+
+    /**
+     * Sales vs purchase aggregates for a firm + product_type + date range.
+     * Sales = BOS + Tax Invoice + Un-registered BOS; Purchase = Kisan receipts +
+     * Purchase Module. Returns per-source breakdown + totals (base/gross/qty/cnt).
+     */
+    public function trading_profit_summary($template_id, $product_type, $from, $to): array
+    {
+        $tid  = (int) $template_id;
+        $from = (string) $from;
+        $to   = (string) $to;
+
+        // Sum one sale/receipt doc table scoped by template + product_type + date range.
+        $docSum = function ($table) use ($tid, $product_type, $from, $to) {
+            $b = $this->db()->table($table)
+                ->select('COALESCE(SUM(amount),0) AS base, COALESCE(SUM(total_invoice),0) AS gross, COALESCE(SUM(quantity),0) AS qty, COUNT(*) AS cnt', false)
+                ->where('template_id', $tid)
+                ->where('product_type', $product_type)
+                ->where('status !=', 'Cancelled')
+                ->where('status !=', 'Delete');
+            if ($from !== '' && $to !== '') {
+                $dexpr = "DATE(COALESCE(NULLIF(billing_date,''), updated_date))";
+                $b->where("$dexpr >= " . $this->db()->escape($from), null, false);
+                $b->where("$dexpr <= " . $this->db()->escape($to), null, false);
+            }
+            $r = $b->get()->getRow();
+            return ['base' => (float) $r->base, 'gross' => (float) $r->gross, 'qty' => (float) $r->qty, 'cnt' => (int) $r->cnt];
+        };
+
+        $sales = [
+            'bos'   => $docSum('invoice_system'),
+            'tax'   => $docSum('tax_invoice_system'),
+            'unreg' => $docSum('uninvoice_system'),
+        ];
+        $purchase_kisan = $docSum('payment_receipt');
+
+        // Purchase Module — no product_type/FY column -> template + invoice_date in range.
+        $pbBuilder = $this->db()->table('purchase_bills')
+            ->select('COALESCE(SUM(amount),0) AS base, COALESCE(SUM(weight),0) AS qty, COUNT(*) AS cnt', false)
+            ->where('template_id', $tid)
+            ->where('status !=', 'Cancelled')
+            ->where('status !=', 'Delete');
+        if ($from !== '' && $to !== '') {
+            $pexpr = "DATE(COALESCE(NULLIF(invoice_date,''), added_date))";
+            $pbBuilder->where("$pexpr >= " . $this->db()->escape($from), null, false);
+            $pbBuilder->where("$pexpr <= " . $this->db()->escape($to), null, false);
+        }
+        $pb = $pbBuilder->get()->getRow();
+        $purchase_module = ['base' => (float) $pb->base, 'gross' => (float) $pb->base, 'qty' => (float) $pb->qty, 'cnt' => (int) $pb->cnt];
+
+        $sales_base  = $sales['bos']['base']  + $sales['tax']['base']  + $sales['unreg']['base'];
+        $sales_gross = $sales['bos']['gross'] + $sales['tax']['gross'] + $sales['unreg']['gross'];
+        $sales_qty   = $sales['bos']['qty']   + $sales['tax']['qty']   + $sales['unreg']['qty'];
+        $sales_cnt   = $sales['bos']['cnt']   + $sales['tax']['cnt']   + $sales['unreg']['cnt'];
+
+        $purchase_base  = $purchase_kisan['base']  + $purchase_module['base'];
+        $purchase_gross = $purchase_kisan['gross'] + $purchase_module['gross'];
+        $purchase_qty   = $purchase_kisan['qty']   + $purchase_module['qty'];
+        $purchase_cnt   = $purchase_kisan['cnt']   + $purchase_module['cnt'];
+
+        return [
+            'sales'    => $sales,
+            'purchase' => ['kisan' => $purchase_kisan, 'module' => $purchase_module],
+            'totals'   => [
+                'sales_base'     => $sales_base,     'sales_gross'    => $sales_gross,    'sales_qty'    => $sales_qty,    'sales_cnt'    => $sales_cnt,
+                'purchase_base'  => $purchase_base,  'purchase_gross' => $purchase_gross, 'purchase_qty' => $purchase_qty, 'purchase_cnt' => $purchase_cnt,
+                'profit_base'    => $sales_base - $purchase_base,
+                'profit_gross'   => $sales_gross - $purchase_gross,
+                'margin_pct'     => $sales_base > 0 ? (($sales_base - $purchase_base) / $sales_base) * 100 : 0,
+            ],
+        ];
+    }
+
+    /** Individual SALE bills behind the Trading-Profit total (drill-down). */
+    public function trading_sales_bills($template_id, $product_type, $from, $to): array
+    {
+        $tid = (int) $template_id;
+        $pt  = $this->db()->escape($product_type);
+        $f   = $this->db()->escape($from);
+        $t   = $this->db()->escape($to);
+        $sql = "SELECT src, bill_no, bdate, party, qty, amount, doc_id FROM (
+              SELECT 'Bill of Supply' src, i.invoice_id bill_no, i.billing_date bdate, an.name party, i.quantity qty, i.amount amount, i.bos_id doc_id
+                FROM invoice_system i LEFT JOIN aa_account_name an ON an.account_id = i.account_id
+                WHERE i.template_id = $tid AND i.product_type = $pt AND i.status NOT IN ('Cancelled','Delete')
+                  AND DATE(COALESCE(NULLIF(i.billing_date,''), i.updated_date)) BETWEEN $f AND $t
+              UNION ALL
+              SELECT 'Tax Invoice', tx.tax_invoice_fy_id, tx.billing_date, an.name, tx.quantity, tx.amount, tx.tax_invoice_id
+                FROM tax_invoice_system tx LEFT JOIN aa_account_name an ON an.account_id = tx.account_id
+                WHERE tx.template_id = $tid AND tx.product_type = $pt AND tx.status NOT IN ('Cancelled','Delete')
+                  AND DATE(COALESCE(NULLIF(tx.billing_date,''), tx.updated_date)) BETWEEN $f AND $t
+              UNION ALL
+              SELECT 'Un-registered BOS', u.invoice_id, u.billing_date, an.name, u.quantity, u.amount, u.bos_id
+                FROM uninvoice_system u LEFT JOIN aa_account_name an ON an.account_id = u.account_id
+                WHERE u.template_id = $tid AND u.product_type = $pt AND u.status NOT IN ('Cancelled','Delete')
+                  AND DATE(COALESCE(NULLIF(u.billing_date,''), u.updated_date)) BETWEEN $f AND $t
+            ) x ORDER BY bdate ASC, src ASC";
+        return $this->db()->query($sql)->getResult();
+    }
+
+    /** Individual PURCHASE bills behind the Trading-Profit total (drill-down). */
+    public function trading_purchase_bills($template_id, $product_type, $from, $to): array
+    {
+        $tid = (int) $template_id;
+        $pt  = $this->db()->escape($product_type);
+        $f   = $this->db()->escape($from);
+        $t   = $this->db()->escape($to);
+        $sql = "SELECT src, bill_no, bdate, party, qty, amount, doc_id FROM (
+              SELECT 'Purchase from Kisan' src, pr.invoice_id bill_no, pr.billing_date bdate, an.name party, pr.quantity qty, pr.amount amount, pr.bos_id doc_id
+                FROM payment_receipt pr LEFT JOIN aa_account_name an ON an.account_id = pr.account_id
+                WHERE pr.template_id = $tid AND pr.product_type = $pt AND pr.status NOT IN ('Cancelled','Delete')
+                  AND DATE(COALESCE(NULLIF(pr.billing_date,''), pr.updated_date)) BETWEEN $f AND $t
+              UNION ALL
+              SELECT 'Purchase Module', pb.invoice_no, pb.invoice_date, an.name, pb.weight, pb.amount, pb.id
+                FROM purchase_bills pb LEFT JOIN aa_account_name an ON an.account_id = pb.account_id
+                WHERE pb.template_id = $tid AND pb.status NOT IN ('Cancelled','Delete')
+                  AND DATE(COALESCE(NULLIF(pb.invoice_date,''), pb.added_date)) BETWEEN $f AND $t
+            ) x ORDER BY bdate ASC, src ASC";
+        return $this->db()->query($sql)->getResult();
+    }
 }
