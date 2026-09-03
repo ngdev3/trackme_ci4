@@ -246,4 +246,342 @@ class MonitorModel
         usort($rows, fn ($a, $b) => strtotime($b->ts) - strtotime($a->ts));
         return array_slice($rows, 0, $limit);
     }
+
+    /* ==================== Timeline tab ==================== */
+    public function timeline(array $f, int $limit = 200, bool $include_entries = true): array
+    {
+        return $this->recent_activity($f, $limit, $include_entries);
+    }
+
+    /* ==================== Traffic tab (daily_traffic) ==================== */
+    private function dateScope($b, string $col, array $f)
+    {
+        return $b->where("DATE($col) >=", $f['from'])->where("DATE($col) <=", $f['to']);
+    }
+
+    public function trafficSummary(array $f): array
+    {
+        $db = $this->db();
+        $total = (int) $db->table('daily_traffic')->countAllResults();
+        $today = (int) $db->table('daily_traffic')->where('DATE(trafiic_date)', date('Y-m-d'))->countAllResults();
+        $period = (int) $this->dateScope($db->table('daily_traffic'), 'trafiic_date', $f)->countAllResults();
+        $up = $this->dateScope($db->table('daily_traffic'), 'trafiic_date', $f)->select('COUNT(DISTINCT url) c', false)->get()->getRow();
+        $au = $this->dateScope($db->table('daily_traffic'), 'trafiic_date', $f)->select('COUNT(DISTINCT user_id) c', false)->where('user_id IS NOT NULL', null, false)->get()->getRow();
+        return ['total' => $total, 'today' => $today, 'period' => $period,
+            'unique_pages' => $up ? (int) $up->c : 0, 'active_users' => $au ? (int) $au->c : 0];
+    }
+
+    public function topPages(array $f): array
+    {
+        return $this->dateScope($this->db()->table('daily_traffic'), 'trafiic_date', $f)
+            ->select('url, COUNT(id) total', false)->groupBy('url')->orderBy('total', 'desc')->limit(8)->get()->getResult();
+    }
+
+    public function userActivity(array $f): array
+    {
+        return $this->dateScope($this->db()->table('daily_traffic dt'), 'dt.trafiic_date', $f)
+            ->select("dt.user_id, COALESCE(NULLIF(TRIM(CONCAT(u.first_name,' ',u.last_name)),''),'Guest / Unknown') user_name,
+                COUNT(dt.id) visits, COUNT(DISTINCT dt.action_type) actions, MAX(dt.trafiic_date) last_seen", false)
+            ->join('users u', 'u.id = dt.user_id', 'left')->groupBy('dt.user_id, user_name')
+            ->orderBy('visits', 'desc')->limit(8)->get()->getResult();
+    }
+
+    /** Visits DataTables feed (count + rows) — respects date filter + search. */
+    public function countVisits(array $f, bool $withSearch, string $search = ''): int
+    {
+        $b = $this->dateScope($this->db()->table('daily_traffic'), 'trafiic_date', $f);
+        if ($withSearch && $search !== '') { $b->like('url', $search); }
+        return (int) $b->countAllResults();
+    }
+
+    public function visits(array $f, string $search, int $start, $length): array
+    {
+        $b = $this->dateScope($this->db()->table('daily_traffic dt'), 'dt.trafiic_date', $f)
+            ->select("dt.url, dt.trafiic_date, dt.action_type, dt.ip_address,
+                COALESCE(NULLIF(TRIM(CONCAT(u.first_name,' ',u.last_name)),''),'Guest / Unknown') user_name", false)
+            ->join('users u', 'u.id = dt.user_id', 'left')->orderBy('dt.trafiic_date', 'desc');
+        if ($search !== '') { $b->like('dt.url', $search); }
+        if ($length != -1) { $b->limit((int) $length, $start); }
+        return $b->get()->getResult();
+    }
+
+    /* ==================== Logins tab (aa_login_detail) ==================== */
+    public function loginsData(array $f, string $search, int $start, $length): array
+    {
+        $db = $this->db();
+        if (! $db->tableExists('aa_login_detail')) { return ['total' => 0, 'filtered' => 0, 'rows' => []]; }
+        $scope = function () use ($db, $f) {
+            $b = $db->table('aa_login_detail ald')->join('users u', 'u.id = ald.user_id', 'left')
+                ->where('DATE(ald.added_date) >=', $f['from'])->where('DATE(ald.added_date) <=', $f['to']);
+            if (! empty($f['user'])) { $b->where('ald.user_id', $f['user']); }
+            return $b;
+        };
+        $total = (int) $scope()->countAllResults();
+        $fb = $scope();
+        if ($search !== '') { $fb->groupStart()->like('ald.REMOTE_ADDR', $search)->orLike('u.first_name', $search)->orLike('u.last_name', $search)->groupEnd(); }
+        $filtered = (int) $fb->countAllResults(false);
+        $rb = $scope();
+        if ($search !== '') { $rb->groupStart()->like('ald.REMOTE_ADDR', $search)->orLike('u.first_name', $search)->orLike('u.last_name', $search)->groupEnd(); }
+        $rb->select("ald.user_id, ald.REMOTE_ADDR, ald.HTTP_USER_AGENT, ald.added_date,
+            COALESCE(NULLIF(TRIM(CONCAT(u.first_name,' ',u.last_name)),''),'Guest / Unknown') user_name", false)
+            ->orderBy('ald.added_date', 'desc');
+        if ($length != -1) { $rb->limit((int) $length, $start); }
+        return ['total' => $total, 'filtered' => $filtered, 'rows' => $rb->get()->getResult()];
+    }
+
+    /* ==================== Login Security tab (aa_login_attempts) ==================== */
+    private function attemptsScope(array $f, bool $onlyFailed = true)
+    {
+        $b = $this->db()->table('aa_login_attempts la')
+            ->where('DATE(la.attempted_at) >=', $f['from'])->where('DATE(la.attempted_at) <=', $f['to']);
+        if ($onlyFailed) { $b->where('la.success', 0); }
+        return $b;
+    }
+
+    public function loginAttemptsStats(array $f): array
+    {
+        if (! $this->db()->tableExists('aa_login_attempts')) { return ['failures' => 0, 'success' => 0, 'ips' => 0, 'emails' => 0]; }
+        $fails = (int) $this->attemptsScope($f, true)->countAllResults();
+        $succ  = (int) $this->attemptsScope($f, false)->where('la.success', 1)->countAllResults();
+        $ips   = (int) ($this->attemptsScope($f, true)->select('COUNT(DISTINCT la.ip_address) c', false)->get()->getRow()->c ?? 0);
+        $emails= (int) ($this->attemptsScope($f, true)->select('COUNT(DISTINCT la.email) c', false)->get()->getRow()->c ?? 0);
+        return ['failures' => $fails, 'success' => $succ, 'ips' => $ips, 'emails' => $emails];
+    }
+
+    public function loginAttemptsData(array $f, string $search, int $start, $length): array
+    {
+        if (! $this->db()->tableExists('aa_login_attempts')) { return ['total' => 0, 'filtered' => 0, 'rows' => []]; }
+        $total = (int) $this->attemptsScope($f, true)->countAllResults();
+        $fb = $this->attemptsScope($f, true);
+        if ($search !== '') { $fb->groupStart()->like('la.email', $search)->orLike('la.ip_address', $search)->orLike('la.reason', $search)->groupEnd(); }
+        $filtered = (int) $fb->countAllResults();
+        $rb = $this->attemptsScope($f, true)->select('la.email, la.ip_address, la.user_agent, la.reason, la.attempted_at', false);
+        if ($search !== '') { $rb->groupStart()->like('la.email', $search)->orLike('la.ip_address', $search)->orLike('la.reason', $search)->groupEnd(); }
+        $rb->orderBy('la.attempted_at', 'desc');
+        if ($length != -1) { $rb->limit((int) $length, $start); }
+        return ['total' => $total, 'filtered' => $filtered, 'rows' => $rb->get()->getResult()];
+    }
+
+    public function loginAttemptsTopIps(array $f, int $limit = 10): array
+    {
+        if (! $this->db()->tableExists('aa_login_attempts')) { return []; }
+        return $this->attemptsScope($f, true)
+            ->select('la.ip_address, COUNT(*) fails, COUNT(DISTINCT la.email) emails, MAX(la.attempted_at) last_try', false)
+            ->where('la.ip_address IS NOT NULL', null, false)
+            ->groupBy('la.ip_address')->orderBy('fails', 'desc')->limit($limit)->get()->getResult();
+    }
+
+    /* ==================== IP & Location (rollup; external geo/maps deferred) ==================== */
+    public function ip_intel(array $f, bool $include_entries = true): array
+    {
+        $db = $this->db();
+        $from = $f['from']; $to = $f['to'];
+        $map = [];
+        $touch = function (&$map, $ip, $uid, $ts) {
+            if ($ip === null || $ip === '') { return; }
+            if (! isset($map[$ip])) { $map[$ip] = ['ip' => $ip, 'hits' => 0, 'users' => [], 'first' => $ts, 'last' => $ts]; }
+            $map[$ip]['hits']++;
+            if ($uid) { $map[$ip]['users'][(int) $uid] = 1; }
+            if ($ts < $map[$ip]['first']) { $map[$ip]['first'] = $ts; }
+            if ($ts > $map[$ip]['last']) { $map[$ip]['last'] = $ts; }
+        };
+        foreach ($this->dateScope($db->table('daily_traffic'), 'trafiic_date', $f)
+            ->select('ip_address ip, user_id, trafiic_date ts', false)->where('ip_address IS NOT NULL', null, false)
+            ->get()->getResult() as $r) { $touch($map, $r->ip, $r->user_id, $r->ts); }
+        if ($include_entries && $this->hasEntryGeo()) {
+            $b = $this->dateScope($db->table('aa_entry_trace'), 'created_at', $f)
+                ->select('ip_address ip, user_id, created_at ts', false)->where('ip_address IS NOT NULL', null, false);
+            if (($tid = $this->entryFirmId())) { $b->where('template_id', $tid); }
+            foreach ($b->get()->getResult() as $r) { $touch($map, $r->ip, $r->user_id, $r->ts); }
+        }
+        if ($db->tableExists('aa_login_detail')) {
+            foreach ($this->dateScope($db->table('aa_login_detail'), 'added_date', $f)
+                ->select('REMOTE_ADDR ip, user_id, added_date ts', false)->where('REMOTE_ADDR IS NOT NULL', null, false)
+                ->get()->getResult() as $r) { $touch($map, $r->ip, $r->user_id, $r->ts); }
+        }
+        $out = [];
+        foreach ($map as $d) {
+            $d['user_count'] = count($d['users']); unset($d['users']);
+            $d['version'] = filter_var($d['ip'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 6 : (filter_var($d['ip'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) ? 4 : 0);
+            // Geo/MAC enrichment is deferred (needs an external geolocation API +
+            // cache table); provide neutral defaults so the view renders cleanly.
+            $d['geo'] = 0; $d['geo_status'] = 'unknown';
+            $d['city'] = null; $d['country'] = null; $d['isp'] = null;
+            $d['mac'] = null; $d['mac_vendor'] = null; $d['mac_source'] = 'remote';
+            $d['modules'] = [];
+            $out[] = (object) $d;
+        }
+        usort($out, fn ($a, $b) => $b->hits - $a->hits);
+        return $out;
+    }
+
+    /* ==================== Anomalies tab ==================== */
+    private function userName($id): string
+    {
+        if (! $id) { return 'Guest / Unknown'; }
+        $r = $this->db()->table('users')->select("COALESCE(NULLIF(TRIM(CONCAT(first_name,' ',last_name)),''),'User #" . (int) $id . "') nm", false)
+            ->where('id', (int) $id)->get()->getRow();
+        return $r ? $r->nm : ('User #' . (int) $id);
+    }
+
+    public function anomalies(array $f, bool $include_entries = true): array
+    {
+        $flags = [];
+        foreach ($this->ip_intel($f, $include_entries) as $ip) {
+            if ($ip->user_count >= 2) {
+                $flags[] = (object) ['sev' => $ip->user_count >= 3 ? 'high' : 'med', 'type' => 'Shared IP',
+                    'title' => $ip->ip . ' used by ' . $ip->user_count . ' users',
+                    'detail' => $ip->hits . ' hits · last ' . date('d M h:i A', strtotime($ip->last)), 'ip' => $ip->ip];
+            }
+        }
+        if ($include_entries && $this->hasEntryGeo()) {
+            $b = $this->db()->table('aa_entry_trace t')->join('users u', 'u.id = t.user_id', 'left')
+                ->select("t.module, t.entry_id, t.action, t.ip_address, t.created_at,
+                    COALESCE(NULLIF(TRIM(CONCAT(u.first_name,' ',u.last_name)),''), t.user_name,'Unknown') user_name", false)
+                ->where('DATE(t.created_at) >=', $f['from'])->where('DATE(t.created_at) <=', $f['to'])->where('HOUR(t.created_at) <', 5);
+            if (($tid = $this->entryFirmId())) { $b->where('t.template_id', $tid); }
+            if (! empty($f['user'])) { $b->where('t.user_id', $f['user']); }
+            foreach ($b->orderBy('t.created_at', 'desc')->limit(40)->get()->getResult() as $r) {
+                $flags[] = (object) ['sev' => 'med', 'type' => 'Odd-hour entry',
+                    'title' => $r->user_name . ' — ' . $r->module . ' #' . $r->entry_id . ' (' . $r->action . ')',
+                    'detail' => date('d M Y h:i A', strtotime($r->created_at)) . ' · ' . ($r->ip_address ?: 'no IP'), 'ip' => $r->ip_address];
+            }
+        }
+        $userIps = [];
+        foreach ($this->dateScope($this->db()->table('daily_traffic'), 'trafiic_date', $f)
+            ->select('user_id, ip_address', false)->where('user_id IS NOT NULL', null, false)->where('ip_address IS NOT NULL', null, false)
+            ->get()->getResult() as $r) { $userIps[(int) $r->user_id][$r->ip_address] = 1; }
+        foreach ($userIps as $u => $ips) {
+            if (count($ips) >= 4) {
+                $flags[] = (object) ['sev' => count($ips) >= 6 ? 'high' : 'med', 'type' => 'Multiple IPs',
+                    'title' => $this->userName($u) . ' seen from ' . count($ips) . ' different IPs',
+                    'detail' => 'Possible shared account or roaming', 'ip' => ''];
+            }
+        }
+        return $flags;
+    }
+
+    /* ==================== Activity Scores tab ==================== */
+    private function scoreWeights(): array
+    {
+        return ['create' => 5, 'update' => 2, 'delete' => 1, 'login' => 2, 'view' => 0.2];
+    }
+
+    private function scoreWindow(string $a, string $b, int $onlyUser, array $W): array
+    {
+        $db = $this->db();
+        $out = [];
+        $lo = $a . ' 00:00:00'; $hi = $b . ' 23:59:59';
+        $ensure = function ($uid) use (&$out) {
+            if (! isset($out[$uid])) { $out[$uid] = ['create' => 0, 'update' => 0, 'delete' => 0, 'login' => 0, 'view' => 0, 'days' => 0, 'score' => 0.0]; }
+        };
+        if ($db->tableExists('aa_entry_trace')) {
+            $q = $db->table('aa_entry_trace')->select('user_id, LOWER(action) act, COUNT(*) c', false)
+                ->where('created_at >=', $lo)->where('created_at <=', $hi)->groupBy('user_id, action');
+            if ($onlyUser) { $q->where('user_id', $onlyUser); }
+            foreach ($q->get()->getResult() as $r) {
+                $uid = (int) $r->user_id; if (! $uid) { continue; } $ensure($uid);
+                $act = in_array($r->act, ['create', 'update', 'delete'], true) ? $r->act : 'update';
+                $out[$uid][$act] += (int) $r->c;
+            }
+        }
+        if ($db->tableExists('aa_login_detail')) {
+            $q = $db->table('aa_login_detail')->select('user_id, COUNT(*) c', false)->where('added_date >=', $lo)->where('added_date <=', $hi)->groupBy('user_id');
+            if ($onlyUser) { $q->where('user_id', $onlyUser); }
+            foreach ($q->get()->getResult() as $r) { $uid = (int) $r->user_id; if (! $uid) { continue; } $ensure($uid); $out[$uid]['login'] += (int) $r->c; }
+        }
+        if ($db->tableExists('daily_traffic')) {
+            $q = $db->table('daily_traffic')->select('user_id, COUNT(*) c', false)->where('trafiic_date >=', $lo)->where('trafiic_date <=', $hi)->groupBy('user_id');
+            if ($onlyUser) { $q->where('user_id', $onlyUser); }
+            foreach ($q->get()->getResult() as $r) { $uid = (int) $r->user_id; if (! $uid) { continue; } $ensure($uid); $out[$uid]['view'] += (int) $r->c; }
+        }
+        $unions = [];
+        $eLo = $db->escape($lo); $eHi = $db->escape($hi);
+        if ($db->tableExists('aa_entry_trace')) { $unions[] = "SELECT user_id, DATE(created_at) d FROM aa_entry_trace WHERE created_at BETWEEN $eLo AND $eHi"; }
+        if ($db->tableExists('daily_traffic')) { $unions[] = "SELECT user_id, DATE(trafiic_date) d FROM daily_traffic WHERE trafiic_date BETWEEN $eLo AND $eHi"; }
+        if ($db->tableExists('aa_login_detail')) { $unions[] = "SELECT user_id, DATE(added_date) d FROM aa_login_detail WHERE added_date BETWEEN $eLo AND $eHi"; }
+        if ($unions) {
+            $sql = 'SELECT user_id, COUNT(DISTINCT d) days FROM (' . implode(' UNION ALL ', $unions) . ') t WHERE user_id IS NOT NULL';
+            if ($onlyUser) { $sql .= ' AND user_id = ' . $onlyUser; }
+            $sql .= ' GROUP BY user_id';
+            foreach ($db->query($sql)->getResult() as $r) { $uid = (int) $r->user_id; if (! $uid || ! isset($out[$uid])) { continue; } $out[$uid]['days'] = (int) $r->days; }
+        }
+        foreach ($out as $uid => $x) {
+            $out[$uid]['score'] = $x['create'] * $W['create'] + $x['update'] * $W['update'] + $x['delete'] * $W['delete'] + $x['login'] * $W['login'] + $x['view'] * $W['view'];
+        }
+        return $out;
+    }
+
+    public function user_scores(array $f): array
+    {
+        $W = $this->scoreWeights();
+        $from = $f['from']; $to = $f['to'];
+        $days = max(1, (int) floor((strtotime($to) - strtotime($from)) / 86400) + 1);
+        $prevTo = date('Y-m-d', strtotime($from . ' -1 day'));
+        $prevFrom = date('Y-m-d', strtotime($from . ' -' . $days . ' day'));
+        $only = ! empty($f['user']) ? (int) $f['user'] : 0;
+        $cur = $this->scoreWindow($from, $to, $only, $W);
+        $prev = $this->scoreWindow($prevFrom, $prevTo, $only, $W);
+        $rows = [];
+        foreach ($cur as $uid => $b) {
+            $prevScore = isset($prev[$uid]) ? (float) $prev[$uid]['score'] : 0.0;
+            $delta = ($prevScore > 0) ? round((($b['score'] - $prevScore) / $prevScore) * 100) : null;
+            $rows[] = (object) ['user_id' => $uid, 'user_name' => $this->userName($uid),
+                'create' => (int) $b['create'], 'update' => (int) $b['update'], 'delete' => (int) $b['delete'],
+                'login' => (int) $b['login'], 'view' => (int) $b['view'], 'days' => (int) $b['days'],
+                'score' => round($b['score'], 1), 'avg_day' => $b['days'] > 0 ? round($b['score'] / $b['days'], 1) : round($b['score'], 1),
+                'prev_score' => round($prevScore, 1), 'delta' => $delta];
+        }
+        usort($rows, fn ($x, $y) => ($y->score <=> $x->score));
+        $rank = 0;
+        foreach ($rows as $r) { $r->rank = ++$rank; }
+        return ['rows' => $rows, 'weights' => $W, 'window' => ['from' => $from, 'to' => $to, 'days' => $days], 'prev_window' => ['from' => $prevFrom, 'to' => $prevTo]];
+    }
+
+    /* ==================== Entry Audit tab (aa_entry_trace, firm-scoped) ==================== */
+    public function entryModules(): array
+    {
+        $b = $this->db()->table('aa_entry_trace')->distinct()->select('module');
+        if (($tid = $this->entryFirmId())) { $b->where('template_id', $tid); }
+        return $b->orderBy('module', 'asc')->get()->getResult();
+    }
+
+    private function entryFilterScope($b, array $p)
+    {
+        if (($tid = $this->entryFirmId())) { $b->where('t.template_id', $tid); }
+        foreach (['f_module' => 't.module', 'f_source' => 't.entry_source', 'f_action' => 't.action'] as $k => $col) {
+            $v = $p[$k] ?? '';
+            if ($v !== '' && $v !== 'all') { $b->where($col, $v); }
+        }
+        if (! empty($p['f_user']) && $p['f_user'] !== 'all') { $b->where('t.user_id', (int) $p['f_user']); }
+        if (! empty($p['f_ip'])) { $b->like('t.ip_address', trim((string) $p['f_ip'])); }
+        if (! empty($p['f_from'])) { $b->where('DATE(t.created_at) >=', $p['f_from']); }
+        if (! empty($p['f_to'])) { $b->where('DATE(t.created_at) <=', $p['f_to']); }
+        if (($p['f_geo'] ?? '') === '1') { $b->where('t.latitude IS NOT NULL', null, false); }
+        $sv = trim((string) ($p['search']['value'] ?? ''));
+        if ($sv !== '') { $b->groupStart()->like('t.ip_address', $sv)->orLike('t.module', $sv)->orLike('t.user_name', $sv)->orLike('t.entry_id', $sv)->groupEnd(); }
+        return $b;
+    }
+
+    public function entryData(array $p): array
+    {
+        $db = $this->db();
+        $tid = $this->entryFirmId();
+        $totalB = $db->table('aa_entry_trace');
+        if ($tid) { $totalB->where('template_id', $tid); }
+        $total = (int) $totalB->countAllResults();
+        $filtered = (int) $this->entryFilterScope($db->table('aa_entry_trace t'), $p)->countAllResults();
+        $rb = $this->entryFilterScope($db->table('aa_entry_trace t'), $p)
+            ->select('t.*, TRIM(CONCAT(COALESCE(u.first_name,""),\' \',COALESCE(u.last_name,""))) full_name', false)
+            ->join('users u', 'u.id = t.user_id', 'left')->orderBy('t.id', 'DESC');
+        $len = (int) ($p['length'] ?? 25); if ($len <= 0) { $len = 25; }
+        $rb->limit($len, (int) ($p['start'] ?? 0));
+        $stats = $this->entryFilterScope($db->table('aa_entry_trace t'), $p)
+            ->select("COUNT(*) total, SUM(t.entry_source='App') app_cnt, SUM(t.latitude IS NOT NULL) geo_cnt,
+                COUNT(DISTINCT t.ip_address) ip_cnt, COUNT(DISTINCT t.user_id) user_cnt", false)->get()->getRow();
+        return ['total' => $total, 'filtered' => $filtered, 'rows' => $rb->get()->getResult(), 'stats' => [
+            'total' => $stats ? (int) $stats->total : 0, 'app_cnt' => $stats ? (int) $stats->app_cnt : 0,
+            'geo_cnt' => $stats ? (int) $stats->geo_cnt : 0, 'ip_cnt' => $stats ? (int) $stats->ip_cnt : 0,
+            'user_cnt' => $stats ? (int) $stats->user_cnt : 0]];
+    }
 }

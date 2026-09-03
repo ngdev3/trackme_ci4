@@ -158,9 +158,22 @@ $routes->post('admin/attendance/employee_view_all', [Attendance::class, 'employe
 $routes->get('admin/attendance/employee_delete/(:segment)', [Attendance::class, 'employee_delete']);
 $routes->get('admin/attendance/employee_toggle_status/(:segment)', [Attendance::class, 'employee_toggle_status']);
 
-// Activity & Audit Monitor — overview (KPIs, charts, online-now, recent activity)
+// Activity & Audit Monitor — overview + all sibling tabs (date/user filter nav)
 $routes->get('admin/monitor', ['\App\Modules\Admin\Controllers\Monitor', 'index']);
 $routes->get('admin/monitor/overview', ['\App\Modules\Admin\Controllers\Monitor', 'overview']);
+$routes->get('admin/monitor/scores', ['\App\Modules\Admin\Controllers\Monitor', 'scores']);
+$routes->get('admin/monitor/traffic', ['\App\Modules\Admin\Controllers\Monitor', 'traffic']);
+$routes->post('admin/monitor/traffic_data', ['\App\Modules\Admin\Controllers\Monitor', 'traffic_data']);
+$routes->get('admin/monitor/logins', ['\App\Modules\Admin\Controllers\Monitor', 'logins']);
+$routes->post('admin/monitor/logins_data', ['\App\Modules\Admin\Controllers\Monitor', 'logins_data']);
+$routes->get('admin/monitor/login_security', ['\App\Modules\Admin\Controllers\Monitor', 'login_security']);
+$routes->post('admin/monitor/login_security_data', ['\App\Modules\Admin\Controllers\Monitor', 'login_security_data']);
+$routes->get('admin/monitor/timeline', ['\App\Modules\Admin\Controllers\Monitor', 'timeline']);
+$routes->get('admin/monitor/ip_intel', ['\App\Modules\Admin\Controllers\Monitor', 'ip_intel']);
+$routes->get('admin/monitor/anomalies', ['\App\Modules\Admin\Controllers\Monitor', 'anomalies']);
+$routes->get('admin/monitor/entries', ['\App\Modules\Admin\Controllers\Monitor', 'entries']);
+$routes->post('admin/monitor/entries_data', ['\App\Modules\Admin\Controllers\Monitor', 'entries_data']);
+$routes->match(['GET', 'POST'], 'admin/monitor/retention', ['\App\Modules\Admin\Controllers\Monitor', 'retention']);
 $routes->get('admin/salary_module/listing', [SalaryModule::class, 'listing']);
 $routes->get('admin/salary_module', [SalaryModule::class, 'listing']);
 $routes->post('admin/salary_module/view_all', [SalaryModule::class, 'viewAll']);
