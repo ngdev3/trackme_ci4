@@ -121,6 +121,22 @@ $routes->get('admin/Kisanreg/report_csv/(:segment)', [Kisanreg::class, 'report_c
 
 // Account Mapping — Farmer Captures inbox (read + archive/delete on staging)
 $routes->match(['GET', 'POST'], 'admin/accountMapping/account_mapping', ['\App\Modules\Admin\Controllers\AccountMapping', 'account_mapping']);
+// Temp Farmer Thumb (thumb_figure) — page + lock-engine AJAX
+$routes->get('admin/accountMapping/thumb_figure', ['\App\Modules\Admin\Controllers\AccountMapping', 'thumb_figure']);
+$routes->post('admin/accountMapping/temp_add', ['\App\Modules\Admin\Controllers\AccountMapping', 'temp_add']);
+$routes->post('admin/accountMapping/temp_get', ['\App\Modules\Admin\Controllers\AccountMapping', 'temp_get']);
+$routes->post('admin/accountMapping/temp_edit', ['\App\Modules\Admin\Controllers\AccountMapping', 'temp_edit']);
+$routes->post('admin/accountMapping/temp_delete', ['\App\Modules\Admin\Controllers\AccountMapping', 'temp_delete']);
+$routes->post('admin/accountMapping/temp_move', ['\App\Modules\Admin\Controllers\AccountMapping', 'temp_move']);
+$routes->post('admin/accountMapping/temp_lock', ['\App\Modules\Admin\Controllers\AccountMapping', 'temp_lock']);
+$routes->post('admin/accountMapping/temp_request_unlock', ['\App\Modules\Admin\Controllers\AccountMapping', 'temp_request_unlock']);
+$routes->post('admin/accountMapping/temp_relock', ['\App\Modules\Admin\Controllers\AccountMapping', 'temp_relock']);
+$routes->get('admin/accountMapping/temp_unlock_requests', ['\App\Modules\Admin\Controllers\AccountMapping', 'temp_unlock_requests']);
+$routes->post('admin/accountMapping/temp_approve', ['\App\Modules\Admin\Controllers\AccountMapping', 'temp_approve']);
+$routes->post('admin/accountMapping/temp_reject', ['\App\Modules\Admin\Controllers\AccountMapping', 'temp_reject']);
+$routes->post('admin/accountMapping/thumb_farmer_qty', ['\App\Modules\Admin\Controllers\AccountMapping', 'thumb_farmer_qty']);
+$routes->post('admin/accountMapping/thumb_farmer_search', ['\App\Modules\Admin\Controllers\AccountMapping', 'thumb_farmer_search']);
+$routes->post('admin/accountMapping/thumb_account_search', ['\App\Modules\Admin\Controllers\AccountMapping', 'thumb_account_search']);
 $routes->get('admin/accountMapping/captures', ['\App\Modules\Admin\Controllers\AccountMapping', 'captures']);
 $routes->get('admin/accountMapping/capture_archive/(:num)', ['\App\Modules\Admin\Controllers\AccountMapping', 'capture_archive/$1']);
 $routes->get('admin/accountMapping/capture_delete/(:num)', ['\App\Modules\Admin\Controllers\AccountMapping', 'capture_delete/$1']);

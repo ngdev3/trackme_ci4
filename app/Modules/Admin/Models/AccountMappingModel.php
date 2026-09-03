@@ -130,4 +130,172 @@ class AccountMappingModel
             ->where("COALESCE(status,'') <>", 'Delete')
             ->countAllResults();
     }
+
+    /* ================= Thumb Figure support (aa_center_thumb_target, kisanvahidata.mid) ================= */
+
+    /** Create the target + daily tables and the kisanvahidata.mid column once. */
+    public function thumb_ensure_schema()
+    {
+        static $done = false;
+        if ($done) { return; }
+        $done = true;
+        $db = $this->db();
+
+        $db->query("CREATE TABLE IF NOT EXISTS `aa_center_thumb_target` (
+            `id`            INT AUTO_INCREMENT PRIMARY KEY,
+            `center_id`     INT NOT NULL,
+            `FY`            VARCHAR(20) NOT NULL,
+            `template_id`   INT NOT NULL,
+            `expected_qty`  DECIMAL(10,2) NOT NULL DEFAULT 0,
+            `expected_time` VARCHAR(20) NULL,
+            `added_by`      INT NULL,
+            `created_at`    DATETIME NULL,
+            `updated_at`    DATETIME NULL,
+            UNIQUE KEY `uniq_center_fy_tpl` (`center_id`, `FY`, `template_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+
+        $col = $db->query("SHOW COLUMNS FROM `kisanvahidata` LIKE 'mid'");
+        if ($col->getNumRows() === 0) {
+            $db->query("ALTER TABLE `kisanvahidata` ADD COLUMN `mid` VARCHAR(50) NULL AFTER `Quantity`");
+        }
+
+        $db->query("CREATE TABLE IF NOT EXISTS `aa_thumb_figure_daily` (
+            `id`          INT AUTO_INCREMENT PRIMARY KEY,
+            `entry_date`  DATE NOT NULL,
+            `farmer_id`   VARCHAR(255) NOT NULL,
+            `farmer_name` VARCHAR(255) NOT NULL,
+            `center_id`   INT NOT NULL DEFAULT 0,
+            `qty`         DECIMAL(10,2) NOT NULL DEFAULT 0,
+            `mid`         VARCHAR(100) NULL,
+            `FY`          VARCHAR(20) NOT NULL,
+            `product_type` INT NOT NULL DEFAULT 0,
+            `template_id` INT NOT NULL DEFAULT 0,
+            `added_by`    INT NULL,
+            `created_at`  DATETIME NULL,
+            `updated_at`  DATETIME NULL,
+            KEY `idx_scope` (`entry_date`, `FY`, `product_type`, `template_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+
+    /**
+     * Farmer autocomplete for the Temp Thumb add box: distinct farmers in the
+     * current FY (from kisanvahidata + reg_kisanvahidata), matched by ID/name,
+     * carrying their most-recent center and REMAINING allocatable quantity
+     * (registered/left minus what temp-thumb already holds); farmers at 0 remaining
+     * are dropped. Raw SQL preserved from CI3 (GROUP_CONCAT commas → escape off).
+     */
+    public function thumb_farmer_search($q, $limit = 30): array
+    {
+        $this->thumb_ensure_schema();
+        $db  = $this->db();
+        $q   = trim((string) $q);
+        $fy  = $db->escape(fy()->FY);
+        $pt  = $db->escape(fy()->product_type);
+        $tid = $db->escape(fy()->template_id);
+        $lim = (int) $limit;
+
+        $reg_qcol = $db->fieldExists('left_quantity', 'reg_kisanvahidata')
+            ? 'COALESCE(left_quantity, Quantity)' : 'Quantity';
+
+        $inner = "SELECT Farmer_ID, Farmer_name, CenterName AS cname, Purchase_Date_new AS pdate, Quantity AS q, 'kv' AS src
+                    FROM kisanvahidata
+                   WHERE FY = $fy AND status <> 'Delete'
+                  UNION ALL
+                  SELECT Farmer_ID, Farmer_name, NULL AS cname, reg_date AS pdate, $reg_qcol AS q, 'reg' AS src
+                    FROM reg_kisanvahidata
+                   WHERE FY = $fy AND status <> 'Delete'";
+
+        $where = '';
+        if ($q !== '') {
+            $like  = $db->escapeLikeString($q);
+            $where = "WHERE (u.Farmer_ID LIKE '%$like%' OR u.Farmer_name LIKE '%$like%')";
+        }
+
+        $grouped = "SELECT u.Farmer_ID AS farmer_id,
+                           MAX(u.Farmer_name) AS farmer_name,
+                           SUBSTRING_INDEX(GROUP_CONCAT(u.cname ORDER BY u.pdate DESC), ',', 1) AS center_id,
+                           CASE WHEN SUM(CASE WHEN u.src='reg' THEN u.q ELSE 0 END) > 0
+                                THEN SUM(CASE WHEN u.src='reg' THEN u.q ELSE 0 END)
+                                ELSE SUM(CASE WHEN u.src='kv'  THEN u.q ELSE 0 END) END AS available
+                      FROM ($inner) u
+                      $where
+                     GROUP BY u.Farmer_ID";
+
+        $alloc_join = '';
+        $alloc_expr = '0';
+        if ($db->tableExists('aa_temp_thumb')) {
+            $alloc_join = "LEFT JOIN (SELECT farmer_id, SUM(qty) AS alloc FROM aa_temp_thumb
+                               WHERE FY = $fy AND product_type = $pt AND template_id = $tid
+                               GROUP BY farmer_id) a ON a.farmer_id = g.farmer_id";
+            $alloc_expr = 'COALESCE(a.alloc,0)';
+        }
+
+        $sql = "SELECT g.farmer_id, g.farmer_name, g.center_id, g.available,
+                       GREATEST(g.available - $alloc_expr, 0) AS remaining
+                  FROM ($grouped) g
+                  $alloc_join
+                 HAVING remaining > 0
+                 ORDER BY g.farmer_name ASC
+                 LIMIT $lim";
+
+        $rows = $db->query($sql)->getResult();
+
+        $ids = [];
+        foreach ($rows as $r) { if ((int) $r->center_id) { $ids[(int) $r->center_id] = true; } }
+        $names = [];
+        if ($ids) {
+            foreach ($db->table('aa_center_name')->select('center_id, name')
+                         ->whereIn('center_id', array_keys($ids))->get()->getResult() as $c) {
+                $names[(int) $c->center_id] = $c->name;
+            }
+        }
+        foreach ($rows as $r) {
+            $cid = (int) $r->center_id;
+            $r->center_id   = $cid;
+            $r->center_name = $names[$cid] ?? '';
+        }
+        return $rows;
+    }
+
+    /**
+     * The farmer's default Mediator = the account they are registered under
+     * (reg_kisanvahidata.account_no, else kisanvahidata.account_no) as its name.
+     */
+    public function farmer_reg_account_name($farmer_id): string
+    {
+        $fid = trim((string) $farmer_id);
+        if ($fid === '') { return ''; }
+        $fy  = fy()->FY;
+        $db  = $this->db();
+
+        $acc = 0;
+        if ($db->tableExists('reg_kisanvahidata')) {
+            $row = $db->table('reg_kisanvahidata')->select('account_no')->where('Farmer_ID', $fid)->where('FY', $fy)
+                ->where('status <>', 'Delete')->where("COALESCE(account_no,'') <>", '')
+                ->orderBy('Kisan_ID', 'desc')->limit(1)->get()->getRow();
+            if ($row) { $acc = (int) $row->account_no; }
+        }
+        if (! $acc) {
+            $row = $db->table('kisanvahidata')->select('account_no')->where('Farmer_ID', $fid)->where('FY', $fy)
+                ->where('status <>', 'Delete')->where("COALESCE(account_no,'') <>", '')
+                ->orderBy('Kisan_ID', 'desc')->limit(1)->get()->getRow();
+            if ($row) { $acc = (int) $row->account_no; }
+        }
+        if (! $acc) { return ''; }
+
+        $an = $db->table('aa_account_name')->select('name')->where('account_id', $acc)
+            ->where('status !=', 'Delete')->get()->getRow();
+        return $an ? (string) $an->name : '';
+    }
+
+    /** Account-name autocomplete for the "Mid" field (global accounts, active only). */
+    public function thumb_account_search($q, $limit = 30): array
+    {
+        $q = trim((string) $q);
+        $b = $this->db()->table('aa_account_name')->select('account_id AS id, name', false)->where('status', 'Active');
+        if ($q !== '') {
+            $b->groupStart()->like('name', $q)->orLike('account_id', $q)->groupEnd();
+        }
+        return $b->orderBy('name', 'asc')->limit((int) $limit)->get()->getResult();
+    }
 }
