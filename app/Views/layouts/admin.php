@@ -26,8 +26,11 @@ $toast = session()->getFlashdata('cr_toast');
     <meta content="width=device-width, initial-scale=1" name="viewport" />
     <meta name="robots" content="noindex, nofollow" />
 
+    <?= csrf_meta() ?>
     <script src="<?= base_url('assets/global/plugins/jquery-3.3.1.min.js') ?>"></script>
     <script src="<?= base_url('assets/global/plugins/jquery-migrate.min.js') ?>"></script>
+    <!-- CSRF token wiring for every AJAX/DataTables POST + form (must precede AJAX). -->
+    <script src="<?= base_url('assets/js/csrf.js') ?>"></script>
 
     <link href="<?= base_url('assets/admin/assets/css/bootstrap.css') ?>" rel="stylesheet">
     <link href="<?= base_url('assets/admin/assets/css/layout.css') ?>" rel="stylesheet">

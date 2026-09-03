@@ -70,8 +70,13 @@ class Security extends BaseConfig
      * --------------------------------------------------------------------------
      *
      * Regenerate CSRF Token on every submission.
+     *
+     * FALSE for this app: the ERP fires many concurrent AJAX/DataTables POSTs
+     * per page; a per-request rotating token races those requests into 403s.
+     * A stable per-session token (still unguessable) keeps every AJAX call and
+     * pre-rendered form valid for the session.
      */
-    public bool $regenerate = true;
+    public bool $regenerate = false;
 
     /**
      * --------------------------------------------------------------------------

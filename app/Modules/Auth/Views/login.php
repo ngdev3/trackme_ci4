@@ -414,6 +414,7 @@ if (($_SERVER['SERVER_NAME'] ?? '') == "localhost") {
             <!-- FORM -->
             <div class="login-panel">
                 <form id="login-form1" class="login-card" action="<?= base_url('admin/auth/login') ?>" method="post">
+                    <?= csrf_field() ?>
                     <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($redirect ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                     <img class="mobile-logo" src="<?=base_url()?>assets/images/logo.png" alt="C R Industries">
                     <h2>Welcome back 🚀</h2>

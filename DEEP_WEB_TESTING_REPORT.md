@@ -16,10 +16,10 @@ Test accounts used:
 | Severity | Count | Fixed | Open |
 |---|---|---|---|
 | 🔴 CRITICAL | 0 | 0 | 0 |
-| 🟠 HIGH | 4 | 1 | 3 |
+| 🟠 HIGH | 4 | 2 | 2 |
 | 🟡 MEDIUM | 4 | 1 | 3 |
 | 🔵 LOW | 2 | 0 | 2 |
-| 🟢 PASSED | 11 | — | — |
+| 🟢 PASSED | 12 | — | — |
 
 No critical (data-loss / full-takeover) issues were found. The most important **open** items are deployment-hardening concerns (dev mode, disabled CSRF, md5 passwords) that stem from the ongoing CI3→CI4 migration and are documented with remediation paths. Two concrete gaps were **fixed and retested** this session.
 
@@ -51,10 +51,21 @@ No critical (data-loss / full-takeover) issues were found. The most important **
 
 ## 3. Open findings (documented — not auto-fixed, with reasons)
 
-### 🟠 SEC-003 — CSRF protection disabled globally
-- **Evidence:** `app/Config/Filters.php` → `csrf` commented out in `$globals['before']`. All state-changing POSTs (login, add/edit/delete, `change_fy`, `save_entry`, retention, etc.) accept cross-site forged requests. `SameSite=Lax` on the session cookie gives partial mitigation (blocks cross-site POST from a top-level navigation in modern browsers, but not all vectors).
-- **Why not auto-fixed:** Every ported CI3 form/AJAX call omits a CSRF token; turning CSRF on globally would break **all** POST flows at once. This needs a coordinated pass (add `csrf_field()` / a JS header to every form + AJAX). 
-- **Recommendation:** Enable `csrf` and inject the token app-wide (a single `$.ajaxSetup` header + a hidden field in the shared form partials), then retest each module. Track as a dedicated migration task.
+### 🟠 SEC-003 — CSRF protection disabled globally  → FIXED
+- **Evidence (before):** `app/Config/Filters.php` → `csrf` commented out in `$globals['before']`. All state-changing POSTs (login, add/edit/delete, `change_fy`, `save_entry`, retention, etc.) accepted cross-site forged requests.
+- **Fix applied (app-wide, no per-call edits):**
+  1. `Config/Security.php` → `$regenerate = false` (stable per-session token — a rotating token would race the app's many concurrent AJAX/DataTables POSTs into false 403s).
+  2. `Config/Filters.php` → enabled the `csrf` before-filter, excepting the token-authenticated mobile API and key-guarded public webhooks (`api_services/*`, `farmer_capture/*`, `app_download/*`, `web_push/*`, `letter_verify/*`). CSRF only guards unsafe verbs, so GET pages are untouched.
+  3. `Views/layouts/admin.php` → `csrf_meta()` in `<head>` + new `assets/js/csrf.js` loaded right after jQuery.
+  4. `assets/js/csrf.js` → a global `$.ajaxSetup` attaches `X-CSRF-TOKEN` to every non-GET jQuery/DataTables request, and a delegated submit handler injects/refreshes the hidden token field on every POST `<form>` — so all 60+ AJAX call sites and forms are covered without editing each.
+  5. `csrf_field()` added to the three public forms outside the admin layout (login, forgot, ricemill inquiry).
+- **Files changed:** `app/Config/Security.php`, `app/Config/Filters.php`, `app/Views/layouts/admin.php`, `public/assets/js/csrf.js`, `app/Modules/Auth/Views/login.php`, `app/Modules/Auth/Views/forgot.php`, `app/Modules/Ricemill/Views/site.php`
+- **Retest:**
+  - Login POST **without** token → **403**; **with** token → **303 → dashboard**. ✅
+  - Authed AJAX POST **without** token → **403**; **with** `X-CSRF-TOKEN` header → **200** + data. ✅
+  - Excepted `api_services` POST without token → not blocked (404, i.e. reaches routing). ✅
+  - **Browser end-to-end:** logged in via the real form, `employee_view_all` DataTables **POST → 200 OK** (global injector attached the token automatically), no CSRF errors in console. ✅ PASS
+- **Note:** on the live host, also set `Config\Cookie::$secure = true` so the CSRF + session cookies are HTTPS-only (SEC-008).
 
 ### 🟠 SEC-004 — Application running in `development` environment
 - **Evidence:** `.env` → `CI_ENVIRONMENT = development`. Unmatched routes and exceptions render CI4's **debug page** (framework version, file paths, stack traces); the debug toolbar is emitted. Confirmed on bad routes.

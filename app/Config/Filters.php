@@ -81,7 +81,18 @@ class Filters extends BaseFilters
     public array $globals = [
         'before' => [
             // 'honeypot',
-            // 'csrf',
+            // CSRF only checks unsafe verbs (POST/PUT/PATCH/DELETE); GET pages are
+            // untouched. Excepted: the token-authenticated mobile API and the
+            // key-guarded public webhooks/downloads, which are not browser-form
+            // flows and carry their own auth. Token is injected app-wide via
+            // csrf_meta() + assets/js/csrf.js (AJAX header) and csrf_field() (forms).
+            'csrf' => ['except' => [
+                'api_services/*',
+                'farmer_capture/*',
+                'app_download/*',
+                'web_push/*',
+                'letter_verify/*',
+            ]],
             // 'invalidchars',
         ],
         'after' => [

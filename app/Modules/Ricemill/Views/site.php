@@ -410,6 +410,7 @@ $heroPos  = $base . 'assets/ricemill/hero-poster.jpg';
                 <?php endif; ?>
 
                 <form method="post" action="<?= $base ?>ricemill/inquiry">
+                    <?= csrf_field() ?>
                     <div class="form-row" style="margin-bottom:16px;">
                         <div class="field">
                             <label>Name <span class="req">*</span></label>

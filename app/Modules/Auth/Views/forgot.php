@@ -449,6 +449,7 @@ $flash_success = session()->getFlashdata('success');
                     <?php endif; ?>
 
                     <form class="forget-form forgot-form" action="<?= base_url('admin/auth/forgot') ?>" method="post">
+                        <?= csrf_field() ?>
                         <div class="form-group">
                             <label class="form-label" for="email">Email Address</label>
                             <div class="forgot-input-shell">
