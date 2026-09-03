@@ -174,29 +174,24 @@ if (! function_exists('erp_user_is_view_only')) {
         $uid = (int) $uid;
         if ($uid <= 0) { return false; }
 
-        // Current firm id. fy()->template_id is authoritative, but the firm row
-        // isn't always resolved in filter context (filter order + loadFirmContext's
-        // once-guard), so fall back to the user's default_firm — the same pattern
-        // CI3 Entry_trace_mod::_template_id() uses. Without this, PER-FIRM view-only
-        // silently fails (tid=0) while GLOBAL view-only still works.
-        $tid = 0;
-        if (function_exists('fy')) {
-            $f = fy();
-            if (is_object($f) && isset($f->template_id) && $f->template_id !== '') { $tid = (int) $f->template_id; }
-        }
-        if ($tid <= 0 && function_exists('currentuserinfo')) {
-            $ui = currentuserinfo();
-            if (is_object($ui) && ! empty($ui->default_firm)) { $tid = (int) $ui->default_firm; }
-        }
-        @file_put_contents(WRITEPATH . 'logs/vo2.log', date('H:i:s') . " VOFN uid=$uid tid=$tid ui=" . (function_exists('currentuserinfo') && is_object(currentuserinfo()) ? ('obj df=' . (currentuserinfo()->default_firm ?? 'NULL')) : 'NOOBJ') . "\n", FILE_APPEND);
-        $key = $uid . ':' . $tid;
-        if (isset($cache[$key])) { return $cache[$key]; }
-
+        // Current firm id. fy()->template_id is authoritative in a controller,
+        // but session helpers (fy()/currentuserinfo()) are NOT reliably populated
+        // when this runs inside RbacFilter, so PER-FIRM view-only was silently
+        // failing there (tid=0) while GLOBAL view-only worked. Resolve the firm
+        // straight from the DB via $uid (users.default_firm) — always available.
         erp_ensure_view_only_column();
         $db = Database::connect();
 
-        $row = $db->table('users')->select('is_view_only')->where('id', $uid)->get()->getRow();
-        if ($row && (int) $row->is_view_only === 1) { return $cache[$key] = true; }
+        $urow = $db->table('users')->select('is_view_only, default_firm')->where('id', $uid)->get()->getRow();
+        if ($urow && (int) $urow->is_view_only === 1) { return $cache[$uid . ':g'] = true; }
+
+        // Use users.default_firm as THE current firm — CI4 change_fy_id keeps it in
+        // sync with the switcher — so the check is identical whether it runs in the
+        // RbacFilter (where fy()/session helpers are not yet populated) or a view.
+        $tid = ($urow && ! empty($urow->default_firm)) ? (int) $urow->default_firm : 0;
+
+        $key = $uid . ':' . $tid;
+        if (isset($cache[$key])) { return $cache[$key]; }
 
         if ($tid > 0) {
             $n = $db->table('aa_view_only_template')->where('user_id', $uid)->where('template_id', $tid)->countAllResults();

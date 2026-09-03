@@ -87,6 +87,23 @@ $toast = session()->getFlashdata('cr_toast');
             <?= $this->include('\App\Modules\Admin\Views\elements\top_nav') ?>
 
             <div class="page-content" style="padding-top:0;">
+                <?php
+                // View-Only banner: tell the user up-front they are read-only in THIS
+                // firm (global or per-firm) so a blocked save is never a surprise.
+                // Super Admin is never view-only. Uses $user/$ctx already resolved
+                // above (reliable in the layout) + the DB-backed resolver.
+                $__voUid = (int) ($user->id ?? 0);
+                if ($__voUid > 0 && ! $ctx->isSuperAdmin()
+                    && function_exists('erp_user_is_view_only') && erp_user_is_view_only($__voUid)) {
+                    $__voFirm = trim((string) ($firm->firm_name ?? ''));
+                    ?>
+                    <div style="margin:14px 20px 0;padding:11px 16px;border-radius:8px;display:flex;align-items:center;gap:10px;background:#fff8e5;border:1px solid #f2d98a;color:#8a6314;font-weight:700;font-size:13px;">
+                        <i class="ti-lock" style="font-size:16px;"></i>
+                        <span>You have <b>view-only</b> access<?= $__voFirm !== '' ? ' for <b>' . esc($__voFirm) . '</b>' : '' ?>. You can browse and open reports, but adding, editing and deleting are disabled here.</span>
+                    </div>
+                    <?php
+                }
+                ?>
                 <?php if ($contentView !== null): ?>
                     <?= view($contentView, $contentData ?? []) ?>
                 <?php endif; ?>

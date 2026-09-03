@@ -55,11 +55,9 @@ class RbacFilter implements FilterInterface
         // GLOBAL view-only hardening: even when the method name classifies as a
         // 'view' (save_entry, quick_update, store, …), block it for a view-only
         // user whenever it arrives over a write HTTP verb and is not a known read.
-        if ($action === 'view' && $uid) {
-            $vo = erp_user_is_view_only($uid);
+        if ($action === 'view' && $uid && erp_user_is_view_only($uid)) {
             $http = strtoupper($request->getMethod());
-            @file_put_contents(WRITEPATH . 'logs/rbac_debug.log', date('H:i:s') . " mod=$module method=$method action=$action uid=$uid vo=" . var_export($vo, true) . " http=$http read=" . var_export(erp_method_is_read_endpoint($method), true) . "\n", FILE_APPEND);
-            if ($vo && in_array($http, ['POST', 'PUT', 'PATCH', 'DELETE'], true) && ! erp_method_is_read_endpoint($method)) {
+            if (in_array($http, ['POST', 'PUT', 'PATCH', 'DELETE'], true) && ! erp_method_is_read_endpoint($method)) {
                 return $this->deny($request, true);
             }
         }
