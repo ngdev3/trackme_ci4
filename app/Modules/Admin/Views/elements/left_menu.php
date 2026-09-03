@@ -101,6 +101,7 @@ $menu = [
     ['label' => 'Sales Register', 'icon' => 'fa-tags', 'ctrl' => 'sale_module', 'rbac' => 'sale_module', 'items' => ['Listing' => 'sale_module/listing']],
     ['label' => 'Lot System', 'icon' => 'fa-th-large', 'ctrl' => 'lot_system', 'rbac' => 'lot_system', 'items' => ['Listing' => 'lot_system/listing', 'Add' => 'lot_system/add']],
     ['label' => 'Paddy Center Challan', 'icon' => 'fa-pencil-square-o', 'ctrl' => 'paddylotsystem', 'rbac' => 'PaddyLotsystem', 'items' => ['Listing' => 'PaddyLotsystem/listing', 'Add' => 'PaddyLotsystem/add']],
+    ['label' => 'Activity & Audit Monitor', 'icon' => 'fa-heartbeat', 'ctrl' => 'monitor', 'rbac' => null, 'items' => ['Overview' => 'monitor/overview', 'Page Traffic' => 'monitor/traffic', 'Entry Audit' => 'monitor/entries', 'Logins' => 'monitor/logins', 'Activity Timeline' => 'monitor/timeline', 'IP & Location' => 'monitor/ip_intel', 'Anomalies' => 'monitor/anomalies', 'Retention' => 'monitor/retention']],
     ['label' => 'Setting', 'icon' => 'fa-cog', 'ctrl' => 'setting', 'rbac' => 'setting', 'href' => base_url('admin/setting/hub')],
     ['label' => 'View-Only Users', 'icon' => 'fa-eye', 'ctrl' => 'setting', 'rbac' => null, 'href' => base_url('admin/setting/view_only')],
     ['label' => 'Users', 'icon' => 'fa-users', 'ctrl' => 'users', 'rbac' => 'users', 'items' => ['Listing' => 'users/listing', 'Add' => 'users/add', 'Role Permissions' => 'role_permissions', 'User Permissions' => 'user_permissions']],
