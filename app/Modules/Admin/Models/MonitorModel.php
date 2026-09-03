@@ -415,6 +415,122 @@ class MonitorModel
         return $out;
     }
 
+    /* ==================== IP geolocation (ip-api.com, cached in aa_ip_geo) ==================== */
+    private function ensureIpGeoTable(): void
+    {
+        static $done = false;
+        if ($done) { return; }
+        $done = true;
+        $this->db()->query("CREATE TABLE IF NOT EXISTS `aa_ip_geo` (
+            `ip` VARCHAR(45) NOT NULL, `version` TINYINT DEFAULT 0, `status` VARCHAR(10) DEFAULT 'ok',
+            `lat` DECIMAL(10,7) NULL, `lng` DECIMAL(10,7) NULL, `city` VARCHAR(120) NULL,
+            `region` VARCHAR(120) NULL, `country` VARCHAR(80) NULL, `isp` VARCHAR(160) NULL,
+            `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`ip`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+    }
+
+    private function ipPublic(string $ip): bool
+    {
+        return (bool) filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+    }
+
+    private function ipVersion(string $ip): int
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) { return 6; }
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) { return 4; }
+        return 0;
+    }
+
+    /**
+     * Resolve IPs to {version,status,lat,lng,city,region,country,isp}. Cached in
+     * aa_ip_geo; private/reserved IPs are marked 'local'; uncached public IPs are
+     * batch-looked-up from ip-api.com (free, no key). Best-effort — a network
+     * failure just leaves those IPs unresolved. CI3 Monitor_mod::geolocate_ips().
+     *
+     * @return array<string,object> ip => row
+     */
+    public function geolocate_ips(array $ips, int $maxLookup = 100): array
+    {
+        $out = [];
+        $ips = array_values(array_unique(array_filter(array_map(fn ($x) => trim((string) $x), $ips))));
+        if (! $ips) { return $out; }
+        $this->ensureIpGeoTable();
+        $db = $this->db();
+
+        foreach ($db->table('aa_ip_geo')->whereIn('ip', $ips)->get()->getResult() as $r) { $out[$r->ip] = $r; }
+
+        $todo = [];
+        foreach ($ips as $ip) {
+            if (isset($out[$ip])) { continue; }
+            $ver = $this->ipVersion($ip);
+            if ($ver === 0) { continue; }
+            if (! $this->ipPublic($ip)) {
+                $row = ['ip' => $ip, 'version' => $ver, 'status' => 'local', 'updated_at' => date('Y-m-d H:i:s')];
+                $db->table('aa_ip_geo')->replace($row);
+                $out[$ip] = (object) $row;
+                continue;
+            }
+            $todo[] = $ip;
+        }
+        if (! $todo) { return $out; }
+        $todo = array_slice($todo, 0, $maxLookup);
+
+        foreach (array_chunk($todo, 100) as $chunk) {
+            $resolved = $this->ipapiBatch($chunk);
+            foreach ($chunk as $ip) {
+                $ver = $this->ipVersion($ip);
+                $g = $resolved[$ip] ?? null;
+                if ($g && ($g['status'] ?? '') === 'success') {
+                    $row = ['ip' => $ip, 'version' => $ver, 'status' => 'ok', 'lat' => $g['lat'], 'lng' => $g['lon'],
+                        'city' => $g['city'] ?? null, 'region' => $g['regionName'] ?? null,
+                        'country' => $g['country'] ?? null, 'isp' => $g['isp'] ?? null, 'updated_at' => date('Y-m-d H:i:s')];
+                } else {
+                    $row = ['ip' => $ip, 'version' => $ver, 'status' => 'fail', 'updated_at' => date('Y-m-d H:i:s')];
+                }
+                $db->table('aa_ip_geo')->replace($row);
+                $out[$ip] = (object) $row;
+            }
+        }
+        return $out;
+    }
+
+    private function ipapiBatch(array $ips): array
+    {
+        $res = [];
+        if (! $ips || ! function_exists('curl_init')) { return $res; }
+        $payload = array_map(fn ($ip) => ['query' => $ip], $ips);
+        $ch = curl_init('http://ip-api.com/batch?fields=status,message,query,country,regionName,city,lat,lon,isp');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT => 15, CURLOPT_CONNECTTIMEOUT => 6,
+        ]);
+        $body = curl_exec($ch);
+        curl_close($ch);
+        if ($body === false) { return $res; }
+        $arr = json_decode($body, true);
+        if (! is_array($arr)) { return $res; }
+        foreach ($arr as $row) { if (isset($row['query'])) { $res[$row['query']] = $row; } }
+        return $res;
+    }
+
+    /** Exact device-GPS points from the entry-audit log for the map (firm-scoped). */
+    public function geo_points(array $f): array
+    {
+        if (! $this->hasEntryGeo()) { return []; }
+        $db = $this->db();
+        $hasAcc = $db->fieldExists('accuracy', 'aa_entry_trace');
+        $sel = "t.latitude, t.longitude, " . ($hasAcc ? 't.accuracy' : 'NULL accuracy') . ", t.module, t.entry_id, t.action, t.ip_address, t.created_at,
+            COALESCE(NULLIF(TRIM(CONCAT(u.first_name,' ',u.last_name)),''), t.user_name,'Unknown') user_name";
+        $b = $db->table('aa_entry_trace t')->select($sel, false)->join('users u', 'u.id = t.user_id', 'left')
+            ->where('t.latitude IS NOT NULL', null, false)->where('t.longitude IS NOT NULL', null, false)
+            ->where('DATE(t.created_at) >=', $f['from'])->where('DATE(t.created_at) <=', $f['to']);
+        if (($tid = $this->entryFirmId())) { $b->where('t.template_id', $tid); }
+        if (! empty($f['user'])) { $b->where('t.user_id', $f['user']); }
+        return $b->orderBy('t.created_at', 'desc')->limit(500)->get()->getResult();
+    }
+
     /* ==================== Anomalies tab ==================== */
     private function userName($id): string
     {

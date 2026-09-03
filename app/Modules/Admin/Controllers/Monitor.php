@@ -176,11 +176,35 @@ class Monitor extends BaseController
     {
         $m = new MonitorModel();
         $data = $this->baseData('ip_intel');
-        $data['ips']    = $m->ip_intel($data['filters'], $data['is_super']);
-        $data['points'] = [];
+        $f = $data['filters'];
+        $data['ips'] = $m->ip_intel($f, $data['is_super']);
+
+        // Geolocate every IP in the rollup (cached) and attach city/country/isp.
+        $ipList = array_map(fn ($r) => $r->ip, $data['ips']);
+        $geo = $m->geolocate_ips($ipList);
+        $markers = [];
+        foreach ($data['ips'] as $row) {
+            $g = $geo[$row->ip] ?? null;
+            $row->city       = $g->city ?? null;
+            $row->country    = $g->country ?? null;
+            $row->region     = $g->region ?? null;
+            $row->isp        = $g->isp ?? null;
+            $row->geo_status = $g->status ?? 'unknown';
+            if ($g && ($g->status ?? '') === 'ok' && $g->lat !== null && $g->lng !== null) {
+                $markers[] = [
+                    'lat' => (float) $g->lat, 'lng' => (float) $g->lng, 'ip' => $row->ip, 'version' => (int) $row->version,
+                    'city' => $g->city, 'region' => $g->region, 'country' => $g->country, 'isp' => $g->isp,
+                    'hits' => (int) $row->hits, 'users' => (int) $row->user_count, 'modules' => '',
+                    'first' => ! empty($row->first) ? date('d M Y h:i A', strtotime($row->first)) : '',
+                    'last'  => ! empty($row->last) ? date('d M Y h:i A', strtotime($row->last)) : '',
+                ];
+            }
+        }
+        $data['ip_markers']    = $markers;
+        $data['points']        = $m->geo_points($f);          // exact device GPS from entry audit
         $data['module_access'] = [];
-        $data['ip_markers'] = [];
         $data['module_labels'] = [];
+
         $v4 = 0; $v6 = 0;
         foreach ($data['ips'] as $row) { if ($row->version === 6) { $v6++; } elseif ($row->version === 4) { $v4++; } }
         $data['v4_count'] = $v4; $data['v6_count'] = $v6;
