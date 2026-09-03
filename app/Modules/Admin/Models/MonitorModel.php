@@ -23,6 +23,20 @@ class MonitorModel
         return $this->db()->tableExists('aa_entry_trace');
     }
 
+    /**
+     * Current firm id for scoping the entry-audit log. aa_entry_trace carries
+     * template_id, so the Monitor's entry data reflects the firm selected in the
+     * top-nav switcher. (daily_traffic / aa_login_detail have no firm column and
+     * stay global — page views & logins are not per-firm.) Returns 0 when the
+     * firm context isn't resolvable, which disables the scope (shows all firms).
+     */
+    private function entryFirmId(): int
+    {
+        if (! function_exists('fy')) { return 0; }
+        $f = fy();
+        return (int) ($f->template_id ?? 0);
+    }
+
     /** Sanitised date/user filter from GET/POST (defaults: month-to-date). */
     public function filters(): array
     {
@@ -96,11 +110,13 @@ class MonitorModel
             $logins = (int) $b->countAllResults();
         }
 
+        $tid = $this->entryFirmId();
         $ent = ['create' => 0, 'update' => 0, 'delete' => 0, 'geo' => 0, 'total' => 0];
         if ($this->hasEntryGeo()) {
             $b = $db->table('aa_entry_trace')
                 ->select("COUNT(*) total, SUM(action='create') c_create, SUM(action='update') c_update, SUM(action='delete') c_delete, SUM(latitude IS NOT NULL) c_geo", false)
                 ->where('DATE(created_at) >=', $from)->where('DATE(created_at) <=', $to);
+            if ($tid) { $b->where('template_id', $tid); }
             if (! empty($f['user'])) { $b->where('user_id', $f['user']); }
             $r = $b->get()->getRow();
             if ($r) {
@@ -118,9 +134,11 @@ class MonitorModel
             ->where('DATE(trafiic_date) >=', $from)->where('DATE(trafiic_date) <=', $to)
             ->where('ip_address IS NOT NULL', null, false)->get()->getResult() as $x) { if ($x->ip_address !== '') { $ips[$x->ip_address] = 1; } }
         if ($this->hasEntryGeo()) {
-            foreach ($db->table('aa_entry_trace')->select('DISTINCT ip_address', false)
+            $bi = $db->table('aa_entry_trace')->select('DISTINCT ip_address', false)
                 ->where('DATE(created_at) >=', $from)->where('DATE(created_at) <=', $to)
-                ->where('ip_address IS NOT NULL', null, false)->get()->getResult() as $x) { if ($x->ip_address !== '') { $ips[$x->ip_address] = 1; } }
+                ->where('ip_address IS NOT NULL', null, false);
+            if ($tid) { $bi->where('template_id', $tid); }
+            foreach ($bi->get()->getResult() as $x) { if ($x->ip_address !== '') { $ips[$x->ip_address] = 1; } }
         }
 
         return [
@@ -147,6 +165,7 @@ class MonitorModel
         if ($this->hasEntryGeo()) {
             $b = $db->table('aa_entry_trace')->select('DATE(created_at) d, COUNT(*) c', false)
                 ->where('DATE(created_at) >=', date('Y-m-d', $cur))->where('DATE(created_at) <=', $to);
+            if (($tid = $this->entryFirmId())) { $b->where('template_id', $tid); }
             if (! empty($f['user'])) { $b->where('user_id', $f['user']); }
             foreach ($b->groupBy('d')->get()->getResult() as $r) { if (isset($days[$r->d])) { $days[$r->d]['entries'] = (int) $r->c; } }
         }
@@ -171,6 +190,7 @@ class MonitorModel
         if ($this->hasEntryGeo()) {
             $b = $db->table('aa_entry_trace')->select('HOUR(created_at) h, COUNT(*) c', false)
                 ->where('DATE(created_at) >=', $f['from'])->where('DATE(created_at) <=', $f['to']);
+            if (($tid = $this->entryFirmId())) { $b->where('template_id', $tid); }
             if (! empty($f['user'])) { $b->where('user_id', $f['user']); }
             foreach ($b->groupBy('h')->get()->getResult() as $r) { $buckets[(int) $r->h] += (int) $r->c; }
         }
@@ -201,6 +221,7 @@ class MonitorModel
                     COALESCE(NULLIF(TRIM(CONCAT(u.first_name,' ',u.last_name)),''), t.user_name,'Guest / Unknown') user_name", false)
                 ->join('users u', 'u.id = t.user_id', 'left')
                 ->where('DATE(t.created_at) >=', $from)->where('DATE(t.created_at) <=', $to);
+            if (($tid = $this->entryFirmId())) { $b->where('t.template_id', $tid); }
             if ($uid) { $b->where('t.user_id', $uid); }
             foreach ($b->orderBy('t.created_at', 'desc')->limit($limit)->get()->getResult() as $r) {
                 $geo = ($r->latitude !== null && $r->longitude !== null) ? ($r->latitude . ',' . $r->longitude) : '';

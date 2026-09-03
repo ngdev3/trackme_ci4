@@ -12,7 +12,25 @@ use App\Modules\Admin\Models\TrafficModel;
  */
 class Traffic extends BaseController
 {
-    protected $helpers = ['url', 'app'];
+    protected $helpers = ['url', 'app', 'permission'];
+
+    /**
+     * Page-traffic logs expose every user's activity + IP, so — like the CI3
+     * Monitor that absorbed this module — access is Super-Admin only. Enforced
+     * here (not just via the RBAC filter) because 'traffic' is not a grantable
+     * module key and the RBAC filter fails open for unknown keys. Returns a
+     * denial Response when blocked, or null when the caller may proceed.
+     */
+    private function guard()
+    {
+        if (function_exists('erp_is_super_admin') && erp_is_super_admin()) {
+            return null;
+        }
+        if ($this->request->isAJAX()) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => 'denied', 'message' => 'Super Admin only.']);
+        }
+        return redirect()->to(site_url('permission_denied'));
+    }
 
     public function index()
     {
@@ -21,6 +39,7 @@ class Traffic extends BaseController
 
     public function listing()
     {
+        if (($deny = $this->guard()) !== null) { return $deny; }
         return _layout('\App\Modules\Admin\Views\traffic\listing', [
             'title' => 'Page Traffic · C R Industries ERP',
         ]);
@@ -28,6 +47,7 @@ class Traffic extends BaseController
 
     public function view_all()
     {
+        if (($deny = $this->guard()) !== null) { return $deny; }
         $model   = new TrafficModel();
         $filters = $this->filters();
         $total   = $model->countVisits($filters, false);
