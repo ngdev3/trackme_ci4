@@ -179,12 +179,26 @@ $read   = $c && isset($c->read)   ? (int) $c->read   : 0;
             "paginate": { "previous": "Prev", "next": "Next", "last": "Last", "first": "First" }
         },
         "columnDefs": [{ "targets": "_all", "orderable": false }],
+        "createdRow": function (row) {
+            // Expose the row's target record URL (the message-cell link) on the <tr>.
+            var href = $(row).find('td:nth-child(2) a').attr('href');
+            if (href) { $(row).attr('data-href', href).addClass('ntf-clickable'); }
+        },
         "ajax": {
             url: "<?php echo base_url(); ?>admin/notification/view_all?<?php echo $QUERY_STRING; ?>",
             type: "post",
             error: function () { $("#employee-grid_processing").css("display", "none"); }
         },
         "order": []
+    });
+
+    // Make the WHOLE notification row clickable — opens its linked record (same
+    // target as the message link). Clicks on links/buttons/menus are ignored.
+    $('head').append('<style>#employee-grid-buyer tr.ntf-clickable{cursor:pointer}#employee-grid-buyer tr.ntf-clickable:hover td{background:#f0f7ff}</style>');
+    $('#employee-grid-buyer tbody').on('click', 'tr.ntf-clickable', function (e) {
+        if ($(e.target).closest('a, button, input, label, select, .dropdown, .btn').length) { return; }
+        var href = $(this).attr('data-href');
+        if (href) { window.location.href = href; }
     });
 
     $(document).ready(function () {
